@@ -92,7 +92,7 @@ public interface SysDictTypeService {
     List<SysDictDataVo> updateDictType(SysDictTypeBo bo);
 
     /**
-     * 校验字典类型称是否唯一
+     * 校验字典类型名称是否唯一
      *
      * @param dictType 字典类型
      * @return 结果

@@ -8,7 +8,7 @@ import java.io.Serial;
 import java.io.Serializable;
 
 /**
- * OAuth provider view object.
+ * OAuth 提供方视图对象
  */
 @Data
 @AutoMapper(target = SysOauthProvider.class)

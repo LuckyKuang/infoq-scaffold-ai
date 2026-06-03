@@ -5,7 +5,7 @@ import cc.infoq.system.domain.entity.SysOauthProvider;
 import cc.infoq.system.domain.vo.SysOauthProviderVo;
 
 /**
- * OAuth provider mapper.
+ * OAuth 提供方 Mapper
  */
 public interface SysOauthProviderMapper extends BaseMapperPlus<SysOauthProvider, SysOauthProviderVo> {
 }

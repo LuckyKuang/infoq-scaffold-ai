@@ -4,7 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 /**
- * OAuth ticket login body.
+ * OAuth 票据登录对象
  */
 @Data
 public class OAuthLoginBody {

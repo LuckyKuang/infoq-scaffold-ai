@@ -362,9 +362,9 @@ public class SysUserServiceImpl implements SysUserService, UserService {
     @CacheEvict(cacheNames = CacheNames.SYS_NICKNAME, key = "#user.userId")
     @Transactional(rollbackFor = Exception.class)
     public int updateUser(SysUserBo user) {
-        // 新增用户与角色管理
+        // 修改用户角色（先清空旧关联再写入新关联）
         insertUserRole(user, true);
-        // 新增用户与岗位管理
+        // 修改用户岗位（先清空旧关联再写入新关联）
         insertUserPost(user, true);
         SysUser sysUser = MapstructUtils.convert(user, SysUser.class);
         // 防止错误更新后导致的数据误删除

@@ -205,7 +205,7 @@ public class SysDictTypeServiceImpl implements SysDictTypeService, DictService {
     }
 
     /**
-     * 校验字典类型称是否唯一
+     * 校验字典类型名称是否唯一
      *
      * @param dictType 字典类型
      * @return 结果

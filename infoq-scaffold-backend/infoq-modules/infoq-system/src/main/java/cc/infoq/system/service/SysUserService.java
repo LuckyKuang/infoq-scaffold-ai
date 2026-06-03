@@ -20,7 +20,7 @@ public interface SysUserService {
      * 根据条件分页查询用户列表
      *
      * @param user      用户信息
-     * @param pageQuery 发呢也
+     * @param pageQuery 分页参数
      * @return 用户信息
      */
     TableDataInfo<SysUserVo> selectPageUserList(SysUserBo user, PageQuery pageQuery);

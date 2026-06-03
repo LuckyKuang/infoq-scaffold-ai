@@ -31,7 +31,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Auth endpoints.
+ * 认证接口
  *
  * @author Pontus
  */

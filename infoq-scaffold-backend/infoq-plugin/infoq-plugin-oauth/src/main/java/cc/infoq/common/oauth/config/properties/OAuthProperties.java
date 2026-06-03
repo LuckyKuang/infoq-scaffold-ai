@@ -11,44 +11,44 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * OAuth login properties.
+ * OAuth 登录配置
  */
 @Data
 @ConfigurationProperties(prefix = "oauth")
 public class OAuthProperties {
 
     /**
-     * Global OAuth login switch.
+     * OAuth 登录全局开关
      */
     private Boolean enabled = false;
 
     /**
-     * Pending authorization state TTL.
+     * 待授权 state 有效期
      */
     private Duration stateTtl = Duration.ofMinutes(10);
 
     /**
-     * Login ticket TTL.
+     * 登录票据有效期
      */
     private Duration ticketTtl = Duration.ofMinutes(2);
 
     /**
-     * Global auto-register switch for OAuth identities.
+     * OAuth 身份自动注册全局开关
      */
     private Boolean autoRegisterEnabled = true;
 
     /**
-     * Reject OAuth auto-register while invite registration is enabled.
+     * 邀请注册开启时是否拒绝 OAuth 自动注册
      */
     private Boolean requireInviteWhenInviteRegisterEnabled = true;
 
     /**
-     * Frontend callback route. Keep it same-origin relative.
+     * 前端回调路由，保持同源相对路径
      */
     private String frontendCallbackPath = "/oauth/callback";
 
     /**
-     * Provider client settings, keyed by provider code.
+     * 提供方客户端配置，按提供方编码索引
      */
     private Map<String, Provider> providers = new LinkedHashMap<>();
 

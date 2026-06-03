@@ -22,7 +22,7 @@ public class SecurityTokenSession implements Serializable {
     private String tokenDigest;
 
     /**
-     * Kept for the existing online-user tokenId contract.
+     * 保持现有在线用户 tokenId 契约
      */
     private String accessToken;
 

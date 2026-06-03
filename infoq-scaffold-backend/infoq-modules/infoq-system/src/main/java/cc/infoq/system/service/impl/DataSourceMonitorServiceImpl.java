@@ -20,11 +20,10 @@ import java.util.Map;
 import java.util.TreeMap;
 
 /**
- * Native Hikari datasource monitor service.
+ * Hikari 数据源监控服务
  *
- * <p>This implementation reads runtime information directly from
- * {@link DynamicRoutingDataSource}, unwraps the real {@link HikariDataSource},
- * and exposes pool/config metrics without borrowing a connection.</p>
+ * <p>直接读取 {@link DynamicRoutingDataSource} 运行时信息，解析真实的 {@link HikariDataSource}，
+ * 在不借用连接的前提下暴露连接池和配置指标。</p>
  *
  * @author Pontus
  */

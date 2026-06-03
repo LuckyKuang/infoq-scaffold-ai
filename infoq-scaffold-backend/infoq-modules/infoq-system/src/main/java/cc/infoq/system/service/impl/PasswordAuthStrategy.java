@@ -65,7 +65,7 @@ public class PasswordAuthStrategy implements AuthStrategy {
         }
         SysUserVo user = loadUserByUsername(username);
         loginService.checkLogin(LoginType.PASSWORD, username, () -> !BCrypt.checkpw(password, user.getPassword()));
-        // 此处可根据登录用户的数据不同 自行创建 loginUser
+        // 构建登录用户信息（包含权限、角色、岗位等上下文）
         LoginUser loginUser = loginService.buildLoginUser(user);
         loginUser.setClientKey(client.getClientKey());
         loginUser.setDeviceType(client.getDeviceType());

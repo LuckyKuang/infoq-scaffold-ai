@@ -9,7 +9,7 @@ import java.io.Serializable;
 import java.util.Date;
 
 /**
- * OAuth identity view object.
+ * OAuth 身份绑定视图对象
  */
 @Data
 @AutoMapper(target = SysOauthIdentity.class)
