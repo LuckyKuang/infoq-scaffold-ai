@@ -79,7 +79,7 @@ function acquireToken({
 
   if (result.status !== 0) {
     throw new Error(
-      `Failed to acquire admin token from ${backendUrl}. Ensure backend is reachable and captcha is disabled before running the probe.\n${loginOutput}`
+      `Failed to acquire admin token from ${backendUrl}. Ensure backend is reachable and can be logged in without captcha for this fast route probe. For real captcha E2E, use infoq-admin-e2e-captcha-verification.\n${loginOutput}`
     );
   }
 

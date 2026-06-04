@@ -122,7 +122,14 @@ async function assertAuthCode() {
     fail('GET /auth/code', `code=${body.code}, msg=${body.msg || ''}`);
   }
   if (body?.data?.captchaEnabled === true) {
-    fail('GET /auth/code', 'captchaEnabled=true, use temp backend with --captcha.enable=false');
+    fail(
+      'GET /auth/code',
+      [
+        'captchaEnabled=true.',
+        'Use infoq-admin-e2e-captcha-verification for real captcha login,',
+        'or run verify_login.mjs with --allow-captcha-disabled for explicit fast diagnostics.'
+      ].join(' ')
+    );
   }
   pass('GET /auth/code', 'captchaEnabled=false');
 }

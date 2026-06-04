@@ -77,6 +77,7 @@ backend 工作区基线是 JDK 17 与 Maven 3.9.x。
 当前默认组合：
 
 - 浏览器主流程：`infoq-browser-automation` + repo-owned `playwright-cli`
+- 真实验证码 admin E2E：`infoq-admin-e2e-captcha-verification`
 - React admin / weapp 运行态：`infoq-react-runtime-verification`
 - Vue admin / weapp 运行态：`infoq-vue-runtime-verification`
 - OpenAI / Codex / AGENTS / MCP 问题：`openai-docs`

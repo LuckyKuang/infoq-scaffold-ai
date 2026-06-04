@@ -109,6 +109,7 @@ infoq-scaffold-ai
 - Vue 家族单测：`infoq-vue-unit-test-patterns`
 - 后端单测与回归补测：`infoq-backend-unit-test-patterns`
 - 后端冒烟、双机集群 smoke 与登录校验：`infoq-backend-smoke-test`、`infoq-login-success-check`
+- 真实验证码管理端 E2E：`infoq-admin-e2e-captcha-verification`
 - OpenSpec 与项目参考：`infoq-openspec-delivery`（`init_change_dir.mjs` + `openspec_check.mjs`）、`infoq-project-reference`
 
 其中浏览器自动化默认路径已经收敛为“仓库脚本 + skill 内本地 Playwright 依赖”。`playwright` MCP 只用于临时交互探索，`chrome-devtools` MCP 只用于 Network / Console / Performance 深度诊断。
@@ -202,7 +203,8 @@ node .codex/skills/infoq-openspec-delivery/scripts/openspec_check.mjs <change-id
 node .codex/scripts/backend_mvn.mjs -- clean install -DskipTests
 java -jar infoq-scaffold-backend/infoq-admin/target/infoq-admin.jar --spring.profiles.active=local
 ```
-如需继续执行 React / Vue admin 的受保护路由浏览器探测，临时追加 `--captcha.enable=false`。
+
+真实验证码登录和动态路由 smoke 使用 `infoq-admin-e2e-captcha-verification`。仅做快速 token 或受保护路由诊断时，才显式使用 `--allow-captcha-disabled` 或手动启动关闭验证码的诊断后端。
 
 默认本地访问：
 
@@ -232,6 +234,13 @@ pnpm run dev
 ```bash
 node .codex/skills/infoq-vue-runtime-verification/scripts/start_admin_dev_stack.mjs
 node .codex/skills/infoq-react-runtime-verification/scripts/start_admin_dev_stack.mjs
+```
+
+如果要在不关闭验证码的前提下执行真实验证码登录 + 管理端动态路由 smoke：
+
+```bash
+node .codex/skills/infoq-admin-e2e-captcha-verification/scripts/run_admin_e2e.mjs --client vue --route-limit 1
+node .codex/skills/infoq-admin-e2e-captcha-verification/scripts/run_admin_e2e.mjs --client react --route-limit 1
 ```
 
 停止对应 skill 启动的联调进程：

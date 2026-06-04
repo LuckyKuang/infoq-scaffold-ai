@@ -37,6 +37,7 @@
 | `infoq-backend-unit-test-patterns` | backend 单测 | service / controller / mapper / plugin / aspect |
 | `infoq-backend-smoke-test` | backend 冒烟测试 | HTTP smoke、登录、菜单、导出、受保护接口 |
 | `infoq-login-success-check` | 登录链路验证 | `/auth/login`、token、受保护接口 |
+| `infoq-admin-e2e-captcha-verification` | 真实验证码管理端 E2E | `ddddocr` 识别 `/auth/code`，真实登录后按动态路由 smoke |
 | `infoq-openspec-delivery` | OpenSpec 交付编排 | L3 / L2 变更、跨工作区交付、stable spec 回填、`openspec-check` |
 | `infoq-project-reference` | 仓库静态参考 | 目录、入口、命令、规范 |
 
@@ -110,3 +111,21 @@ node .codex/skills/infoq-openspec-delivery/scripts/openspec_check.mjs <change-id
 - 修改 `.codex/lib/*` 的 CLI 参数、默认端口、日志落点或 env 语义时，必须同步检查对应 skill 的 `SKILL.md`、`references/*.md`、`README.md` 与相关 `doc/*.md`。
 - `.codex/lib` 只沉淀跨 skill 复用的运行时能力，不把单个 skill 的私有流程提前抽成共享层。
 - 共享 helper 产生的状态文件、日志和一次性产物仍统一落在 `doc/tmp/`。
+
+## 9. 真实验证码管理端 E2E
+
+当任务要求“不要跳过验证码”“用 OCR 跑完整登录”或“启动后端和前端后逐模块 smoke”时，使用 `infoq-admin-e2e-captcha-verification`。
+
+默认命令：
+
+```bash
+node .codex/skills/infoq-admin-e2e-captcha-verification/scripts/run_admin_e2e.mjs --client vue
+node .codex/skills/infoq-admin-e2e-captcha-verification/scripts/run_admin_e2e.mjs --client react
+```
+
+说明：
+
+- 该 skill 默认不关闭验证码，必须通过 `/auth/code`、`ddddocr` 和 `/auth/login` 获取真实 token。
+- 首次运行需要本机 Python 环境可 import `ddddocr`，浏览器依赖仍复用 `infoq-browser-automation`。
+- 证据默认写入 `doc/tmp/infoq-admin-e2e-captcha-verification/<run-id>/`。
+- 默认覆盖动态路由只读 smoke；写入型 CRUD、导出、批量操作和权限矩阵需要单独定义测试数据与清理策略。

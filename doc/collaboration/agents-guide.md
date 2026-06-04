@@ -137,11 +137,12 @@ repo 级 custom agents 的真值不写在 `AGENTS.md` 之外的任意散落文�
 
 - 后端单测与回归补测：`infoq-backend-unit-test-patterns`
 - 后端接口与运行态冒烟：`infoq-backend-smoke-test`、`infoq-login-success-check`
+- 真实验证码管理端 E2E：`infoq-admin-e2e-captcha-verification`
 - React 家族运行态验证：`infoq-react-runtime-verification`
 - Vue 家族运行态验证：`infoq-vue-runtime-verification`
 - React 家族单测：`infoq-react-unit-test-patterns`
 - Vue 家族单测：`infoq-vue-unit-test-patterns`
-admin 和 weapp 的差异留在 skill 的 `references/admin` 与 `references/weapp`，而 backend 测试 / smoke 则通过独立 skill 保持边界清晰，而不是重新拆共享底座。
+admin 和 weapp 的差异留在 skill 的 `references/admin` 与 `references/weapp`，真实验证码管理端 E2E 通过独立 skill 保持“验证码 + 登录 + 动态路由 smoke”边界清晰，而 backend 测试 / smoke 则通过独立 skill 保持边界清晰，不重新拆共享底座。
 
 ## 8. AGENTS 什么时候需要更新
 

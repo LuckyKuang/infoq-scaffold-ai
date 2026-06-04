@@ -31,7 +31,7 @@ const config = {
   rsaPublicKey: 'MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAKoR8mX0rGKLqzcWmOzbfj64K8ZIgOdHnzkXSOVOZbFu/TJhZ7rFAN+eaGkl3C4buccQd/EjEsj9ir7ijT7h96MCAwEAAQ=='
 };
 
-let autoTemp = true;
+let allowCaptchaDisabled = false;
 let buildBackend = false;
 let keepServer = false;
 let printToken = false;
@@ -44,11 +44,11 @@ function usage() {
 
 Options:
   --base-url <url>          Base URL of running backend (default: http://127.0.0.1:8080).
-  --temp-port <port>        Temp backend port when auto-starting (default: 18081).
-  --profile <name>          Spring profile for temp backend (default: local).
-  --build                   Build backend jar before temp startup.
-  --no-auto-temp            Disable auto temp backend when captcha is enabled.
-  --keep-server             Keep temp backend alive after checks.
+  --temp-port <port>        Temp backend port for explicit captcha-disabled diagnostics (default: 18081).
+  --profile <name>          Spring profile for explicit temp backend (default: local).
+  --build                   Build backend jar before explicit temp startup.
+  --allow-captcha-disabled  Explicitly allow starting a temp backend with --captcha.enable=false.
+  --keep-server             Keep explicit temp backend alive after checks.
   --username <name>         Preferred login username.
   --password <pwd>          Preferred login password.
   --login-candidates <csv>  Fallback list, e.g. "admin:admin123,dept:666666".
@@ -82,8 +82,8 @@ for (let index = 0; index < args.length; index += 1) {
     case '--build':
       buildBackend = true;
       break;
-    case '--no-auto-temp':
-      autoTemp = false;
+    case '--allow-captcha-disabled':
+      allowCaptchaDisabled = true;
       break;
     case '--keep-server':
       keepServer = true;
@@ -113,6 +113,25 @@ for (let index = 0; index < args.length; index += 1) {
       usage();
       process.exit(1);
   }
+}
+
+function captchaGuidance(baseUrl) {
+  return [
+    `[login-check] captcha enabled on ${baseUrl}.`,
+    'Default login verification no longer disables captcha automatically.',
+    'Use real captcha E2E:',
+    '  node .codex/skills/infoq-admin-e2e-captcha-verification/scripts/run_admin_e2e.mjs --client vue',
+    'Or explicitly opt into fast diagnostics:',
+    '  node .codex/skills/infoq-login-success-check/scripts/verify_login.mjs --allow-captcha-disabled'
+  ].join('\n');
+}
+
+function unreachableGuidance(baseUrl) {
+  return [
+    `[login-check] ${baseUrl} unreachable.`,
+    'Start the backend yourself, or explicitly opt into a captcha-disabled temp backend for fast diagnostics:',
+    '  node .codex/skills/infoq-login-success-check/scripts/verify_login.mjs --allow-captcha-disabled'
+  ].join('\n');
 }
 
 async function canReachAuthCode(baseUrl) {
@@ -204,7 +223,7 @@ async function startTempBackend() {
   tempLog = resolveDocTmpPath(repoRoot, `infoq-login-check-${config.tempPort}-${Date.now()}.log`);
   const logFd = fs.openSync(tempLog, 'a');
 
-  console.log(`[login-check] starting temp backend on ${tempBase} with captcha disabled`);
+  console.log(`[login-check] starting explicit captcha-disabled temp backend on ${tempBase}`);
   const child = spawn(
     'java',
     [
@@ -248,10 +267,10 @@ async function determineTargetBaseUrl() {
   if (authCode?.response?.ok) {
     const captchaEnabled = authCode.body?.data?.captchaEnabled === true;
     if (captchaEnabled) {
-      if (!autoTemp) {
-        throw new Error(`[login-check] captcha enabled on ${config.baseUrl}; use auto temp backend or disable captcha`);
+      if (!allowCaptchaDisabled) {
+        throw new Error(captchaGuidance(config.baseUrl));
       }
-      console.log(`[login-check] captcha enabled on ${config.baseUrl}; switching to temp backend`);
+      console.log(`[login-check] captcha enabled on ${config.baseUrl}; explicit fast diagnostic mode will use temp backend`);
       await startTempBackend();
       return;
     }
@@ -261,11 +280,11 @@ async function determineTargetBaseUrl() {
     return;
   }
 
-  if (!autoTemp) {
-    throw new Error(`[login-check] ${config.baseUrl} unreachable and auto temp backend disabled`);
+  if (!allowCaptchaDisabled) {
+    throw new Error(unreachableGuidance(config.baseUrl));
   }
 
-  console.log(`[login-check] ${config.baseUrl} unreachable; starting temp backend`);
+  console.log(`[login-check] ${config.baseUrl} unreachable; explicit fast diagnostic mode will start temp backend`);
   await startTempBackend();
 }
 

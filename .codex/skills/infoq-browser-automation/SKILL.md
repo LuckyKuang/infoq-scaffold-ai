@@ -37,6 +37,8 @@ pnpm --dir .codex/skills/infoq-browser-automation/scripts run playwright-cli flo
 
 ### 3. 管理端受保护路由验证
 
+该命令是快速路由探测，不负责真实验证码登录。运行前必须已经有可直接登录的后端，或明确使用关闭验证码的诊断后端；需要覆盖真实验证码、OCR 与登录态时，改用 `infoq-admin-e2e-captcha-verification`。
+
 先只列出后端真实返回路由：
 
 ```bash
@@ -110,7 +112,8 @@ pnpm --dir .codex/skills/infoq-browser-automation/scripts run chrome-devtools-cl
 
 - 默认优先复跑 CLI，不要先上 MCP。
 - CLI 失败时必须保留失败命令、错误摘要与证据路径，禁止静默切走 MCP。
-- backend 未运行、captcha 未关闭或前端站点不可达时，必须显式失败。
+- backend 未运行、验证码仍开启且未使用真实验证码 E2E、或前端站点不可达时，必须显式失败。
+- 不要把 `admin-route-probe` 当成真实验证码登录验证；真实验证码链路使用 `infoq-admin-e2e-captcha-verification`。
 - skill 文档树只保留当前 CLI-first 入口与现行约束，不保留任何历史浏览器入口说明。
 
 ## 参考
