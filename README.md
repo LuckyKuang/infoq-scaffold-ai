@@ -110,6 +110,8 @@ infoq-scaffold-ai
 - 后端单测与回归补测：`infoq-backend-unit-test-patterns`
 - 后端冒烟、双机集群 smoke 与登录校验：`infoq-backend-smoke-test`、`infoq-login-success-check`
 - 真实验证码管理端 E2E：`infoq-admin-e2e-captcha-verification`
+- 管理端 Web 自动化测试矩阵：`infoq-admin-web-test-case-generator`
+- 管理端 CRUD E2E 模式：`infoq-admin-crud-e2e-patterns`
 - OpenSpec 与项目参考：`infoq-openspec-delivery`（`init_change_dir.mjs` + `openspec_check.mjs`）、`infoq-project-reference`
 
 其中浏览器自动化默认路径已经收敛为“仓库脚本 + skill 内本地 Playwright 依赖”。`playwright` MCP 只用于临时交互探索，`chrome-devtools` MCP 只用于 Network / Console / Performance 深度诊断。
@@ -241,6 +243,13 @@ node .codex/skills/infoq-react-runtime-verification/scripts/start_admin_dev_stac
 ```bash
 node .codex/skills/infoq-admin-e2e-captcha-verification/scripts/run_admin_e2e.mjs --client vue --route-limit 1
 node .codex/skills/infoq-admin-e2e-captcha-verification/scripts/run_admin_e2e.mjs --client react --route-limit 1
+```
+
+如果要先生成 React/Vue 管理端 Web 自动化测试矩阵：
+
+```bash
+node .codex/skills/infoq-admin-web-test-case-generator/scripts/generate-case-matrix.mjs
+node .codex/skills/infoq-admin-web-test-case-generator/scripts/validate-case-matrix.mjs doc/test/frontend-web-automation/case-matrix.json
 ```
 
 停止对应 skill 启动的联调进程：

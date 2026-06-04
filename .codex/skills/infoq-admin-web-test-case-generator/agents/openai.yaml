@@ -1,0 +1,4 @@
+interface:
+  display_name: "InfoQ 管理端测试矩阵"
+  short_description: "生成 React/Vue 管理端 Web 自动化测试矩阵"
+  default_prompt: "使用 $infoq-admin-web-test-case-generator 生成或校验本仓库 React/Vue 管理端 Web 自动化测试矩阵。"

@@ -1,6 +1,24 @@
 # 管理端 E2E 场景矩阵
 
-## 本轮默认覆盖
+## 范围来源
+
+管理端 Web 自动化测试范围由 `infoq-admin-web-test-case-generator` 生成：
+
+```bash
+node .codex/skills/infoq-admin-web-test-case-generator/scripts/generate-case-matrix.mjs
+```
+
+默认矩阵产物：
+
+```text
+doc/test/frontend-web-automation/case-matrix.json
+doc/test/frontend-web-automation/case-matrix.md
+doc/test/frontend-web-automation/gaps.md
+```
+
+本 skill 当前执行 P0 只读 smoke；如需模块级 CRUD 模式，使用 `infoq-admin-crud-e2e-patterns`。
+
+## P0 默认覆盖
 
 | 层级 | 场景 | 验收方式 |
 | --- | --- | --- |
@@ -11,7 +29,7 @@
 | 动态路由 | `/system/menu/getRouters` | token 可访问，返回路由树 |
 | 管理端路由 | 动态路由 smoke | 每个候选路由可打开，截图和 console 记录落盘 |
 
-## 默认排除
+## P1 / P2 默认排除
 
 | 类型 | 原因 |
 | --- | --- |
@@ -27,3 +45,4 @@
 2. 所有写入型场景使用 `e2e_` 前缀测试数据。
 3. 每个写入型场景必须定义清理步骤和失败后人工回滚提示。
 4. 权限边界至少覆盖管理员、部门账号、普通账号三类角色。
+5. 后续可为 `run_admin_e2e.mjs` 增加 `--case-matrix` 和 `--case-priority P0` 参数，在执行器内直接读取矩阵。

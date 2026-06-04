@@ -33,6 +33,13 @@ node .codex/skills/infoq-admin-e2e-captcha-verification/scripts/run_admin_e2e.mj
 node .codex/skills/infoq-admin-e2e-captcha-verification/scripts/run_admin_e2e.mjs --client vue --route-limit 1
 ```
 
+按测试矩阵选择 P0 路由时，先生成矩阵，再用 `--include-route` 或 `--route-limit` 收敛执行范围：
+
+```bash
+node .codex/skills/infoq-admin-web-test-case-generator/scripts/generate-case-matrix.mjs
+node .codex/skills/infoq-admin-e2e-captcha-verification/scripts/run_admin_e2e.mjs --client vue --include-route "/system/user"
+```
+
 ## 前置条件
 
 1. 后端依赖的 MySQL、Redis、MinIO 等本地环境必须可用。
@@ -102,7 +109,9 @@ doc/tmp/infoq-admin-e2e-captcha-verification/<run-id>/
 
 ## 场景矩阵
 
-本轮默认场景是动态路由只读 smoke。模块级 CRUD、导出、批量操作、权限边界和数据清理策略见 `references/scenario-matrix.md`，默认不执行。
+本技能的执行边界是 P0 动态路由只读 smoke。完整测试范围真值由 `infoq-admin-web-test-case-generator` 生成到 `doc/test/frontend-web-automation/case-matrix.json`。
+
+模块级 CRUD、导出、批量操作、权限边界和数据清理策略见 `infoq-admin-crud-e2e-patterns` 与 `references/scenario-matrix.md`，默认不执行。
 
 ## 护栏
 

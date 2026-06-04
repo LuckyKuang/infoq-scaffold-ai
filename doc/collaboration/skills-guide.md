@@ -38,6 +38,8 @@
 | `infoq-backend-smoke-test` | backend 冒烟测试 | HTTP smoke、登录、菜单、导出、受保护接口 |
 | `infoq-login-success-check` | 登录链路验证 | `/auth/login`、token、受保护接口 |
 | `infoq-admin-e2e-captcha-verification` | 真实验证码管理端 E2E | `ddddocr` 识别 `/auth/code`，真实登录后按动态路由 smoke |
+| `infoq-admin-web-test-case-generator` | 管理端 Web 自动化测试矩阵 | 从 `sys_menu`、React/Vue 页面、路由和测试生成 `case-matrix` 与缺口报告 |
+| `infoq-admin-crud-e2e-patterns` | 管理端 CRUD E2E 模式 | 写入型浏览器自动化的数据、权限按钮、cleanup 和危险动作门禁 |
 | `infoq-openspec-delivery` | OpenSpec 交付编排 | L3 / L2 变更、跨工作区交付、stable spec 回填、`openspec-check` |
 | `infoq-project-reference` | 仓库静态参考 | 目录、入口、命令、规范 |
 
@@ -129,3 +131,31 @@ node .codex/skills/infoq-admin-e2e-captcha-verification/scripts/run_admin_e2e.mj
 - 首次运行需要本机 Python 环境可 import `ddddocr`，浏览器依赖仍复用 `infoq-browser-automation`。
 - 证据默认写入 `doc/tmp/infoq-admin-e2e-captcha-verification/<run-id>/`。
 - 默认覆盖动态路由只读 smoke；写入型 CRUD、导出、批量操作和权限矩阵需要单独定义测试数据与清理策略。
+
+## 10. 管理端 Web 自动化测试矩阵
+
+当任务要求“生成各功能前端 Web 自动化测试用例”“刷新 React/Vue 管理端测试矩阵”“找出菜单和页面自动化缺口”时，使用 `infoq-admin-web-test-case-generator`。
+
+默认命令：
+
+```bash
+node .codex/skills/infoq-admin-web-test-case-generator/scripts/generate-case-matrix.mjs
+node .codex/skills/infoq-admin-web-test-case-generator/scripts/validate-case-matrix.mjs doc/test/frontend-web-automation/case-matrix.json
+```
+
+说明：
+
+- 后端 `sys_menu` 是动态管理页的主要真值。
+- React `src/pages` 与 Vue `src/views` 用于校验组件存在性和双端差异。
+- 默认产物写入 `doc/test/frontend-web-automation/`。
+- 该 skill 不启动浏览器、不登录、不写业务数据。
+
+## 11. 管理端 CRUD E2E 模式
+
+当任务要求“为用户/角色/字典等模块设计 CRUD 浏览器自动化”“定义测试数据清理策略”“设计权限按钮断言”时，使用 `infoq-admin-crud-e2e-patterns`。
+
+说明：
+
+- 所有写入型用例必须使用 `e2e_` 前缀数据。
+- 删除、批量操作、OSS 配置、定时任务执行、用户强退等场景必须显式标记副作用和门禁。
+- 该 skill 只沉淀模式，不替代 `infoq-browser-automation` 或 `infoq-admin-e2e-captcha-verification` 的执行底座。
