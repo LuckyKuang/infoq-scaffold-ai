@@ -1,11 +1,11 @@
 # GEMINI.md
 |IMPORTANT: Prefer retrieval-led reasoning over pre-training-led reasoning for any project tasks. Read repository files before relying on framework pretraining data.
 |概览:InfoQ-Scaffold-AI 是专为 AI 主力研发设计的全栈脚手架，集成 Spring Boot 3 后端与 Vue 3/React 19 双端管理台及小程序（uni-app/Taro）。
-|后端栈:Spring Boot 3.5.14|JDK 17|MyBatis-Plus 3.5.16|Sa-Token 1.44.0|MySQL 8|Redis 7|Java package `cc.infoq.{module}.{layer}`|4-space indent.
-|Vue 管理端栈:Vue 3.5.35|Element Plus 2.14.1|Vite 8.0.16|Pinia|Vue Router 5|Vitest 4|2-space indent.
+|后端栈:Spring Boot 3.5.14|JDK 17|MyBatis-Plus 3.5.16|Spring Security|MySQL 8|Redis 7|Java package `cc.infoq.{module}.{layer}`|4-space indent.
+|Vue 管理端栈:Vue 3.5.35|Element Plus 2.14.1|Vite 8.0.16|Pinia|Vue Router 5.1.0|Vitest 4|2-space indent.
 |React 管理端栈:React 19.2.7|Ant Design 6.4.3|Vite 8.0.16|Zustand|React Router 7.16|Vitest 4|2-space indent.
-|小程序栈:uni-app Vue 3|Taro 4 React 18|2-space indent.
-|视觉系统:Vanilla CSS 优先|Tesla 极简主义设计|真值见 `DESIGN.md`|Demo 见 `doc/ui-demos/tesla-design-foundation.html`。
+|小程序栈:uni-app 3 (Vue 3, 原生组件, Uni-helper)|Taro 4 (React 18, Taro UI)|2-space indent.
+|视觉系统:Vanilla CSS 优先覆盖组件库 Token|Tesla 极简主义设计 (Cohere Editorial) 融合卡片式圆角|真值见 `DESIGN.md`|Demo 见 `doc/ui-demos/tesla-design-foundation.html`。
 |后端命令:run=mvn spring-boot:run -pl infoq-admin|build=mvn clean package -P dev|test=mvn test|port=8080。
 |Vue 命令:dev=pnpm run dev|build=pnpm run build:prod|test=pnpm run test:unit。
 |React 命令:dev=pnpm run dev|build=pnpm run build:prod|test=pnpm run test。
