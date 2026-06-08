@@ -12,7 +12,7 @@
 |小程序命令:Vue=pnpm --dir infoq-scaffold-frontend-weapp-vue build-open:weapp:dev|React=pnpm --dir infoq-scaffold-frontend-weapp-react build-open:weapp:dev|需配置 `TARO_APP_ID`。
 |AI 规约层:根 `AGENTS.md` (全局)|工作区 `AGENTS.md` (栈细则)|优先级:工作区优先。
 |OpenSpec 交付:L3(强制):新功能/API 变更/跨工作区，需在 `openspec/changes/<change-id>/` 建规约|L1:小修复需写 Acceptance Contract。
-|自动化 Skill:验证={infoq-vue-runtime-verification,infoq-react-runtime-verification,infoq-backend-smoke-test}|单测={infoq-vue-unit-test-patterns,infoq-react-unit-test-patterns,infoq-backend-unit-test-patterns}|浏览器=infoq-browser-automation|项目参考=infoq-project-reference。
+|自动化 Skill:前端验证=infoq-frontend-verify|后端验证=infoq-backend-verify|数据运维=infoq-data-ops|管理端 E2E=infoq-admin-e2e|管理端操作=infoq-admin-ops|浏览器=infoq-browser-automate|项目参考=infoq-project-reference|组件参考=infoq-component-reference|交付工作流=infoq-delivery-workflow。
 |UI/UX 协议:重大 UI 变更需走 Phase 1 (ASCII 线框) -> Phase 2 (静态 Demo) -> Phase 3 (实现) -> Phase 4 (验证)|门禁=`LAYOUT APPROVED`|`DEMO APPROVED`。
 |工程红线:UTF-8 编码|前端必用 `pnpm`|禁止硬编码密钥|边界校验输入|错误信息禁止出现 `[object Object]`。
 |文档真值:根 `doc/` 是正文真值源|文档站 `infoq-scaffold-docs` 仅为展示层|同步命令=`pnpm run docs:sync`。

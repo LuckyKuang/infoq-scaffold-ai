@@ -38,7 +38,7 @@ outline: [2, 3]
 
 ## 4. 我改了 `application-local.yml`，为什么启动时没生效
 
-因为默认 profile 是 `dev`。如果你没有显式传 `--spring.profiles.active=local`，运行时不会自动切到 `local`。
+如果你是手动直跑 `java -jar`，不显式传 `--spring.profiles.active=local` 时仍会落到 `dev`。如果你是用仓库本地联调脚本，`start_admin_dev_stack.mjs` 和 `run_admin_e2e.mjs` 会在存在 `application-local.yml` 时优先选择 `local`。
 
 错误示例：
 

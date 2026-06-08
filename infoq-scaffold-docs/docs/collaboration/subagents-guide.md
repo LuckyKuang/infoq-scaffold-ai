@@ -36,7 +36,7 @@ multi-agent 的价值不是“多开几个 agent”，而是把高噪声、边�
 - 项目级上下文：`openspec/project.md`
 - 当前真相规格：`openspec/specs/`
 - 活跃变更目录：`openspec/changes/<change-id>/`
-- 统一入口 skill：`.codex/skills/infoq-openspec-delivery/`
+- 统一入口 skill：`.codex/skills/infoq-delivery-workflow/`
 - repo 级 custom agents 真值：`.codex/agents/`
 
 ## 4. 当前可用的专家
@@ -50,7 +50,7 @@ multi-agent 的价值不是“多开几个 agent”，而是把高噪声、边�
 
 补充约束：
 
-- `design.md` 由主线程按需维护；重大 UI/UX 任务优先切换到 `infoq-ui-ux-three-phase-protocol`
+- `design.md` 由主线程按需维护；重大 UI/UX 任务优先切换到 `infoq-delivery-workflow` 的四阶段 UI 门禁
 - `materials.md` 只在确有文案、mock data、图标建议价值时由主线程补充
 - 最终验收、blocker 总结与是否需要 `review.md` 由主线程负责
 
@@ -73,13 +73,13 @@ enhance-user-import
 ### 5.2 初始化 change 目录
 
 ```bash
-node .codex/skills/infoq-openspec-delivery/scripts/init_change_dir.mjs enhance-user-import
+node .codex/skills/infoq-delivery-workflow/scripts/init_change_dir.mjs enhance-user-import
 ```
 
 初始化后先执行：
 
 ```bash
-node .codex/skills/infoq-openspec-delivery/scripts/openspec_check.mjs enhance-user-import
+node .codex/skills/infoq-delivery-workflow/scripts/openspec_check.mjs enhance-user-import
 ```
 
 ### 5.3 明确告诉 Codex 使用 subagents
@@ -87,13 +87,13 @@ node .codex/skills/infoq-openspec-delivery/scripts/openspec_check.mjs enhance-us
 推荐提示词：
 
 ```text
-请使用 infoq-openspec-delivery 工作流处理这个需求。
+请使用 infoq-delivery-workflow 工作流处理这个需求。
 change id: enhance-user-import
 
 要求：
 1. spawn requirements_expert 生成 proposal.md 和 spec deltas
 2. spawn technical_designer 生成 tasks.md
-3. 如涉及明显 UI/交互决策，主线程先补 design.md，或改走 infoq-ui-ux-three-phase-protocol
+3. 如涉及明显 UI/交互决策，主线程先补 design.md，或改走 infoq-delivery-workflow 的四阶段 UI 门禁
 4. spawn code_implementer 按计划实现 backend、admin、weapp 需要改动的部分
 5. spawn auto_fixer 跑相关验证并修复真实问题
 6. 主线程基于验证证据做最终验收；必要时写 review.md 记录 blocker

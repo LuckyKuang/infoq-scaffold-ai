@@ -32,7 +32,8 @@ outline: [2, 3]
 
 ### 后端
 
-- 默认 Maven profile 是 `dev`。
+- 直接使用 Maven 或 `java -jar` 时，默认 Maven profile 仍是 `dev`。
+- 仓库本地联调脚本 `start_admin_dev_stack.mjs` / `run_admin_e2e.mjs` 会在存在 `application-local.yml` 时优先选择 `local`。
 - 若要稳定命中指定 profile，优先使用 `java -jar` 显式传入 `--spring.profiles.active=...`。
 - 本仓库当前推荐的确定性运行路径是先 `node .codex/scripts/backend_mvn.mjs -- clean install -DskipTests`，再运行 `infoq-scaffold-backend/infoq-admin/target/infoq-admin.jar`。
 
@@ -68,6 +69,8 @@ outline: [2, 3]
 node .codex/scripts/backend_mvn.mjs -- clean install -DskipTests
 java -jar infoq-scaffold-backend/infoq-admin/target/infoq-admin.jar --spring.profiles.active=dev
 ```
+
+> 说明：上面是手动直跑示例。仓库本地联调脚本会在存在 `application-local.yml` 时优先切到 `local`，以减少本地联调时的数据库和 Redis 错配。
 
 ### 4.2 使用 `local` profile
 

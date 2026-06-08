@@ -1,0 +1,4 @@
+interface:
+  display_name: "InfoQ 浏览器自动化"
+  short_description: "以仓库内跨平台 CLI 执行浏览器验证、截图和 console 证据采集"
+  default_prompt: "使用 $infoq-browser-automate 优先走仓库内跨平台 CLI：playwright-cli 负责页面流程与 admin route probe，chrome-devtools-cli 负责本地 DevTools 级诊断；遵循 list-routes 优先、目标枚举、console/pageerror 失败门禁和 MCP 显式 fallback。"

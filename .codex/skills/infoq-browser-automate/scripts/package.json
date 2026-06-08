@@ -1,0 +1,14 @@
+{
+  "name": "infoq-browser-automate-scripts",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.28.2",
+  "scripts": {
+    "playwright-cli": "node playwright_cli.mjs",
+    "chrome-devtools-cli": "node chrome_devtools_cli.mjs"
+  },
+  "devDependencies": {
+    "chrome-devtools-mcp": "0.25.0",
+    "playwright": "1.59.1"
+  }
+}

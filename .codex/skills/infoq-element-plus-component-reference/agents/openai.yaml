@@ -1,4 +1,0 @@
-interface:
-  display_name: "InfoQ Element Plus 组件参考"
-  short_description: "基于官方文档选择并应用 Element Plus 组件"
-  default_prompt: "使用 $infoq-element-plus-component-reference 根据官方文档选择合适的 Element Plus 组件，并以正确 API 实现 Vue 3 页面。"

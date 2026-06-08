@@ -1,4 +1,0 @@
-interface:
-  display_name: "InfoQ 版本升级"
-  short_description: "统一升级 backend、frontend、docs 和发布版本号"
-  default_prompt: "使用 $infoq-version-bump 在 backend、admin 前端、weapp 前端、docs 工作区、docker 和发布文档之间一致地升级版本号。"

@@ -248,6 +248,7 @@
 - 交付规划应定义 acceptance contract，覆盖功能范围、非目标、异常处理、所需日志/可观测性、回滚条件
 - 可发布变更在部署前必须验证环境/配置前置条件与外部依赖
 - 影响共享环境、数据或部署状态的破坏性/高风险操作必须显式确认
-- 后端运行时/登录改动应使用 `infoq-login-success-check` 与 `infoq-backend-smoke-test`
-- Admin 运行态验证归属 `infoq-react-runtime-verification` 或 `infoq-vue-runtime-verification`
-- Weapp 运行态验证归属同家族 React/Vue 运行态技能（通过 `references/weapp/*`）
+- SQL、数据库、Redis、数据修复、迁移、测试数据维护和 API/UI/DB 一致性验证归属 `infoq-data-ops`
+- 后端运行时、登录、smoke 与单测验证归属 `infoq-backend-verify`
+- React/Vue admin 与 weapp 运行态、单测、coverage、lint/build 归属 `infoq-frontend-verify`
+- 管理端真实验证码登录、动态路由 smoke、测试矩阵与 CRUD E2E 模式归属 `infoq-admin-e2e`

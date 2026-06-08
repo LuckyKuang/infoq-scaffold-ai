@@ -32,8 +32,8 @@ outline: [2, 3]
 
 它们位于：
 
-- `.codex/skills/infoq-browser-automation/scripts/playwright_cli.mjs`
-- `.codex/skills/infoq-browser-automation/scripts/chrome_devtools_cli.mjs`
+- `.codex/skills/infoq-browser-automate/scripts/playwright_cli.mjs`
+- `.codex/skills/infoq-browser-automate/scripts/chrome_devtools_cli.mjs`
 
 可选只读 `mysql` / `redis` MCP 的本地启动入口位于：
 
@@ -44,7 +44,7 @@ outline: [2, 3]
 
 | 路径 | 角色 | 文档定位 |
 | --- | --- | --- |
-| `.codex/scripts/resolve_backend_local_mcp_env.mjs` | 统一按 `application-local.yml -> application-dev.yml` 顺序解析 backend 本地配置，并抽取 MySQL / Redis 只读环境变量；当前同时被只读 MCP 启动脚本与 `infoq-backend-smoke-test` 复用 | 内部 helper，不单独作为用户入口 |
+| `.codex/scripts/resolve_backend_local_mcp_env.mjs` | 统一按 `application-local.yml -> application-dev.yml` 顺序解析 backend 本地配置，并抽取 MySQL / Redis 只读环境变量；当前同时被只读 MCP 启动脚本、`infoq-data-ops` 与 `infoq-backend-verify` 复用 | 内部 helper，不单独作为用户入口 |
 | `.codex/scripts/launch_cached_mcp_package.mjs` | 优先复用本机 npm / npx cache 中已存在的 MCP 包；缓存未命中时再回退到 `npx -y <package>` 下载启动 | 内部 helper，不单独作为用户入口 |
 
 默认行为：
@@ -73,10 +73,10 @@ outline: [2, 3]
 
 ## 4. 典型使用方式
 
-- React / Vue 管理端运行态问题：先用 `infoq-browser-automation` 的 CLI-first 路径；需要临时互动时再用 `playwright` MCP。
+- React / Vue 管理端运行态问题：先用 `infoq-browser-automate` 的 CLI-first 路径；需要临时互动时再用 `playwright` MCP。
 - 页面白屏、接口报错、性能或请求细节排查：用 `chrome-devtools`。
 - OpenAI / AGENTS / skills / Codex / MCP 文档问题：优先 `openai-docs`。
-- backend 数据或缓存排查：在本地配置完成后再显式启用只读 `mysql` / `redis`。
+- backend 数据或缓存排查：使用 `infoq-data-ops` 做只读探测与门禁；在本地配置完成后再显式启用只读 `mysql` / `redis`。
 
 ## 5. 使用约束
 

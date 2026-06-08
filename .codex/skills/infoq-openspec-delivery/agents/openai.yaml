@@ -1,4 +1,0 @@
-interface:
-  display_name: "InfoQ OpenSpec 交付"
-  short_description: "编排 active change、稳定规格和 openspec-check 的 OpenSpec 工作流"
-  default_prompt: "使用 $infoq-openspec-delivery 为功能需求、契约变更或跨工作区交付执行 OpenSpec 工作流，并使用 openspec-check 校验 active change。"

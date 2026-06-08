@@ -29,7 +29,7 @@ openspec/changes/<change-id>/
 - 实现前和交付前都必须执行：
 
 ```bash
-node .codex/skills/infoq-openspec-delivery/scripts/openspec_check.mjs <change-id>
+node .codex/skills/infoq-delivery-workflow/scripts/openspec_check.mjs <change-id>
 ```
 
 - 只有在验证证据完整后才允许归档或合并

@@ -1,0 +1,4 @@
+interface:
+  display_name: "InfoQ 发布操作"
+  short_description: "统一升级版本并同步发布文档和 docs 站点"
+  default_prompt: "使用 $infoq-release-ops 在 backend、admin、weapp、docs、docker 和发布文档之间一致地升级版本；遵循 dry-run 优先、影响枚举、依赖/SQL/docs 检查、发布前验证和回滚条件确认；SQL 或数据迁移细节联动 $infoq-data-ops。"

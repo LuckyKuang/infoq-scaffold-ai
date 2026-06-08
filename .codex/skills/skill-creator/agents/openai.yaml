@@ -1,4 +1,0 @@
-interface:
-  display_name: "Skill 创建器"
-  short_description: "创建或更新 skill"
-  default_prompt: "使用 $skill-creator 阅读当前仓库，并创建一个适合本项目的新 skill 或更新现有 skill。"

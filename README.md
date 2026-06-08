@@ -97,26 +97,27 @@ infoq-scaffold-ai
 
 当前仓库的 skill 结构遵循两条规则：
 
-- 每个 skill 只做一类工作
-- 除 `skill-creator` 外，仓库级 skill 统一使用 `infoq-` 前缀
+- 每个 skill 只做一个工作域
+- 仓库级 skill 统一使用 `infoq-` 前缀；创建或更新 skill 使用系统级 `skill-creator`
+- 现有 skill 默认按领域型可执行 SOP 维护：判定范围 -> 只读探测/预览 -> 目标与影响枚举 -> 写入或危险动作门禁 -> 执行验证 -> `doc/tmp/` 证据留存与显式失败
+- 优先破坏性重构现有领域 skill，只有出现无法归入现有 skill 的新工作域时才新增 skill
 
 其中最核心的 skill 分为：
 
-- 通用浏览器自动化：`infoq-browser-automation`
-- React 家族运行态验证：`infoq-react-runtime-verification`
-- Vue 家族运行态验证：`infoq-vue-runtime-verification`
-- React 家族单测：`infoq-react-unit-test-patterns`
-- Vue 家族单测：`infoq-vue-unit-test-patterns`
-- 后端单测与回归补测：`infoq-backend-unit-test-patterns`
-- 后端冒烟、双机集群 smoke 与登录校验：`infoq-backend-smoke-test`、`infoq-login-success-check`
-- 真实验证码管理端 E2E：`infoq-admin-e2e-captcha-verification`
-- 管理端 Web 自动化测试矩阵：`infoq-admin-web-test-case-generator`
-- 管理端 CRUD E2E 模式：`infoq-admin-crud-e2e-patterns`
-- OpenSpec 与项目参考：`infoq-openspec-delivery`（`init_change_dir.mjs` + `openspec_check.mjs`）、`infoq-project-reference`
+- 项目静态参考：`infoq-project-reference`
+- 高影响交付、OpenSpec、重大 UI/UX 门禁和插件治理：`infoq-delivery-workflow`
+- 后端单测、smoke、登录/auth 和 Redisson OSS 兼容性验证：`infoq-backend-verify`
+- React/Vue admin 与 weapp 单测、构建和运行态验证：`infoq-frontend-verify`
+- SQL、数据库、Redis、数据修复、迁移和一致性核对：`infoq-data-ops`
+- 管理端测试矩阵、真实验证码 E2E 和 CRUD E2E 模式：`infoq-admin-e2e`
+- 管理端真实页面运营维护、权限巡检和危险动作门禁：`infoq-admin-ops`
+- 通用浏览器自动化执行器：`infoq-browser-automate`
+- Ant Design 与 Element Plus 组件 API 参考：`infoq-component-reference`
+- 版本升级、发布前检查、package / 小程序 manifest 版本字段同步：`infoq-release-ops`
 
 其中浏览器自动化默认路径已经收敛为“仓库脚本 + skill 内本地 Playwright 依赖”。`playwright` MCP 只用于临时交互探索，`chrome-devtools` MCP 只用于 Network / Console / Performance 深度诊断。
 
-React 家族和 Vue 家族 skill 会通过 `references/admin` 与 `references/weapp` 区分客户端，但不再保留共享底座型 skill 目录。
+React / Vue 与 admin / weapp 差异通过目标 skill 的 `references/*` 或 `--client react|vue` 参数区分，不再按技术栈碎片化拆 skill。
 
 详见：
 
@@ -132,7 +133,7 @@ React 家族和 Vue 家族 skill 会通过 `references/admin` 与 `references/we
 - 当前真相规格：[`openspec/specs/README.md`](./openspec/specs/README.md)
 - 活跃变更与归档：[`openspec/changes/README.md`](./openspec/changes/README.md)
 
-默认的 OpenSpec 交付入口是 `infoq-openspec-delivery`。新的功能、行为变更或跨工作区任务，先在 `openspec/changes/<change-id>/` 建立或定位 change，再开始实现。
+默认的 OpenSpec 交付入口是 `infoq-delivery-workflow`。新的功能、行为变更或跨工作区任务，先在 `openspec/changes/<change-id>/` 建立或定位 change，再开始实现。
 
 当前首批 stable specs 已覆盖：
 
@@ -148,8 +149,8 @@ React 家族和 Vue 家族 skill 会通过 `references/admin` 与 `references/we
 当前最小 OpenSpec 闭环命令：
 
 ```bash
-node .codex/skills/infoq-openspec-delivery/scripts/init_change_dir.mjs <change-id>
-node .codex/skills/infoq-openspec-delivery/scripts/openspec_check.mjs <change-id>
+node .codex/skills/infoq-delivery-workflow/scripts/init_change_dir.mjs <change-id>
+node .codex/skills/infoq-delivery-workflow/scripts/openspec_check.mjs <change-id>
 ```
 
 如果本次变更属于 repo-level 或高风险治理重构，还应同时在 `doc/plan/YYYY-MM-DD-topic-plan.md` 中保留执行计划。
@@ -161,7 +162,7 @@ node .codex/skills/infoq-openspec-delivery/scripts/openspec_check.mjs <change-id
 - `code_implementer`
 - `auto_fixer`
 
-`design.md`、`materials.md`、`review.md` 默认由主线程按需维护；重大 UI/UX 任务优先切到 `infoq-ui-ux-three-phase-protocol`。
+`design.md`、`materials.md`、`review.md` 默认由主线程按需维护；重大 UI/UX 任务优先走 `infoq-delivery-workflow` 中的四阶段 UI 门禁。
 
 ### 4. 项目级 MCP
 
@@ -206,7 +207,7 @@ node .codex/scripts/backend_mvn.mjs -- clean install -DskipTests
 java -jar infoq-scaffold-backend/infoq-admin/target/infoq-admin.jar --spring.profiles.active=local
 ```
 
-真实验证码登录和动态路由 smoke 使用 `infoq-admin-e2e-captcha-verification`。仅做快速 token 或受保护路由诊断时，才显式使用 `--allow-captcha-disabled` 或手动启动关闭验证码的诊断后端。
+真实验证码登录和动态路由 smoke 使用 `infoq-admin-e2e`。仅做快速 token 或受保护路由诊断时，才显式使用 `--allow-captcha-disabled` 或手动启动关闭验证码的诊断后端。
 
 默认本地访问：
 
@@ -234,30 +235,34 @@ pnpm run dev
 如果要通过 skill 启动后端 + 管理端联调：
 
 ```bash
-node .codex/skills/infoq-vue-runtime-verification/scripts/start_admin_dev_stack.mjs
-node .codex/skills/infoq-react-runtime-verification/scripts/start_admin_dev_stack.mjs
+node .codex/skills/infoq-frontend-verify/scripts/start_admin_dev_stack.mjs --client vue
+node .codex/skills/infoq-frontend-verify/scripts/start_admin_dev_stack.mjs --client react
 ```
 
 如果要在不关闭验证码的前提下执行真实验证码登录 + 管理端动态路由 smoke：
 
 ```bash
-node .codex/skills/infoq-admin-e2e-captcha-verification/scripts/run_admin_e2e.mjs --client vue --route-limit 1
-node .codex/skills/infoq-admin-e2e-captcha-verification/scripts/run_admin_e2e.mjs --client react --route-limit 1
+node .codex/skills/infoq-admin-e2e/scripts/run_admin_e2e.mjs --client vue --route-limit 1
+node .codex/skills/infoq-admin-e2e/scripts/run_admin_e2e.mjs --client react --route-limit 1
 ```
+
+`run_admin_e2e.mjs` 默认会在完成、失败或中断后停止本次 skill 启动的后端和管理端 dev server；只有成功且需要保留联调栈时才显式传 `--keep-stack-after`，失败或中断仍会关闭 owned 进程。运行态状态文件按 client 保存在 `doc/tmp/infoq-admin-e2e/stack/<vue|react>/state.json`。
 
 如果要先生成 React/Vue 管理端 Web 自动化测试矩阵：
 
 ```bash
-node .codex/skills/infoq-admin-web-test-case-generator/scripts/generate-case-matrix.mjs
-node .codex/skills/infoq-admin-web-test-case-generator/scripts/validate-case-matrix.mjs doc/test/frontend-web-automation/case-matrix.json
+node .codex/skills/infoq-admin-e2e/scripts/generate-case-matrix.mjs
+node .codex/skills/infoq-admin-e2e/scripts/validate-case-matrix.mjs doc/test/frontend-web-automation/case-matrix.json
 ```
 
 停止对应 skill 启动的联调进程：
 
 ```bash
-node .codex/skills/infoq-vue-runtime-verification/scripts/stop_admin_dev_stack.mjs
-node .codex/skills/infoq-react-runtime-verification/scripts/stop_admin_dev_stack.mjs
+node .codex/skills/infoq-frontend-verify/scripts/stop_admin_dev_stack.mjs --client vue
+node .codex/skills/infoq-frontend-verify/scripts/stop_admin_dev_stack.mjs --client react
 ```
+
+`start_admin_dev_stack.mjs` 的状态文件保存在 `doc/tmp/infoq-frontend-verify/<vue|react>/state.json`，记录 pid、port、log 和 `running/stopped/failed/interrupted` 等状态。验证完成、失败或中断后按状态文件执行 stop，只关闭 skill 自己启动或记录为 owned 的进程。
 
 ### 3. 小程序端
 
@@ -386,17 +391,17 @@ bash script/bin/deploy-frontend.sh deploy
 若要直接执行最小浏览器探测，可使用：
 
 ```bash
-pnpm --dir .codex/skills/infoq-browser-automation/scripts install
-pnpm --dir .codex/skills/infoq-browser-automation/scripts run playwright-cli flow --url "https://example.com" --wait-for-text "Example Domain"
+pnpm --dir .codex/skills/infoq-browser-automate/scripts install
+pnpm --dir .codex/skills/infoq-browser-automate/scripts run playwright-cli flow --url "https://example.com" --wait-for-text "Example Domain"
 ```
 
-首次运行缺少浏览器二进制时，先执行 `pnpm --dir .codex/skills/infoq-browser-automation/scripts exec playwright install chromium`。
+首次运行缺少浏览器二进制时，先执行 `pnpm --dir .codex/skills/infoq-browser-automate/scripts exec playwright install chromium`。
 浏览器 skill 不再维护 `.sh` / `.ps1` 包装器，统一直接调用仓库内 CLI；仓库内临时文件统一写入 `doc/tmp/`。
 
 ## 项目能力概览
 
 - AI 协作治理：根级 / 工作区级 `AGENTS.md` 与 `.codex/skills`
-- 研发自动化：后端冒烟、登录校验、浏览器验证、小程序 DevTools 打开、版本升级（含文档站同步）
+- 研发自动化：后端冒烟、登录校验、浏览器验证、小程序 DevTools 打开、版本升级（含 manifest 与文档站同步）
 - 后端业务基线：认证授权、组织权限、字典参数、通知客户端、OSS、日志监控、服务监控与 Hikari 连接池监控
 - 多前端交付：Vue/React 管理端 + Vue/React 小程序端
 - 插件化扩展：encrypt、mail、sse、websocket、doc、translation、sensitive、excel、log 等能力模块

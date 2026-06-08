@@ -1,0 +1,4 @@
+interface:
+  display_name: "InfoQ 组件参考"
+  short_description: "核验 React Ant Design 与 Vue Element Plus 组件 API"
+  default_prompt: "使用 $infoq-component-reference 为 React Ant Design 或 Vue Element Plus 页面选择组件、核对官方 API 和版本兼容性。"

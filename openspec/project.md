@@ -33,7 +33,7 @@
 - 活跃变更规划放在 `openspec/changes/<change-id>/`
 - 当前稳定真值规范放在 `openspec/specs/`
 - 执行期间以 `proposal.md`、`tasks.md` 与相关规范增量作为真值
-- active change 在实现前和交付前都必须通过 `node .codex/skills/infoq-openspec-delivery/scripts/openspec_check.mjs <change-id>` 结构校验
+- active change 在实现前和交付前都必须通过 `node .codex/skills/infoq-delivery-workflow/scripts/openspec_check.mjs <change-id>` 结构校验
 - `tasks.md` 默认显式评估 `infoq-scaffold-backend`、`infoq-scaffold-frontend-react`、`infoq-scaffold-frontend-vue`、`infoq-scaffold-frontend-weapp-react`、`infoq-scaffold-frontend-weapp-vue`、`infoq-scaffold-docs`、`script / deploy`
 - 每个变更只维护一个验收约定
 - 验证顺序固定为：主流程验证 -> 目标测试 -> lint/build -> 差异评审
@@ -47,6 +47,6 @@
 - OpenSpec 相关临时验证输出不得放在 `openspec/` 下规避提交；一次性产物统一放在 `doc/tmp/`
 - 前端命令优先使用 `pnpm`
 - 后端构建与测试使用 `mvn`
-- L3/L2 交付优先使用 `infoq-openspec-delivery` 做 OpenSpec 文档产物编排；其当前主入口是 `init_change_dir.mjs` 与 `openspec_check.mjs`
+- L3/L2 交付优先使用 `infoq-delivery-workflow` 做 OpenSpec 文档产物编排；其当前主入口是 `init_change_dir.mjs` 与 `openspec_check.mjs`
 - 对重复验证流程优先复用仓库技能
 - 仅当用户明确要求子代理或多专家执行时才使用子代理

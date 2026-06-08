@@ -1,4 +1,0 @@
-interface:
-  display_name: "InfoQ React 运行态验证"
-  short_description: "验证 React admin、Docker 部署入口和 weapp 的运行态行为"
-  default_prompt: "使用 $infoq-react-runtime-verification 验证本仓库 React admin、Docker 部署入口或 weapp 的运行态行为。"

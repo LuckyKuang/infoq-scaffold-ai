@@ -1,4 +1,0 @@
-interface:
-  display_name: "InfoQ React 单测模式"
-  short_description: "补充或扩展 React 家族 admin / weapp 测试"
-  default_prompt: "使用 $infoq-react-unit-test-patterns 为本仓库的 admin 或 weapp React 代码补充、扩展单元测试。"

@@ -2,8 +2,8 @@
   "name": "InfoQ Weapp Vue",
   "appid": "wxxxxxxxxxxxxxxxxx",
   "description": "InfoQ Vue mobile scaffold",
-  "versionName": "2.1.0",
-  "versionCode": "210",
+  "versionName": "2.1.5",
+  "versionCode": "215",
   "transformPx": false,
   "uniStatistics": {
     "enable": false

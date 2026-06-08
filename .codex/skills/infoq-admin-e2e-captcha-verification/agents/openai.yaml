@@ -1,4 +1,0 @@
-interface:
-  display_name: "InfoQ 真实验证码 E2E"
-  short_description: "用 ddddocr 完成真实验证码登录和管理端路由 smoke"
-  default_prompt: "使用 $infoq-admin-e2e-captcha-verification 启动或复用本仓库管理端，通过真实验证码登录并执行动态路由 E2E smoke。"
