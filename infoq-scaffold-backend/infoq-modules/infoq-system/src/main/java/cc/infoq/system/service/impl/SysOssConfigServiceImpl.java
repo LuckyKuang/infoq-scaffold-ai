@@ -129,11 +129,7 @@ public class SysOssConfigServiceImpl implements SysOssConfigService {
                 throw new ServiceException("系统内置, 不可删除!");
             }
         }
-        List<SysOssConfig> list = CollUtil.newArrayList();
-        for (Long configId : ids) {
-            SysOssConfig config = sysOssConfigMapper.selectById(configId);
-            list.add(config);
-        }
+        List<SysOssConfig> list = sysOssConfigMapper.selectByIds(ids);
         boolean flag = sysOssConfigMapper.deleteByIds(ids) > 0;
         if (flag) {
             list.forEach(sysOssConfig ->

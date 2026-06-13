@@ -1,12 +1,13 @@
 package cc.infoq.system.service.impl;
 
 import cc.infoq.common.exception.ServiceException;
-import cc.infoq.common.utils.MapstructUtils;
-import cc.infoq.common.utils.SpringUtils;
 import cc.infoq.common.mybatis.core.page.PageQuery;
 import cc.infoq.common.mybatis.core.page.TableDataInfo;
+import cc.infoq.common.utils.MapstructUtils;
+import cc.infoq.common.utils.SpringUtils;
 import cc.infoq.system.domain.bo.SysPostBo;
 import cc.infoq.system.domain.entity.SysPost;
+import cc.infoq.system.domain.entity.SysUserPost;
 import cc.infoq.system.domain.vo.SysPostVo;
 import cc.infoq.system.mapper.SysDeptMapper;
 import cc.infoq.system.mapper.SysPostMapper;
@@ -29,15 +30,9 @@ import org.springframework.context.support.GenericApplicationContext;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.mockStatic;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @Tag("dev")
@@ -69,7 +64,9 @@ class SysPostServiceImplTest {
         post.setPostId(1L);
         post.setPostName("审计岗");
         when(sysPostMapper.selectByIds(List.of(1L))).thenReturn(List.of(post));
-        when(sysUserPostMapper.selectCount(any())).thenReturn(1L);
+        SysUserPost userPost = new SysUserPost();
+        userPost.setPostId(1L);
+        when(sysUserPostMapper.selectList(any())).thenReturn(List.of(userPost));
 
         assertThrows(ServiceException.class, () -> service.deletePostByIds(List.of(1L)));
     }
@@ -205,7 +202,7 @@ class SysPostServiceImplTest {
         post.setPostId(7L);
         post.setPostName("测试岗");
         when(sysPostMapper.selectByIds(List.of(7L))).thenReturn(List.of(post));
-        when(sysUserPostMapper.selectCount(any())).thenReturn(0L);
+        when(sysUserPostMapper.selectList(any())).thenReturn(List.of());
         when(sysPostMapper.deleteByIds(List.of(7L))).thenReturn(1);
 
         int rows = service.deletePostByIds(List.of(7L));

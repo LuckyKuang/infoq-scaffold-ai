@@ -36,18 +36,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.mockStatic;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @Tag("dev")
@@ -320,11 +311,12 @@ class SysDictTypeServiceImplTest {
         typeB.setDictType("sys_b");
         typeB.setDictName("B");
         when(sysDictTypeMapper.selectByIds(List.of(1L, 2L))).thenReturn(List.of(typeA, typeB));
-        when(sysDictDataMapper.exists(any())).thenReturn(false);
+        when(sysDictDataMapper.selectList(any())).thenReturn(List.of());
 
         try (MockedStatic<CacheUtils> cacheUtils = mockStatic(CacheUtils.class)) {
             service.deleteDictTypeByIds(List.of(1L, 2L));
 
+            verify(sysDictDataMapper).selectList(any());
             verify(sysDictTypeMapper).deleteByIds(List.of(1L, 2L));
             cacheUtils.verify(() -> CacheUtils.evict(CacheNames.SYS_DICT, "sys_a"));
             cacheUtils.verify(() -> CacheUtils.evict(CacheNames.SYS_DICT_TYPE, "sys_a"));
@@ -341,7 +333,9 @@ class SysDictTypeServiceImplTest {
         typeA.setDictType("sys_a");
         typeA.setDictName("类型A");
         when(sysDictTypeMapper.selectByIds(List.of(1L))).thenReturn(List.of(typeA));
-        when(sysDictDataMapper.exists(any())).thenReturn(true);
+        SysDictData data = new SysDictData();
+        data.setDictType("sys_a");
+        when(sysDictDataMapper.selectList(any())).thenReturn(List.of(data));
 
         assertThrows(ServiceException.class, () -> service.deleteDictTypeByIds(List.of(1L)));
     }

@@ -5,15 +5,17 @@ import cc.infoq.common.domain.dto.UserOnlineDTO;
 import cc.infoq.common.domain.model.LoginUser;
 import cc.infoq.common.redis.utils.RedisUtils;
 import cc.infoq.common.utils.SpringUtils;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
-import org.mockito.MockedStatic;
+import org.junit.jupiter.api.*;
+import org.redisson.api.RBucket;
+import org.redisson.api.RBuckets;
 import org.redisson.api.RSet;
 import org.redisson.api.RedissonClient;
 import org.springframework.context.support.GenericApplicationContext;
 
+import java.lang.reflect.Field;
 import java.time.Duration;
+import java.util.Map;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -22,6 +24,38 @@ import static org.mockito.Mockito.*;
 
 @Tag("dev")
 class SecurityTokenStoreTest {
+
+    private static RedissonClient redissonClient;
+    private static RBucket<Object> bucket;
+    private static RBuckets buckets;
+    private static RSet<String> set;
+
+    @BeforeAll
+    @SuppressWarnings("unchecked")
+    static void initSpringContext() throws Exception {
+        RedissonClient contextClient = mock(RedissonClient.class);
+        GenericApplicationContext context = new GenericApplicationContext();
+        context.registerBean(RedissonClient.class, () -> contextClient);
+        context.refresh();
+        new SpringUtils().setApplicationContext(context);
+
+        Field clientField = RedisUtils.class.getDeclaredField("CLIENT");
+        clientField.setAccessible(true);
+        redissonClient = (RedissonClient) clientField.get(null);
+
+        bucket = mock(RBucket.class);
+        buckets = mock(RBuckets.class);
+        set = mock(RSet.class);
+        when(redissonClient.getBucket(anyString())).thenAnswer(invocation -> bucket);
+        when(redissonClient.getBuckets()).thenReturn(buckets);
+        when(redissonClient.<String>getSet(anyString())).thenAnswer(invocation -> set);
+        when(set.expire(any(Duration.class))).thenReturn(true);
+    }
+
+    @BeforeEach
+    void clearInteractions() {
+        clearInvocations(redissonClient, bucket, buckets, set);
+    }
 
     @Test
     @DisplayName("digest/key: should use sha256 digest as internal redis key")
@@ -43,36 +77,43 @@ class SecurityTokenStoreTest {
 
     @Test
     @DisplayName("save: should write session by digest and legacy online key by clear token")
-    @SuppressWarnings("unchecked")
     void saveShouldWriteSessionByDigestAndLegacyOnlineKeyByClearToken() {
-        GenericApplicationContext context = new GenericApplicationContext();
-        RedissonClient redissonClient = mock(RedissonClient.class);
-        RSet<String> set = mock(RSet.class);
-        when(redissonClient.<String>getSet(anyString())).thenReturn(set);
-        when(set.expire(any(Duration.class))).thenReturn(true);
-        context.registerBean(RedissonClient.class, () -> redissonClient);
-        context.refresh();
-        new SpringUtils().setApplicationContext(context);
-
         SecurityTokenStore store = new SecurityTokenStore();
         SecurityTokenSession session = session("digest-1");
 
-        try (MockedStatic<RedisUtils> redisUtils = mockStatic(RedisUtils.class)) {
-            redisUtils.when(RedisUtils::getClient).thenReturn(redissonClient);
+        store.save("clear-access-token", session);
 
-            store.save("clear-access-token", session);
+        verify(redissonClient).getBucket(store.sessionKey("digest-1"));
+        verify(redissonClient).getBucket(CacheConstants.ONLINE_TOKEN_KEY + "clear-access-token");
+        verify(bucket).set(eq(session), any(Duration.class));
+        verify(bucket).set(argThat(value ->
+            value instanceof UserOnlineDTO dto && "clear-access-token".equals(dto.getTokenId())
+        ), any(Duration.class));
+        verify(redissonClient, times(2)).getSet(store.loginIndexKey("sys_user:1"));
+        verify(redissonClient, times(2)).getSet(store.userIndexKey(1L));
+        verify(set, times(2)).add("digest-1");
+        verify(set, times(2)).expire(any(Duration.class));
+    }
 
-            redisUtils.verify(() -> RedisUtils.setCacheObject(eq(store.sessionKey("digest-1")), eq(session), any(Duration.class)));
-            redisUtils.verify(() -> RedisUtils.setCacheObject(
-                eq(CacheConstants.ONLINE_TOKEN_KEY + "clear-access-token"),
-                argThat((UserOnlineDTO dto) -> "clear-access-token".equals(dto.getTokenId())),
-                any(Duration.class)
-            ));
-            redisUtils.verify(() -> RedisUtils.addCacheSet(store.loginIndexKey("sys_user:1"), "digest-1"));
-            redisUtils.verify(() -> RedisUtils.addCacheSet(store.userIndexKey(1L), "digest-1"));
-        } finally {
-            context.close();
-        }
+    @Test
+    @DisplayName("revokeByUserId: should batch load sessions by indexed digests")
+    void revokeByUserIdShouldBatchLoadSessionsByIndexedDigests() {
+        SecurityTokenStore store = new SecurityTokenStore();
+        SecurityTokenSession session = session("digest-1");
+        when(set.readAll()).thenReturn(Set.of("digest-1", "digest-missing"));
+        when(buckets.get(any(String[].class))).thenReturn(Map.of(store.sessionKey("digest-1"), session));
+
+        int count = store.revokeByUserId(1L);
+
+        assertEquals(1, count);
+        verify(redissonClient, times(2)).getSet(store.userIndexKey(1L));
+        verify(set).readAll();
+        verify(buckets).get(any(String[].class));
+        verify(bucket, never()).get();
+        verify(redissonClient).getBucket(store.sessionKey("digest-1"));
+        verify(redissonClient).getBucket(store.sessionKey("digest-missing"));
+        verify(bucket, times(3)).delete();
+        verify(set, times(2)).remove("digest-1");
     }
 
     private SecurityTokenProperties properties() {

@@ -27,6 +27,8 @@ import org.springframework.stereotype.Service;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * 岗位信息 服务层处理
@@ -223,8 +225,18 @@ public class SysPostServiceImpl implements SysPostService, PostService {
     @Override
     public int deletePostByIds(List<Long> postIds) {
         List<SysPost> list = sysPostMapper.selectByIds(postIds);
+        Set<Long> assignedPostIds;
+        if (CollUtil.isNotEmpty(list)) {
+            assignedPostIds = sysUserPostMapper.selectList(new LambdaQueryWrapper<SysUserPost>()
+                    .in(SysUserPost::getPostId, postIds))
+                .stream()
+                .map(SysUserPost::getPostId)
+                .collect(Collectors.toSet());
+        } else {
+            assignedPostIds = Set.of();
+        }
         for (SysPost post : list) {
-            if (this.countUserPostById(post.getPostId()) > 0) {
+            if (assignedPostIds.contains(post.getPostId())) {
                 throw new ServiceException("{}已分配，不能删除!", post.getPostName());
             }
         }

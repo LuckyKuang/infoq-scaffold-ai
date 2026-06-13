@@ -1,15 +1,15 @@
 package cc.infoq.system.service.impl;
 
+import cc.infoq.common.domain.dto.OssDTO;
 import cc.infoq.common.exception.ServiceException;
 import cc.infoq.common.mybatis.core.page.PageQuery;
 import cc.infoq.common.mybatis.core.page.TableDataInfo;
+import cc.infoq.common.oss.core.OssClient;
 import cc.infoq.common.oss.entity.UploadResult;
 import cc.infoq.common.oss.enums.AccessPolicyType;
-import cc.infoq.common.oss.core.OssClient;
 import cc.infoq.common.oss.factory.OssFactory;
 import cc.infoq.common.utils.MapstructUtils;
 import cc.infoq.common.utils.SpringUtils;
-import cc.infoq.common.domain.dto.OssDTO;
 import cc.infoq.system.domain.bo.SysOssBo;
 import cc.infoq.system.domain.entity.SysOss;
 import cc.infoq.system.domain.vo.SysOssVo;
@@ -41,17 +41,10 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.mockStatic;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @Tag("dev")
@@ -142,23 +135,46 @@ class SysOssServiceImplTest {
     @DisplayName("listByIds/selectUrlByIds/selectByIds: should fail explicitly when matching url fails")
     void listAndSelectByIdsShouldFailWhenMatchingUrlFails() {
         SysOssServiceImpl service = new SysOssServiceImpl(sysOssMapper);
-        SysOssServiceImpl proxy = org.mockito.Mockito.spy(service);
 
         SysOssVo vo1 = buildVo(1L, "local", "a.txt", "https://origin/a");
-        when(proxy.getById(1L)).thenReturn(vo1);
+        when(sysOssMapper.selectVoByIds(List.of(1L))).thenReturn(List.of(vo1));
 
         OssClient storage = mock(OssClient.class);
         when(storage.getAccessPolicy()).thenReturn(AccessPolicyType.PRIVATE);
         when(storage.createPresignedGetUrl(any(), any())).thenThrow(new RuntimeException("storage unavailable"));
 
-        try (MockedStatic<SpringUtils> springUtils = mockStatic(SpringUtils.class);
-             MockedStatic<OssFactory> ossFactory = mockStatic(OssFactory.class)) {
-            springUtils.when(() -> SpringUtils.getAopProxy(service)).thenReturn(proxy);
+        try (MockedStatic<OssFactory> ossFactory = mockStatic(OssFactory.class)) {
             ossFactory.when(() -> OssFactory.instance("local")).thenReturn(storage);
 
             assertThrows(ServiceException.class, () -> service.listByIds(List.of(1L)));
             assertThrows(ServiceException.class, () -> service.selectUrlByIds("1"));
             assertThrows(ServiceException.class, () -> service.selectByIds("1"));
+        }
+    }
+
+    @Test
+    @DisplayName("listByIds/selectUrlByIds/selectByIds: should batch load and preserve requested order")
+    void listAndSelectByIdsShouldBatchLoadAndPreserveRequestedOrder() {
+        SysOssServiceImpl service = new SysOssServiceImpl(sysOssMapper);
+        List<Long> ids = List.of(2L, 1L, 2L);
+        SysOssVo vo1 = buildVo(1L, "local", "a.txt", "https://origin/a");
+        SysOssVo vo2 = buildVo(2L, "local", "b.txt", "https://origin/b");
+        when(sysOssMapper.selectVoByIds(ids)).thenReturn(List.of(vo1, vo2));
+
+        OssClient storage = mock(OssClient.class);
+        when(storage.getAccessPolicy()).thenReturn(AccessPolicyType.PUBLIC);
+
+        try (MockedStatic<OssFactory> ossFactory = mockStatic(OssFactory.class)) {
+            ossFactory.when(() -> OssFactory.instance("local")).thenReturn(storage);
+
+            List<SysOssVo> rows = service.listByIds(ids);
+            String urls = service.selectUrlByIds("2,1,2");
+            List<OssDTO> dtoList = service.selectByIds("2,1,2");
+
+            assertEquals(List.of(2L, 1L, 2L), rows.stream().map(SysOssVo::getOssId).toList());
+            assertEquals("https://origin/b,https://origin/a,https://origin/b", urls);
+            assertEquals(List.of("https://origin/b", "https://origin/a", "https://origin/b"),
+                dtoList.stream().map(OssDTO::getUrl).toList());
         }
     }
 

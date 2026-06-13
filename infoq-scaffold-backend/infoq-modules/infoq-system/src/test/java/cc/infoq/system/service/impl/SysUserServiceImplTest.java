@@ -236,20 +236,25 @@ class SysUserServiceImplTest {
     }
 
     @Test
-    @DisplayName("selectNicknameByIds: should query nickname via aop proxy and skip blanks")
-    void selectNicknameByIdsShouldQueryViaAopProxyAndSkipBlanks() {
+    @DisplayName("selectNicknameByIds: should batch query nicknames and keep requested order")
+    void selectNicknameByIdsShouldBatchQueryNicknamesAndKeepRequestedOrder() {
         SysUserServiceImpl service = spy(newService());
-        doReturn("Alice").when(service).selectNicknameById(1L);
-        doReturn("").when(service).selectNicknameById(2L);
-        doReturn("Bob").when(service).selectNicknameById(3L);
+        SysUser userA = new SysUser();
+        userA.setUserId(1L);
+        userA.setNickName("Alice");
+        SysUser userB = new SysUser();
+        userB.setUserId(2L);
+        userB.setNickName("");
+        SysUser userC = new SysUser();
+        userC.setUserId(3L);
+        userC.setNickName("Bob");
+        when(sysUserMapper.selectList(any())).thenReturn(List.of(userC, userB, userA));
 
-        try (MockedStatic<SpringUtils> springUtils = mockStatic(SpringUtils.class)) {
-            springUtils.when(() -> SpringUtils.getAopProxy(service)).thenReturn(service);
+        String result = service.selectNicknameByIds("1,2,3");
 
-            String result = service.selectNicknameByIds("1,2,3");
-
-            assertEquals("Alice,Bob", result);
-        }
+        assertEquals("Alice,Bob", result);
+        verify(sysUserMapper).selectList(any());
+        verify(service, never()).selectNicknameById(anyLong());
     }
 
     @Test
@@ -586,7 +591,7 @@ class SysUserServiceImplTest {
     @DisplayName("deleteUserByIds: should throw when current operator has no data scope")
     void deleteUserByIdsShouldThrowWhenNoDataScope() {
         SysUserServiceImpl service = newService();
-        when(sysUserMapper.countUserById(2L)).thenReturn(0L);
+        when(sysUserMapper.selectUserList(any())).thenReturn(List.of());
 
         ServiceException ex;
         try (MockedStatic<LoginUserContext> loginHelper = mockStatic(LoginUserContext.class)) {
@@ -602,7 +607,10 @@ class SysUserServiceImplTest {
     @DisplayName("deleteUserByIds: should throw when delete count is zero")
     void deleteUserByIdsShouldThrowWhenDeleteCountZero() {
         SysUserServiceImpl service = newService();
-        when(sysUserMapper.countUserById(anyLong())).thenReturn(1L);
+        when(sysUserMapper.selectUserList(any())).thenReturn(List.of(
+            userVo(2L, "u2", "用户2"),
+            userVo(3L, "u3", "用户3")
+        ));
         when(sysUserMapper.deleteByIds(any())).thenReturn(0);
 
         ServiceException ex;
@@ -618,7 +626,10 @@ class SysUserServiceImplTest {
     @DisplayName("deleteUserByIds: should delete role/post relations then user records")
     void deleteUserByIdsShouldDeleteRelationsThenUsers() {
         SysUserServiceImpl service = newService();
-        when(sysUserMapper.countUserById(anyLong())).thenReturn(1L);
+        when(sysUserMapper.selectUserList(any())).thenReturn(List.of(
+            userVo(2L, "u2", "用户2"),
+            userVo(3L, "u3", "用户3")
+        ));
         when(sysUserMapper.deleteByIds(any())).thenReturn(2);
 
         int rows;

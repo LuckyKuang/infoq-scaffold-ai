@@ -36,6 +36,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 角色 业务层处理
@@ -427,9 +428,19 @@ public class SysRoleServiceImpl implements SysRoleService, RoleService {
     public int deleteRoleByIds(List<Long> roleIds) {
         this.checkRoleDataScope(roleIds);
         List<SysRole> roles = sysRoleMapper.selectByIds(roleIds);
+        Set<Long> assignedRoleIds;
+        if (CollUtil.isNotEmpty(roles)) {
+            assignedRoleIds = sysUserRoleMapper.selectList(new LambdaQueryWrapper<SysUserRole>()
+                    .in(SysUserRole::getRoleId, roleIds))
+                .stream()
+                .map(SysUserRole::getRoleId)
+                .collect(Collectors.toSet());
+        } else {
+            assignedRoleIds = Set.of();
+        }
         for (SysRole role : roles) {
             checkRoleAllowed(BeanUtil.toBean(role, SysRoleBo.class));
-            if (countUserRoleByRoleId(role.getRoleId()) > 0) {
+            if (assignedRoleIds.contains(role.getRoleId())) {
                 throw new ServiceException(String.format("%1$s已分配，不能删除!", role.getRoleName()));
             }
         }

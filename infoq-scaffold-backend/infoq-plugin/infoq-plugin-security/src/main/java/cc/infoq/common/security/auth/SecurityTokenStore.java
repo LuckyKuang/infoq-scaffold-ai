@@ -9,10 +9,7 @@ import cc.infoq.common.utils.StringUtils;
 import org.redisson.api.RSet;
 
 import java.time.Duration;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 public class SecurityTokenStore {
 
@@ -51,6 +48,10 @@ public class SecurityTokenStore {
 
     public boolean revoke(String accessToken, String tokenDigest) {
         SecurityTokenSession session = RedisUtils.getCacheObject(sessionKey(tokenDigest));
+        return revokeLoadedSession(accessToken, tokenDigest, session);
+    }
+
+    private boolean revokeLoadedSession(String accessToken, String tokenDigest, SecurityTokenSession session) {
         markRevoked(tokenDigest, sessionTtl(session));
         RedisUtils.deleteObject(sessionKey(tokenDigest));
         if (StringUtils.isNotBlank(accessToken)) {
@@ -213,11 +214,16 @@ public class SecurityTokenStore {
     }
 
     private int revokeDigests(Collection<String> digests) {
+        if (digests.isEmpty()) {
+            return 0;
+        }
+        String[] sessionKeys = digests.stream().map(this::sessionKey).toArray(String[]::new);
+        Map<String, SecurityTokenSession> sessionsByKey = RedisUtils.getClient().getBuckets().get(sessionKeys);
         int count = 0;
         for (String digest : digests) {
-            SecurityTokenSession session = RedisUtils.getCacheObject(sessionKey(digest));
+            SecurityTokenSession session = sessionsByKey.get(sessionKey(digest));
             String accessToken = session == null ? null : session.getAccessToken();
-            if (revoke(accessToken, digest)) {
+            if (revokeLoadedSession(accessToken, digest, session)) {
                 count++;
             }
         }

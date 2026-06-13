@@ -2,11 +2,11 @@ package cc.infoq.system.service.impl;
 
 import cc.infoq.common.exception.ServiceException;
 import cc.infoq.common.json.utils.JsonUtils;
+import cc.infoq.common.oss.constant.OssConstant;
 import cc.infoq.common.redis.utils.CacheUtils;
 import cc.infoq.common.redis.utils.RedisUtils;
-import cc.infoq.common.utils.SpringUtils;
 import cc.infoq.common.utils.MapstructUtils;
-import cc.infoq.common.oss.constant.OssConstant;
+import cc.infoq.common.utils.SpringUtils;
 import cc.infoq.system.domain.bo.SysOssConfigBo;
 import cc.infoq.system.domain.entity.SysOssConfig;
 import cc.infoq.system.domain.vo.SysOssConfigVo;
@@ -23,27 +23,20 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.MockedStatic;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.redisson.api.RBucket;
+import org.redisson.api.RedissonClient;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.context.support.GenericApplicationContext;
-import org.redisson.api.RBucket;
-import org.redisson.api.RedissonClient;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.eq;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @Tag("dev")
@@ -122,7 +115,7 @@ class SysOssConfigServiceImplTest {
         SysOssConfig config = new SysOssConfig();
         config.setOssConfigId(9L);
         config.setConfigKey("custom");
-        when(sysOssConfigMapper.selectById(9L)).thenReturn(config);
+        when(sysOssConfigMapper.selectByIds(List.of(9L))).thenReturn(List.of(config));
         when(sysOssConfigMapper.deleteByIds(List.of(9L))).thenReturn(0);
 
         Boolean result = service.deleteWithValidByIds(List.of(9L), false);
@@ -139,8 +132,7 @@ class SysOssConfigServiceImplTest {
         SysOssConfig config2 = new SysOssConfig();
         config2.setOssConfigId(10L);
         config2.setConfigKey("custom-2");
-        when(sysOssConfigMapper.selectById(9L)).thenReturn(config1);
-        when(sysOssConfigMapper.selectById(10L)).thenReturn(config2);
+        when(sysOssConfigMapper.selectByIds(List.of(9L, 10L))).thenReturn(List.of(config1, config2));
         when(sysOssConfigMapper.deleteByIds(List.of(9L, 10L))).thenReturn(2);
 
         try (MockedStatic<CacheUtils> cacheUtils = org.mockito.Mockito.mockStatic(CacheUtils.class)) {
