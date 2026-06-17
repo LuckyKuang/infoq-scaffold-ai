@@ -1,0 +1,21 @@
+export default {
+  'pages.layouts.userLayout.title': 'infoq-scaffold অ্যাডমিন',
+  'pages.login.accountLogin.tab': 'অ্যাকাউন্ট লগইন',
+  'pages.login.accountLogin.errorMessage':
+    'ব্যবহারকারীর নাম, পাসওয়ার্ড বা যাচাইকরণ কোড ভুল',
+  'pages.login.failure': 'লগইন ব্যর্থ হয়েছে। আবার চেষ্টা করুন!',
+  'pages.login.success': 'সফল লগইন!',
+  'pages.login.username.placeholder': 'ব্যবহারকারীর নাম',
+  'pages.login.username.required': 'আপনার ব্যবহারকারীর নাম ইনপুট করুন!',
+  'pages.login.password.placeholder': 'পাসওয়ার্ড',
+  'pages.login.password.required': 'আপনার পাসওয়ার্ড ইনপুট করুন!',
+  'pages.login.captcha.placeholder': 'যাচাইকরণ কোড',
+  'pages.login.captcha.required': 'যাচাইকরণ কোড ইনপুট করুন!',
+  'pages.login.rememberMe': 'আমাকে মনে রাখুন',
+  'pages.login.forgotPassword': 'পাসওয়ার্ড ভুলে গেছেন',
+  'pages.login.submit': 'প্রবেশ করুন',
+  'pages.login.loginWith': 'লগইন করুন:',
+  'pages.login.registerAccount': 'অ্যাকাউন্ট নিবন্ধন করুন',
+  'pages.404.subTitle': 'দুঃখিত, আপনি যে পৃষ্ঠাটি দেখতে চান তা বিদ্যমান নেই।',
+  'pages.404.buttonText': 'প্রধান পাতায় ফিরে যান',
+};

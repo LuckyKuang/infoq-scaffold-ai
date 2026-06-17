@@ -1,0 +1,21 @@
+export default {
+  'pages.layouts.userLayout.title': 'infoq-scaffold admin',
+  'pages.login.accountLogin.tab': 'Account Login',
+  'pages.login.accountLogin.errorMessage':
+    'Username, password, or verification code is incorrect',
+  'pages.login.failure': 'Login failed, please try again!',
+  'pages.login.success': 'Login successful!',
+  'pages.login.username.placeholder': 'Username',
+  'pages.login.username.required': 'Please input your username!',
+  'pages.login.password.placeholder': 'Password',
+  'pages.login.password.required': 'Please input your password!',
+  'pages.login.captcha.placeholder': 'Verification code',
+  'pages.login.captcha.required': 'Please input verification code!',
+  'pages.login.rememberMe': 'Remember me',
+  'pages.login.forgotPassword': 'Forgot password',
+  'pages.login.submit': 'Login',
+  'pages.login.loginWith': 'Login with:',
+  'pages.login.registerAccount': 'Register account',
+  'pages.404.subTitle': 'Sorry, the page you visited does not exist.',
+  'pages.404.buttonText': 'Back home',
+};

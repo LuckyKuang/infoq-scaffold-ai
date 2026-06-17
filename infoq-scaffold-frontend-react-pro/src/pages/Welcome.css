@@ -1,0 +1,15 @@
+.welcome-summary {
+  margin-bottom: 16px;
+}
+
+.welcome-summary .ant-typography {
+  max-width: 760px;
+}
+
+.welcome-card-grid {
+  margin-top: 16px;
+}
+
+.welcome-card {
+  min-height: 150px;
+}

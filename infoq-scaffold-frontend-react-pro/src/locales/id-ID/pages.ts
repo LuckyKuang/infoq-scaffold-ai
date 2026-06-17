@@ -1,0 +1,21 @@
+export default {
+  'pages.layouts.userLayout.title': 'Admin infoq-scaffold',
+  'pages.login.accountLogin.tab': 'Login akun',
+  'pages.login.accountLogin.errorMessage':
+    'Nama pengguna, kata sandi, atau kode verifikasi salah',
+  'pages.login.failure': 'Login gagal, silakan coba lagi!',
+  'pages.login.success': 'Login berhasil!',
+  'pages.login.username.placeholder': 'Nama pengguna',
+  'pages.login.username.required': 'Nama pengguna wajib diisi!',
+  'pages.login.password.placeholder': 'Kata sandi',
+  'pages.login.password.required': 'Kata sandi wajib diisi!',
+  'pages.login.captcha.placeholder': 'Kode verifikasi',
+  'pages.login.captcha.required': 'Kode verifikasi wajib diisi!',
+  'pages.login.rememberMe': 'Ingat saya',
+  'pages.login.forgotPassword': 'Lupa kata sandi',
+  'pages.login.submit': 'Masuk',
+  'pages.login.loginWith': 'Masuk dengan:',
+  'pages.login.registerAccount': 'Daftar akun',
+  'pages.404.subTitle': 'Maaf, halaman yang Anda kunjungi tidak ada.',
+  'pages.404.buttonText': 'Kembali ke beranda',
+};

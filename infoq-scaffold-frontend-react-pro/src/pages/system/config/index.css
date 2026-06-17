@@ -1,0 +1,267 @@
+.config-center-page {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.config-hero-content {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.config-title.ant-typography {
+  margin: 0 0 4px;
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 600;
+}
+
+.config-subtitle.ant-typography {
+  font-size: 14px;
+  line-height: 22px;
+}
+
+.config-hero-actions {
+  justify-content: flex-end;
+}
+
+.config-center-layout {
+  display: grid;
+  grid-template-columns: minmax(180px, 240px) minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.config-group-nav {
+  align-self: start;
+}
+
+.config-group-nav .ant-card-body {
+  display: grid;
+  gap: 8px;
+}
+
+.config-group-nav .ant-btn {
+  justify-content: flex-start;
+  text-align: left;
+}
+
+.config-mobile-group {
+  display: none;
+}
+
+.config-group-list {
+  display: grid;
+  gap: 16px;
+}
+
+.config-group-section {
+  display: grid;
+  gap: 10px;
+}
+
+.config-section-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.config-section-heading.ant-typography {
+  font-size: 16px;
+  line-height: 24px;
+}
+
+.config-card-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.config-list-panel {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.config-list-scroll {
+  padding-right: 4px;
+}
+
+.config-list-pagination {
+  flex: 0 0 auto;
+  padding-top: 10px;
+}
+
+.config-list-pagination .pagination-container-react {
+  margin-top: 0;
+}
+
+.config-center-card {
+  border-color: #ebeef5;
+}
+
+.config-setting-row.ant-card .ant-card-body {
+  padding: 14px 16px;
+}
+
+.config-card-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(240px, 420px);
+  gap: 16px 24px;
+  align-items: center;
+}
+
+.config-card-main-editing {
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 460px);
+}
+
+.config-card-copy {
+  min-width: 0;
+}
+
+.config-card-heading {
+  min-width: 0;
+}
+
+.config-card-heading .ant-typography {
+  font-size: 14px;
+  line-height: 22px;
+}
+
+.config-card-key {
+  margin-top: 6px;
+  color: rgba(0, 0, 0, 0.45);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  word-break: break-all;
+}
+
+.config-card-desc {
+  margin-top: 6px;
+  color: rgba(0, 0, 0, 0.62);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.config-card-warning {
+  margin-top: 6px;
+  color: #d46b08;
+  font-size: 13px;
+}
+
+.config-card-control {
+  display: flex;
+  justify-content: flex-end;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.config-card-main-editing .config-card-control {
+  justify-content: flex-end;
+  width: 100%;
+}
+
+.config-edit-row {
+  justify-content: flex-end;
+  width: 100%;
+  max-width: 100%;
+}
+
+.config-edit-row .ant-input,
+.config-edit-row .ant-input-affix-wrapper {
+  flex: 1 1 180px;
+  min-width: 0;
+  max-width: 260px;
+}
+
+.config-edit-row .ant-typography {
+  max-width: 100%;
+  word-break: break-all;
+}
+
+.config-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(5, 5, 5, 0.06);
+}
+
+.config-card-actions {
+  justify-content: flex-end;
+}
+
+html[data-theme-mode="dark"] .config-center-card.ant-card {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+html[data-theme-mode="dark"] .config-card-key {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+html[data-theme-mode="dark"] .config-card-desc {
+  color: rgba(255, 255, 255, 0.68);
+}
+
+html[data-theme-mode="dark"] .config-card-warning {
+  color: #faad14;
+}
+
+html[data-theme-mode="dark"] .config-card-footer {
+  border-top-color: rgba(255, 255, 255, 0.08);
+}
+
+@media (max-width: 900px) {
+  .config-center-layout {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .config-group-nav {
+    display: none;
+  }
+
+  .config-mobile-group {
+    display: block;
+    margin-bottom: 12px;
+    flex: 0 0 auto;
+  }
+
+  .config-hero-actions {
+    justify-content: flex-start;
+  }
+
+  .config-card-main {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .config-card-control,
+  .config-card-main-editing .config-card-control {
+    justify-content: flex-start;
+  }
+
+  .config-edit-row {
+    justify-content: flex-start;
+  }
+
+  .config-edit-row .ant-input,
+  .config-edit-row .ant-input-affix-wrapper {
+    max-width: 100%;
+  }
+
+  .config-card-actions {
+    justify-content: flex-start;
+  }
+
+  .config-card-footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

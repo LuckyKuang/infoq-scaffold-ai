@@ -1,0 +1,21 @@
+export default {
+  'pages.layouts.userLayout.title': 'infoq-scaffold 管理画面',
+  'pages.login.accountLogin.tab': 'アカウントログイン',
+  'pages.login.accountLogin.errorMessage':
+    'ユーザー名、パスワード、または確認コードが正しくありません',
+  'pages.login.failure': 'ログインに失敗しました。もう一度お試しください。',
+  'pages.login.success': 'ログインしました',
+  'pages.login.username.placeholder': 'ユーザー名',
+  'pages.login.username.required': 'ユーザー名を入力してください！',
+  'pages.login.password.placeholder': 'パスワード',
+  'pages.login.password.required': 'パスワードを入力してください！',
+  'pages.login.captcha.placeholder': '確認コード',
+  'pages.login.captcha.required': '確認コードを入力してください！',
+  'pages.login.rememberMe': 'ログイン状態を保持',
+  'pages.login.forgotPassword': 'パスワードをお忘れですか',
+  'pages.login.submit': 'ログイン',
+  'pages.login.loginWith': '他のログイン方法：',
+  'pages.login.registerAccount': 'アカウント登録',
+  'pages.404.subTitle': '申し訳ありません。アクセスしたページは存在しません。',
+  'pages.404.buttonText': 'ホームへ戻る',
+};
