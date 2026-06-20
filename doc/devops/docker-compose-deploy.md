@@ -37,6 +37,7 @@ export INFOQ_DEPLOY_ROOT="$(pwd)/doc/tmp/infoq-deploy"
 /infoq/nginx/log
 /infoq/vue/logs
 /infoq/react/logs
+/infoq/react-pro/logs
 ```
 
 其中 `${INFOQ_DEPLOY_ROOT:-/infoq}/server/config/application-prod.yml` 会在首次执行 `bash script/bin/infoq.sh prepare` 时自动生成一份 Docker Compose 默认模板。
@@ -86,7 +87,7 @@ bash script/bin/deploy-frontend.sh prepare
 bash script/bin/deploy-frontend.sh deploy
 ```
 
-`deploy` 会先同步 `${INFOQ_DEPLOY_ROOT:-/infoq}/nginx/conf/nginx.conf`，再顺序构建 Vue / React 前端镜像，最后启动两个前端容器与 `nginx-web`。本机 Docker 验证时不要直接用 `docker compose up --build infoq-frontend-vue infoq-frontend-react` 并行构建替代脚本。
+`deploy` 会先同步 `${INFOQ_DEPLOY_ROOT:-/infoq}/nginx/conf/nginx.conf`，再顺序构建 Vue / React / React Pro 前端镜像，最后启动三个前端容器与 `nginx-web`。本机 Docker 验证时不要直接用 `docker compose up --build infoq-frontend-vue infoq-frontend-react infoq-frontend-react-pro` 并行构建替代脚本。
 
 常用命令：
 
@@ -101,13 +102,16 @@ bash script/bin/deploy-frontend.sh stop
 
 - 网关入口：`http://host/vue/`
 - 网关入口：`http://host/react/`
+- 网关入口：`http://host/react-pro/`
 - Vue 直连端口：`9091`
 - React 直连端口：`9092`
+- React Pro 直连端口：`9093`
 
 前端日志目录：
 
 - Vue：`/infoq/vue/logs`
 - React：`/infoq/react/logs`
+- React Pro：`/infoq/react-pro/logs`
 - 网关 Nginx：`/infoq/nginx/log`
 
 ## 4. 日常启动步骤
@@ -121,7 +125,7 @@ export SECURITY_TOKEN_SECRET=replace-with-at-least-32-chars-secret
 # 先启动后端依赖与 infoq-admin
 bash script/bin/infoq.sh start
 
-# 再启动 Vue / React / nginx-web
+# 再启动 Vue / React / React Pro / nginx-web
 bash script/bin/deploy-frontend.sh start
 ```
 
@@ -129,6 +133,7 @@ bash script/bin/deploy-frontend.sh start
 
 - `http://host/vue/`
 - `http://host/react/`
+- `http://host/react-pro/`
 - `http://host/prod-api/`
 
 说明：
@@ -143,7 +148,7 @@ bash script/bin/deploy-frontend.sh start
 ```bash
 export INFOQ_DEPLOY_ROOT="$(pwd)/doc/tmp/infoq-deploy"
 
-# 先停止 Vue / React / nginx-web
+# 先停止 Vue / React / React Pro / nginx-web
 bash script/bin/deploy-frontend.sh stop
 
 # 再停止 infoq-admin / mysql / redis / minio

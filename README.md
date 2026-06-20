@@ -4,7 +4,7 @@
 
 # InfoQ-Scaffold-AI
 
-> 一个以 AI 为主力研发者的全栈工程脚手架。仓库通过 `AGENTS.md` 约束协作规则，通过 `.codex/skills` 固化自动化 SOP，并以 `OpenSpec` 管理长期规格与变更，将能力落到 Spring Boot 3 后端、Vue/React 管理端、Vue/React 小程序端、脚本、SQL、MCP 与文档工作区中。社区：[Linux DO](https://linux.do)
+> 一个以 AI 为主力研发者的全栈工程脚手架。仓库通过 `AGENTS.md` 约束协作规则，通过 `.codex/skills` 固化自动化 SOP，并以 `OpenSpec` 管理长期规格与变更，将能力落到 Spring Boot 3 后端、Vue/React/React Pro 管理端、Vue/React 小程序端、脚本、SQL、MCP 与文档工作区中。社区：[Linux DO](https://linux.do)
 
 ![Version](https://img.shields.io/badge/Version-2.1.5-f66a39)
 ![JDK](https://img.shields.io/badge/JDK-17-1677FF)
@@ -28,6 +28,7 @@
 - Spring Boot 3.5 多模块后端
 - Vue 3 + Element Plus 管理端
 - React 19 + Ant Design 管理端
+- React 19 + Ant Design Pro 管理端
 - uni-app + Vue 3 小程序端
 - Taro + React 小程序端
 - 根 `doc/` 正文真值源与 `infoq-scaffold-docs` 文档站展示层
@@ -41,7 +42,7 @@
 本项目面向四类核心场景：
 
 1. **AI-first 工程协作**：通过根级和工作区级 `AGENTS.md`、skills、`OpenSpec`、MCP 让 Codex 先对齐规格、再做修改、最后执行验证。
-2. **双管理端基线**：同时提供 Vue 3 + Element Plus 与 React 19 + Ant Design 两套管理端实现。
+2. **三管理端基线**：同时提供 Vue 3 + Element Plus、React 19 + Ant Design、React 19 + Ant Design Pro 三套管理端实现。
 3. **双小程序端基线**：同时提供 uni-app Vue 与 Taro React 两套小程序实现。
 4. **可运行、可验证、可部署**：本地联调、单元测试、浏览器验证、小程序 DevTools 打开、Docker Compose 部署和版本升级都在同一仓库闭环完成。
 
@@ -60,6 +61,7 @@ infoq-scaffold-ai
 │   └── infoq-plugin
 ├── infoq-scaffold-frontend-vue
 ├── infoq-scaffold-frontend-react
+├── infoq-scaffold-frontend-react-pro
 ├── infoq-scaffold-frontend-weapp-vue
 ├── infoq-scaffold-frontend-weapp-react
 ├── infoq-scaffold-docs
@@ -76,10 +78,11 @@ infoq-scaffold-ai
 | 后端 | Spring Boot `3.5.14`、JDK `17`、MyBatis-Plus `3.5.16`、Sa-Token `1.44.0` |
 | Vue 管理端 | Vue `3.5.35`、TypeScript `6.0.3`、Vite `8.0.16`、Element Plus `2.14.1`、Vue Router `5.1.0`、Vitest `4.1.8` |
 | React 管理端 | React `19.2.7`、TypeScript `6.0.3`、Vite `8.0.16`、Ant Design `6.4.3`、React Router `7.16.0`、Vitest `4.1.8` |
+| React Pro 管理端 | React `19.2.5`、TypeScript `6.0.3`、Umi Max `4.6.57`、Ant Design `6.4.3`、ProComponents `3.1.12-0`、Vitest `4.1.8` |
 | Vue 小程序端 | uni-app 3、Vue 3、TypeScript、Pinia、WeChat Mini Program |
 | React 小程序端 | Taro 4、React 18、TypeScript、Zustand、WeChat Mini Program |
 | 存储与中间件 | MySQL 8、Redis 7、MinIO |
-| 验证与自动化 | Maven、pnpm、浏览器自动化、Chrome DevTools MCP、OpenAI Docs MCP、WeChat DevTools |
+| 验证与自动化 | Maven、pnpm、浏览器自动化、Chrome DevTools MCP、OpenAI Docs skill、WeChat DevTools |
 
 ## AI 协作资产
 
@@ -89,6 +92,7 @@ infoq-scaffold-ai
 - 后端规则：[`infoq-scaffold-backend/AGENTS.md`](./infoq-scaffold-backend/AGENTS.md)
 - Vue 管理端规则：[`infoq-scaffold-frontend-vue/AGENTS.md`](./infoq-scaffold-frontend-vue/AGENTS.md)
 - React 管理端规则：[`infoq-scaffold-frontend-react/AGENTS.md`](./infoq-scaffold-frontend-react/AGENTS.md)
+- React Pro 管理端规则：[`infoq-scaffold-frontend-react-pro/AGENTS.md`](./infoq-scaffold-frontend-react-pro/AGENTS.md)
 - Vue 小程序规则：[`infoq-scaffold-frontend-weapp-vue/AGENTS.md`](./infoq-scaffold-frontend-weapp-vue/AGENTS.md)
 - React 小程序规则：[`infoq-scaffold-frontend-weapp-react/AGENTS.md`](./infoq-scaffold-frontend-weapp-react/AGENTS.md)
 - 文档站规则：[`infoq-scaffold-docs/AGENTS.md`](./infoq-scaffold-docs/AGENTS.md)
@@ -171,13 +175,14 @@ node .codex/skills/infoq-delivery-workflow/scripts/openspec_check.mjs <change-id
 当前默认启用：
 
 - `playwright`
-- `openai-docs`
 - `chrome-devtools`
 
 可选但默认禁用：
 
 - `mysql`（只读；通过 `node .codex/scripts/start_mysql_mcp.mjs` 启动，默认按 `application-local.yml -> application-dev.yml` 顺序读取 backend 配置，并允许用环境变量覆盖；共享文档示例统一使用本地依赖 `127.0.0.1:3306/infoq`）
 - `redis`（只读；通过 `node .codex/scripts/start_redis_mcp.mjs` 启动，默认按 `application-local.yml -> application-dev.yml` 顺序读取 backend 配置，并允许用环境变量覆盖；共享文档示例统一使用本地依赖 `127.0.0.1:6379/0`）
+
+OpenAI / Codex 官方文档查询使用本机或系统级 `openai-docs` skill，不作为项目级 MCP 固定配置。
 
 详见：
 
@@ -231,6 +236,16 @@ cd infoq-scaffold-frontend-react
 pnpm install
 pnpm run dev
 ```
+
+React Pro 管理端：
+
+```bash
+cd infoq-scaffold-frontend-react-pro
+pnpm install
+pnpm run dev
+```
+
+React Pro 默认使用端口 `80`，并在 Umi Max dev server ready 后自动打开浏览器。需要关闭自动打开时，执行 `pnpm run dev -- --no-open`。
 
 如果要通过 skill 启动后端 + 管理端联调：
 
@@ -316,6 +331,16 @@ pnpm run lint
 pnpm run build:prod
 ```
 
+### React Pro 管理端
+
+```bash
+cd infoq-scaffold-frontend-react-pro
+pnpm run test
+pnpm run test:coverage
+pnpm run lint
+pnpm run build
+```
+
 ### React 小程序端
 
 ```bash
@@ -364,9 +389,12 @@ bash script/bin/deploy-frontend.sh deploy
 
 - `infoq-frontend-vue`
 - `infoq-frontend-react`
+- `infoq-frontend-react-pro`
 - `nginx-web`
 
-`deploy-frontend.sh deploy` 会先同步前端网关目录与 `nginx.conf`，再顺序构建 Vue / React 镜像，最后启动两个前端容器与 `nginx-web`，避免本机 Docker 并行构建时的内存峰值。
+`deploy-frontend.sh deploy` 会先同步前端网关目录与 `nginx.conf`，再顺序构建 Vue / React / React Pro 镜像，最后启动三个前端容器与 `nginx-web`，避免本机 Docker 并行构建时的内存峰值。
+
+部署后的网关入口为 `/vue/`、`/react/`、`/react-pro/`；容器直连端口分别为 `9091`、`9092`、`9093`。
 
 详见：
 
@@ -382,6 +410,7 @@ bash script/bin/deploy-frontend.sh deploy
 - 后端改动：主流程验证 + 定向 Maven 测试
 - Vue 管理端：`pnpm run test:unit` + `pnpm run build:prod`
 - React 管理端：`pnpm run test` + `pnpm run build:prod`
+- React Pro 管理端：`pnpm run test` + `pnpm run build`
 - Vue 小程序端：`pnpm run typecheck` + `pnpm run test` + `pnpm run build:weapp:dev`
 - React 小程序端：`pnpm run test` + `pnpm run lint` + `pnpm run build:weapp:dev`
 - 文档站：`cd infoq-scaffold-docs && pnpm run docs:sync && pnpm run docs:check-links && pnpm run build`
@@ -403,7 +432,7 @@ pnpm --dir .codex/skills/infoq-browser-automate/scripts run playwright-cli flow 
 - AI 协作治理：根级 / 工作区级 `AGENTS.md` 与 `.codex/skills`
 - 研发自动化：后端冒烟、登录校验、浏览器验证、小程序 DevTools 打开、版本升级（含 manifest 与文档站同步）
 - 后端业务基线：认证授权、组织权限、字典参数、通知客户端、OSS、日志监控、服务监控与 Hikari 连接池监控
-- 多前端交付：Vue/React 管理端 + Vue/React 小程序端
+- 多前端交付：Vue/React/React Pro 管理端 + Vue/React 小程序端
 - 插件化扩展：encrypt、mail、sse、websocket、doc、translation、sensitive、excel、log 等能力模块
 
 ## 文档导航

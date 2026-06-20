@@ -52,10 +52,12 @@ mkdir /infoq/server/ip2region/
 ```bash
 mkdir /infoq/vue/
 mkdir /infoq/react/
+mkdir /infoq/react-pro/
 
 # 前端日志存放目录
 mkdir /infoq/vue/logs/
 mkdir /infoq/react/logs/
+mkdir /infoq/react-pro/logs/
 ```
 
 赋予权限

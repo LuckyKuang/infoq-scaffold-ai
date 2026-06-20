@@ -18,7 +18,6 @@ outline: [2, 3]
 | Server | 状态 | 传输方式 | 主要用途 |
 | --- | --- | --- | --- |
 | `playwright` | 已启用 | STDIO | 浏览器交互探索与补充验证 |
-| `openai-docs` | 已启用 | HTTP | OpenAI / Codex / API 官方文档查询 |
 | `chrome-devtools` | 已启用 | STDIO | Network / Console / Performance 深度调试 |
 | `mysql` | 可选、默认禁用、只读 | STDIO | 查看本地或测试 MySQL 上下文 |
 | `redis` | 可选、默认禁用、只读 | STDIO | 查看本地或测试 Redis 上下文 |
@@ -66,7 +65,6 @@ outline: [2, 3]
 | Server | 已显式要求审批的工具 | 超时配置 |
 | --- | --- | --- |
 | `playwright` | `browser_navigate`、`browser_click`、`browser_run_code` | `startup_timeout_sec = 20`，`tool_timeout_sec = 120` |
-| `openai-docs` | `search_openai_docs`、`fetch_openai_doc` | `tool_timeout_sec = 120` |
 | `chrome-devtools` | `take_snapshot`、`take_screenshot`、`evaluate_script`、`click` | `startup_timeout_sec = 20`，`tool_timeout_sec = 120` |
 | `mysql` | 只读白名单工具 | `startup_timeout_sec = 20`，`tool_timeout_sec = 120` |
 | `redis` | 只读白名单工具 | `startup_timeout_sec = 20`，`tool_timeout_sec = 120` |
@@ -75,12 +73,12 @@ outline: [2, 3]
 
 - React / Vue 管理端运行态问题：先用 `infoq-browser-automate` 的 CLI-first 路径；需要临时互动时再用 `playwright` MCP。
 - 页面白屏、接口报错、性能或请求细节排查：用 `chrome-devtools`。
-- OpenAI / AGENTS / skills / Codex / MCP 文档问题：优先 `openai-docs`。
+- OpenAI / AGENTS / skills / Codex / MCP 文档问题：优先本机或系统级 `openai-docs` skill，不在项目级 `.codex/config.toml` 声明对应 MCP server。
 - backend 数据或缓存排查：使用 `infoq-data-ops` 做只读探测与门禁；在本地配置完成后再显式启用只读 `mysql` / `redis`。
 
 ## 5. 使用约束
 
 - 不在仓库内保存真实 token、账号或私有本机路径。
 - `mysql` 与 `redis` 只保留只读能力。
-- 默认启用的仓库级 MCP 只有 `playwright`、`openai-docs`、`chrome-devtools`。
+- 默认启用的仓库级 MCP 只有 `playwright`、`chrome-devtools`。
 - 文档与 skill 中出现的 server / tool 名称，必须与 `.codex/config.toml` 保持一致。

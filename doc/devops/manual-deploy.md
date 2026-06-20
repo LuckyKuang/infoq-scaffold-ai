@@ -19,8 +19,8 @@
 
 - MySQL、Redis 作为独立服务运行
 - 后端以 `infoq-admin.jar` 方式运行在 `9090`
-- Vue 与 React 构建为静态资源
-- Nginx 统一提供 `/vue/`、`/react/`、`/prod-api/` 入口
+- Vue、React 与 React Pro 构建为静态资源
+- Nginx 统一提供 `/vue/`、`/react/`、`/react-pro/`、`/prod-api/` 入口
 
 与 Compose 部署相比，变化点只有运行方式；产物、路径语义和访问入口应尽量保持一致。
 
@@ -201,7 +201,7 @@ journalctl -u infoq-admin -n 200 --no-pager
 ```bash
 cd infoq-scaffold-frontend-vue
 pnpm install
-pnpm run build:prod
+VITE_APP_CONTEXT_PATH=/vue/ pnpm run build:prod
 ```
 
 构建产物目录：
@@ -213,20 +213,33 @@ pnpm run build:prod
 ```bash
 cd infoq-scaffold-frontend-react
 pnpm install
-pnpm run build:prod
+VITE_APP_CONTEXT_PATH=/react/ pnpm run build:prod
 ```
 
 构建产物目录：
 
 - `infoq-scaffold-frontend-react/dist/`
 
-### 4.3 准备静态资源目录
+### 4.3 构建 React Pro 管理端
+
+```bash
+cd infoq-scaffold-frontend-react-pro
+pnpm install
+VITE_APP_CONTEXT_PATH=/react-pro/ pnpm run build
+```
+
+构建产物目录：
+
+- `infoq-scaffold-frontend-react-pro/dist/`
+
+### 4.4 准备静态资源目录
 
 推荐目录：
 
 ```bash
 mkdir -p /infoq/nginx/html/vue
 mkdir -p /infoq/nginx/html/react
+mkdir -p /infoq/nginx/html/react-pro
 mkdir -p /infoq/nginx/log
 mkdir -p /infoq/nginx/conf
 ```
@@ -236,9 +249,10 @@ mkdir -p /infoq/nginx/conf
 ```bash
 cp -R infoq-scaffold-frontend-vue/dist/* /infoq/nginx/html/vue/
 cp -R infoq-scaffold-frontend-react/dist/* /infoq/nginx/html/react/
+cp -R infoq-scaffold-frontend-react-pro/dist/* /infoq/nginx/html/react-pro/
 ```
 
-### 4.4 前端生产变量确认
+### 4.5 前端生产变量确认
 
 手动部署前，先确认前端生产变量与网关路径一致：
 
@@ -249,11 +263,13 @@ cp -R infoq-scaffold-frontend-react/dist/* /infoq/nginx/html/react/
 
 - Vue：`/vue/` + `/prod-api`
 - React：`/react/` + `/prod-api`
+- React Pro：`/react-pro/` + `/prod-api`
 
 配置文件参考：
 
 - [infoq-scaffold-frontend-vue/.env.production](../../infoq-scaffold-frontend-vue/.env.production)
 - [infoq-scaffold-frontend-react/.env.production](../../infoq-scaffold-frontend-react/.env.production)
+- [infoq-scaffold-frontend-react-pro/.env.production](../../infoq-scaffold-frontend-react-pro/.env.production)
 
 ## 5. Nginx 网关部署
 
@@ -319,7 +335,7 @@ systemctl reload nginx
 4. 导入初始化 SQL
 5. 按文件名顺序导入所有 `sql/infoq_scaffold_update_*.sql`
 6. 设置 `DEPLOY_ID`、`SECURITY_TOKEN_SECRET` 和必要密钥配置后启动后端 `infoq-admin.jar`
-7. 发布 Vue / React 静态资源
+7. 发布 Vue / React / React Pro 静态资源
 8. 选择 HTTP 或 HTTPS 的 Nginx 配置文件
 9. 启动或重载 Nginx
 
@@ -331,6 +347,7 @@ systemctl reload nginx
 - Nginx 已监听 `80` 或 `443`
 - `http://host/vue/` 可打开
 - `http://host/react/` 可打开
+- `http://host/react-pro/` 可打开
 - `http://host/prod-api/` 已能反代到后端
 - `http://host/prod-api/monitor/health/readiness` 返回 2xx；DB 或 Redis 不可用时该端点必须返回失败
 - 登录、菜单、基础接口可正常访问

@@ -1,5 +1,5 @@
-import { PageContainer } from '@ant-design/pro-components';
-import { Alert, Typography } from 'antd';
+import {PageContainer} from '@ant-design/pro-components';
+import {Alert, Typography} from 'antd';
 
 type RouteNotMigratedProps = {
   componentName?: string;
@@ -15,7 +15,7 @@ export default function RouteNotMigrated({
       <Alert
         type="warning"
         showIcon
-        message="后端菜单已接入，但该业务页面尚未迁移到 Pro 候选项目。"
+        message="后端菜单已接入，但该业务页面尚未在 React Pro 管理端实现。"
         description={
           <Typography.Text code>{componentName || path}</Typography.Text>
         }

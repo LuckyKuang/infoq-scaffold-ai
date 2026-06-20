@@ -137,6 +137,25 @@ services:
     volumes:
       - ${INFOQ_DEPLOY_ROOT:-/infoq}/react/logs/:/var/log/nginx/
 
+  infoq-frontend-react-pro:
+    build:
+      context: ../../infoq-scaffold-frontend-react-pro
+      dockerfile: Dockerfile
+      args:
+        VITE_APP_CONTEXT_PATH: /react-pro/
+        VITE_APP_BASE_API: /prod-api
+        VITE_APP_PORT: 9093
+    image: infoq/infoq-frontend-react-pro:2.1.5
+    container_name: infoq-frontend-react-pro
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Shanghai
+      NGINX_PORT: 9093
+    ports:
+      - "9093:9093"
+    volumes:
+      - ${INFOQ_DEPLOY_ROOT:-/infoq}/react-pro/logs/:/var/log/nginx/
+
   nginx-web:
     image: nginx:1.28.2
     container_name: nginx-web
@@ -154,3 +173,4 @@ services:
       - infoq-admin
       - infoq-frontend-vue
       - infoq-frontend-react
+      - infoq-frontend-react-pro

@@ -58,7 +58,7 @@ repo-level 或高风险治理变更，除 active change 外，还应在 `doc/pla
 
 1. 一次只改一类问题。
 2. 优先最小闭环，不绑无关重构。
-3. `tasks.md` 默认显式评估 backend、React admin、Vue admin、React weapp、Vue weapp、docs、script/deploy。
+3. `tasks.md` 默认显式评估 backend、React admin、React Pro admin、Vue admin、React weapp、Vue weapp、docs、script/deploy。
 4. 任何命令、环境变量、skill 入口、文档站同步链路或 MCP 配置变更，都要同步更新 `README.md` 与 `doc/*.md`。
 
 ### 4.3 修改后
@@ -94,7 +94,7 @@ backend 工作区基线是 JDK 17 与 Maven 3.9.x。
 - SQL、数据库、Redis、数据修复、迁移和一致性核对：`infoq-data-ops`
 - React/Vue admin 与 weapp 单测、构建和运行态：`infoq-frontend-verify`
 - 后端登录、smoke 和单测验证：`infoq-backend-verify`
-- OpenAI / Codex / AGENTS / MCP 问题：`openai-docs`
+- OpenAI / Codex / AGENTS / MCP 问题：`openai-docs`（本机/系统 skill，不作为项目级 MCP 固定配置）
 - 前端深度调试：`chrome-devtools`
 
 说明：

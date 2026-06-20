@@ -8,6 +8,7 @@
 
 - `infoq-scaffold-backend`：Spring Boot 多模块后端
 - `infoq-scaffold-frontend-react`：React 19 + Ant Design 管理端
+- `infoq-scaffold-frontend-react-pro`：React 19 + Ant Design Pro 管理端
 - `infoq-scaffold-frontend-vue`：Vue 3 + Element Plus 管理端
 - `infoq-scaffold-frontend-weapp-vue`：uni-app + Vue 小程序与 H5 移动端
 - `infoq-scaffold-frontend-weapp-react`：Taro + React 小程序与 H5 移动端
@@ -34,7 +35,7 @@
 - 当前稳定真值规范放在 `openspec/specs/`
 - 执行期间以 `proposal.md`、`tasks.md` 与相关规范增量作为真值
 - active change 在实现前和交付前都必须通过 `node .codex/skills/infoq-delivery-workflow/scripts/openspec_check.mjs <change-id>` 结构校验
-- `tasks.md` 默认显式评估 `infoq-scaffold-backend`、`infoq-scaffold-frontend-react`、`infoq-scaffold-frontend-vue`、`infoq-scaffold-frontend-weapp-react`、`infoq-scaffold-frontend-weapp-vue`、`infoq-scaffold-docs`、`script / deploy`
+- `tasks.md` 默认显式评估 `infoq-scaffold-backend`、`infoq-scaffold-frontend-react`、`infoq-scaffold-frontend-react-pro`、`infoq-scaffold-frontend-vue`、`infoq-scaffold-frontend-weapp-react`、`infoq-scaffold-frontend-weapp-vue`、`infoq-scaffold-docs`、`script / deploy`
 - 每个变更只维护一个验收约定
 - 验证顺序固定为：主流程验证 -> 目标测试 -> lint/build -> 差异评审
 - `sql/infoq_scaffold_2.0.0.sql` 是冻结初始化基线，任何变更不得修改该文件；数据库结构、字典、菜单、配置和初始化数据变化必须新增 `sql/infoq_scaffold_update_YYYYMMDD.sql` 增量脚本承载

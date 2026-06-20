@@ -29,5 +29,5 @@
 - `notification/spec.md`：通知公告、实时提醒和管理端 SSE / WebSocket 开关
 - `file-storage/spec.md`：OSS 文件管理、私有对象访问策略和头像上传
 - `plugin-governance/spec.md`：插件分档、软开关策略、硬删除守则与治理护栏
-- `admin-routing/spec.md`：Vue / React 管理端固定路由、动态路由装配与组件映射
+- `admin-routing/spec.md`：Vue / React / React Pro 管理端固定路由、动态路由装配与组件映射
 - `platform-governance/spec.md`：OpenSpec 分级、影响矩阵、校验器要求与语言规范

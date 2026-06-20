@@ -23,11 +23,12 @@ outline: [2, 3]
 
 ## 2. 当前分层方式
 
-本仓库现在是六层入口：
+本仓库现在是七层入口：
 
 - 根规则：`/AGENTS.md`
 - 后端：`infoq-scaffold-backend/AGENTS.md`
 - React 管理端：`infoq-scaffold-frontend-react/AGENTS.md`
+- React Pro 管理端：`infoq-scaffold-frontend-react-pro/AGENTS.md`
 - Vue 管理端：`infoq-scaffold-frontend-vue/AGENTS.md`
 - React 小程序端：`infoq-scaffold-frontend-weapp-react/AGENTS.md`
 - Vue 小程序端：`infoq-scaffold-frontend-weapp-vue/AGENTS.md`

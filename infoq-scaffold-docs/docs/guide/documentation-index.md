@@ -36,7 +36,7 @@ outline: [2, 3]
 ### 架构与开发
 
 - [`backend/handbook.md`](/backend/handbook)：Spring Boot 后端结构、认证链路、插件和配置要点。
-- [`admin/handbook.md`](/admin/handbook)：Vue / React 管理端目录、路由、请求封装、页面扩展方式。
+- [`admin/handbook.md`](/admin/handbook)：Vue / React / React Pro 管理端目录、路由、请求封装、页面扩展方式。
 - [`weapp/handbook.md`](/weapp/handbook)：Vue / React 小程序端环境变量、页面清单、DevTools 和 e2e。
 - [`collaboration/development-workflow.md`](/collaboration/development-workflow)：AGENTS、OpenSpec、skills、MCP、验证顺序和日常开发闭环。
 
@@ -44,6 +44,7 @@ outline: [2, 3]
 
 - `infoq-scaffold-docs`：[`README.md`](https://github.com/luckykuang/infoq-scaffold-ai/blob/main/infoq-scaffold-docs/README.md) -> [`doc/architecture.md`](https://github.com/luckykuang/infoq-scaffold-ai/blob/main/infoq-scaffold-docs/doc/architecture.md) -> [`doc/data-flow.md`](https://github.com/luckykuang/infoq-scaffold-ai/blob/main/infoq-scaffold-docs/doc/data-flow.md)
 - `infoq-scaffold-frontend-react`：[`README.md`](https://github.com/luckykuang/infoq-scaffold-ai/blob/main/infoq-scaffold-frontend-react/README.md) -> [`doc/architecture.md`](https://github.com/luckykuang/infoq-scaffold-ai/blob/main/infoq-scaffold-frontend-react/doc/architecture.md) -> [`doc/data-flow.md`](https://github.com/luckykuang/infoq-scaffold-ai/blob/main/infoq-scaffold-frontend-react/doc/data-flow.md)
+- `infoq-scaffold-frontend-react-pro`：[`README.md`](https://github.com/luckykuang/infoq-scaffold-ai/blob/main/infoq-scaffold-frontend-react-pro/README.md) -> [`README.zh-CN.md`](https://github.com/luckykuang/infoq-scaffold-ai/blob/main/infoq-scaffold-frontend-react-pro/README.zh-CN.md)
 - `infoq-scaffold-frontend-vue`：[`README.md`](https://github.com/luckykuang/infoq-scaffold-ai/blob/main/infoq-scaffold-frontend-vue/README.md) -> [`doc/architecture.md`](https://github.com/luckykuang/infoq-scaffold-ai/blob/main/infoq-scaffold-frontend-vue/doc/architecture.md) -> [`doc/data-flow.md`](https://github.com/luckykuang/infoq-scaffold-ai/blob/main/infoq-scaffold-frontend-vue/doc/data-flow.md)
 - `infoq-scaffold-frontend-weapp-react`：[`README.md`](https://github.com/luckykuang/infoq-scaffold-ai/blob/main/infoq-scaffold-frontend-weapp-react/README.md) -> [`doc/architecture.md`](https://github.com/luckykuang/infoq-scaffold-ai/blob/main/infoq-scaffold-frontend-weapp-react/doc/architecture.md) -> [`doc/data-flow.md`](https://github.com/luckykuang/infoq-scaffold-ai/blob/main/infoq-scaffold-frontend-weapp-react/doc/data-flow.md)
 - `infoq-scaffold-frontend-weapp-vue`：[`README.md`](https://github.com/luckykuang/infoq-scaffold-ai/blob/main/infoq-scaffold-frontend-weapp-vue/README.md) -> [`doc/architecture.md`](https://github.com/luckykuang/infoq-scaffold-ai/blob/main/infoq-scaffold-frontend-weapp-vue/doc/architecture.md) -> [`doc/data-flow.md`](https://github.com/luckykuang/infoq-scaffold-ai/blob/main/infoq-scaffold-frontend-weapp-vue/doc/data-flow.md)
@@ -75,7 +76,7 @@ outline: [2, 3]
 
 - 项目定位、目录结构、技术栈与模块边界。
 - 后端 `dev/local/prod` profile、登录授权、动态菜单、插件开关与调试入口。
-- Vue / React 管理端的路由、请求封装、代理、构建和测试，以及系统监控页面（在线用户、任务调度、缓存、服务监控、Hikari 连接池监控）。
+- Vue / React / React Pro 管理端的路由、请求封装、代理、构建和测试，以及系统监控页面（在线用户、任务调度、缓存、服务监控、Hikari 连接池监控）。
 - Vue / React 小程序端的环境变量、AppID、API 域名、构建打开开发者工具与 e2e。
 - 仓库特有的 AI 协作资产：`AGENTS.md`、`.codex/skills`、`OpenSpec`、`.codex/config.toml`。
 
@@ -93,6 +94,7 @@ outline: [2, 3]
 | `infoq-scaffold-backend` | Spring Boot 3 多模块后端 | `infoq-admin/src/main/java/cc/infoq/admin/SysAdminApplication.java` |
 | `infoq-scaffold-frontend-vue` | Vue 3 + Element Plus 管理端 | `src/main.ts`、`src/router/index.ts` |
 | `infoq-scaffold-frontend-react` | React 19 + Ant Design 管理端 | `src/main.tsx`、`src/router/AppRouter.tsx` |
+| `infoq-scaffold-frontend-react-pro` | React 19 + Ant Design Pro 管理端 | `config/config.ts`、`config/routes.ts`、`src/app.tsx` |
 | `infoq-scaffold-frontend-weapp-vue` | uni-app Vue 小程序端 | `src/pages.json`、`src/api/request.ts` |
 | `infoq-scaffold-frontend-weapp-react` | Taro React 小程序端 | `src/app.config.ts`、`src/api/request.ts` |
 | `openspec` | 规格、变更、设计资产 | `project.md`、`specs/`、`changes/` |

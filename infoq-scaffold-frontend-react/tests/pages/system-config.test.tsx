@@ -138,6 +138,7 @@ const { default: ConfigPage } = await import('@/pages/system/config/index');
 describe('pages/system/config', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    window.scrollTo = vi.fn();
     configPageMocks.getConfigPanel.mockResolvedValue({ data: panelFixture });
     configPageMocks.updateConfigByKey.mockResolvedValue(undefined);
     configPageMocks.resetConfigByKey.mockResolvedValue({ data: 'false' });
@@ -154,6 +155,9 @@ describe('pages/system/config', () => {
     expect(container.querySelectorAll('.config-setting-row')).toHaveLength(3);
     expect(container.querySelector('.config-list-panel')).toBeInTheDocument();
     expect(container.querySelector('.config-list-scroll')).toBeInTheDocument();
+    expect(screen.queryByPlaceholderText('搜索配置名称、键名或备注')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^刷新$/ })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '刷新缓存' })).toBeInTheDocument();
     expect(configPageMocks.getConfigPanel).toHaveBeenCalled();
   });
 
@@ -167,22 +171,30 @@ describe('pages/system/config', () => {
     });
   });
 
-  it('paginates the config list inside the scrollable list panel', async () => {
+  it('paginates the config list and scrolls the page', async () => {
     configPageMocks.getConfigPanel.mockResolvedValueOnce({ data: largePanelFixture });
     const { container } = renderWithRouter(<ConfigPage />, '/system/config');
 
     expect(await screen.findByText('分页配置1')).toBeInTheDocument();
-    expect(container.querySelectorAll('.config-setting-row')).toHaveLength(10);
-    expect(screen.queryByText('分页配置11')).not.toBeInTheDocument();
+    expect(container.querySelectorAll('.config-setting-row')).toHaveLength(5);
+    expect(screen.queryByText('分页配置6')).not.toBeInTheDocument();
 
     const nextButton = container.querySelector<HTMLButtonElement>('.ant-pagination-next button');
     expect(nextButton).toBeInTheDocument();
     fireEvent.click(nextButton!);
 
     await waitFor(() => {
+      expect(screen.getByText('分页配置6')).toBeInTheDocument();
+    });
+    expect(container.querySelectorAll('.config-setting-row')).toHaveLength(5);
+
+    fireEvent.click(nextButton!);
+
+    await waitFor(() => {
       expect(screen.getByText('分页配置11')).toBeInTheDocument();
     });
     expect(container.querySelectorAll('.config-setting-row')).toHaveLength(2);
+    expect(window.scrollTo).toHaveBeenCalledWith({ top: 0 });
   });
 
   it('updates switch config by key', async () => {

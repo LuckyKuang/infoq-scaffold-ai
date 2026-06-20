@@ -155,6 +155,9 @@ describe('pages/system/config', () => {
     expect(container.querySelectorAll('.config-setting-row')).toHaveLength(3);
     expect(container.querySelector('.config-list-panel')).toBeInTheDocument();
     expect(container.querySelector('.config-list-scroll')).toBeInTheDocument();
+    expect(screen.queryByPlaceholderText('搜索配置名称、键名或备注')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^刷新$/ })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '刷新缓存' })).toBeInTheDocument();
     expect(configPageMocks.getConfigPanel).toHaveBeenCalled();
   });
 
@@ -170,7 +173,7 @@ describe('pages/system/config', () => {
     });
   });
 
-  it('paginates the config list inside the scrollable list panel', async () => {
+  it('paginates the config list and scrolls the page', async () => {
     configPageMocks.getConfigPanel.mockResolvedValueOnce({
       data: largePanelFixture,
     });

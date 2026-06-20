@@ -1,26 +1,12 @@
-import {
-  GithubOutlined,
-  LockOutlined,
-  LoginOutlined,
-  SafetyCertificateOutlined,
-  UserOutlined,
-} from '@ant-design/icons';
-import {
-  LoginForm,
-  ProFormCheckbox,
-  ProFormText,
-} from '@ant-design/pro-components';
-import { Helmet, Link, SelectLang, useIntl, useModel } from '@umijs/max';
-import { App, Button, Divider } from 'antd';
-import { createStyles } from 'antd-style';
-import { useCallback, useEffect, useState } from 'react';
-import { Footer } from '@/components';
-import {
-  getCodeImg,
-  getOAuthProviders,
-  login,
-} from '@/services/ant-design-pro/api';
-import { setToken } from '@/utils/auth';
+import {GithubOutlined, LockOutlined, LoginOutlined, SafetyCertificateOutlined, UserOutlined,} from '@ant-design/icons';
+import {LoginForm, ProFormCheckbox, ProFormText,} from '@ant-design/pro-components';
+import {Helmet, Link, SelectLang, useIntl, useModel} from '@umijs/max';
+import {App, Button, Divider} from 'antd';
+import {createStyles} from 'antd-style';
+import {useCallback, useEffect, useState} from 'react';
+import {Footer} from '@/components';
+import {getCodeImg, getOAuthProviders, login,} from '@/services/ant-design-pro/api';
+import {setToken} from '@/utils/auth';
 import Settings from '../../../../config/defaultSettings';
 
 const useStyles = createStyles(({ token }) => ({
@@ -41,6 +27,14 @@ const useStyles = createStyles(({ token }) => ({
     minHeight: '100vh',
     overflow: 'auto',
     background: token.colorBgLayout,
+  },
+  main: {
+    flex: 1,
+    minHeight: 0,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '32px 16px',
   },
   captcha: {
     height: 32,
@@ -205,7 +199,7 @@ const Login: React.FC = () => {
         </title>
       </Helmet>
       <Lang />
-      <div style={{ flex: 1, padding: '32px 0' }}>
+      <div className={`${styles.main} login-form-shell`}>
         <LoginForm
           contentStyle={{ minWidth: 280, maxWidth: '75vw' }}
           logo={<img alt="logo" src="/logo.svg" />}

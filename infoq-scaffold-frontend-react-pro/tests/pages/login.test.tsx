@@ -1,6 +1,6 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { App } from 'antd';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import {fireEvent, render, screen, waitFor} from '@testing-library/react';
+import {App} from 'antd';
+import {beforeEach, describe, expect, it, vi} from 'vitest';
 
 const loginPageMocks = vi.hoisted(() => ({
   fetchUserInfo: vi.fn(),
@@ -184,6 +184,17 @@ describe('pages/user/login', () => {
       expect(localStorage.getItem('Admin-Token')).toBe('token-1');
       expect(loginPageMocks.fetchUserInfo).toHaveBeenCalledTimes(1);
       expect(loginPageMocks.setInitialState).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it('centers the login form in the page viewport', async () => {
+    const { container } = renderLogin();
+
+    await screen.findByPlaceholderText('用户名');
+    expect(container.querySelector('.login-form-shell')).toHaveStyle({
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
     });
   });
 

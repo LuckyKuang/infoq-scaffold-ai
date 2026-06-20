@@ -1,5 +1,5 @@
 import { flushPromises, mount } from '@vue/test-utils';
-import { computed, defineComponent, h, inject, provide, reactive } from 'vue';
+import { defineComponent, h, nextTick } from 'vue';
 import ConfigView from '@/views/system/config/index.vue';
 
 const panelFixture = {
@@ -89,7 +89,7 @@ const largePanelFixture = {
   ]
 };
 
-const configMocks = vi.hoisted(() => ({
+const configPageMocks = vi.hoisted(() => ({
   getConfigPanel: vi.fn(),
   addConfig: vi.fn(),
   updateConfig: vi.fn(),
@@ -104,13 +104,13 @@ const configMocks = vi.hoisted(() => ({
 }));
 
 vi.mock('@/api/system/config', () => ({
-  getConfigPanel: configMocks.getConfigPanel,
-  addConfig: configMocks.addConfig,
-  updateConfig: configMocks.updateConfig,
-  updateConfigByKey: configMocks.updateConfigByKey,
-  resetConfigByKey: configMocks.resetConfigByKey,
-  reorderConfig: configMocks.reorderConfig,
-  refreshCache: configMocks.refreshCache
+  getConfigPanel: configPageMocks.getConfigPanel,
+  addConfig: configPageMocks.addConfig,
+  updateConfig: configPageMocks.updateConfig,
+  updateConfigByKey: configPageMocks.updateConfigByKey,
+  resetConfigByKey: configPageMocks.resetConfigByKey,
+  reorderConfig: configPageMocks.reorderConfig,
+  refreshCache: configPageMocks.refreshCache
 }));
 
 vi.mock('@/store/modules/user', () => ({
@@ -119,62 +119,116 @@ vi.mock('@/store/modules/user', () => ({
   })
 }));
 
-const passthroughStub = (name: string) =>
+const withAttrs = (attrs: Record<string, unknown>, className: string) => ({
+  ...attrs,
+  class: [className, attrs.class]
+});
+
+const passthroughStub = (name: string, className = `${name.toLowerCase()}-stub`) =>
   defineComponent({
     name,
-    setup(_, { slots }) {
-      return () => h('div', slots.default?.());
+    setup(_, { attrs, slots }) {
+      return () => h('div', withAttrs(attrs, className), slots.default?.());
     }
   });
 
-const TABLE_DATA_SYMBOL = Symbol('configTableData');
-
-const ElCardStub = defineComponent({
-  name: 'ElCard',
-  setup(_, { slots }) {
-    return () => h('div', { class: 'el-card-stub' }, [slots.header?.(), slots.default?.()]);
-  }
-});
+const ElCardStub = passthroughStub('ElCard', 'el-card-stub');
+const ElTagStub = passthroughStub('ElTag', 'el-tag-stub');
+const ElOptionStub = passthroughStub('ElOption', 'el-option-stub');
+const ElFormItemStub = passthroughStub('ElFormItem', 'el-form-item-stub');
 
 const ElButtonStub = defineComponent({
   name: 'ElButton',
   props: {
-    icon: { type: String, default: '' },
-    disabled: { type: Boolean, default: false }
+    disabled: {
+      type: Boolean,
+      default: false
+    },
+    icon: {
+      type: String,
+      default: ''
+    }
   },
   emits: ['click'],
-  setup(props, { slots, emit }) {
+  setup(props, { attrs, slots, emit }) {
     return () =>
       h(
         'button',
         {
-          class: 'el-button-stub',
-          'data-icon': props.icon,
+          ...withAttrs(attrs, 'el-button-stub'),
           disabled: props.disabled,
-          onClick: (event: MouseEvent) => emit('click', event)
+          'data-icon': props.icon,
+          onClick: (event: MouseEvent) => {
+            if (!props.disabled) {
+              emit('click', event);
+            }
+          }
         },
         slots.default?.()
       );
   }
 });
 
+const ElInputStub = defineComponent({
+  name: 'ElInput',
+  props: {
+    modelValue: {
+      type: [String, Number],
+      default: ''
+    },
+    type: {
+      type: String,
+      default: 'text'
+    },
+    placeholder: {
+      type: String,
+      default: ''
+    },
+    disabled: {
+      type: Boolean,
+      default: false
+    }
+  },
+  emits: ['update:modelValue', 'keyup'],
+  setup(props, { attrs, emit }) {
+    return () =>
+      h('input', {
+        ...withAttrs(attrs, 'el-input-stub'),
+        value: props.modelValue,
+        type: props.type === 'password' ? 'password' : 'text',
+        placeholder: props.placeholder,
+        disabled: props.disabled,
+        onInput: (event: Event) => emit('update:modelValue', (event.target as HTMLInputElement).value),
+        onKeyup: (event: KeyboardEvent) => emit('keyup', event)
+      });
+  }
+});
+
 const ElSwitchStub = defineComponent({
   name: 'ElSwitch',
   props: {
-    modelValue: { type: Boolean, default: false }
+    modelValue: {
+      type: Boolean,
+      default: false
+    },
+    disabled: {
+      type: Boolean,
+      default: false
+    }
   },
-  emits: ['update:modelValue', 'change'],
-  setup(props, { emit }) {
+  emits: ['change'],
+  setup(props, { attrs, emit }) {
     return () =>
       h(
         'button',
         {
-          class: 'el-switch-stub',
-          'data-model-value': String(props.modelValue),
+          ...withAttrs(attrs, 'el-switch-stub'),
+          'data-checked': String(props.modelValue),
+          disabled: props.disabled,
           onClick: () => {
-            const next = !props.modelValue;
-            emit('update:modelValue', next);
-            emit('change', next);
+            if (!props.disabled) {
+              emit('change', !props.modelValue);
+            }
           }
         },
         'switch'
@@ -182,81 +236,89 @@ const ElSwitchStub = defineComponent({
   }
 });
 
-const ElFormStub = defineComponent({
-  name: 'ElForm',
-  setup(_, { slots, expose }) {
-    expose({
-      resetFields: vi.fn(),
-      validate: (cb: (valid: boolean) => void) => cb(true)
-    });
-    return () => h('form', slots.default?.());
-  }
-});
-
-const ElInputStub = defineComponent({
-  name: 'ElInput',
+const ElSelectStub = defineComponent({
+  name: 'ElSelect',
   props: {
-    modelValue: { type: [String, Number], default: '' },
-    placeholder: { type: String, default: '' }
-  },
-  emits: ['update:modelValue'],
-  setup(props, { emit }) {
-    return () =>
-      h('input', {
-        value: props.modelValue,
-        placeholder: props.placeholder,
-        onInput: (event: Event) => emit('update:modelValue', (event.target as HTMLInputElement).value)
-      });
-  }
-});
-
-const ElTableStub = defineComponent({
-  name: 'ElTable',
-  props: {
-    data: {
-      type: Array,
-      default: () => []
+    modelValue: {
+      type: [String, Number, Boolean],
+      default: ''
     }
   },
-  setup(props, { slots }) {
-    provide(
-      TABLE_DATA_SYMBOL,
-      computed(() => props.data as unknown[])
-    );
-    return () => h('div', { class: 'el-table-stub' }, slots.default?.());
+  emits: ['update:modelValue', 'change'],
+  setup(_, { attrs, slots }) {
+    return () => h('div', withAttrs(attrs, 'el-select-stub'), slots.default?.());
   }
 });
 
-const ElTableColumnStub = defineComponent({
-  name: 'ElTableColumn',
-  setup(_, { slots }) {
-    const rows = inject(
-      TABLE_DATA_SYMBOL,
-      computed(() => [] as unknown[])
-    );
-    return () => h('div', { class: 'el-table-column-stub' }, (slots.default && slots.default({ row: rows.value[0] || {}, $index: 0 })) || []);
+const ElFormStub = defineComponent({
+  name: 'ElForm',
+  setup(_, { attrs, slots, expose }) {
+    expose({
+      resetFields: vi.fn(),
+      validate: (callback: (valid: boolean) => void) => callback(true)
+    });
+    return () => h('form', withAttrs(attrs, 'el-form-stub'), slots.default?.());
+  }
+});
+
+const ElDrawerStub = defineComponent({
+  name: 'ElDrawer',
+  props: {
+    modelValue: {
+      type: Boolean,
+      default: false
+    }
+  },
+  setup(props, { attrs, slots }) {
+    return () => (props.modelValue ? h('div', withAttrs(attrs, 'el-drawer-stub'), slots.default?.()) : h('div'));
+  }
+});
+
+const ElTabsStub = passthroughStub('ElTabs', 'el-tabs-stub');
+const ElTabPaneStub = passthroughStub('ElTabPane', 'el-tab-pane-stub');
+const ElTableStub = passthroughStub('ElTable', 'el-table-stub');
+const ElTableColumnStub = passthroughStub('ElTableColumn', 'el-table-column-stub');
+const ElInputNumberStub = ElInputStub;
+
+const ElEmptyStub = defineComponent({
+  name: 'ElEmpty',
+  props: {
+    description: {
+      type: String,
+      default: ''
+    }
+  },
+  setup(props, { attrs }) {
+    return () => h('div', withAttrs(attrs, 'el-empty-stub'), props.description);
   }
 });
 
 const PaginationStub = defineComponent({
   name: 'Pagination',
   props: {
-    total: { type: Number, default: 0 },
-    page: { type: Number, default: 1 },
-    limit: { type: Number, default: 10 }
+    page: {
+      type: Number,
+      default: 1
+    },
+    limit: {
+      type: Number,
+      default: 5
+    },
+    total: {
+      type: Number,
+      default: 0
+    }
   },
-  emits: ['update:page', 'update:limit', 'pagination'],
-  setup(props, { emit }) {
+  emits: ['update:page', 'update:limit'],
+  setup(props, { attrs, emit }) {
     return () =>
-      h('div', { class: 'pagination-stub', 'data-total': String(props.total) }, [
+      h('div', withAttrs(attrs, 'pagination-stub'), [
         h(
           'button',
           {
-            class: 'pagination-next-stub',
-            onClick: () => {
-              emit('update:page', 2);
-              emit('pagination', { page: 2, limit: props.limit });
-            }
+            class: 'pagination-next',
+            disabled: props.page * props.limit >= props.total,
+            onClick: () => emit('update:page', props.page + 1)
           },
           'next'
         )
@@ -267,10 +329,14 @@ const PaginationStub = defineComponent({
 describe('views/system/config/index', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    configMocks.getConfigPanel.mockResolvedValue({ data: panelFixture });
-    configMocks.updateConfigByKey.mockResolvedValue(undefined);
-    configMocks.resetConfigByKey.mockResolvedValue({ data: 'false' });
-    configMocks.refreshCache.mockResolvedValue(undefined);
+    window.scrollTo = vi.fn();
+    configPageMocks.getConfigPanel.mockResolvedValue({ data: panelFixture });
+    configPageMocks.addConfig.mockResolvedValue(undefined);
+    configPageMocks.updateConfig.mockResolvedValue(undefined);
+    configPageMocks.updateConfigByKey.mockResolvedValue(undefined);
+    configPageMocks.resetConfigByKey.mockResolvedValue({ data: 'false' });
+    configPageMocks.reorderConfig.mockResolvedValue(undefined);
+    configPageMocks.refreshCache.mockResolvedValue(undefined);
   });
 
   const mountView = () =>
@@ -278,34 +344,32 @@ describe('views/system/config/index', () => {
       global: {
         config: {
           globalProperties: {
-            useDict: () => reactive({}),
             $modal: {
-              msgSuccess: configMocks.msgSuccess,
-              msgWarning: configMocks.msgWarning,
-              msgError: configMocks.msgError
+              msgSuccess: configPageMocks.msgSuccess,
+              msgWarning: configPageMocks.msgWarning,
+              msgError: configPageMocks.msgError
             },
-            download: configMocks.download
+            download: configPageMocks.download
           } as unknown as import('vue').ComponentCustomProperties & Record<string, unknown>
         },
         directives: {
-          loading: {},
-          hasPermi: {}
+          loading: {}
         },
         stubs: {
           'el-card': ElCardStub,
-          'el-button': ElButtonStub,
-          'el-switch': ElSwitchStub,
           'el-input': ElInputStub,
-          'el-select': passthroughStub('ElSelect'),
-          'el-option': passthroughStub('ElOption'),
-          'el-tag': passthroughStub('ElTag'),
-          'el-empty': passthroughStub('ElEmpty'),
-          'el-drawer': passthroughStub('ElDrawer'),
-          'el-tabs': passthroughStub('ElTabs'),
-          'el-tab-pane': passthroughStub('ElTabPane'),
+          'el-button': ElButtonStub,
+          'el-select': ElSelectStub,
+          'el-option': ElOptionStub,
+          'el-tag': ElTagStub,
+          'el-switch': ElSwitchStub,
+          'el-empty': ElEmptyStub,
+          'el-drawer': ElDrawerStub,
+          'el-tabs': ElTabsStub,
+          'el-tab-pane': ElTabPaneStub,
           'el-form': ElFormStub,
-          'el-form-item': passthroughStub('ElFormItem'),
-          'el-input-number': true,
+          'el-form-item': ElFormItemStub,
+          'el-input-number': ElInputNumberStub,
           'el-table': ElTableStub,
           'el-table-column': ElTableColumnStub,
           pagination: PaginationStub
@@ -313,78 +377,82 @@ describe('views/system/config/index', () => {
       }
     });
 
-  it('loads grouped config panel on mounted', async () => {
+  it('loads config panel groups and typed items', async () => {
     const wrapper = mountView();
     await flushPromises();
 
-    expect(configMocks.getConfigPanel).toHaveBeenCalled();
     expect(wrapper.text()).toContain('账号与登录');
     expect(wrapper.text()).toContain('是否开启注册');
     expect(wrapper.text()).toContain('初始密码');
     expect(wrapper.findAll('.config-setting-row')).toHaveLength(3);
     expect(wrapper.find('.config-list-panel').exists()).toBe(true);
     expect(wrapper.find('.config-list-scroll').exists()).toBe(true);
+    expect(wrapper.text()).toContain('管理配置定义');
+    expect(wrapper.find('input[placeholder="搜索配置名称、键名或备注"]').exists()).toBe(false);
+    const actionLabels = wrapper.findAll('button.el-button-stub').map((button) => button.text().trim());
+    expect(actionLabels).not.toContain('刷新');
+    expect(actionLabels).toContain('刷新缓存');
+    expect(configPageMocks.getConfigPanel).toHaveBeenCalled();
   });
 
   it('reports malformed config panel instead of rendering empty groups', async () => {
-    configMocks.getConfigPanel.mockResolvedValueOnce({ data: {} });
+    configPageMocks.getConfigPanel.mockResolvedValueOnce({ data: {} });
 
     mountView();
     await flushPromises();
 
-    expect(configMocks.msgError).toHaveBeenCalledWith('配置面板响应 data.groups 必须是数组');
+    expect(configPageMocks.msgError).toHaveBeenCalledWith('配置面板响应 data.groups 必须是数组');
   });
 
-  it('paginates the config list inside the scrollable list panel', async () => {
-    configMocks.getConfigPanel.mockResolvedValueOnce({ data: largePanelFixture });
+  it('paginates the config list with five rows per page and scrolls the page', async () => {
+    configPageMocks.getConfigPanel.mockResolvedValueOnce({ data: largePanelFixture });
     const wrapper = mountView();
     await flushPromises();
 
     expect(wrapper.text()).toContain('分页配置1');
-    expect(wrapper.findAll('.config-setting-row')).toHaveLength(10);
-    expect(wrapper.text()).not.toContain('分页配置11');
+    expect(wrapper.findAll('.config-setting-row')).toHaveLength(5);
+    expect(wrapper.text()).not.toContain('分页配置6');
 
-    await wrapper.find('button.pagination-next-stub').trigger('click');
-    await flushPromises();
+    await wrapper.find('button.pagination-next').trigger('click');
+    await nextTick();
 
-    expect(wrapper.text()).toContain('分页配置11');
-    expect(wrapper.findAll('.config-setting-row')).toHaveLength(2);
+    expect(wrapper.text()).toContain('分页配置6');
+    expect(wrapper.findAll('.config-setting-row')).toHaveLength(5);
+    expect(window.scrollTo).toHaveBeenCalledWith({ top: 0 });
   });
 
   it('updates switch config by key', async () => {
     const wrapper = mountView();
     await flushPromises();
 
-    const switchButton = wrapper.find('button.el-switch-stub[data-model-value="true"]');
-    expect(switchButton.exists()).toBe(true);
-    await switchButton.trigger('click');
+    await wrapper.find('button.el-switch-stub').trigger('click');
     await flushPromises();
 
-    expect(configMocks.updateConfigByKey).toHaveBeenCalledWith('sys.account.registerUser', false);
+    expect(configPageMocks.updateConfigByKey).toHaveBeenCalledWith('sys.account.registerUser', false);
   });
 
   it('enters password edit mode without leaving the config card layout', async () => {
     const wrapper = mountView();
     await flushPromises();
 
-    const editButton = wrapper.findAll('button.el-button-stub').find((button) => button.text().includes('编辑'));
+    const editButton = wrapper.findAll('button.el-button-stub').find((button) => button.text().trim() === '编辑');
     expect(editButton).toBeDefined();
     await editButton!.trigger('click');
-    await flushPromises();
+    await nextTick();
 
     expect(wrapper.find('.config-card-main-editing').exists()).toBe(true);
-    expect(wrapper.findAll('input').some((input) => (input.element as HTMLInputElement).value === '123456')).toBe(true);
+    expect((wrapper.find('input[type="password"]').element as HTMLInputElement).value).toBe('123456');
   });
 
-  it('restores default value through resetByKey', async () => {
+  it('restores default value by backend reset api', async () => {
     const wrapper = mountView();
     await flushPromises();
 
-    const resetButton = wrapper.findAll('button.el-button-stub').find((button) => button.text().includes('恢复默认'));
+    const resetButton = wrapper.findAll('button.el-button-stub').find((button) => button.text().trim() === '恢复默认');
     expect(resetButton).toBeDefined();
     await resetButton!.trigger('click');
     await flushPromises();
 
-    expect(configMocks.resetConfigByKey).toHaveBeenCalledWith('sys.account.registerUser');
+    expect(configPageMocks.resetConfigByKey).toHaveBeenCalledWith('sys.account.registerUser');
   });
 });

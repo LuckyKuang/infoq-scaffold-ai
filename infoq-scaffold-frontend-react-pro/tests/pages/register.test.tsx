@@ -1,7 +1,7 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { App as AntdApp } from 'antd';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import {fireEvent, render, screen, waitFor} from '@testing-library/react';
+import {App as AntdApp} from 'antd';
+import {MemoryRouter, Route, Routes} from 'react-router-dom';
+import {beforeEach, describe, expect, it, vi} from 'vitest';
 
 const registerPageMocks = vi.hoisted(() => ({
   getCodeImg: vi.fn(),
@@ -85,6 +85,17 @@ describe('pages/register', () => {
         }),
       );
       expect(screen.getByText('Login Page')).toBeInTheDocument();
+    });
+  });
+
+  it('centers the register form in the auth page shell', async () => {
+    const { container } = renderPage();
+
+    await screen.findByPlaceholderText('邮箱');
+    expect(container.querySelector('.auth-page-shell')).toHaveStyle({
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
     });
   });
 

@@ -7,7 +7,7 @@
 适用范围：
 
 - 在仓库内通过 Codex 协作完成需求分析、设计、技术方案、代码实现、自动修复与最终验收
-- 覆盖 `infoq-scaffold-backend`、React/Vue 管理端、React/Vue 小程序端
+- 覆盖 `infoq-scaffold-backend`、React/Vue/React Pro 管理端、React/Vue 小程序端
 
 ## 2. 什么是 Subagents
 

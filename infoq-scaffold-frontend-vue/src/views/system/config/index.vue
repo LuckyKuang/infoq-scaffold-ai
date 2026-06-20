@@ -7,8 +7,6 @@
           <div class="config-subtitle">按类型直接修改配置，恢复默认由后端读取 default_value 执行。</div>
         </div>
         <div class="config-hero-actions">
-          <el-input v-model="keyword" clearable placeholder="搜索配置名称、键名或备注" class="config-search" />
-          <el-button icon="Refresh" @click="loadPanel">刷新</el-button>
           <el-button @click="handleRefreshCache">刷新缓存</el-button>
           <el-button @click="handleExport">导出</el-button>
           <el-button v-if="isSuperAdmin" type="primary" icon="Plus" @click="openAddDrawer">管理配置定义</el-button>
@@ -37,7 +35,7 @@
       </div>
 
       <div class="config-list-panel">
-        <div ref="listScrollRef" v-loading="loading" class="config-list-scroll">
+        <div v-loading="loading" class="config-list-scroll">
           <div class="config-group-list">
             <el-card v-if="filteredItemTotal === 0" shadow="hover">
               <el-empty description="没有匹配的配置项" />
@@ -271,14 +269,12 @@ const assertConfigPanel = (value: unknown): ConfigPanel => {
 
 const panel = reactive<ConfigPanel>({ groups: [] });
 const loading = ref(false);
-const keyword = ref('');
 const activeGroupKey = ref('all');
 const savingKeys = reactive<Record<string, boolean>>({});
 const editingKeys = reactive<Record<string, boolean>>({});
 const editingValues = reactive<Record<string, string>>({});
 const listPage = ref(1);
-const listPageSize = ref(10);
-const listScrollRef = ref<HTMLElement>();
+const listPageSize = ref(5);
 const drawerOpen = ref(false);
 const submitting = ref(false);
 const orderRows = ref<ConfigReorderForm[]>([]);
@@ -298,18 +294,11 @@ const allItems = computed(() => panel.groups.flatMap((group) => group.items));
 const groupOptions = computed(() => panel.groups.map((group) => ({ label: group.groupName, value: group.groupKey })));
 
 const filteredGroups = computed<ConfigPanelGroup[]>(() => {
-  const normalizedKeyword = keyword.value.trim().toLowerCase();
   return panel.groups
     .map((group) => ({
       ...group,
       items: group.items.filter((item) => {
-        const matchedGroup = activeGroupKey.value === 'all' || item.groupKey === activeGroupKey.value;
-        const matchedKeyword =
-          !normalizedKeyword ||
-          [item.configName, item.configKey, item.remark, item.configValue]
-            .filter(Boolean)
-            .some((value) => String(value).toLowerCase().includes(normalizedKeyword));
-        return matchedGroup && matchedKeyword;
+        return activeGroupKey.value === 'all' || item.groupKey === activeGroupKey.value;
       })
     }))
     .filter((group) => group.items.length > 0 || activeGroupKey.value === group.groupKey);
@@ -333,7 +322,7 @@ const pagedGroups = computed<ConfigPanelGroup[]>(() => {
     .filter((group) => group.items.length > 0);
 });
 
-watch([keyword, activeGroupKey], () => {
+watch([activeGroupKey], () => {
   listPage.value = 1;
 });
 
@@ -344,10 +333,8 @@ watch([filteredItemTotal, listPageSize], () => {
   }
 });
 
-watch([listPage, listPageSize, keyword, activeGroupKey], () => {
-  if (listScrollRef.value) {
-    listScrollRef.value.scrollTop = 0;
-  }
+watch([listPage, listPageSize, activeGroupKey], () => {
+  window.scrollTo({ top: 0 });
 });
 
 const loadPanel = async () => {
@@ -516,9 +503,6 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  height: calc(100vh - 100px);
-  min-height: 0;
-  overflow: hidden;
 }
 
 .config-center-hero {
@@ -556,23 +540,14 @@ onMounted(() => {
   flex-wrap: wrap;
 }
 
-.config-search {
-  width: 260px;
-}
-
 .config-center-layout {
   display: grid;
   grid-template-columns: minmax(180px, 240px) minmax(0, 1fr);
   gap: 12px;
-  align-items: stretch;
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
+  align-items: start;
 }
 
 .config-group-nav {
-  position: sticky;
-  top: 72px;
   align-self: start;
 
   :deep(.el-card__body) {
@@ -606,16 +581,10 @@ onMounted(() => {
 .config-list-panel {
   display: flex;
   min-width: 0;
-  min-height: 0;
-  height: 100%;
   flex-direction: column;
-  overflow: hidden;
 }
 
 .config-list-scroll {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
   padding-right: 4px;
 }
 

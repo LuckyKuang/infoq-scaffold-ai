@@ -1,45 +1,45 @@
-import { PageContainer } from '@ant-design/pro-components';
-import { Card, Col, Row, Statistic, Typography } from 'antd';
+import {PageContainer} from '@ant-design/pro-components';
+import {Card, Col, Row, Statistic, Typography} from 'antd';
 import React from 'react';
 
 import './Welcome.css';
 
 const migrationCards = [
   {
-    title: '候选项目',
+    title: '正式并行',
     description:
-      '基于 Ant Design Pro / Umi Max 建立迁移工作区，旧 React admin 继续作为行为基线。',
+      '基于 Ant Design Pro / Umi Max 提供正式 React Pro 管理端，与 React、Vue 管理端并行维护。',
   },
   {
-    title: '迁移边界',
+    title: '接口边界',
     description:
-      '优先迁移登录、动态菜单、权限、请求和核心 CRUD，不修改后端 API 契约。',
+      '继续复用登录、动态菜单、权限、请求和核心 CRUD 接口，不修改后端 API 契约。',
   },
   {
-    title: '验收方式',
+    title: '验证方式',
     description:
-      '每个阶段通过测试、lint、build 和旧项目对照验证后，再进入最终目录切换。',
+      '通过测试、lint、build 和运行态 smoke 验证 React Pro 主流程。',
   },
 ] as const;
 
 const Welcome: React.FC = () => {
   return (
-    <PageContainer title="React Admin Ant Design Pro 候选项目">
+    <PageContainer title="React Admin Ant Design Pro">
       <Card className="welcome-summary">
-        <Typography.Title level={3}>对照迁移工作区已建立</Typography.Title>
+        <Typography.Title level={3}>React Pro 管理端已启用</Typography.Title>
         <Typography.Paragraph type="secondary">
-          当前目录用于验证 Ant Design Pro 工程基线、逐步迁移旧 React admin
-          的基础设施与业务页面，并在完整验收后整体切换为正式 React 管理端。
+          当前目录是基于 Ant Design Pro 的正式 React Pro 管理端，和旧
+          React 管理端、Vue 管理端并行保留，共用同一套后端菜单与权限真值。
         </Typography.Paragraph>
         <Row gutter={[16, 16]}>
           <Col xs={24} md={8}>
-            <Statistic title="迁移模式" value="新建对照" />
+            <Statistic title="项目定位" value="正式并行" />
           </Col>
           <Col xs={24} md={8}>
-            <Statistic title="当前阶段" value="Phase 1" />
+            <Statistic title="默认端口" value="80" />
           </Col>
           <Col xs={24} md={8}>
-            <Statistic title="最终目标" value="整体切换" />
+            <Statistic title="路由真值" value="后端菜单" />
           </Col>
         </Row>
       </Card>

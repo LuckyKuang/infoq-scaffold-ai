@@ -51,12 +51,15 @@ export default function AuthPageShell({ title, children }: AuthPageShellProps) {
 
   return (
     <div
+      className="auth-page-shell"
       style={{
+        width: '100%',
         minHeight: '100vh',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '0 16px',
+        boxSizing: 'border-box',
+        padding: '32px 16px 56px',
         backgroundImage: `url(${loginBackground})`,
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
