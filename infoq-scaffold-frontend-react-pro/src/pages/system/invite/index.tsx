@@ -23,27 +23,19 @@ import {
   Tooltip,
   Typography,
 } from 'antd';
-import type { ColumnsType } from 'antd/es/table';
-import type { Dayjs } from 'dayjs';
-import { useCallback, useEffect, useState } from 'react';
-import {
-  cancelInvite,
-  delInvite,
-  generateInvite,
-  listInvite,
-} from '@/api/system/invite';
-import type {
-  InviteCodeGenerateForm,
-  InviteCodeQuery,
-  InviteCodeVO,
-} from '@/api/system/invite/types';
+import type {ColumnsType} from 'antd/es/table';
+import type {Dayjs} from 'dayjs';
+import {useCallback, useState} from 'react';
+import {cancelInvite, delInvite, generateInvite, listInvite,} from '@/api/system/invite';
+import type {InviteCodeGenerateForm, InviteCodeQuery, InviteCodeVO,} from '@/api/system/invite/types';
 import DictTag from '@/components/DictTag';
 import Pagination from '@/components/Pagination';
 import RightToolbar from '@/components/RightToolbar';
+import useInitialLoadEffect from '@/hooks/useInitialLoadEffect';
 import useDictOptions from '@/hooks/useDictOptions';
 import modal from '@/utils/modal';
-import { download } from '@/utils/request';
-import { addDateRange } from '@/utils/scaffold';
+import {download} from '@/utils/request';
+import {addDateRange} from '@/utils/scaffold';
 
 type GenerateInviteFormState = InviteCodeGenerateForm & {
   expireTime?: Dayjs;
@@ -102,10 +94,7 @@ export default function InvitePage() {
   const dict = useDictOptions('sys_invite_code_status');
 
   const loadList = useCallback(
-    async (
-      nextQuery: InviteCodeQuery = query,
-      nextRange: [Dayjs, Dayjs] | null = dateRange,
-    ) => {
+    async (nextQuery: InviteCodeQuery, nextRange: [Dayjs, Dayjs] | null) => {
       setLoading(true);
       try {
         const response = await listInvite(
@@ -117,10 +106,10 @@ export default function InvitePage() {
         setLoading(false);
       }
     },
-    [dateRange, query],
+    [],
   );
 
-  useEffect(() => {
+  useInitialLoadEffect(() => {
     loadList(initialQuery, null);
   }, [loadList]);
 

@@ -32,6 +32,34 @@ public class SecurityTokenStore {
         return Optional.ofNullable(RedisUtils.getCacheObject(sessionKey(tokenDigest)));
     }
 
+    public Map<String, SecurityTokenSession> findByDigests(Collection<String> tokenDigests) {
+        if (tokenDigests == null || tokenDigests.isEmpty()) {
+            return Map.of();
+        }
+        List<String> digests = tokenDigests.stream()
+            .filter(StringUtils::isNotBlank)
+            .distinct()
+            .toList();
+        if (digests.isEmpty()) {
+            return Map.of();
+        }
+        String[] keys = digests.stream()
+            .flatMap(digest -> java.util.stream.Stream.of(sessionKey(digest), revokedKey(digest)))
+            .toArray(String[]::new);
+        Map<String, Object> valuesByKey = RedisUtils.getClient().getBuckets().get(keys);
+        Map<String, SecurityTokenSession> sessionsByDigest = new HashMap<>();
+        for (String digest : digests) {
+            if (valuesByKey.containsKey(revokedKey(digest))) {
+                continue;
+            }
+            Object session = valuesByKey.get(sessionKey(digest));
+            if (session != null) {
+                sessionsByDigest.put(digest, (SecurityTokenSession) session);
+            }
+        }
+        return sessionsByDigest;
+    }
+
     public boolean isRevoked(String tokenDigest) {
         return StringUtils.isNotBlank(tokenDigest) && RedisUtils.isExistsObject(revokedKey(tokenDigest));
     }

@@ -1,11 +1,11 @@
-import { useLocation, useModel } from '@umijs/max';
-import { useEffect, useMemo } from 'react';
+import {useLocation, useModel} from '@umijs/max';
+import {useEffect, useMemo} from 'react';
 import TagsViewBar from '@/components/TagsViewBar';
-import type { RouteComponentMapItem } from '@/router/route-transform';
-import { resolveRoutePath } from '@/router/route-transform';
-import { useSettingsStore } from '@/store/modules/settings';
-import type { TagView } from '@/store/modules/tagsView';
-import { useTagsViewStore } from '@/store/modules/tagsView';
+import type {RouteComponentMapItem} from '@/router/route-transform';
+import {resolveRoutePath} from '@/router/route-transform';
+import {useSettingsStore} from '@/store/modules/settings';
+import type {TagView} from '@/store/modules/tagsView';
+import {useTagsViewStore} from '@/store/modules/tagsView';
 
 const normalizePath = (path: string) =>
   path.replace(/\/+/g, '/').replace(/\/$/, '') || '/';
@@ -59,6 +59,17 @@ export default function LayoutTagsView() {
   const addView = useTagsViewStore((state) => state.addView);
   const currentPath = normalizePath(location.pathname);
 
+  const affixTags = useMemo(() => {
+    const routeComponentMap = initialState?.routeComponentMap || {};
+    return Object.values({
+      ...staticRouteMap,
+      ...routeComponentMap,
+    })
+      .filter((routeDef) => routeDef.meta?.affix)
+      .map((routeDef) => toTagView(routeDef, normalizePath(routeDef.path), ''))
+      .filter((tag): tag is TagView => Boolean(tag));
+  }, [initialState?.routeComponentMap]);
+
   const currentTag = useMemo(() => {
     const routeComponentMap = initialState?.routeComponentMap || {};
     const routeDef =
@@ -70,10 +81,13 @@ export default function LayoutTagsView() {
   }, [currentPath, initialState?.routeComponentMap, location.search]);
 
   useEffect(() => {
+    affixTags.forEach((tag) => {
+      addView(tag);
+    });
     if (currentTag) {
       addView(currentTag);
     }
-  }, [addView, currentTag]);
+  }, [addView, affixTags, currentTag]);
 
   if (!tagsView) {
     return null;

@@ -20,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @Tag("dev")
@@ -48,8 +49,8 @@ class SseTopicListenerTest {
         message.setMessage("hello");
         messageConsumerCaptor.getValue().accept(message);
 
-        verify(sseEmitterManager).sendMessage(1L, "hello");
-        verify(sseEmitterManager).sendMessage(2L, "hello");
+        verify(sseEmitterManager).isLocalSource(null);
+        verify(sseEmitterManager).sendPublishedMessage(message);
     }
 
     @Test
@@ -66,7 +67,28 @@ class SseTopicListenerTest {
         message.setMessage("broadcast");
         messageConsumerCaptor.getValue().accept(message);
 
-        verify(sseEmitterManager).sendMessage("broadcast");
+        verify(sseEmitterManager).isLocalSource(null);
+        verify(sseEmitterManager).sendPublishedMessage(message);
         assertEquals(-1, listener.getOrder());
+    }
+
+    @Test
+    @DisplayName("run: should ignore redis loopback from current node")
+    void runShouldIgnoreCurrentNodeLoopback() throws Exception {
+        SseTopicListener listener = new SseTopicListener();
+        ReflectionTestUtils.setField(listener, "sseEmitterManager", sseEmitterManager);
+
+        listener.run(applicationArguments);
+
+        verify(sseEmitterManager).subscribeMessage(messageConsumerCaptor.capture());
+        when(sseEmitterManager.isLocalSource("node-1")).thenReturn(true);
+
+        SseMessageDto message = new SseMessageDto();
+        message.setSourceNodeId("node-1");
+        message.setMessage("broadcast");
+        messageConsumerCaptor.getValue().accept(message);
+
+        verify(sseEmitterManager).isLocalSource("node-1");
+        verifyNoMoreInteractions(sseEmitterManager);
     }
 }

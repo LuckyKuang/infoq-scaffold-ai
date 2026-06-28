@@ -7,45 +7,19 @@ import {
   ReloadOutlined,
   SearchOutlined,
 } from '@ant-design/icons';
-import {
-  Button,
-  Card,
-  Col,
-  Form,
-  Input,
-  InputNumber,
-  Modal,
-  Row,
-  Select,
-  Space,
-  Table,
-  Tooltip,
-} from 'antd';
-import type { ColumnsType } from 'antd/es/table';
-import { useCallback, useEffect, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import {
-  addData,
-  delData,
-  getData,
-  listData,
-  updateData,
-} from '@/api/system/dict/data';
-import type {
-  DictDataForm,
-  DictDataQuery,
-  DictDataVO,
-} from '@/api/system/dict/data/types';
-import {
-  optionselect as getDictTypeOptions,
-  getType,
-} from '@/api/system/dict/type';
-import type { DictTypeVO } from '@/api/system/dict/type/types';
+import {Button, Card, Col, Form, Input, InputNumber, Modal, Row, Select, Space, Table, Tooltip,} from 'antd';
+import type {ColumnsType} from 'antd/es/table';
+import {useCallback, useEffect, useState} from 'react';
+import {useLocation, useNavigate} from '@umijs/max';
+import {addData, delData, getData, listData, updateData,} from '@/api/system/dict/data';
+import type {DictDataForm, DictDataQuery, DictDataVO,} from '@/api/system/dict/data/types';
+import {getType, optionselect as getDictTypeOptions,} from '@/api/system/dict/type';
+import type {DictTypeVO} from '@/api/system/dict/type/types';
 import DictTag from '@/components/DictTag';
 import Pagination from '@/components/Pagination';
 import RightToolbar from '@/components/RightToolbar';
 import modal from '@/utils/modal';
-import { download } from '@/utils/request';
+import {download} from '@/utils/request';
 
 const initialQuery: DictDataQuery = {
   pageNum: 1,

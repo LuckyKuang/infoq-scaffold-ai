@@ -1,8 +1,8 @@
 // https://umijs.org/config/
 
-import { existsSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
-import { defineConfig } from '@umijs/max';
+import {existsSync, readFileSync} from 'node:fs';
+import {join} from 'node:path';
+import {defineConfig} from '@umijs/max';
 
 import routes from './routes';
 
@@ -63,6 +63,11 @@ const APP_BASE_API =
   process.env.VITE_APP_BASE_API ||
   (process.env.NODE_ENV === 'production' ? '/prod-api' : '/dev-api');
 const APP_CONTEXT_PATH = process.env.VITE_APP_CONTEXT_PATH || '/';
+const APP_PROXY_TARGET =
+  process.env.VITE_APP_PROXY_TARGET ||
+  (process.env.NODE_ENV === 'production'
+    ? ''
+    : proxy[UMI_ENV as keyof typeof proxy]?.[APP_BASE_API]?.target || '');
 const PUBLIC_PATH = APP_CONTEXT_PATH.endsWith('/')
   ? APP_CONTEXT_PATH
   : `${APP_CONTEXT_PATH}/`;
@@ -254,6 +259,7 @@ export default defineConfig({
     'process.env.VITE_APP_TITLE': APP_TITLE,
     'process.env.VITE_APP_LOGO_TITLE': APP_LOGO_TITLE,
     'process.env.VITE_APP_BASE_API': APP_BASE_API,
+    'process.env.VITE_APP_PROXY_TARGET': APP_PROXY_TARGET,
     'process.env.VITE_APP_CONTEXT_PATH': PUBLIC_PATH,
     'process.env.VITE_APP_CLIENT_ID':
       process.env.VITE_APP_CLIENT_ID || 'e5cd7e4891bf95d1d19206ce24a7b32e',
@@ -265,6 +271,7 @@ export default defineConfig({
     'import.meta.env.VITE_APP_TITLE': APP_TITLE,
     'import.meta.env.VITE_APP_LOGO_TITLE': APP_LOGO_TITLE,
     'import.meta.env.VITE_APP_BASE_API': APP_BASE_API,
+    'import.meta.env.VITE_APP_PROXY_TARGET': APP_PROXY_TARGET,
     'import.meta.env.VITE_APP_CONTEXT_PATH': PUBLIC_PATH,
     'import.meta.env.VITE_APP_CLIENT_ID':
       process.env.VITE_APP_CLIENT_ID || 'e5cd7e4891bf95d1d19206ce24a7b32e',

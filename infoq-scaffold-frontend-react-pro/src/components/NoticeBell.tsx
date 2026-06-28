@@ -1,8 +1,8 @@
-import { Badge, Button, Empty, Popover, Tag, Tooltip, theme } from 'antd';
-import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import {Badge, Button, Empty, Popover, Tag, theme} from 'antd';
+import {useState} from 'react';
+import {useTranslation} from 'react-i18next';
 import SvgIcon from '@/components/SvgIcon';
-import { useNoticeStore } from '@/store/modules/notice';
+import {useNoticeStore} from '@/store/modules/notice';
 
 export default function NoticeBell() {
   const { t } = useTranslation();
@@ -113,25 +113,21 @@ export default function NoticeBell() {
       open={popoverOpen}
       onOpenChange={setPopoverOpen}
     >
-      <span style={{ display: 'inline-flex' }}>
-        <Tooltip
-          title={t('navbar.message')}
-          open={popoverOpen ? false : undefined}
-        >
-          <Button
-            type="text"
-            icon={
-              <Badge count={unreadCount} size="small">
-                <SvgIcon
-                  iconClass="message"
-                  size={18}
-                  title={t('navbar.message')}
-                />
-              </Badge>
-            }
-          />
-        </Tooltip>
-      </span>
+      <Button
+        type="text"
+        aria-label={t('navbar.message')}
+        title={t('navbar.message')}
+        data-testid="layout-notice-button"
+        icon={
+          <Badge count={unreadCount} size="small">
+            <SvgIcon
+              iconClass="message"
+              size={18}
+              title={t('navbar.message')}
+            />
+          </Badge>
+        }
+      />
     </Popover>
   );
 }

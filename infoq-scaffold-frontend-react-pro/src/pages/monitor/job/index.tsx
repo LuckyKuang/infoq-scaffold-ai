@@ -7,22 +7,9 @@ import {
   ReloadOutlined,
   SearchOutlined,
 } from '@ant-design/icons';
-import {
-  Button,
-  Card,
-  Col,
-  Form,
-  Input,
-  Modal,
-  Radio,
-  Row,
-  Select,
-  Space,
-  Switch,
-  Table,
-} from 'antd';
-import type { ColumnsType } from 'antd/es/table';
-import { useCallback, useEffect, useState } from 'react';
+import {Button, Card, Col, Form, Input, Modal, Radio, Row, Select, Space, Switch, Table,} from 'antd';
+import type {ColumnsType} from 'antd/es/table';
+import {useCallback, useState} from 'react';
 import {
   addJob,
   changeJobStatus,
@@ -33,14 +20,15 @@ import {
   runJob,
   updateJob,
 } from '@/api/monitor/job';
-import type { JobForm, JobQuery, JobVO } from '@/api/monitor/job/types';
+import type {JobForm, JobQuery, JobVO} from '@/api/monitor/job/types';
 import DictTag from '@/components/DictTag';
 import Pagination from '@/components/Pagination';
 import RightToolbar from '@/components/RightToolbar';
+import useInitialLoadEffect from '@/hooks/useInitialLoadEffect';
 import useDictOptions from '@/hooks/useDictOptions';
 import modal from '@/utils/modal';
 import auth from '@/utils/permission';
-import { download } from '@/utils/request';
+import {download} from '@/utils/request';
 
 const initialQuery: JobQuery = {
   pageNum: 1,
@@ -113,7 +101,7 @@ export default function JobPage() {
     }
   }, [form]);
 
-  useEffect(() => {
+  useInitialLoadEffect(() => {
     loadList(initialQuery);
     loadHandlerOptions();
   }, [loadList, loadHandlerOptions]);

@@ -1,6 +1,6 @@
 import i18n from 'i18next';
-import { initReactI18next } from 'react-i18next';
-import { LanguageEnum } from '@/enums/LanguageEnum';
+import {initReactI18next} from 'react-i18next';
+import {LanguageEnum} from '@/enums/LanguageEnum';
 
 const resources = {
   zh_CN: {
@@ -119,7 +119,6 @@ const resources = {
       },
       common: {
         logout: '退出登录',
-        welcome: '欢迎使用',
       },
       navbar: {
         search: '搜索',
@@ -282,7 +281,6 @@ const resources = {
       },
       common: {
         logout: 'Logout',
-        welcome: 'Welcome',
       },
       navbar: {
         search: 'Search',

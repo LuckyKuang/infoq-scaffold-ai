@@ -1,4 +1,5 @@
 import { screen, waitFor } from '@testing-library/react';
+import { StrictMode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderWithRouter } from '../helpers/renderWithRouter';
 
@@ -223,6 +224,7 @@ function asResolvedValue<T>(value: unknown): T {
 }
 
 beforeEach(() => {
+  vi.clearAllMocks();
   vi.mocked(userApi.listUser).mockResolvedValue(
     asResolvedValue<Awaited<ReturnType<typeof userApi.listUser>>>({
       rows: [
@@ -367,6 +369,25 @@ describe('pages/system', () => {
     });
   });
 
+  it('runs user management initial requests once in strict mode', async () => {
+    renderWithRouter(
+      <StrictMode>
+        <UserPage />
+      </StrictMode>,
+      '/system/user',
+    );
+
+    expect(
+      await screen.findByPlaceholderText('请输入用户名称'),
+    ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(userApi.listUser).toHaveBeenCalledTimes(1);
+      expect(userApi.deptTreeSelect).toHaveBeenCalledTimes(1);
+      expect(roleApi.listRole).toHaveBeenCalledTimes(1);
+      expect(postApi.optionselect).toHaveBeenCalledTimes(1);
+    });
+  });
+
   it('renders the role management page with fetched rows', async () => {
     renderWithRouter(<RolePage />, '/system/role');
 
@@ -391,6 +412,22 @@ describe('pages/system', () => {
     });
   });
 
+  it('runs menu management initial list once in strict mode', async () => {
+    renderWithRouter(
+      <StrictMode>
+        <MenuPage />
+      </StrictMode>,
+      '/system/menu',
+    );
+
+    expect(
+      await screen.findByPlaceholderText('请输入菜单名称'),
+    ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(menuApi.listMenu).toHaveBeenCalledTimes(1);
+    });
+  });
+
   it('renders the department management page with fetched rows', async () => {
     renderWithRouter(<DeptPage />, '/system/dept');
 
@@ -400,6 +437,29 @@ describe('pages/system', () => {
     expect(screen.getAllByText('类别编码').length).toBeGreaterThan(0);
     await waitFor(() => {
       expect(deptApi.listDept).toHaveBeenCalled();
+    });
+  });
+
+  it('runs department management initial dept list once in strict mode', async () => {
+    renderWithRouter(
+      <StrictMode>
+        <DeptPage />
+      </StrictMode>,
+      '/system/dept',
+    );
+
+    expect(
+      await screen.findByPlaceholderText('请输入部门名称'),
+    ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(deptApi.listDept).toHaveBeenCalledTimes(1);
+      expect(deptApi.listDept).toHaveBeenCalledWith({
+        pageNum: 1,
+        pageSize: 10,
+        deptName: '',
+        deptCategory: '',
+        status: undefined,
+      });
     });
   });
 

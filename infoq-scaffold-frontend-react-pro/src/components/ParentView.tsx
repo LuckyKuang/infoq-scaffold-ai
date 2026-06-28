@@ -1,4 +1,4 @@
-import { Outlet } from 'react-router-dom';
+import {Outlet} from '@umijs/max';
 
 export default function ParentView() {
   return <Outlet />;

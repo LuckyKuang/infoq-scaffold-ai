@@ -1,10 +1,4 @@
-import {
-  DeleteOutlined,
-  EditOutlined,
-  PlusOutlined,
-  ReloadOutlined,
-  SearchOutlined,
-} from '@ant-design/icons';
+import {DeleteOutlined, EditOutlined, PlusOutlined, ReloadOutlined, SearchOutlined,} from '@ant-design/icons';
 import {
   Button,
   Card,
@@ -22,24 +16,18 @@ import {
   Tree,
   TreeSelect,
 } from 'antd';
-import type { ColumnsType } from 'antd/es/table';
-import type { DataNode } from 'antd/es/tree';
-import { useCallback, useEffect, useState } from 'react';
-import {
-  addMenu,
-  cascadeDelMenu,
-  delMenu,
-  getMenu,
-  listMenu,
-  updateMenu,
-} from '@/api/system/menu';
-import type { MenuForm, MenuQuery, MenuVO } from '@/api/system/menu/types';
+import type {ColumnsType} from 'antd/es/table';
+import type {DataNode} from 'antd/es/tree';
+import {useCallback, useState} from 'react';
+import {addMenu, cascadeDelMenu, delMenu, getMenu, listMenu, updateMenu,} from '@/api/system/menu';
+import type {MenuForm, MenuQuery, MenuVO} from '@/api/system/menu/types';
 import DictTag from '@/components/DictTag';
 import RightToolbar from '@/components/RightToolbar';
 import SvgIcon from '@/components/SvgIcon';
+import useInitialLoadEffect from '@/hooks/useInitialLoadEffect';
 import useDictOptions from '@/hooks/useDictOptions';
 import modal from '@/utils/modal';
-import { handleTree } from '@/utils/scaffold';
+import {handleTree} from '@/utils/scaffold';
 
 type MenuNode = MenuVO;
 
@@ -94,22 +82,19 @@ export default function MenuPage() {
   const menuId = Form.useWatch('menuId', form);
   const dict = useDictOptions('sys_show_hide', 'sys_normal_disable');
 
-  const loadList = useCallback(
-    async (nextQuery: MenuQuery = query) => {
-      setLoading(true);
-      try {
-        const response = await listMenu(nextQuery);
-        const data = handleTree<MenuNode>(response.data, 'menuId');
-        setList(data);
-        setMenuOptions(data);
-      } finally {
-        setLoading(false);
-      }
-    },
-    [query],
-  );
+  const loadList = useCallback(async (nextQuery: MenuQuery) => {
+    setLoading(true);
+    try {
+      const response = await listMenu(nextQuery);
+      const data = handleTree<MenuNode>(response.data, 'menuId');
+      setList(data);
+      setMenuOptions(data);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  useEffect(() => {
+  useInitialLoadEffect(() => {
     loadList(initialQuery);
   }, [loadList]);
 
@@ -204,7 +189,7 @@ export default function MenuPage() {
     }
     await delMenu(menuId);
     modal.msgSuccess('删除成功');
-    loadList();
+    loadList(query);
   };
 
   const handleSubmit = async () => {
@@ -218,7 +203,7 @@ export default function MenuPage() {
       }
       modal.msgSuccess('操作成功');
       setDialogOpen(false);
-      loadList();
+      loadList(query);
     } finally {
       setSubmitting(false);
     }
@@ -319,7 +304,7 @@ export default function MenuPage() {
             <RightToolbar
               showSearch={showSearch}
               onShowSearchChange={setShowSearch}
-              onQueryTable={() => loadList()}
+              onQueryTable={() => loadList(query)}
             />
           </div>
         </div>
@@ -474,7 +459,7 @@ export default function MenuPage() {
           modal.msgSuccess('删除成功');
           setDeleteOpen(false);
           setCheckedMenuIds([]);
-          loadList();
+          loadList(query);
         }}
       >
         <Tree

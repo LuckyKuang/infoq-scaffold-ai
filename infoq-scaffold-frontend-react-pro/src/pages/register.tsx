@@ -1,14 +1,9 @@
-import { App, Button, Form, Input } from 'antd';
-import { useCallback, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { Link, useNavigate } from 'react-router-dom';
-import {
-  checkInviteCode,
-  getCodeImg,
-  register as registerApi,
-  sendEmailCode,
-} from '@/api/login';
-import type { RegisterForm } from '@/api/types';
+import {App, Button, Form, Input} from 'antd';
+import {useCallback, useEffect, useState} from 'react';
+import {useTranslation} from 'react-i18next';
+import {Link, useNavigate} from '@umijs/max';
+import {checkInviteCode, getCodeImg, register as registerApi, sendEmailCode,} from '@/api/login';
+import type {RegisterForm} from '@/api/types';
 import AuthPageShell from '@/components/AuthPageShell';
 import SvgIcon from '@/components/SvgIcon';
 

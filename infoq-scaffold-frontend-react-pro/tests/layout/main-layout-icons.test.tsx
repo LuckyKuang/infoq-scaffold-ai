@@ -1,5 +1,7 @@
-import { render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import {render, screen} from '@testing-library/react';
+import {beforeEach, describe, expect, it, vi} from 'vitest';
+import {useAppStore} from '@/store/modules/app';
+import {useSettingsStore} from '@/store/modules/settings';
 
 vi.mock('@umijs/max', () => ({
   history: {
@@ -11,14 +13,16 @@ vi.mock('@umijs/max', () => ({
     replace: vi.fn(),
   },
   Link: ({ children }: { children: React.ReactNode }) => children,
+  useLocation: () => ({
+    pathname: '/index',
+    search: '',
+    hash: '',
+  }),
 }));
 
 vi.mock('@/components', () => ({
   AvatarDropdown: ({ children }: { children: React.ReactNode }) => children,
-  DocLink: () => null,
   ErrorBoundary: ({ children }: { children: React.ReactNode }) => children,
-  Footer: () => null,
-  LangDropdown: () => null,
   LayoutTagsView: () => <div data-testid="layout-tags-view" />,
   OfflineBanner: () => null,
 }));
@@ -31,6 +35,28 @@ vi.mock('@/components/SvgIcon', () => ({
 
 vi.mock('@ant-design/pro-components', () => ({
   SettingDrawer: () => <div data-testid="setting-drawer" />,
+}));
+
+vi.mock('@/components/SettingsDrawer', () => ({
+  default: () => <div data-testid="setting-drawer" />,
+}));
+
+vi.mock('@/components/KeepAliveView', () => ({
+  default: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="keep-alive-view">{children}</div>
+  ),
+}));
+
+vi.mock('@/components/TopNav', () => ({
+  default: () => <div data-testid="top-nav" />,
+}));
+
+vi.mock('nprogress', () => ({
+  default: {
+    configure: vi.fn(),
+    done: vi.fn(),
+    start: vi.fn(),
+  },
 }));
 
 vi.mock('@/services/ant-design-pro/api', () => ({
@@ -49,6 +75,11 @@ vi.mock('@root/config/defaultSettings', () => ({
 const { layout } = await import('@/app');
 
 describe('ProLayout runtime config', () => {
+  beforeEach(() => {
+    useAppStore.setState({ device: 'desktop' });
+    useSettingsStore.setState({ topNav: false });
+  });
+
   it('renders backend menu icon names as SvgIcon nodes', () => {
     const layoutConfig = layout({
       initialState: {
@@ -97,6 +128,46 @@ describe('ProLayout runtime config', () => {
 
     expect(screen.getByTestId('layout-tags-view')).toBeInTheDocument();
     expect(screen.getByTestId('setting-drawer')).toBeInTheDocument();
+    expect(screen.getByTestId('keep-alive-view')).toBeInTheDocument();
     expect(screen.getByText('Page Content')).toBeInTheDocument();
+  });
+
+  it('renders TopNav in the header title when legacy topNav is enabled', () => {
+    useSettingsStore.setState({ topNav: true });
+    const layoutConfig = layout({
+      initialState: {
+        settings: {},
+        settingDrawerOpen: false,
+      },
+      setInitialState: vi.fn(),
+    } as any);
+    const headerTitleRender = layoutConfig.headerTitleRender;
+    expect(typeof headerTitleRender).toBe('function');
+
+    render(
+      typeof headerTitleRender === 'function'
+        ? headerTitleRender(<span>Logo</span>, <b>Title</b>, {} as any)
+        : null,
+    );
+
+    expect(screen.getByTestId('top-nav')).toBeInTheDocument();
+  });
+
+  it('hides header action icons on mobile like the legacy React layout', () => {
+    useAppStore.setState({ device: 'mobile' });
+    const layoutConfig = layout({
+      initialState: {
+        settings: {},
+        settingDrawerOpen: false,
+      },
+      setInitialState: vi.fn(),
+    } as any);
+
+    const actionsRender = layoutConfig.actionsRender;
+
+    expect(typeof actionsRender).toBe('function');
+    if (typeof actionsRender === 'function') {
+      expect(actionsRender({} as any)).toEqual([]);
+    }
   });
 });

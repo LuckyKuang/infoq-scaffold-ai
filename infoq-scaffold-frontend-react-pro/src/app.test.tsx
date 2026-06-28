@@ -12,10 +12,26 @@ const mockHistory = {
 
 const mockGetInfo = vi.fn();
 const mockGetRouters = vi.fn();
+const {
+  mockInitSSE,
+  mockInitWebSocket,
+  mockCloseSSE,
+  mockCloseWebSocket,
+  mockLogoutApi,
+  mockModalMsgError,
+} = vi.hoisted(() => ({
+    mockInitSSE: vi.fn(),
+    mockInitWebSocket: vi.fn(),
+    mockCloseSSE: vi.fn(),
+    mockCloseWebSocket: vi.fn(),
+    mockLogoutApi: vi.fn(),
+    mockModalMsgError: vi.fn(),
+  }));
 
 vi.mock('@umijs/max', () => ({
   history: mockHistory,
   Link: ({ children }: any) => children,
+  useLocation: () => mockHistory.location,
 }));
 
 vi.mock('@/services/ant-design-pro/api', () => ({
@@ -23,18 +39,84 @@ vi.mock('@/services/ant-design-pro/api', () => ({
   getRouters: mockGetRouters,
 }));
 
+vi.mock('@/api/login', () => ({
+  exchangeOAuthTicket: vi.fn(),
+  getInfo: vi.fn(),
+  login: vi.fn(),
+  logout: mockLogoutApi,
+}));
+
+vi.mock('@/utils/modal', () => ({
+  default: {
+    msgError: mockModalMsgError,
+  },
+}));
+
 vi.mock('@/components', () => ({
   AvatarDropdown: () => null,
-  DocLink: () => null,
   ErrorBoundary: ({ children }: any) => children,
-  Footer: () => null,
-  LangDropdown: () => null,
   LayoutTagsView: () => null,
   OfflineBanner: () => null,
 }));
 
 vi.mock('@/components/SvgIcon', () => ({
   default: () => null,
+}));
+
+vi.mock('@/components/InfoQGit', () => ({
+  default: () => null,
+}));
+
+vi.mock('@/components/KeepAliveView', () => ({
+  default: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="keep-alive-view">{children}</div>
+  ),
+}));
+
+vi.mock('@/components/LangSelect', () => ({
+  default: () => null,
+}));
+
+vi.mock('@/components/NoticeBell', () => ({
+  default: () => null,
+}));
+
+vi.mock('@/components/ScreenFull', () => ({
+  default: () => null,
+}));
+
+vi.mock('@/components/SearchMenu', () => ({
+  default: () => null,
+}));
+
+vi.mock('@/components/SettingsDrawer', () => ({
+  default: () => null,
+}));
+
+vi.mock('@/components/SizeSelect', () => ({
+  default: () => null,
+}));
+
+vi.mock('@/components/TopNav', () => ({
+  default: () => <div data-testid="top-nav" />,
+}));
+
+vi.mock('nprogress', () => ({
+  default: {
+    configure: vi.fn(),
+    done: vi.fn(),
+    start: vi.fn(),
+  },
+}));
+
+vi.mock('@/utils/sse', () => ({
+  closeSSE: mockCloseSSE,
+  initSSE: mockInitSSE,
+}));
+
+vi.mock('@/utils/websocket', () => ({
+  closeWebSocket: mockCloseWebSocket,
+  initWebSocket: mockInitWebSocket,
 }));
 
 vi.mock('@ant-design/pro-components', () => ({
@@ -95,10 +177,12 @@ describe('app getInitialState', () => {
     };
     mockGetInfo.mockResolvedValue(mockUserInfo);
     mockGetRouters.mockResolvedValue(mockRoutes);
+    mockLogoutApi.mockResolvedValue({ code: 200 });
   });
 
   it('should fetch current user and backend menu when token exists', async () => {
     const { getInitialState } = await import('./app');
+    const { usePermissionStore } = await import('@/store/modules/permission');
 
     const state = await getInitialState();
 
@@ -125,14 +209,23 @@ describe('app getInitialState', () => {
     expect(state.routeComponentMap?.['/system/user']?.component).toBe(
       'system/user/index',
     );
+    expect(
+      usePermissionStore.getState().routeComponentMap['/system/user']
+        ?.component,
+    ).toBe('system/user/index');
+    expect(mockInitSSE).toHaveBeenCalled();
+    expect(mockInitWebSocket).toHaveBeenCalled();
   });
 
   it('should redirect to login when bootstrap fails', async () => {
     const { getInitialState } = await import('./app');
-    mockGetInfo.mockRejectedValue(new Error('401 Unauthorized'));
+    const bootstrapError = new Error('401 Unauthorized');
+    mockGetInfo.mockRejectedValue(bootstrapError);
 
     const state = await getInitialState();
 
+    expect(mockModalMsgError).toHaveBeenCalledWith(bootstrapError);
+    expect(mockLogoutApi).toHaveBeenCalled();
     expect(mockReplace).toHaveBeenCalledWith(
       expect.stringContaining('/login?redirect='),
     );
@@ -177,7 +270,10 @@ describe('app getInitialState', () => {
 
     const state = await getInitialState();
 
-    expect(state.settings).toEqual({ navTheme: 'light' });
+    expect(state.settings).toMatchObject({
+      fixedHeader: false,
+      navTheme: 'realDark',
+    });
   });
 
   it('should use scaffold base API for request config', async () => {

@@ -37,6 +37,7 @@ describe('store/user', () => {
     vi.clearAllMocks();
     localStorage.clear();
     vi.stubEnv('VITE_APP_BASE_API', '/test-api');
+    vi.stubEnv('VITE_APP_PROXY_TARGET', '');
     useUserStore.setState({
       token: '',
       roles: [],
@@ -100,6 +101,20 @@ describe('store/user', () => {
 
     expect(userStoreMocks.initSSE).toHaveBeenCalledWith(
       '/test-api/resource/sse',
+    );
+    expect(userStoreMocks.initWebSocket).toHaveBeenCalledWith(
+      'ws://localhost:3000/test-api/resource/websocket',
+    );
+  });
+
+  it('uses proxy target directly for SSE in development to avoid dev proxy buffering', () => {
+    vi.stubEnv('VITE_APP_PROXY_TARGET', 'http://127.0.0.1:18081/');
+    setToken('persisted-token');
+
+    useUserStore.getState().initializeRealtimeChannels();
+
+    expect(userStoreMocks.initSSE).toHaveBeenCalledWith(
+      'http://127.0.0.1:18081/resource/sse',
     );
     expect(userStoreMocks.initWebSocket).toHaveBeenCalledWith(
       'ws://localhost:3000/test-api/resource/websocket',

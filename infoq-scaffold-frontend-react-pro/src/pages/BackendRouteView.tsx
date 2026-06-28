@@ -1,14 +1,10 @@
-import { Navigate, useLocation, useModel } from '@umijs/max';
-import { Spin } from 'antd';
-import { Suspense } from 'react';
+import {Navigate, useLocation, useModel} from '@umijs/max';
+import {Spin} from 'antd';
+import {Suspense} from 'react';
 import InnerLink from '@/components/InnerLink';
-import RouteNotMigrated from '@/pages/exception/RouteNotMigrated';
-import { resolvePageComponent } from '@/router/component-map';
-import { convertPathToComponent } from '@/router/path-to-component';
-import {
-  findFirstConcreteChildPath,
-  resolveRoutePath,
-} from '@/router/route-transform';
+import {resolvePageComponent} from '@/router/component-map';
+import {convertPathToComponent} from '@/router/path-to-component';
+import {findFirstConcreteChildPath, resolveRoutePath,} from '@/router/route-transform';
 
 const normalizePath = (path: string) =>
   path.replace(/\/+/g, '/').replace(/\/$/, '') || '/';
@@ -24,10 +20,6 @@ export default function BackendRouteView() {
     routeComponentMap[`${currentPath}/index`];
   const componentName =
     routeDef?.component || convertPathToComponent(currentPath);
-
-  if (!routeDef && !componentName) {
-    return <RouteNotMigrated path={currentPath} />;
-  }
 
   if (componentName === 'Layout' || componentName === 'ParentView') {
     return (
@@ -48,11 +40,6 @@ export default function BackendRouteView() {
   }
 
   const DynamicPage = resolvePageComponent(componentName);
-  if (!DynamicPage) {
-    return (
-      <RouteNotMigrated componentName={componentName} path={currentPath} />
-    );
-  }
 
   return (
     <Suspense fallback={<Spin />}>

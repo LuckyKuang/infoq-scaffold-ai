@@ -54,6 +54,7 @@
 - 这两个 CLI 是 repo-owned 入口，适用于 Windows / macOS / Linux。
 - 为兼容不同平台和 `pnpm` 参数透传差异，也接受 `run <cli-name> -- ...` 形式，但默认推荐无 `--` 写法。
 - 不再维护平台包装脚本，直接调用仓库内 CLI。
+- `playwright-cli admin-route-probe` 先走快速 token 获取；若后端明确返回 `captchaEnabled=true`，会自动调用 `infoq-admin-e2e/scripts/captcha_login.mjs` 识别验证码并获取真实 token。
 - `playwright` MCP 只用于临时交互探索。
 - `chrome-devtools` MCP 只用于深度诊断。
 
@@ -126,17 +127,20 @@ node .codex/skills/infoq-delivery-workflow/scripts/openspec_check.mjs <change-id
 ```bash
 node .codex/skills/infoq-admin-e2e/scripts/generate-case-matrix.mjs
 node .codex/skills/infoq-admin-e2e/scripts/validate-case-matrix.mjs doc/test/frontend-web-automation/case-matrix.json
+node .codex/skills/infoq-admin-e2e/scripts/captcha_login.mjs --backend-url http://127.0.0.1:8080 --print-token
 node .codex/skills/infoq-admin-e2e/scripts/run_admin_e2e.mjs --client vue
 node .codex/skills/infoq-admin-e2e/scripts/run_admin_e2e.mjs --client react
+node .codex/skills/infoq-admin-e2e/scripts/run_admin_e2e.mjs --client react-pro
 ```
 
 说明：
 
 - 真实验证码 E2E 默认不关闭验证码，必须通过 `/auth/code`、OCR 和 `/auth/login` 获取真实 token。
+- `captcha_login.mjs` 是共享验证码登录入口，`run_admin_e2e.mjs` 和 `admin-route-probe` 的验证码 fallback 都复用它。
 - 首次运行 OCR 场景需要本机 Python 环境可 import `ddddocr`，浏览器依赖仍复用 `infoq-browser-automate`。
 - 证据默认写入 `doc/tmp/infoq-admin-e2e/<run-id>/`。
 - `run_admin_e2e.mjs` 默认在完成、失败或中断后停止本次 skill 启动的栈；只有成功且需要保留联调进程时显式传 `--keep-stack-after`，失败或中断仍会关闭 owned 进程。
-- 管理端 E2E 栈状态按 client 稳定写入 `doc/tmp/infoq-admin-e2e/stack/<vue|react>/state.json`，断开后下一次运行会先清理未标记 `keepAlive` 的旧状态。
+- 管理端 E2E 栈状态按 client 稳定写入 `doc/tmp/infoq-admin-e2e/stack/<vue|react|react-pro>/state.json`，断开后下一次运行会先清理未标记 `keepAlive` 的旧状态。
 - 写入型 CRUD、导出、批量操作和权限矩阵必须先定义测试数据、cleanup 和危险动作门禁。
 
 ## 10. 前端验证

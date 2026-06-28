@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import {useEffect} from 'react';
+import {useLocation, useNavigate, useParams} from '@umijs/max';
 
 export default function RedirectPage() {
   const location = useLocation();

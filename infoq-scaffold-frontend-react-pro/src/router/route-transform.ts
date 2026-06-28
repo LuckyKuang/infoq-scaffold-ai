@@ -1,4 +1,4 @@
-import { isHttp } from '@/utils/validate';
+import {isHttp} from '@/utils/validate';
 
 export type RouteComponentMapItem = {
   name?: string;
@@ -10,10 +10,13 @@ export type RouteComponentMapItem = {
 
 export type ProMenuRoute = {
   path: string;
+  key?: string;
   name?: string;
   locale?: false;
   icon?: string;
   hideInMenu?: boolean;
+  hideInBreadcrumb?: boolean;
+  parentKeys?: string[];
   redirect?: string;
   routes?: ProMenuRoute[];
   children?: ProMenuRoute[];
@@ -267,6 +270,7 @@ export const toProMenuRoutes = (routes: API.AppRoute[]): ProMenuRoute[] =>
       : undefined;
     return {
       path: route.path,
+      key: route.path,
       name: route.meta?.title || route.name || route.path,
       locale: false,
       icon:
@@ -274,6 +278,10 @@ export const toProMenuRoutes = (routes: API.AppRoute[]): ProMenuRoute[] =>
           ? route.meta.icon
           : undefined,
       hideInMenu: isHidden(route.hidden),
+      hideInBreadcrumb: route.meta?.breadcrumb === false,
+      parentKeys: route.meta?.activeMenu
+        ? [resolveRoutePath(route.meta.activeMenu)]
+        : undefined,
       redirect:
         route.redirect && route.redirect !== 'noredirect'
           ? route.redirect

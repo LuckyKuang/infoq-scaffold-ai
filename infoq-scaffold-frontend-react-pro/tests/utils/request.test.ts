@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import {beforeEach, describe, expect, it, vi} from 'vitest';
 
 const mockUmiRequest = vi.hoisted(() => vi.fn());
 const mockDownload = vi.hoisted(() => vi.fn());
@@ -67,6 +67,53 @@ describe('utils/request', () => {
         repeatSubmit: false,
       },
     });
+  });
+
+  it('reuses identical in-flight GET requests', async () => {
+    localStorage.setItem('Admin-Token', 'token-1');
+    let resolveRequest:
+      | ((value: { code: number; rows: unknown[] }) => void)
+      | undefined;
+    const pendingResponse = new Promise<{ code: number; rows: unknown[] }>(
+      (resolve) => {
+        resolveRequest = resolve;
+      },
+    );
+    mockUmiRequest.mockReturnValueOnce(pendingResponse);
+
+    const firstRequest = request({
+      url: '/system/user/list',
+      method: 'get',
+      params: {
+        pageNum: 1,
+        pageSize: 10,
+      },
+    });
+    const secondRequest = request({
+      url: '/system/user/list',
+      method: 'get',
+      params: {
+        pageSize: 10,
+        pageNum: 1,
+      },
+    });
+
+    expect(mockUmiRequest).toHaveBeenCalledTimes(1);
+    expect(firstRequest).toBe(secondRequest);
+
+    resolveRequest?.({ code: 200, rows: [] });
+    await expect(firstRequest).resolves.toEqual({ code: 200, rows: [] });
+
+    mockUmiRequest.mockResolvedValueOnce({ code: 200, rows: [{ id: 1 }] });
+    await request({
+      url: '/system/user/list',
+      method: 'get',
+      params: {
+        pageNum: 1,
+        pageSize: 10,
+      },
+    });
+    expect(mockUmiRequest).toHaveBeenCalledTimes(2);
   });
 
   it('re-exports the shared download implementation', () => {

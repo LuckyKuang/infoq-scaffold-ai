@@ -1,6 +1,7 @@
 package cc.infoq.common.security.config;
 
 import cc.infoq.common.security.config.properties.SecurityProperties;
+import cc.infoq.common.security.config.properties.SseProperties;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -30,6 +31,7 @@ class SpringSecurityAutoConfigurationTest {
         assertTrue(matchers.contains(SecurityConfig.HEALTH_CHECK_PATH));
         assertTrue(matchers.contains(SecurityConfig.HEALTH_CHECK_PATTERN));
         assertTrue(matchers.contains("/doc.html"));
+        assertTrue(matchers.contains("/resource/sse"));
         assertFalse(matchers.contains(""));
     }
 
@@ -43,6 +45,19 @@ class SpringSecurityAutoConfigurationTest {
 
         assertFalse(matchers.contains("/auth/logout"));
         assertFalse(matchers.contains("/resource/sse/close"));
+    }
+
+    @Test
+    @DisplayName("resolvePublicMatchers: should expose configured sse connect path only")
+    void resolvePublicMatchersShouldExposeConfiguredSseConnectPathOnly() {
+        SecurityProperties properties = new SecurityProperties();
+        SseProperties sseProperties = new SseProperties();
+        sseProperties.setPath("/events/connect");
+
+        List<String> matchers = SpringSecurityAutoConfiguration.resolvePublicMatchers(properties, sseProperties);
+
+        assertTrue(matchers.contains("/events/connect"));
+        assertFalse(matchers.contains("/events/connect/close"));
     }
 
     @Test

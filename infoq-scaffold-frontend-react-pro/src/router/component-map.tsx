@@ -1,4 +1,6 @@
-import { type ComponentType, type LazyExoticComponent, lazy } from 'react';
+import {type ComponentType, lazy, type LazyExoticComponent} from 'react';
+
+const NotFoundPage = lazy(() => import('@/pages/error/404'));
 
 const componentMap: Record<string, LazyExoticComponent<ComponentType<any>>> = {
   index: lazy(() => import('@/pages/index')),
@@ -54,9 +56,9 @@ const componentMap: Record<string, LazyExoticComponent<ComponentType<any>>> = {
 
 export const resolvePageComponent = (component?: string) => {
   if (!component) {
-    return undefined;
+    return NotFoundPage;
   }
-  return componentMap[component];
+  return componentMap[component] || NotFoundPage;
 };
 
 export default componentMap;

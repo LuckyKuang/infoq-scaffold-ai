@@ -1,10 +1,6 @@
-import { getMenuData } from '@ant-design/pro-components/es/layout/utils/getMenuData';
-import { describe, expect, it, vi } from 'vitest';
-import {
-  buildRouteComponentMap,
-  findFirstConcreteChildPath,
-  toProMenuRoutes,
-} from './route-transform';
+import {getMenuData} from '@ant-design/pro-components/es/layout/utils/getMenuData';
+import {describe, expect, it, vi} from 'vitest';
+import {buildRouteComponentMap, findFirstConcreteChildPath, toProMenuRoutes,} from './route-transform';
 
 describe('toProMenuRoutes', () => {
   it('keeps backend menu titles out of ProLayout intl lookup', () => {
@@ -34,12 +30,37 @@ describe('toProMenuRoutes', () => {
 
     expect(formatMessage).not.toHaveBeenCalled();
     expect(menuData[0]).toMatchObject({
+      key: '/system',
       name: '系统管理',
       locale: false,
     });
     expect(menuData[0]?.children?.[0]).toMatchObject({
+      key: 'user',
       name: '用户管理',
       locale: false,
+    });
+  });
+
+  it('maps activeMenu and breadcrumb visibility metadata for ProLayout', () => {
+    const menuRoutes = toProMenuRoutes([
+      {
+        path: '/system/user/detail',
+        name: 'UserDetail',
+        component: 'system/user/detail',
+        hidden: true,
+        meta: {
+          title: '用户详情',
+          activeMenu: '/system/user',
+          breadcrumb: false,
+        },
+      },
+    ]);
+
+    expect(menuRoutes[0]).toMatchObject({
+      key: '/system/user/detail',
+      hideInMenu: true,
+      hideInBreadcrumb: true,
+      parentKeys: ['/system/user'],
     });
   });
 

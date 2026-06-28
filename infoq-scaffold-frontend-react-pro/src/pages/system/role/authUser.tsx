@@ -1,30 +1,10 @@
-import {
-  CloseOutlined,
-  PlusOutlined,
-  ReloadOutlined,
-  SearchOutlined,
-  StopOutlined,
-} from '@ant-design/icons';
-import {
-  Button,
-  Card,
-  Col,
-  Form,
-  Input,
-  Row,
-  Space,
-  Table,
-  Tooltip,
-} from 'antd';
-import type { ColumnsType } from 'antd/es/table';
-import { useCallback, useEffect, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import {
-  allocatedUserList,
-  authUserCancel,
-  authUserCancelAll,
-} from '@/api/system/role';
-import type { UserQuery, UserVO } from '@/api/system/user/types';
+import {CloseOutlined, PlusOutlined, ReloadOutlined, SearchOutlined, StopOutlined,} from '@ant-design/icons';
+import {Button, Card, Col, Form, Input, Row, Space, Table, Tooltip,} from 'antd';
+import type {ColumnsType} from 'antd/es/table';
+import {useCallback, useEffect, useState} from 'react';
+import {useLocation, useNavigate} from '@umijs/max';
+import {allocatedUserList, authUserCancel, authUserCancelAll,} from '@/api/system/role';
+import type {UserQuery, UserVO} from '@/api/system/user/types';
 import DictTag from '@/components/DictTag';
 import Pagination from '@/components/Pagination';
 import RightToolbar from '@/components/RightToolbar';

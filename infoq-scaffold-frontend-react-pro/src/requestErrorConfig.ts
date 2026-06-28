@@ -1,19 +1,14 @@
-import type { RequestOptions } from '@@/plugin-request/request';
-import type { AxiosResponse, RequestConfig } from '@umijs/max';
-import { getIntl } from '@umijs/max';
+import type {RequestOptions} from '@@/plugin-request/request';
+import type {AxiosResponse, RequestConfig} from '@umijs/max';
+import {history} from '@umijs/max';
 import FileSaver from 'file-saver';
-import { clearAuthState, getToken } from './utils/auth';
-import {
-  decryptBase64,
-  decryptWithAes,
-  encryptBase64,
-  encryptWithAes,
-  generateAesKey,
-} from './utils/crypto';
-import { errorCode } from './utils/errorCode';
-import { decrypt, encrypt } from './utils/jsencrypt';
+import {useUserStore} from './store/modules/user';
+import {getToken} from './utils/auth';
+import {decryptBase64, decryptWithAes, encryptBase64, encryptWithAes, generateAesKey,} from './utils/crypto';
+import {errorCode} from './utils/errorCode';
+import {decrypt, encrypt} from './utils/jsencrypt';
 import modal from './utils/modal';
-import { blobValidate, tansParams } from './utils/scaffold';
+import {blobValidate, tansParams} from './utils/scaffold';
 
 // 错误处理方案： 错误类型
 enum ErrorShowType {
@@ -45,6 +40,8 @@ const encryptHeader = 'encrypt-key';
 const repeatSubmitKey = 'sessionObj';
 const repeatSubmitInterval = 500;
 
+export const isRelogin = { show: false };
+
 const hasOwn = (target: unknown, key: string) =>
   typeof target === 'object' && target !== null && Object.hasOwn(target, key);
 
@@ -67,13 +64,48 @@ const redirectToLogin = () => {
   if (typeof window === 'undefined') {
     return;
   }
-  clearAuthState();
   const loginPath = getLoginPath();
   const currentPath = `${window.location.pathname}${window.location.search}${window.location.hash}`;
   if (window.location.pathname === loginPath) {
     return;
   }
-  window.location.href = `${loginPath}?redirect=${encodeURIComponent(currentPath)}`;
+  history.replace(`${loginPath}?redirect=${encodeURIComponent(currentPath)}`);
+};
+
+const handleUnauthorized = () => {
+  if (isRelogin.show) {
+    return;
+  }
+  isRelogin.show = true;
+  modal
+    .confirm('登录状态已过期，您可以继续留在该页面，或者重新登录')
+    .then(async (ok) => {
+      if (!ok) {
+        isRelogin.show = false;
+        return;
+      }
+      try {
+        useUserStore.getState().clearSession();
+      } finally {
+        isRelogin.show = false;
+        redirectToLogin();
+      }
+    });
+};
+
+const getRequestErrorMessage = (error: any) => {
+  let messageText = error?.message || '请求失败';
+  const status = error?.response?.status;
+  if (messageText === 'Network Error') {
+    messageText = '后端接口连接异常';
+  } else if (messageText.includes('timeout')) {
+    messageText = '系统接口请求超时';
+  } else if (status) {
+    messageText = `系统接口${status}异常`;
+  } else if (messageText.includes('Request failed with status code')) {
+    messageText = `系统接口${messageText.slice(-3)}异常`;
+  }
+  return messageText;
 };
 
 const shouldSkipToken = (headers: Record<string, unknown>) =>
@@ -219,7 +251,13 @@ export const errorConfig: RequestConfig = {
       if (!success) {
         const error: any = new Error(errorMessage);
         error.name = 'BizError';
-        error.info = { errorCode, errorMessage, showType, data };
+        error.info = {
+          errorCode,
+          errorMessage,
+          showType:
+            errorCode === 401 ? ErrorShowType.REDIRECT : showType,
+          data,
+        };
         throw error; // 抛出自制的错误
       }
     },
@@ -248,7 +286,7 @@ export const errorConfig: RequestConfig = {
               });
               break;
             case ErrorShowType.REDIRECT:
-              redirectToLogin();
+              handleUnauthorized();
               break;
             default:
               modal.msgError(errorMessage);
@@ -257,19 +295,15 @@ export const errorConfig: RequestConfig = {
       } else if (error.response) {
         // Axios 的错误
         // 请求成功发出且服务器也响应了状态码，但状态代码超出了 2xx 的范围
-        modal.msgError(`Response status:${error.response.status}`);
-      } else if (typeof navigator !== 'undefined' && !navigator.onLine) {
-        modal.msgError(
-          getIntl().formatMessage({
-            id: 'app.request.offline',
-            defaultMessage:
-              'Network unavailable. Please check your connection and try again.',
-          }),
-        );
+        if (error.response.status === 401) {
+          handleUnauthorized();
+          return;
+        }
+        modal.msgError(getRequestErrorMessage(error));
       } else if (error.request) {
-        modal.msgError('None response! Please retry.');
+        modal.msgError(getRequestErrorMessage(error));
       } else {
-        modal.msgError('Request error, please retry.');
+        modal.msgError(getRequestErrorMessage(error));
       }
     },
   },

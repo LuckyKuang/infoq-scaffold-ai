@@ -72,6 +72,11 @@ function printAdminProbeHelp() {
   console.log(`Usage:
   pnpm --dir .codex/skills/infoq-browser-automate/scripts run playwright-cli admin-route-probe [options]
 
+Behavior:
+  First tries the fast backend login check. If the backend reports
+  captchaEnabled=true, automatically falls back to
+  infoq-admin-e2e/scripts/captcha_login.mjs for OCR captcha login.
+
 Options:
   --frontend-origin <origin>
   --route <route>

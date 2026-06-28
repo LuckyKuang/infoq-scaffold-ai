@@ -119,7 +119,7 @@ infoq-scaffold-ai
 - Ant Design 与 Element Plus 组件 API 参考：`infoq-component-reference`
 - 版本升级、发布前检查、package / 小程序 manifest 版本字段同步：`infoq-release-ops`
 
-其中浏览器自动化默认路径已经收敛为“仓库脚本 + skill 内本地 Playwright 依赖”。`playwright` MCP 只用于临时交互探索，`chrome-devtools` MCP 只用于 Network / Console / Performance 深度诊断。
+其中浏览器自动化默认路径已经收敛为“仓库脚本 + skill 内本地 Playwright 依赖”。`admin-route-probe` 会先走快速 token 获取，遇到后端验证码开启时自动复用 `infoq-admin-e2e/scripts/captcha_login.mjs` 识别验证码并登录。`playwright` MCP 只用于临时交互探索，`chrome-devtools` MCP 只用于 Network / Console / Performance 深度诊断。
 
 React / Vue 与 admin / weapp 差异通过目标 skill 的 `references/*` 或 `--client react|vue` 参数区分，不再按技术栈碎片化拆 skill。
 
@@ -212,7 +212,7 @@ node .codex/scripts/backend_mvn.mjs -- clean install -DskipTests
 java -jar infoq-scaffold-backend/infoq-admin/target/infoq-admin.jar --spring.profiles.active=local
 ```
 
-真实验证码登录和动态路由 smoke 使用 `infoq-admin-e2e`。仅做快速 token 或受保护路由诊断时，才显式使用 `--allow-captcha-disabled` 或手动启动关闭验证码的诊断后端。
+真实验证码登录和动态路由 smoke 使用 `infoq-admin-e2e`。仅做后端快速 token 诊断时，才显式使用 `--allow-captcha-disabled` 或手动启动关闭验证码的诊断后端；受保护路由探测遇到验证码时会自动调用 OCR 登录脚本。
 
 默认本地访问：
 
@@ -257,11 +257,13 @@ node .codex/skills/infoq-frontend-verify/scripts/start_admin_dev_stack.mjs --cli
 如果要在不关闭验证码的前提下执行真实验证码登录 + 管理端动态路由 smoke：
 
 ```bash
+node .codex/skills/infoq-admin-e2e/scripts/captcha_login.mjs --backend-url http://127.0.0.1:8080 --print-token
 node .codex/skills/infoq-admin-e2e/scripts/run_admin_e2e.mjs --client vue --route-limit 1
 node .codex/skills/infoq-admin-e2e/scripts/run_admin_e2e.mjs --client react --route-limit 1
+node .codex/skills/infoq-admin-e2e/scripts/run_admin_e2e.mjs --client react-pro --route-limit 1
 ```
 
-`run_admin_e2e.mjs` 默认会在完成、失败或中断后停止本次 skill 启动的后端和管理端 dev server；只有成功且需要保留联调栈时才显式传 `--keep-stack-after`，失败或中断仍会关闭 owned 进程。运行态状态文件按 client 保存在 `doc/tmp/infoq-admin-e2e/stack/<vue|react>/state.json`。
+`captcha_login.mjs` 是仓库内真实验证码 token 获取入口，封装 `/auth/code`、`ddddocr`、算术验证码归一化和加密 `/auth/login`，证据写入 `doc/tmp/infoq-admin-e2e/captcha-login/<run-id>/`。`run_admin_e2e.mjs` 默认会在完成、失败或中断后停止本次 skill 启动的后端和管理端 dev server；只有成功且需要保留联调栈时才显式传 `--keep-stack-after`，失败或中断仍会关闭 owned 进程。运行态状态文件按 client 保存在 `doc/tmp/infoq-admin-e2e/stack/<vue|react|react-pro>/state.json`。
 
 如果要先生成 React/Vue 管理端 Web 自动化测试矩阵：
 

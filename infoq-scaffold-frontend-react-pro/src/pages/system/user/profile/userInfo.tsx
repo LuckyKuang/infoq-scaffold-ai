@@ -1,6 +1,6 @@
 import { Button, Form, Input, Radio, Space } from 'antd';
 import { useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from '@umijs/max';
 import { getUserProfile, updateUserProfile } from '@/api/system/user';
 import { assertUserProfileData } from '@/api/system/user/guards';
 import type { UserVO } from '@/api/system/user/types';

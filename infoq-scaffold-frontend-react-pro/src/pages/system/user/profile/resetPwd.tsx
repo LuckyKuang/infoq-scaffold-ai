@@ -1,8 +1,8 @@
-import { Button, Form, Input, Space } from 'antd';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { updateUserPwd } from '@/api/system/user';
-import type { ResetPwdForm } from '@/api/system/user/types';
-import { useTagsViewStore } from '@/store/modules/tagsView';
+import {Button, Form, Input, Space} from 'antd';
+import {useLocation, useNavigate} from '@umijs/max';
+import {updateUserPwd} from '@/api/system/user';
+import type {ResetPwdForm} from '@/api/system/user/types';
+import {useTagsViewStore} from '@/store/modules/tagsView';
 import modal from '@/utils/modal';
 
 const initialValues: ResetPwdForm = {

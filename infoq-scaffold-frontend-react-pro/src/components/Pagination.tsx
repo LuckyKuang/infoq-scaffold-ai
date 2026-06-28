@@ -1,4 +1,4 @@
-import { Pagination as AntPagination } from 'antd';
+import {Pagination as AntPagination} from 'antd';
 
 export type PaginationPayload = {
   page: number;
@@ -41,13 +41,8 @@ export default function Pagination({
         pageSizeOptions={pageSizes}
         showTotal={(currentTotal) => `共 ${currentTotal} 条`}
         onChange={(nextPage, nextSize) => {
-          onPageChange?.({
-            page: nextPage,
-            limit: nextSize,
-          });
-        }}
-        onShowSizeChange={(nextPage, nextSize) => {
-          const safePage = nextPage * nextSize > total ? 1 : nextPage;
+          const safePage =
+            nextSize !== limit && nextPage * nextSize > total ? 1 : nextPage;
           onPageChange?.({
             page: safePage,
             limit: nextSize,

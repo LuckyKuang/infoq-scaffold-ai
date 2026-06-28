@@ -10,6 +10,16 @@ const registerPageMocks = vi.hoisted(() => ({
   checkInviteCode: vi.fn(),
 }));
 
+vi.mock('@umijs/max', async () => {
+  const router = await vi.importActual<typeof import('react-router-dom')>(
+    'react-router-dom',
+  );
+  return {
+    Link: router.Link,
+    useNavigate: router.useNavigate,
+  };
+});
+
 vi.mock('@/api/login', () => ({
   getCodeImg: registerPageMocks.getCodeImg,
   register: registerPageMocks.register,

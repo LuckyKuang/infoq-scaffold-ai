@@ -2,6 +2,7 @@ package cc.infoq.common.security.config;
 
 import cc.infoq.common.security.auth.*;
 import cc.infoq.common.security.config.properties.SecurityProperties;
+import cc.infoq.common.security.config.properties.SseProperties;
 import cc.infoq.common.security.filter.SecurityTokenAuthenticationFilter;
 import cc.infoq.common.security.handler.SecurityAccessDeniedHandler;
 import cc.infoq.common.security.handler.SecurityAuthenticationEntryPoint;
@@ -32,10 +33,12 @@ import java.util.Set;
 @AutoConfiguration(before = SecurityAutoConfiguration.class)
 @EnableWebSecurity
 @EnableMethodSecurity
-@EnableConfigurationProperties({SecurityProperties.class, SecurityTokenProperties.class})
+@EnableConfigurationProperties({SecurityProperties.class, SecurityTokenProperties.class, SseProperties.class})
 public class SpringSecurityAutoConfiguration {
 
     static final String STRICT_AUTHENTICATION_PROPERTY = "security.spring-security.strict-authentication";
+
+    private static final String DEFAULT_SSE_PATH = "/resource/sse";
 
     private static final List<String> DEFAULT_PUBLIC_MATCHERS = List.of(
         "/",
@@ -109,9 +112,10 @@ public class SpringSecurityAutoConfiguration {
                                                    SecurityAuthenticationEntryPoint authenticationEntryPoint,
                                                    SecurityAccessDeniedHandler accessDeniedHandler,
                                                    SecurityProperties securityProperties,
+                                                   SseProperties sseProperties,
                                                    ObjectProvider<SecurityTokenAuthenticationFilter> tokenAuthenticationFilter,
                                                    Environment environment) throws Exception {
-        List<String> publicMatchers = resolvePublicMatchers(securityProperties);
+        List<String> publicMatchers = resolvePublicMatchers(securityProperties, sseProperties);
         boolean strictAuthentication = isStrictAuthentication(environment);
         http
             .csrf(AbstractHttpConfigurer::disable)
@@ -139,6 +143,10 @@ public class SpringSecurityAutoConfiguration {
     }
 
     static List<String> resolvePublicMatchers(SecurityProperties securityProperties) {
+        return resolvePublicMatchers(securityProperties, new SseProperties());
+    }
+
+    static List<String> resolvePublicMatchers(SecurityProperties securityProperties, SseProperties sseProperties) {
         Set<String> matchers = new LinkedHashSet<>();
         if (securityProperties != null && securityProperties.getExcludes() != null) {
             for (String exclude : securityProperties.getExcludes()) {
@@ -148,7 +156,15 @@ public class SpringSecurityAutoConfiguration {
             }
         }
         matchers.addAll(DEFAULT_PUBLIC_MATCHERS);
+        matchers.add(resolveSseConnectPath(sseProperties));
         return new ArrayList<>(matchers);
+    }
+
+    private static String resolveSseConnectPath(SseProperties sseProperties) {
+        if (sseProperties == null || sseProperties.getPath() == null || sseProperties.getPath().isBlank()) {
+            return DEFAULT_SSE_PATH;
+        }
+        return sseProperties.getPath();
     }
 
     static boolean isStrictAuthentication(Environment environment) {

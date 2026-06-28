@@ -27,16 +27,13 @@ import {
   Tooltip,
   Tree,
 } from 'antd';
-import type { ColumnsType } from 'antd/es/table';
-import type { DataNode } from 'antd/es/tree';
-import type { Dayjs } from 'dayjs';
-import { useCallback, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import {
-  treeselect as menuTreeselect,
-  roleMenuTreeselect,
-} from '@/api/system/menu';
-import type { MenuTreeOption } from '@/api/system/menu/types';
+import type {ColumnsType} from 'antd/es/table';
+import type {DataNode} from 'antd/es/tree';
+import type {Dayjs} from 'dayjs';
+import {useCallback, useState} from 'react';
+import {useNavigate} from '@umijs/max';
+import {roleMenuTreeselect, treeselect as menuTreeselect,} from '@/api/system/menu';
+import type {MenuTreeOption} from '@/api/system/menu/types';
 import {
   addRole,
   changeRoleStatus,
@@ -47,18 +44,14 @@ import {
   listRole,
   updateRole,
 } from '@/api/system/role';
-import type {
-  RoleDeptTree,
-  RoleForm,
-  RoleQuery,
-  RoleVO,
-} from '@/api/system/role/types';
+import type {RoleDeptTree, RoleForm, RoleQuery, RoleVO,} from '@/api/system/role/types';
 import Pagination from '@/components/Pagination';
 import RightToolbar from '@/components/RightToolbar';
+import useInitialLoadEffect from '@/hooks/useInitialLoadEffect';
 import useDictOptions from '@/hooks/useDictOptions';
 import modal from '@/utils/modal';
-import { download } from '@/utils/request';
-import { addDateRange } from '@/utils/scaffold';
+import {download} from '@/utils/request';
+import {addDateRange} from '@/utils/scaffold';
 
 type TreeOption = MenuTreeOption;
 type RoleTreeOption = TreeOption | RoleDeptTree['depts'][number];
@@ -140,10 +133,7 @@ export default function RolePage() {
   const dict = useDictOptions('sys_normal_disable');
 
   const loadList = useCallback(
-    async (
-      nextQuery: RoleQuery = query,
-      nextRange: [Dayjs, Dayjs] | null = dateRange,
-    ) => {
+    async (nextQuery: RoleQuery, nextRange: [Dayjs, Dayjs] | null) => {
       setLoading(true);
       try {
         const response = await listRole(
@@ -155,7 +145,7 @@ export default function RolePage() {
         setLoading(false);
       }
     },
-    [dateRange, query],
+    [],
   );
 
   const loadMenuTree = async (roleId?: string | number) => {
@@ -177,7 +167,7 @@ export default function RolePage() {
     setCheckedDeptKeys(response.data.checkedKeys.map(String));
   };
 
-  useEffect(() => {
+  useInitialLoadEffect(() => {
     loadList(initialQuery, null);
   }, [loadList]);
 
@@ -215,7 +205,7 @@ export default function RolePage() {
             }
             await changeRoleStatus(record.roleId, nextStatus);
             modal.msgSuccess('状态修改成功');
-            loadList();
+            loadList(query, dateRange);
           }}
         />
       ),
@@ -296,7 +286,7 @@ export default function RolePage() {
     await delRole(target);
     modal.msgSuccess('删除成功');
     setSelectedIds([]);
-    loadList();
+    loadList(query, dateRange);
   };
 
   const handleSubmit = async () => {
@@ -314,7 +304,7 @@ export default function RolePage() {
       }
       modal.msgSuccess('操作成功');
       setDialogOpen(false);
-      loadList();
+      loadList(query, dateRange);
     } finally {
       setSubmitting(false);
     }
@@ -498,7 +488,7 @@ export default function RolePage() {
             <RightToolbar
               showSearch={showSearch}
               onShowSearchChange={setShowSearch}
-              onQueryTable={() => loadList()}
+              onQueryTable={() => loadList(query, dateRange)}
             />
           </div>
         </div>
@@ -607,7 +597,7 @@ export default function RolePage() {
           });
           modal.msgSuccess('修改成功');
           setScopeOpen(false);
-          loadList();
+          loadList(query, dateRange);
         }}
       >
         <Form form={form} layout="vertical">

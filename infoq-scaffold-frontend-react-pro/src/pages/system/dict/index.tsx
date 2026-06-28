@@ -6,41 +6,19 @@ import {
   ReloadOutlined,
   SearchOutlined,
 } from '@ant-design/icons';
-import {
-  Button,
-  Card,
-  Col,
-  DatePicker,
-  Form,
-  Input,
-  Modal,
-  Row,
-  Space,
-  Table,
-  Tooltip,
-} from 'antd';
-import type { ColumnsType } from 'antd/es/table';
-import type { Dayjs } from 'dayjs';
-import { useCallback, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import {
-  addType,
-  delType,
-  getType,
-  listType,
-  refreshCache,
-  updateType,
-} from '@/api/system/dict/type';
-import type {
-  DictTypeForm,
-  DictTypeQuery,
-  DictTypeVO,
-} from '@/api/system/dict/type/types';
+import {Button, Card, Col, DatePicker, Form, Input, Modal, Row, Space, Table, Tooltip,} from 'antd';
+import type {ColumnsType} from 'antd/es/table';
+import type {Dayjs} from 'dayjs';
+import {useCallback, useState} from 'react';
+import {useNavigate} from '@umijs/max';
+import {addType, delType, getType, listType, refreshCache, updateType,} from '@/api/system/dict/type';
+import type {DictTypeForm, DictTypeQuery, DictTypeVO,} from '@/api/system/dict/type/types';
 import Pagination from '@/components/Pagination';
 import RightToolbar from '@/components/RightToolbar';
+import useInitialLoadEffect from '@/hooks/useInitialLoadEffect';
 import modal from '@/utils/modal';
-import { download } from '@/utils/request';
-import { addDateRange } from '@/utils/scaffold';
+import {download} from '@/utils/request';
+import {addDateRange} from '@/utils/scaffold';
 
 const initialQuery: DictTypeQuery = {
   pageNum: 1,
@@ -94,7 +72,7 @@ export default function DictTypePage() {
     [],
   );
 
-  useEffect(() => {
+  useInitialLoadEffect(() => {
     loadList(initialQuery, null);
   }, [loadList]);
 

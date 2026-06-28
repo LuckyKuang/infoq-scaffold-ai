@@ -6,33 +6,22 @@ import {
   SearchOutlined,
   WarningOutlined,
 } from '@ant-design/icons';
-import {
-  Button,
-  Card,
-  Col,
-  DatePicker,
-  Form,
-  Input,
-  Row,
-  Select,
-  Space,
-  Table,
-  Tooltip,
-} from 'antd';
-import type { ColumnsType } from 'antd/es/table';
-import type { SorterResult, SortOrder } from 'antd/es/table/interface';
-import type { Dayjs } from 'dayjs';
-import { useCallback, useEffect, useState } from 'react';
-import { cleanOperLog, delOperLog, list } from '@/api/monitor/operLog';
-import type { OperLogQuery, OperLogVO } from '@/api/monitor/operLog/types';
+import {Button, Card, Col, DatePicker, Form, Input, Row, Select, Space, Table, Tooltip,} from 'antd';
+import type {ColumnsType} from 'antd/es/table';
+import type {SorterResult, SortOrder} from 'antd/es/table/interface';
+import type {Dayjs} from 'dayjs';
+import {useCallback, useState} from 'react';
+import {cleanOperLog, delOperLog, list} from '@/api/monitor/operLog';
+import type {OperLogQuery, OperLogVO} from '@/api/monitor/operLog/types';
 import DictTag from '@/components/DictTag';
 import Pagination from '@/components/Pagination';
 import RightToolbar from '@/components/RightToolbar';
+import useInitialLoadEffect from '@/hooks/useInitialLoadEffect';
 import useDictOptions from '@/hooks/useDictOptions';
 import OperInfoDialog from '@/pages/monitor/operLog/oper-info-dialog';
 import modal from '@/utils/modal';
-import { download } from '@/utils/request';
-import { addDateRange } from '@/utils/scaffold';
+import {download} from '@/utils/request';
+import {addDateRange} from '@/utils/scaffold';
 
 const initialQuery: OperLogQuery = {
   pageNum: 1,
@@ -104,7 +93,7 @@ export default function OperLogPage() {
     [],
   );
 
-  useEffect(() => {
+  useInitialLoadEffect(() => {
     loadList(initialQuery, null);
   }, [loadList]);
 

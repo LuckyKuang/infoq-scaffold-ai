@@ -6,6 +6,7 @@ import {runPlaywrightFlow} from './playwright_core.mjs';
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(scriptDir, '..', '..', '..', '..');
 const loginScript = path.join(repoRoot, '.codex', 'skills', 'infoq-backend-verify', 'scripts', 'login_check.mjs');
+const captchaLoginScript = path.join(repoRoot, '.codex', 'skills', 'infoq-admin-e2e', 'scripts', 'captcha_login.mjs');
 
 function formatTimestamp(date = new Date()) {
   const pad = (value) => String(value).padStart(2, '0');
@@ -52,13 +53,46 @@ function buildDefaultEvidencePath(route, extension) {
   return path.join(repoRoot, 'test-results', 'browser-automation', `${normalizedRoute}.${formatTimestamp()}.${extension}`);
 }
 
-function acquireToken({
-  backendUrl = 'http://127.0.0.1:8080',
-  clientId = 'e5cd7e4891bf95d1d19206ce24a7b32e',
-  username = '',
-  password = ''
-}) {
-  const result = spawnSync(process.execPath, [loginScript], {
+function collectProcessOutput(result) {
+  return [result.stdout, result.stderr, result.error?.message]
+    .filter(Boolean)
+    .map((value) => value.trim())
+    .filter(Boolean)
+    .join('\n');
+}
+
+function parseTokenOutput(output, label) {
+  const tokenLine = output
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line.startsWith('TOKEN='))
+    .at(-1);
+
+  if (!tokenLine) {
+    throw new Error(`${label} succeeded without TOKEN output.\n${output}`);
+  }
+
+  const token = tokenLine.replace(/^TOKEN=/, '');
+  if (!token) {
+    throw new Error(`${label} returned an empty token.\n${output}`);
+  }
+
+  return token;
+}
+
+function isCaptchaEnabledFailure(output) {
+  const normalized = String(output || '').toLowerCase();
+  return (
+    output.includes('captchaEnabled=true') ||
+    output.includes('captchaEnabled = true') ||
+    normalized.includes('captcha enabled') ||
+    normalized.includes('real captcha login') ||
+    normalized.includes('use infoq-admin-e2e')
+  );
+}
+
+function runFastLoginCheck({backendUrl, clientId, username, password}) {
+  return spawnSync(process.execPath, [loginScript], {
     cwd: repoRoot,
     env: {
       ...process.env,
@@ -70,35 +104,68 @@ function acquireToken({
     },
     encoding: 'utf8'
   });
+}
 
-  const loginOutput = [result.stdout, result.stderr]
-    .filter(Boolean)
-    .map((value) => value.trim())
-    .filter(Boolean)
-    .join('\n');
+function runCaptchaLogin({backendUrl, clientId, username, password}) {
+  const runId = `admin-route-probe-${formatTimestamp()}-${process.pid}`;
+  const args = [
+    captchaLoginScript,
+    '--backend-url',
+    backendUrl,
+    '--client-id',
+    clientId,
+    '--run-id',
+    runId,
+    '--print-token'
+  ];
+  if (username && password) {
+    args.push('--username', username, '--password', password);
+  }
 
-  if (result.status !== 0) {
+  const result = spawnSync(process.execPath, args, {
+    cwd: repoRoot,
+    env: {
+      ...process.env,
+      BACKEND_URL: backendUrl,
+      CLIENT_ID: clientId,
+      USERNAME: username,
+      PASSWORD: password
+    },
+    encoding: 'utf8'
+  });
+  return {result, runId};
+}
+
+function acquireToken({
+  backendUrl = 'http://127.0.0.1:8080',
+  clientId = 'e5cd7e4891bf95d1d19206ce24a7b32e',
+  username = '',
+  password = ''
+}) {
+  const fastResult = runFastLoginCheck({backendUrl, clientId, username, password});
+  const fastOutput = collectProcessOutput(fastResult);
+
+  if (fastResult.status === 0) {
+    return parseTokenOutput(fastOutput, 'Login check');
+  }
+
+  if (!isCaptchaEnabledFailure(fastOutput)) {
     throw new Error(
-      `Failed to acquire admin token from ${backendUrl}. Ensure backend is reachable and can be logged in without captcha for this fast route probe. For real captcha E2E, use infoq-admin-e2e.\n${loginOutput}`
+      `Failed to acquire admin token from ${backendUrl}. Ensure backend is reachable and credentials are valid.\n${fastOutput}`
     );
   }
 
-  const tokenLine = loginOutput
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter((line) => line.startsWith('TOKEN='))
-    .at(-1);
-
-  if (!tokenLine) {
-    throw new Error(`Login check succeeded without TOKEN output.\n${loginOutput}`);
+  console.log('[admin-probe] fast login check reported captchaEnabled=true; falling back to OCR captcha login.');
+  const {result: captchaResult, runId} = runCaptchaLogin({backendUrl, clientId, username, password});
+  const captchaOutput = collectProcessOutput(captchaResult);
+  if (captchaResult.status !== 0) {
+    throw new Error(
+      `Failed to acquire admin token from ${backendUrl} with OCR captcha login. Evidence run id: ${runId}\n` +
+      `Fast login output:\n${fastOutput}\n\nCaptcha login output:\n${captchaOutput}`
+    );
   }
-
-  const token = tokenLine.replace(/^TOKEN=/, '');
-  if (!token) {
-    throw new Error(`Parsed token is empty.\n${loginOutput}`);
-  }
-
-  return token;
+  console.log(`[admin-probe] OCR captcha login evidence: doc/tmp/infoq-admin-e2e/captcha-login/${runId}/`);
+  return parseTokenOutput(captchaOutput, 'Captcha login');
 }
 
 async function fetchRoutes(backendUrl, clientId, token) {

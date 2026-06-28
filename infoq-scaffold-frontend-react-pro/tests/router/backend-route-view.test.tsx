@@ -1,5 +1,5 @@
-import { render, screen } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import {render, screen} from '@testing-library/react';
+import {beforeEach, describe, expect, it, vi} from 'vitest';
 import BackendRouteView from '@/pages/BackendRouteView';
 
 const locationState = vi.hoisted(() => ({
@@ -14,6 +14,7 @@ const modelState = vi.hoisted(() => ({
 }));
 
 vi.mock('@umijs/max', () => ({
+  Link: ({ children }: { children: React.ReactNode }) => children,
   Navigate: ({ to }: { to: string }) => <div data-testid="navigate">{to}</div>,
   useLocation: () => locationState,
   useModel: () => modelState,
@@ -41,11 +42,11 @@ describe('pages/BackendRouteView', () => {
     modelState.initialState.routeComponentMap = {};
   });
 
-  it('shows an explicit migration warning for unmapped backend components', () => {
+  it('falls back to the legacy 404 page for unmapped backend components', async () => {
     render(<BackendRouteView />);
 
-    expect(screen.getByText('页面待迁移')).toBeInTheDocument();
-    expect(screen.getByText('system/missing/index')).toBeInTheDocument();
+    expect(await screen.findByText('404错误!')).toBeInTheDocument();
+    expect(screen.getByText('找不到网页！')).toBeInTheDocument();
   });
 
   it('redirects ParentView menu groups to the first concrete child route', () => {

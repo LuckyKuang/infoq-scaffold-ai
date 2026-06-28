@@ -1,43 +1,19 @@
-import {
-  DeleteOutlined,
-  DownloadOutlined,
-  ReloadOutlined,
-  SearchOutlined,
-  UnlockOutlined,
-} from '@ant-design/icons';
-import {
-  Button,
-  Card,
-  Col,
-  DatePicker,
-  Form,
-  Input,
-  Row,
-  Select,
-  Space,
-  Table,
-} from 'antd';
-import type { ColumnsType } from 'antd/es/table';
-import type { SorterResult, SortOrder } from 'antd/es/table/interface';
-import type { Dayjs } from 'dayjs';
-import { useCallback, useEffect, useState } from 'react';
-import {
-  cleanLoginInfo,
-  delLoginInfo,
-  list,
-  unlockLoginInfo,
-} from '@/api/monitor/loginInfo';
-import type {
-  LoginInfoQuery,
-  LoginInfoVO,
-} from '@/api/monitor/loginInfo/types';
+import {DeleteOutlined, DownloadOutlined, ReloadOutlined, SearchOutlined, UnlockOutlined,} from '@ant-design/icons';
+import {Button, Card, Col, DatePicker, Form, Input, Row, Select, Space, Table,} from 'antd';
+import type {ColumnsType} from 'antd/es/table';
+import type {SorterResult, SortOrder} from 'antd/es/table/interface';
+import type {Dayjs} from 'dayjs';
+import {useCallback, useState} from 'react';
+import {cleanLoginInfo, delLoginInfo, list, unlockLoginInfo,} from '@/api/monitor/loginInfo';
+import type {LoginInfoQuery, LoginInfoVO,} from '@/api/monitor/loginInfo/types';
 import DictTag from '@/components/DictTag';
 import Pagination from '@/components/Pagination';
 import RightToolbar from '@/components/RightToolbar';
+import useInitialLoadEffect from '@/hooks/useInitialLoadEffect';
 import useDictOptions from '@/hooks/useDictOptions';
 import modal from '@/utils/modal';
-import { download } from '@/utils/request';
-import { addDateRange } from '@/utils/scaffold';
+import {download} from '@/utils/request';
+import {addDateRange} from '@/utils/scaffold';
 
 type LoginInfoRow = LoginInfoVO & {
   clientKey?: string;
@@ -111,7 +87,7 @@ export default function LoginInfoPage() {
     [],
   );
 
-  useEffect(() => {
+  useInitialLoadEffect(() => {
     loadList(initialQuery, null);
   }, [loadList]);
 

@@ -1,20 +1,33 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { errorConfig } from './requestErrorConfig';
+import {beforeEach, describe, expect, it, vi} from 'vitest';
+import {errorConfig, isRelogin} from './requestErrorConfig';
 
 const mockModal = vi.hoisted(() => ({
+  confirm: vi.fn(),
   msgWarning: vi.fn(),
   msgError: vi.fn(),
   notifyError: vi.fn(),
 }));
+const mockClearSession = vi.hoisted(() => vi.fn());
+const mockLogout = vi.hoisted(() => vi.fn());
+const mockHistoryReplace = vi.hoisted(() => vi.fn());
 
 vi.mock('@/utils/modal', () => ({
   default: mockModal,
 }));
 
 vi.mock('@umijs/max', () => ({
-  getIntl: vi.fn(() => ({
-    formatMessage: vi.fn(({ defaultMessage }) => defaultMessage),
-  })),
+  history: {
+    replace: mockHistoryReplace,
+  },
+}));
+
+vi.mock('./store/modules/user', () => ({
+  useUserStore: {
+    getState: () => ({
+      clearSession: mockClearSession,
+      logout: mockLogout,
+    }),
+  },
 }));
 
 describe('requestErrorConfig', () => {
@@ -25,8 +38,12 @@ describe('requestErrorConfig', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    isRelogin.show = false;
     localStorage.clear();
     process.env.VITE_APP_CLIENT_ID = 'test-client-id';
+    mockModal.confirm.mockResolvedValue(true);
+    mockLogout.mockResolvedValue(undefined);
+    window.history.replaceState({}, '', '/system/user?page=1');
   });
 
   describe('errorThrower', () => {
@@ -105,6 +122,24 @@ describe('requestErrorConfig', () => {
         expect(error.info.data).toEqual({ detail: 'more info' });
       }
     });
+
+    it('should map response errorCode 401 to redirect handling', () => {
+      const response = {
+        success: false,
+        data: null,
+        errorCode: 401,
+        errorMessage: 'Unauthorized',
+      };
+
+      expect.assertions(3);
+      try {
+        errorThrower(response);
+      } catch (error: any) {
+        expect(error.name).toBe('BizError');
+        expect(error.info.errorCode).toBe(401);
+        expect(error.info.showType).toBe(9);
+      }
+    });
   });
 
   describe('errorHandler', () => {
@@ -178,7 +213,7 @@ describe('requestErrorConfig', () => {
       });
     });
 
-    it('should handle REDIRECT showType', () => {
+    it('should handle REDIRECT showType with legacy relogin confirm', async () => {
       const error: any = new Error('Redirect');
       error.name = 'BizError';
       error.info = {
@@ -189,10 +224,41 @@ describe('requestErrorConfig', () => {
 
       errorHandler(error, {});
 
-      // REDIRECT 分支不应触发任何消息/通知提示
       expect(mockModal.msgWarning).not.toHaveBeenCalled();
       expect(mockModal.msgError).not.toHaveBeenCalled();
       expect(mockModal.notifyError).not.toHaveBeenCalled();
+      expect(mockModal.confirm).toHaveBeenCalledWith(
+        '登录状态已过期，您可以继续留在该页面，或者重新登录',
+      );
+      await Promise.resolve();
+      await Promise.resolve();
+      expect(mockClearSession).toHaveBeenCalled();
+      expect(mockLogout).not.toHaveBeenCalled();
+      expect(mockHistoryReplace).toHaveBeenCalledWith(
+        `/login?redirect=${encodeURIComponent('/system/user?page=1')}`,
+      );
+    });
+
+    it('should redirect to login on axios 401 response errors', async () => {
+      const error: any = new Error('Request failed with status code 401');
+      error.response = {
+        status: 401,
+        data: {},
+      };
+
+      errorHandler(error, {});
+
+      expect(mockModal.msgError).not.toHaveBeenCalled();
+      expect(mockModal.confirm).toHaveBeenCalledWith(
+        '登录状态已过期，您可以继续留在该页面，或者重新登录',
+      );
+      await Promise.resolve();
+      await Promise.resolve();
+      expect(mockClearSession).toHaveBeenCalled();
+      expect(mockLogout).not.toHaveBeenCalled();
+      expect(mockHistoryReplace).toHaveBeenCalledWith(
+        `/login?redirect=${encodeURIComponent('/system/user?page=1')}`,
+      );
     });
 
     it('should handle default case for unknown showType', () => {
@@ -218,42 +284,25 @@ describe('requestErrorConfig', () => {
 
       errorHandler(error, {});
 
-      expect(mockModal.msgError).toHaveBeenCalledWith('Response status:500');
+      expect(mockModal.msgError).toHaveBeenCalledWith('系统接口500异常');
     });
 
-    it('should handle offline error', () => {
-      const error: any = new Error('Network error');
-      error.request = {};
-
-      const originalOnLine = navigator.onLine;
-      Object.defineProperty(navigator, 'onLine', {
-        writable: true,
-        value: false,
-      });
-
-      try {
-        errorHandler(error, {});
-
-        expect(mockModal.msgError).toHaveBeenCalledWith(
-          'Network unavailable. Please check your connection and try again.',
-        );
-      } finally {
-        Object.defineProperty(navigator, 'onLine', {
-          writable: true,
-          value: originalOnLine,
-        });
-      }
-    });
-
-    it('should handle request error with no response', () => {
-      const error: any = new Error('Request error');
+    it('should handle network error with legacy message', () => {
+      const error: any = new Error('Network Error');
       error.request = {};
 
       errorHandler(error, {});
 
-      expect(mockModal.msgError).toHaveBeenCalledWith(
-        'None response! Please retry.',
-      );
+      expect(mockModal.msgError).toHaveBeenCalledWith('后端接口连接异常');
+    });
+
+    it('should handle timeout error with legacy message', () => {
+      const error: any = new Error('timeout of 50000ms exceeded');
+      error.request = {};
+
+      errorHandler(error, {});
+
+      expect(mockModal.msgError).toHaveBeenCalledWith('系统接口请求超时');
     });
 
     it('should handle generic error', () => {
@@ -261,9 +310,7 @@ describe('requestErrorConfig', () => {
 
       errorHandler(error, {});
 
-      expect(mockModal.msgError).toHaveBeenCalledWith(
-        'Request error, please retry.',
-      );
+      expect(mockModal.msgError).toHaveBeenCalledWith('Generic error');
     });
   });
 

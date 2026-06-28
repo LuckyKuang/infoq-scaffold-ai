@@ -1,13 +1,23 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { App as AntdApp } from 'antd';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import {fireEvent, render, screen, waitFor} from '@testing-library/react';
+import {App as AntdApp} from 'antd';
+import {MemoryRouter, Route, Routes} from 'react-router-dom';
+import {beforeEach, describe, expect, it, vi} from 'vitest';
 
 const forgotPasswordPageMocks = vi.hoisted(() => ({
   forgotPassword: vi.fn(),
   getCodeImg: vi.fn(),
   sendEmailCode: vi.fn(),
 }));
+
+vi.mock('@umijs/max', async () => {
+  const router = await vi.importActual<typeof import('react-router-dom')>(
+    'react-router-dom',
+  );
+  return {
+    Link: router.Link,
+    useNavigate: router.useNavigate,
+  };
+});
 
 vi.mock('@/api/login', () => ({
   forgotPassword: forgotPasswordPageMocks.forgotPassword,

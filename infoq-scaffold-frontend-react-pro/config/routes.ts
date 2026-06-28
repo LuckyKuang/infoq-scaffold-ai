@@ -41,16 +41,12 @@ export default [
     component: './index',
   },
   {
-    path: '/welcome',
-    redirect: '/index',
-  },
-  {
     path: '/',
     redirect: '/index',
   },
   {
     path: '/404',
-    component: './exception/404',
+    component: './error/404',
     layout: false,
   },
   {

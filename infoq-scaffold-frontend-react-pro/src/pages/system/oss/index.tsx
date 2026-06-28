@@ -8,33 +8,21 @@ import {
   SettingOutlined,
   UploadOutlined,
 } from '@ant-design/icons';
-import {
-  Button,
-  Card,
-  Col,
-  DatePicker,
-  Form,
-  Image,
-  Input,
-  Modal,
-  Row,
-  Space,
-  Table,
-  Tooltip,
-} from 'antd';
-import type { ColumnsType } from 'antd/es/table';
-import type { Dayjs } from 'dayjs';
-import { useCallback, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { getConfigKey, updateConfigByKey } from '@/api/system/config';
-import { delOss, listOss } from '@/api/system/oss';
-import type { OssForm, OssQuery, OssVO } from '@/api/system/oss/types';
+import {Button, Card, Col, DatePicker, Form, Image, Input, Modal, Row, Space, Table, Tooltip,} from 'antd';
+import type {ColumnsType} from 'antd/es/table';
+import type {Dayjs} from 'dayjs';
+import {useCallback, useState} from 'react';
+import {useNavigate} from '@umijs/max';
+import {getConfigKey, updateConfigByKey} from '@/api/system/config';
+import {delOss, listOss} from '@/api/system/oss';
+import type {OssForm, OssQuery, OssVO} from '@/api/system/oss/types';
 import FileUpload from '@/components/FileUpload';
 import ImageUpload from '@/components/ImageUpload';
 import Pagination from '@/components/Pagination';
 import RightToolbar from '@/components/RightToolbar';
+import useInitialLoadEffect from '@/hooks/useInitialLoadEffect';
 import modal from '@/utils/modal';
-import { addDateRange } from '@/utils/scaffold';
+import {addDateRange} from '@/utils/scaffold';
 
 const initialQuery: OssQuery = {
   pageNum: 1,
@@ -104,7 +92,7 @@ export default function OssPage() {
     [],
   );
 
-  useEffect(() => {
+  useInitialLoadEffect(() => {
     loadPreviewSetting();
     loadList(initialQuery, null);
   }, [loadList, loadPreviewSetting]);

@@ -1,6 +1,5 @@
 export default {
   'menu.home': '首页',
-  'menu.welcome': '欢迎',
   'menu.login': '登录',
   'menu.register': '注册',
   'menu.account': '个人中心',

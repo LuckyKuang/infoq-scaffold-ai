@@ -1,6 +1,6 @@
 import {ArrowLeftOutlined} from '@ant-design/icons';
 import {Button, Col, Row} from 'antd';
-import {Link, useLocation, useNavigate} from 'react-router-dom';
+import {Link, useLocation, useNavigate} from '@umijs/max';
 import errGif from '@/assets/401_images/401.gif';
 import '@/pages/error/error-pages.css';
 

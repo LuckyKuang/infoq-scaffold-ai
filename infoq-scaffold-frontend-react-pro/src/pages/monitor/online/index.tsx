@@ -1,28 +1,15 @@
-import {
-  DeleteOutlined,
-  ReloadOutlined,
-  SearchOutlined,
-} from '@ant-design/icons';
-import {
-  Button,
-  Card,
-  Col,
-  Form,
-  Input,
-  Row,
-  Space,
-  Table,
-  Tooltip,
-} from 'antd';
-import type { ColumnsType } from 'antd/es/table';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { forceLogout, list } from '@/api/monitor/online';
-import type { OnlineQuery, OnlineVO } from '@/api/monitor/online/types';
+import {DeleteOutlined, ReloadOutlined, SearchOutlined,} from '@ant-design/icons';
+import {Button, Card, Col, Form, Input, Row, Space, Table, Tooltip,} from 'antd';
+import type {ColumnsType} from 'antd/es/table';
+import {useCallback, useMemo, useState} from 'react';
+import {forceLogout, list} from '@/api/monitor/online';
+import type {OnlineQuery, OnlineVO} from '@/api/monitor/online/types';
 import DictTag from '@/components/DictTag';
 import Pagination from '@/components/Pagination';
+import useInitialLoadEffect from '@/hooks/useInitialLoadEffect';
 import useDictOptions from '@/hooks/useDictOptions';
 import modal from '@/utils/modal';
-import { parseTime } from '@/utils/scaffold';
+import {parseTime} from '@/utils/scaffold';
 
 type OnlineRow = OnlineVO & {
   _rowKey: string;
@@ -44,34 +31,31 @@ export default function OnlinePage() {
   const [total, setTotal] = useState(0);
   const dict = useDictOptions('sys_device_type');
 
-  const loadList = useCallback(
-    async (nextQuery: OnlineQuery = query) => {
-      setLoading(true);
-      try {
-        const response = await list(nextQuery);
-        setListData(
-          response.rows.map((row, index) => {
-            const fallbackKey =
-              [row.userName, row.ipaddr, row.loginTime]
-                .filter(
-                  (item) => item !== undefined && item !== null && item !== '',
-                )
-                .join('-') || `online-row-${index}`;
-            return {
-              ...row,
-              _rowKey: row.tokenId || fallbackKey,
-            };
-          }),
-        );
-        setTotal(response.total);
-      } finally {
-        setLoading(false);
-      }
-    },
-    [query],
-  );
+  const loadList = useCallback(async (nextQuery: OnlineQuery) => {
+    setLoading(true);
+    try {
+      const response = await list(nextQuery);
+      setListData(
+        response.rows.map((row, index) => {
+          const fallbackKey =
+            [row.userName, row.ipaddr, row.loginTime]
+              .filter(
+                (item) => item !== undefined && item !== null && item !== '',
+              )
+              .join('-') || `online-row-${index}`;
+          return {
+            ...row,
+            _rowKey: row.tokenId || fallbackKey,
+          };
+        }),
+      );
+      setTotal(response.total);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  useEffect(() => {
+  useInitialLoadEffect(() => {
     loadList(initialQuery);
   }, [loadList]);
 
@@ -168,14 +152,14 @@ export default function OnlinePage() {
                 }
                 await forceLogout(record.tokenId);
                 modal.msgSuccess('删除成功');
-                loadList();
+                loadList(query);
               }}
             />
           </Tooltip>
         ),
       },
     ],
-    [dict.sys_device_type, loadList, query.pageNum, query.pageSize],
+    [dict.sys_device_type, loadList, query],
   );
 
   return (

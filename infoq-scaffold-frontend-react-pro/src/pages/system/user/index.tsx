@@ -11,7 +11,7 @@ import {
   SearchOutlined,
   UploadOutlined,
 } from '@ant-design/icons';
-import type { MenuProps } from 'antd';
+import type {MenuProps} from 'antd';
 import {
   Button,
   Card,
@@ -33,17 +33,17 @@ import {
   TreeSelect,
   Upload,
 } from 'antd';
-import type { ColumnsType } from 'antd/es/table';
-import type { DataNode } from 'antd/es/tree';
-import type { UploadFile } from 'antd/es/upload/interface';
-import type { Dayjs } from 'dayjs';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import type { DeptTreeVO } from '@/api/system/dept/types';
-import { optionselect as getPostOptions } from '@/api/system/post';
-import type { PostVO } from '@/api/system/post/types';
-import { listRole } from '@/api/system/role';
-import type { RoleQuery, RoleVO } from '@/api/system/role/types';
+import type {ColumnsType} from 'antd/es/table';
+import type {DataNode} from 'antd/es/tree';
+import type {UploadFile} from 'antd/es/upload/interface';
+import type {Dayjs} from 'dayjs';
+import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import {useNavigate} from '@umijs/max';
+import type {DeptTreeVO} from '@/api/system/dept/types';
+import {optionselect as getPostOptions} from '@/api/system/post';
+import type {PostVO} from '@/api/system/post/types';
+import {listRole} from '@/api/system/role';
+import type {RoleQuery, RoleVO} from '@/api/system/role/types';
 import {
   addUser,
   changeUserStatus,
@@ -54,14 +54,14 @@ import {
   resetUserPwd,
   updateUser,
 } from '@/api/system/user';
-import { assertUserDetailData } from '@/api/system/user/guards';
-import type { UserForm, UserQuery, UserVO } from '@/api/system/user/types';
+import {assertUserDetailData} from '@/api/system/user/guards';
+import type {UserForm, UserQuery, UserVO} from '@/api/system/user/types';
 import Pagination from '@/components/Pagination';
-import RightToolbar, { type ToolbarColumn } from '@/components/RightToolbar';
+import RightToolbar, {type ToolbarColumn} from '@/components/RightToolbar';
 import useDictOptions from '@/hooks/useDictOptions';
 import modal from '@/utils/modal';
-import request, { download } from '@/utils/request';
-import { addDateRange } from '@/utils/scaffold';
+import request, {download} from '@/utils/request';
+import {addDateRange} from '@/utils/scaffold';
 
 const initialQuery: UserQuery = {
   pageNum: 1,
@@ -240,6 +240,7 @@ export default function UserPage() {
     () => filterDisabledDeptTree(deptTree),
     [deptTree],
   );
+  const initialLoadStartedRef = useRef(false);
 
   const visibleColumnKeys = useMemo(
     () =>
@@ -254,8 +255,8 @@ export default function UserPage() {
 
   const loadList = useCallback(
     async (
-      nextQuery: UserQuery = query,
-      nextRange: [Dayjs, Dayjs] | null = dateRange,
+      nextQuery: UserQuery,
+      nextRange: [Dayjs, Dayjs] | null,
     ) => {
       setLoading(true);
       try {
@@ -268,7 +269,7 @@ export default function UserPage() {
         setLoading(false);
       }
     },
-    [dateRange, query],
+    [],
   );
 
   const loadBaseOptions = useCallback(async (deptId?: string | number) => {
@@ -287,6 +288,10 @@ export default function UserPage() {
   }, []);
 
   useEffect(() => {
+    if (initialLoadStartedRef.current) {
+      return;
+    }
+    initialLoadStartedRef.current = true;
     loadDeptTree();
     loadList(initialQuery, null);
     loadBaseOptions();
@@ -369,9 +374,9 @@ export default function UserPage() {
       await delUser(target);
       modal.msgSuccess('删除成功');
       setSelectedIds([]);
-      loadList();
+      loadList(query, dateRange);
     },
-    [loadList, selectedIds],
+    [dateRange, loadList, query, selectedIds],
   );
 
   const handleSubmit = useCallback(async () => {
@@ -385,11 +390,11 @@ export default function UserPage() {
       }
       modal.msgSuccess('操作成功');
       setDialogOpen(false);
-      loadList();
+      loadList(query, dateRange);
     } finally {
       setSubmitting(false);
     }
-  }, [form, loadList]);
+  }, [dateRange, form, loadList, query]);
 
   const handleAdd = useCallback(async () => {
     const response = await getUser();
@@ -528,7 +533,7 @@ export default function UserPage() {
               }
               await changeUserStatus(record.userId, nextStatus);
               modal.msgSuccess('状态修改成功');
-              loadList();
+              loadList(query, dateRange);
             }}
           />
         ),
@@ -597,11 +602,13 @@ export default function UserPage() {
 
     return nextColumns.filter((column) => !column.hidden);
   }, [
+    dateRange,
     handleDelete,
     handleEdit,
     loadList,
     navigate,
     pwdForm,
+    query,
     visibleColumnKeys,
   ]);
 
@@ -824,7 +831,7 @@ export default function UserPage() {
                   showSearch={showSearch}
                   columns={columns}
                   onShowSearchChange={setShowSearch}
-                  onQueryTable={() => loadList()}
+                  onQueryTable={() => loadList(query, dateRange)}
                   onColumnsChange={setColumns}
                 />
               </div>

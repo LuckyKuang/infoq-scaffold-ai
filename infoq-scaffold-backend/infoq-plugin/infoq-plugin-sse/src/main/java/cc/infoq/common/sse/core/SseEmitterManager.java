@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -30,6 +31,8 @@ public class SseEmitterManager {
      * 订阅的频道
      */
     private final static String SSE_TOPIC = "global:sse";
+
+    private final static String NODE_ID = UUID.randomUUID().toString();
 
     private final static Map<Long, Map<String, SseEmitter>> USER_TOKEN_EMITTERS = new ConcurrentHashMap<>();
 
@@ -66,25 +69,10 @@ public class SseEmitterManager {
 
         emitters.put(token, emitter);
 
-        // 当 emitter 完成、超时或发生错误时，从映射表中移除对应的 token
-        emitter.onCompletion(() -> {
-            SseEmitter remove = emitters.remove(token);
-            if (remove != null) {
-                remove.complete();
-            }
-        });
-        emitter.onTimeout(() -> {
-            SseEmitter remove = emitters.remove(token);
-            if (remove != null) {
-                remove.complete();
-            }
-        });
-        emitter.onError((e) -> {
-            SseEmitter remove = emitters.remove(token);
-            if (remove != null) {
-                remove.complete();
-            }
-        });
+        // 当 emitter 完成、超时或发生错误时，只清理当前回调对应的连接，避免旧连接回调误删同 token 新连接。
+        emitter.onCompletion(() -> removeEmitter(userId, token, emitter, false));
+        emitter.onTimeout(() -> removeEmitter(userId, token, emitter, true));
+        emitter.onError((e) -> removeEmitter(userId, token, emitter, true));
 
         try {
             // 向客户端发送一条连接成功的事件
@@ -207,10 +195,7 @@ public class SseEmitterManager {
                         .data(message));
                 } catch (Exception e) {
                     log.warn("SSE消息发送失败, userId={}", userId, e);
-                    SseEmitter remove = emitters.remove(entry.getKey());
-                    if (remove != null) {
-                        remove.complete();
-                    }
+                    removeEmitter(userId, entry.getKey(), entry.getValue(), true);
                 }
             }
         } else {
@@ -230,6 +215,52 @@ public class SseEmitterManager {
     }
 
     /**
+     * 将已发布消息投递到当前节点持有的 SSE 连接。
+     */
+    public void sendPublishedMessage(SseMessageDto message) {
+        if (message == null) {
+            return;
+        }
+        if (CollUtil.isNotEmpty(message.getUserIds())) {
+            message.getUserIds().stream()
+                .filter(userId -> userId != null)
+                .forEach(userId -> sendMessage(userId, message.getMessage()));
+            return;
+        }
+        sendMessage(message.getMessage());
+    }
+
+    /**
+     * 判断消息是否由当前节点发布。
+     */
+    public boolean isLocalSource(String sourceNodeId) {
+        return NODE_ID.equals(sourceNodeId);
+    }
+
+    String currentNodeId() {
+        return NODE_ID;
+    }
+
+    private void removeEmitter(Long userId, String token, SseEmitter emitter, boolean complete) {
+        Map<String, SseEmitter> emitters = USER_TOKEN_EMITTERS.get(userId);
+        if (MapUtil.isEmpty(emitters)) {
+            USER_TOKEN_EMITTERS.remove(userId);
+            return;
+        }
+        boolean removed = emitters.remove(token, emitter);
+        if (removed && complete) {
+            try {
+                emitter.complete();
+            } catch (Exception e) {
+                log.warn("SSE连接关闭失败, userId={}", userId, e);
+            }
+        }
+        if (emitters.isEmpty()) {
+            USER_TOKEN_EMITTERS.remove(userId, emitters);
+        }
+    }
+
+    /**
      * 发布SSE订阅消息
      *
      * @param sseMessageDto 要发布的SSE消息对象
@@ -238,10 +269,12 @@ public class SseEmitterManager {
         SseMessageDto broadcastMessage = new SseMessageDto();
         broadcastMessage.setMessage(sseMessageDto.getMessage());
         broadcastMessage.setUserIds(sseMessageDto.getUserIds());
+        broadcastMessage.setSourceNodeId(NODE_ID);
         RedisUtils.publish(SSE_TOPIC, broadcastMessage, consumer -> {
             log.info("SSE发送主题订阅消息topic:{} session keys:{} message:{}",
                 SSE_TOPIC, sseMessageDto.getUserIds(), sseMessageDto.getMessage());
         });
+        sendPublishedMessage(broadcastMessage);
     }
 
     /**
@@ -252,8 +285,10 @@ public class SseEmitterManager {
     public void publishAll(String message) {
         SseMessageDto broadcastMessage = new SseMessageDto();
         broadcastMessage.setMessage(message);
+        broadcastMessage.setSourceNodeId(NODE_ID);
         RedisUtils.publish(SSE_TOPIC, broadcastMessage, consumer -> {
             log.info("SSE发送主题订阅消息topic:{} message:{}", SSE_TOPIC, message);
         });
+        sendPublishedMessage(broadcastMessage);
     }
 }

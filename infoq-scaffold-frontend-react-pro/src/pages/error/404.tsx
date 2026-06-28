@@ -1,4 +1,4 @@
-import {Link} from 'react-router-dom';
+import {Link} from '@umijs/max';
 import parent404 from '@/assets/404_images/404.png';
 import cloud404 from '@/assets/404_images/404_cloud.png';
 import '@/pages/error/error-pages.css';

@@ -1,8 +1,17 @@
-import { render, screen } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { describe, expect, it } from 'vitest';
+import {render, screen} from '@testing-library/react';
+import {MemoryRouter, Route, Routes} from 'react-router-dom';
+import {describe, expect, it, vi} from 'vitest';
 import IFrame from '@/components/iFrame';
 import ParentView from '@/components/ParentView';
+
+vi.mock('@umijs/max', async () => {
+  const router = await vi.importActual<typeof import('react-router-dom')>(
+    'react-router-dom',
+  );
+  return {
+    Outlet: router.Outlet,
+  };
+});
 
 describe('components/bridge', () => {
   it('renders iframe container', () => {

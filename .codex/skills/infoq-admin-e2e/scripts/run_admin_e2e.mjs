@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath, pathToFileURL} from 'node:url';
@@ -11,16 +10,14 @@ import {
     normalizeForwardedArgs,
     readJsonFile,
     resolveDocTmpPath,
-    resolvePythonLaunchSpec,
     resolveRepoRoot,
-    runCommandChecked,
     timestampSlug
 } from '../../../lib/skill_runtime.mjs';
 import {runAdminDevStack, stopAdminDevStackState} from '../../../lib/admin_dev_stack.mjs';
+import {DEFAULT_CAPTCHA_LOGIN_OPTIONS, loginWithRealCaptcha} from './captcha_login.mjs';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolveRepoRoot(scriptDir);
-const ocrScriptPath = path.join(scriptDir, 'ocr_captcha.py');
 const playwrightCorePath = path.join(repoRoot, '.codex', 'skills', 'infoq-browser-automate', 'scripts', 'playwright_core.mjs');
 const defaultProfile = (() => {
   try {
@@ -48,32 +45,42 @@ const CLIENTS = {
     frontendPortFlag: '--react-port',
     frontendPortEnv: 'REACT_PORT',
     defaultFrontendPort: 5174
+  },
+  'react-pro': {
+    label: 'admin-e2e-react-pro',
+    frontendDirName: 'infoq-scaffold-frontend-react-pro',
+    frontendDisplayName: 'React Pro admin',
+    frontendLogPrefix: 'frontend-react-pro',
+    frontendPortFlag: '--react-pro-port',
+    frontendPortEnv: 'REACT_PRO_PORT',
+    defaultFrontendPort: 4184
   }
 };
 
 const DEFAULTS = {
-  backendUrl: 'http://127.0.0.1:8080',
+  backendUrl: DEFAULT_CAPTCHA_LOGIN_OPTIONS.backendUrl,
   backendPort: '8080',
   frontendHost: '127.0.0.1',
   profile: defaultProfile,
-  clientId: 'e5cd7e4891bf95d1d19206ce24a7b32e',
-  loginCandidates: 'admin:admin123,dept:666666,owner:666666,admin:123456',
-  maxCaptchaAttempts: 3,
+  clientId: DEFAULT_CAPTCHA_LOGIN_OPTIONS.clientId,
+  loginCandidates: DEFAULT_CAPTCHA_LOGIN_OPTIONS.loginCandidates,
+  maxCaptchaAttempts: DEFAULT_CAPTCHA_LOGIN_OPTIONS.maxCaptchaAttempts,
   timeoutMs: 45000,
-  rsaPublicKey: 'MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAKoR8mX0rGKLqzcWmOzbfj64K8ZIgOdHnzkXSOVOZbFu/TJhZ7rFAN+eaGkl3C4buccQd/EjEsj9ir7ijT7h96MCAwEAAQ=='
+  rsaPublicKey: DEFAULT_CAPTCHA_LOGIN_OPTIONS.rsaPublicKey
 };
 
 function printHelp() {
   console.log(`Usage:
-  node .codex/skills/infoq-admin-e2e/scripts/run_admin_e2e.mjs --client <vue|react> [options]
+  node .codex/skills/infoq-admin-e2e/scripts/run_admin_e2e.mjs --client <vue|react|react-pro> [options]
 
 Examples:
   node .codex/skills/infoq-admin-e2e/scripts/run_admin_e2e.mjs --client vue
   node .codex/skills/infoq-admin-e2e/scripts/run_admin_e2e.mjs --client react --route-limit 1
+  node .codex/skills/infoq-admin-e2e/scripts/run_admin_e2e.mjs --client react-pro --route-limit 1
   node .codex/skills/infoq-admin-e2e/scripts/run_admin_e2e.mjs --client vue --no-start-stack --backend-url http://127.0.0.1:8080 --frontend-origin http://127.0.0.1:5173
 
 Options:
-  --client <vue|react>              Required admin client.
+  --client <vue|react|react-pro>    Required admin client.
   --backend-url <url>               Backend base URL. Default: ${DEFAULTS.backendUrl}
   --frontend-origin <url>           Frontend origin. Default follows --client.
   --start-stack                     Start or reuse backend + frontend dev stack. Default.
@@ -248,7 +255,7 @@ function parseArgs(argv) {
   }
 
   if (!CLIENTS[options.client]) {
-    throw new Error('--client must be one of: vue, react');
+    throw new Error('--client must be one of: vue, react, react-pro');
   }
   if (!Number.isInteger(options.maxCaptchaAttempts) || options.maxCaptchaAttempts <= 0) {
     throw new Error('--max-captcha-attempts must be a positive integer.');
@@ -321,241 +328,6 @@ function sanitizeName(value) {
     .replace(/^\/+/, '')
     .replace(/[^a-zA-Z0-9._-]+/g, '_')
     .replace(/^_+|_+$/g, '') || 'root';
-}
-
-function toPem(base64Key) {
-  const lines = (base64Key.match(/.{1,64}/g) || []).join('\n');
-  return `-----BEGIN PUBLIC KEY-----\n${lines}\n-----END PUBLIC KEY-----\n`;
-}
-
-function randomAesKey(length = 32) {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let value = '';
-  for (let i = 0; i < length; i += 1) {
-    value += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return value;
-}
-
-function encryptWithAesEcbPkcs7(plainText, aesKey) {
-  const cipher = crypto.createCipheriv('aes-256-ecb', Buffer.from(aesKey, 'utf8'), null);
-  cipher.setAutoPadding(true);
-  return Buffer.concat([cipher.update(plainText, 'utf8'), cipher.final()]).toString('base64');
-}
-
-function encryptHeaderKey(aesKey, publicKeyBase64) {
-  const b64Aes = Buffer.from(aesKey, 'utf8').toString('base64');
-  return crypto
-    .publicEncrypt({key: toPem(publicKeyBase64), padding: crypto.constants.RSA_PKCS1_PADDING}, Buffer.from(b64Aes, 'utf8'))
-    .toString('base64');
-}
-
-async function parseResponseJson(response) {
-  const text = await response.text();
-  try {
-    return JSON.parse(text);
-  } catch {
-    return {_raw: text};
-  }
-}
-
-function buildCandidates(options) {
-  const list = [];
-  if (options.username && options.password) {
-    list.push({username: options.username, password: options.password});
-  }
-  for (const item of options.loginCandidates.split(',')) {
-    const [username, password] = item.split(':');
-    if (!username || !password) {
-      continue;
-    }
-    if (!list.some((candidate) => candidate.username === username && candidate.password === password)) {
-      list.push({username, password});
-    }
-  }
-  if (list.length === 0) {
-    throw new Error('No login candidates configured.');
-  }
-  return list;
-}
-
-function normalizeOcrToCaptcha(rawText) {
-  const cleaned = String(rawText || '')
-    .trim()
-    .replace(/\s+/g, '')
-    .replace(/[oO]/g, '0')
-    .replace(/[lI]/g, '1')
-    .replace(/[×xX*]/g, '*')
-    .replace(/[÷]/g, '/')
-    .replace(/[=？?]+$/g, '');
-
-  if (!cleaned) {
-    return '';
-  }
-
-  if (/^\d+[+\-*/]\d+$/u.test(cleaned)) {
-    const [, left, op, right] = cleaned.match(/^(\d+)([+\-*/])(\d+)$/u);
-    const a = Number(left);
-    const b = Number(right);
-    switch (op) {
-      case '+':
-        return String(a + b);
-      case '-':
-        return String(a - b);
-      case '*':
-        return String(a * b);
-      case '/':
-        return b === 0 ? '' : String(Math.trunc(a / b));
-      default:
-        return cleaned;
-    }
-  }
-
-  return cleaned.replace(/[^a-zA-Z0-9]/g, '');
-}
-
-async function recognizeCaptcha(imagePath) {
-  const python = resolvePythonLaunchSpec();
-  const ocrResult = await runCommandChecked(python.command, [...python.args, '-B', ocrScriptPath, '--image', imagePath], {
-    cwd: repoRoot,
-    env: {
-      ...process.env,
-      PYTHONDONTWRITEBYTECODE: '1'
-    },
-    captureOutput: true
-  }).catch((error) => {
-    throw new Error(`Captcha OCR failed. Ensure ddddocr is installed with: python3 -m pip install ddddocr\n${error.message || error}`);
-  });
-
-  const output = ocrResult.stdout.trim().split(/\r?\n/).at(-1) || '';
-  try {
-    const parsed = JSON.parse(output);
-    if (parsed.error) {
-      throw new Error(parsed.error);
-    }
-    return {
-      raw: String(parsed.raw || parsed.text || ''),
-      text: String(parsed.text || parsed.raw || '')
-    };
-  } catch (error) {
-    throw new Error(`Failed to parse OCR output: ${output}\n${error.message || error}`);
-  }
-}
-
-async function fetchCaptcha(options, runDir, sequence) {
-  const {response, body} = await fetchJson(`${options.backendUrl}/auth/code`, {
-    headers: {
-      clientid: options.clientId,
-      'Content-Language': 'zh-CN'
-    }
-  });
-  if (response.status !== 200 || body.code !== 200) {
-    throw new Error(`GET /auth/code failed: http=${response.status}, code=${body.code}, msg=${body.msg || ''}`);
-  }
-  const data = body.data || {};
-  if (data.captchaEnabled !== true) {
-    throw new Error('GET /auth/code returned captchaEnabled=false. This skill requires real captcha verification.');
-  }
-  if (!data.img || !data.uuid) {
-    throw new Error('GET /auth/code did not return img and uuid.');
-  }
-
-  const imagePath = path.join(runDir, 'captcha', `captcha-${sequence}.png`);
-  const metaPath = path.join(runDir, 'captcha', `captcha-${sequence}.json`);
-  ensureDir(path.dirname(imagePath));
-  fs.writeFileSync(imagePath, Buffer.from(data.img, 'base64'));
-  writeJson(metaPath, {
-    sequence,
-    uuid: data.uuid,
-    captchaEnabled: data.captchaEnabled,
-    registerEnabled: data.registerEnabled,
-    inviteRegisterEnabled: data.inviteRegisterEnabled,
-    forgotPasswordEnabled: data.forgotPasswordEnabled,
-    mailEnabled: data.mailEnabled,
-    imagePath
-  });
-
-  return {uuid: data.uuid, imagePath, metaPath};
-}
-
-async function loginEncrypted(options, account, captchaCode, uuid) {
-  const aesKey = randomAesKey(32);
-  const payload = JSON.stringify({
-    clientId: options.clientId,
-    grantType: 'password',
-    username: account.username,
-    password: account.password,
-    code: captchaCode,
-    uuid
-  });
-
-  const response = await fetch(`${options.backendUrl}/auth/login`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json;charset=UTF-8',
-      clientid: options.clientId,
-      'encrypt-key': encryptHeaderKey(aesKey, options.rsaPublicKey)
-    },
-    body: encryptWithAesEcbPkcs7(payload, aesKey)
-  });
-
-  return {
-    response,
-    body: await parseResponseJson(response)
-  };
-}
-
-async function loginWithRealCaptcha(options, runDir) {
-  const candidates = buildCandidates(options);
-  const attempts = [];
-  let sequence = 0;
-
-  for (const account of candidates) {
-    for (let attempt = 1; attempt <= options.maxCaptchaAttempts; attempt += 1) {
-      sequence += 1;
-      const captcha = await fetchCaptcha(options, runDir, sequence);
-      const ocr = await recognizeCaptcha(captcha.imagePath);
-      const captchaCode = normalizeOcrToCaptcha(ocr.text || ocr.raw);
-      const attemptRecord = {
-        sequence,
-        username: account.username,
-        attempt,
-        uuid: captcha.uuid,
-        imagePath: captcha.imagePath,
-        ocrRaw: ocr.raw,
-        ocrText: ocr.text,
-        captchaCode,
-        status: 'pending'
-      };
-
-      if (!captchaCode) {
-        attemptRecord.status = 'ocr-empty';
-        attempts.push(attemptRecord);
-        writeJson(captcha.metaPath, attemptRecord);
-        continue;
-      }
-
-      const loginResult = await loginEncrypted(options, account, captchaCode, captcha.uuid);
-      const token = loginResult.body?.data?.access_token || loginResult.body?.data?.accessToken;
-      attemptRecord.httpStatus = loginResult.response.status;
-      attemptRecord.responseCode = loginResult.body?.code;
-      attemptRecord.responseMsg = loginResult.body?.msg || '';
-      attemptRecord.status = loginResult.response.status === 200 && loginResult.body?.code === 200 && token ? 'passed' : 'failed';
-      attempts.push(attemptRecord);
-      writeJson(captcha.metaPath, attemptRecord);
-
-      if (attemptRecord.status === 'passed') {
-        console.log(`[admin-e2e] login passed: user=${account.username}, captcha="${captchaCode}", attempt=${attempt}`);
-        return {token, username: account.username, attempts};
-      }
-
-      console.log(
-        `[admin-e2e] login attempt failed: user=${account.username}, captcha="${captchaCode}", http=${attemptRecord.httpStatus}, code=${attemptRecord.responseCode}, msg=${attemptRecord.responseMsg}`
-      );
-    }
-  }
-
-  throw new Error(`Real captcha login failed after ${attempts.length} attempt(s). Evidence: ${path.join(runDir, 'captcha')}`);
 }
 
 async function fetchProtectedJson(options, token, apiPath, label) {

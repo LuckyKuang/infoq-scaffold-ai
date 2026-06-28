@@ -1,13 +1,13 @@
-import type { InputRef } from 'antd';
-import { AutoComplete, Button, Input, Modal, Tooltip, theme } from 'antd';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import {history} from '@umijs/max';
+import type {InputRef} from 'antd';
+import {AutoComplete, Button, Input, Modal, theme, Tooltip} from 'antd';
+import {useEffect, useMemo, useRef, useState} from 'react';
+import {useTranslation} from 'react-i18next';
 import MenuIcon from '@/components/MenuIcon';
 import SvgIcon from '@/components/SvgIcon';
-import { usePermissionStore } from '@/store/modules/permission';
-import type { AppRoute } from '@/types/router';
-import { isHttp } from '@/utils/validate';
+import {usePermissionStore} from '@/store/modules/permission';
+import type {AppRoute} from '@/types/router';
+import {isHttp} from '@/utils/validate';
 
 type SearchRoute = {
   path: string;
@@ -46,7 +46,6 @@ const collectSearchRoutes = (
 };
 
 export default function SearchMenu() {
-  const navigate = useNavigate();
   const { t } = useTranslation();
   const routes = usePermissionStore((state) => state.routes);
   const inputRef = useRef<InputRef>(null);
@@ -95,7 +94,7 @@ export default function SearchMenu() {
       window.open(path, '_blank', 'noopener,noreferrer');
       return;
     }
-    navigate(path);
+    history.push(path);
   };
 
   return (

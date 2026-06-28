@@ -66,7 +66,7 @@ node .codex/skills/infoq-frontend-verify/scripts/fetch_admin_routes_with_token.m
 
 1. 启动本地栈，或至少确保 backend `http://127.0.0.1:8080` 与 React admin `http://127.0.0.1:5174` 已可访问。
    若本地临时把 backend 改到了其他端口，先通过 `--backend-port <port>` 或 `VITE_APP_PROXY_TARGET` 显式对齐。
-2. 若只需要快速查看诊断后端返回的受保护路由列表，确认后端可无验证码登录后执行：
+2. 若只需要快速查看后端返回的受保护路由列表，执行：
 
 ```bash
 pnpm --dir .codex/skills/infoq-browser-automate/scripts run playwright-cli admin-route-probe --backend-url "http://127.0.0.1:8080" --list-routes
@@ -78,7 +78,7 @@ pnpm --dir .codex/skills/infoq-browser-automate/scripts run playwright-cli admin
 pnpm --dir .codex/skills/infoq-browser-automate/scripts run playwright-cli admin-route-probe --frontend-origin "http://127.0.0.1:5174" --route "/index"
 ```
 
-4. 若要覆盖真实验证码登录，请改用 `infoq-admin-e2e`。
+4. `admin-route-probe` 会先走快速 token 获取；若后端返回 `captchaEnabled=true`，会自动调用 `infoq-admin-e2e/scripts/captcha_login.mjs` 识别验证码并获取 token。若要覆盖完整真实验证码路由矩阵，请改用 `infoq-admin-e2e`。
 5. 只有在需要临时交互探索或定位器发现时，才改用 Playwright MCP。
 
 ## Docker 部署验证模式

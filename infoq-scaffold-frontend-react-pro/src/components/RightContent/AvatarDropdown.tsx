@@ -1,15 +1,11 @@
-import {
-  LogoutOutlined,
-  SettingOutlined,
-  SkinOutlined,
-} from '@ant-design/icons';
-import { history, useModel } from '@umijs/max';
-import type { MenuProps } from 'antd';
-import { Spin } from 'antd';
-import React, { startTransition } from 'react';
-import { outLogin } from '@/services/ant-design-pro/api';
-import { clearAuthState } from '@/utils/auth';
-import HeaderDropdown from '../HeaderDropdown';
+import {LogoutOutlined, SettingOutlined, SkinOutlined,} from '@ant-design/icons';
+import {history, useModel} from '@umijs/max';
+import type {MenuProps} from 'antd';
+import {Dropdown, Spin} from 'antd';
+import React, {startTransition} from 'react';
+import {useTranslation} from 'react-i18next';
+import {useSettingsStore} from '@/store/modules/settings';
+import {useUserStore} from '@/store/modules/user';
 
 type GlobalHeaderRightProps = {
   children?: React.ReactNode;
@@ -18,9 +14,13 @@ type GlobalHeaderRightProps = {
 export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({
   children,
 }) => {
+  const { t } = useTranslation();
+  const showSettings = useSettingsStore((state) => state.showSettings);
   const loginOut = async () => {
-    await outLogin().catch(() => undefined);
-    clearAuthState();
+    await useUserStore
+      .getState()
+      .logout()
+      .catch(() => undefined);
     const { search, pathname } = window.location;
     const urlParams = new URL(window.location.href).searchParams;
     const searchParams = new URLSearchParams({
@@ -45,7 +45,7 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({
       loginOut();
       return;
     }
-    if (key === 'theme') {
+    if (key === 'layout') {
       setInitialState((s) => ({ ...s, settingDrawerOpen: true }));
       return;
     }
@@ -64,27 +64,31 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({
 
   const menuItems: MenuProps['items'] = [
     {
-      key: 'settings',
+      key: 'profile',
       icon: <SettingOutlined />,
-      label: '个人设置',
+      label: t('navbar.personalCenter'),
     },
-    {
-      key: 'theme',
-      icon: <SkinOutlined />,
-      label: '主题设置',
-    },
+    ...(showSettings
+      ? [
+          {
+            key: 'layout',
+            icon: <SkinOutlined />,
+            label: t('navbar.layoutSetting'),
+          },
+        ]
+      : []),
     {
       type: 'divider' as const,
     },
     {
       key: 'logout',
       icon: <LogoutOutlined />,
-      label: '退出登录',
+      label: t('common.logout'),
     },
   ];
 
   return (
-    <HeaderDropdown
+    <Dropdown
       placement="bottomRight"
       menu={{
         selectedKeys: [],
@@ -94,6 +98,6 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({
       arrow
     >
       {children}
-    </HeaderDropdown>
+    </Dropdown>
   );
 };

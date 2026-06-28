@@ -2,6 +2,7 @@ interface ImportMetaEnv {
   VITE_APP_TITLE: string;
   VITE_APP_PORT: number;
   VITE_APP_BASE_API: string;
+  VITE_APP_PROXY_TARGET?: string;
   VITE_APP_CONTEXT_PATH: string;
   VITE_APP_ENV: string;
   VITE_APP_ENCRYPT: string;

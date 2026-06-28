@@ -26,4 +26,9 @@ public class SseMessageDto implements Serializable {
      * 需要发送的消息
      */
     private String message;
+
+    /**
+     * 发布消息的节点标识，用于避免本节点 Redis 订阅回环造成重复推送。
+     */
+    private String sourceNodeId;
 }

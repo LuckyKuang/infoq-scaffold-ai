@@ -1,7 +1,6 @@
 package cc.infoq.common.sse.listener;
 
 import cc.infoq.common.sse.core.SseEmitterManager;
-import cn.hutool.core.collection.CollUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationArguments;
@@ -29,14 +28,11 @@ public class SseTopicListener implements ApplicationRunner, Ordered {
     public void run(ApplicationArguments args) throws Exception {
         sseEmitterManager.subscribeMessage((message) -> {
             log.info("SSE主题订阅收到消息session keys={} message={}", message.getUserIds(), message.getMessage());
-            // 如果key不为空就按照key发消息 如果为空就群发
-            if (CollUtil.isNotEmpty(message.getUserIds())) {
-                message.getUserIds().forEach(key -> {
-                    sseEmitterManager.sendMessage(key, message.getMessage());
-                });
-            } else {
-                sseEmitterManager.sendMessage(message.getMessage());
+            if (sseEmitterManager.isLocalSource(message.getSourceNodeId())) {
+                log.debug("跳过当前节点SSE订阅回环消息sourceNodeId={}", message.getSourceNodeId());
+                return;
             }
+            sseEmitterManager.sendPublishedMessage(message);
         });
         log.info("初始化SSE主题订阅监听器成功");
     }

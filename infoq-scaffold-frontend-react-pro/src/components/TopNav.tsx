@@ -1,7 +1,7 @@
 import { MoreOutlined } from '@ant-design/icons';
+import { useNavigate } from '@umijs/max';
 import { Dropdown, Menu, Typography, theme } from 'antd';
 import { useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
 import MenuIcon from '@/components/MenuIcon';
 import { usePermissionStore } from '@/store/modules/permission';
 import type { AppRoute } from '@/types/router';

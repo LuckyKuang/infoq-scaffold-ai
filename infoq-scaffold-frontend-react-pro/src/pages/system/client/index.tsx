@@ -22,27 +22,17 @@ import {
   Table,
   Tooltip,
 } from 'antd';
-import type { ColumnsType } from 'antd/es/table';
-import { useCallback, useEffect, useState } from 'react';
-import {
-  addClient,
-  changeStatus,
-  delClient,
-  getClient,
-  listClient,
-  updateClient,
-} from '@/api/system/client';
-import type {
-  ClientForm,
-  ClientQuery,
-  ClientVO,
-} from '@/api/system/client/types';
+import type {ColumnsType} from 'antd/es/table';
+import {useCallback, useState} from 'react';
+import {addClient, changeStatus, delClient, getClient, listClient, updateClient,} from '@/api/system/client';
+import type {ClientForm, ClientQuery, ClientVO,} from '@/api/system/client/types';
 import DictTag from '@/components/DictTag';
 import Pagination from '@/components/Pagination';
 import RightToolbar from '@/components/RightToolbar';
+import useInitialLoadEffect from '@/hooks/useInitialLoadEffect';
 import useDictOptions from '@/hooks/useDictOptions';
 import modal from '@/utils/modal';
-import { download } from '@/utils/request';
+import {download} from '@/utils/request';
 
 const initialQuery: ClientQuery = {
   pageNum: 1,
@@ -97,7 +87,7 @@ export default function ClientPage() {
     }
   }, []);
 
-  useEffect(() => {
+  useInitialLoadEffect(() => {
     loadList(initialQuery);
   }, [loadList]);
 

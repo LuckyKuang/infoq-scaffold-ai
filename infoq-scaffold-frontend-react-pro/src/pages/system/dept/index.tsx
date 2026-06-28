@@ -22,24 +22,18 @@ import {
   Tooltip,
   TreeSelect,
 } from 'antd';
-import type { ColumnsType } from 'antd/es/table';
-import { useCallback, useEffect, useState } from 'react';
-import {
-  addDept,
-  delDept,
-  getDept,
-  listDept,
-  listDeptExcludeChild,
-  updateDept,
-} from '@/api/system/dept';
-import type { DeptForm, DeptQuery, DeptVO } from '@/api/system/dept/types';
-import { listUserByDeptId } from '@/api/system/user';
-import type { UserVO } from '@/api/system/user/types';
+import type {ColumnsType} from 'antd/es/table';
+import {useCallback, useState} from 'react';
+import {addDept, delDept, getDept, listDept, listDeptExcludeChild, updateDept,} from '@/api/system/dept';
+import type {DeptForm, DeptQuery, DeptVO} from '@/api/system/dept/types';
+import {listUserByDeptId} from '@/api/system/user';
+import type {UserVO} from '@/api/system/user/types';
 import DictTag from '@/components/DictTag';
 import RightToolbar from '@/components/RightToolbar';
+import useInitialLoadEffect from '@/hooks/useInitialLoadEffect';
 import useDictOptions from '@/hooks/useDictOptions';
 import modal from '@/utils/modal';
-import { handleTree } from '@/utils/scaffold';
+import {handleTree} from '@/utils/scaffold';
 
 const initialQuery: DeptQuery = {
   pageNum: 1,
@@ -130,10 +124,19 @@ export default function DeptPage() {
     setDeptUsers(response.data);
   }, []);
 
-  useEffect(() => {
-    loadList(initialQuery);
-    loadDeptOptions();
-  }, [loadDeptOptions, loadList]);
+  useInitialLoadEffect(() => {
+    setLoading(true);
+    listDept(initialQuery)
+      .then((response) => {
+        const treeData = handleTree<DeptVO>(response.data, 'deptId');
+        setList(treeData);
+        setDeptOptions(treeData);
+        setExpandedRowKeys(expandAll ? collectDeptIds(treeData) : []);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [expandAll]);
 
   const columns: ColumnsType<DeptVO> = [
     {

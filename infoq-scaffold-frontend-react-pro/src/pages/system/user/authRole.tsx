@@ -1,10 +1,10 @@
-import { Button, Card, Col, Form, Input, Row, Space, Table } from 'antd';
-import type { ColumnsType } from 'antd/es/table';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import type { RoleVO } from '@/api/system/role/types';
-import { getAuthRole, updateAuthRole } from '@/api/system/user';
-import type { UserVO } from '@/api/system/user/types';
+import {Button, Card, Col, Form, Input, Row, Space, Table} from 'antd';
+import type {ColumnsType} from 'antd/es/table';
+import {useCallback, useEffect, useMemo, useState} from 'react';
+import {useLocation, useNavigate} from '@umijs/max';
+import type {RoleVO} from '@/api/system/role/types';
+import {getAuthRole, updateAuthRole} from '@/api/system/user';
+import type {UserVO} from '@/api/system/user/types';
 import modal from '@/utils/modal';
 
 export default function AuthRolePage() {

@@ -14,6 +14,7 @@ import org.springframework.context.support.GenericApplicationContext;
 
 import java.lang.reflect.Field;
 import java.time.Duration;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -114,6 +115,41 @@ class SecurityTokenStoreTest {
         verify(redissonClient).getBucket(store.sessionKey("digest-missing"));
         verify(bucket, times(3)).delete();
         verify(set, times(2)).remove("digest-1");
+    }
+
+    @Test
+    @DisplayName("findByDigests: should batch load sessions by digest")
+    void findByDigestsShouldBatchLoadSessionsByDigest() {
+        SecurityTokenStore store = new SecurityTokenStore();
+        SecurityTokenSession session = session("digest-1");
+        when(buckets.get(any(String[].class))).thenReturn(Map.of(store.sessionKey("digest-1"), session));
+
+        Map<String, SecurityTokenSession> result = store.findByDigests(List.of("digest-1", "digest-2", "digest-1", ""));
+
+        assertEquals(Map.of("digest-1", session), result);
+        verify(buckets).get(
+            store.sessionKey("digest-1"),
+            store.revokedKey("digest-1"),
+            store.sessionKey("digest-2"),
+            store.revokedKey("digest-2")
+        );
+        verify(bucket, never()).get();
+    }
+
+    @Test
+    @DisplayName("findByDigests: should skip revoked sessions")
+    void findByDigestsShouldSkipRevokedSessions() {
+        SecurityTokenStore store = new SecurityTokenStore();
+        SecurityTokenSession session = session("digest-1");
+        when(buckets.get(any(String[].class))).thenReturn(Map.of(
+            store.sessionKey("digest-1"), session,
+            store.revokedKey("digest-1"), Boolean.TRUE
+        ));
+
+        Map<String, SecurityTokenSession> result = store.findByDigests(List.of("digest-1"));
+
+        assertEquals(Map.of(), result);
+        verify(bucket, never()).get();
     }
 
     private SecurityTokenProperties properties() {

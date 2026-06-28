@@ -30,12 +30,23 @@ export type UserState = {
   loginByOAuthTicket: (loginTicket: string) => Promise<void>;
   getInfo: () => Promise<void>;
   initializeRealtimeChannels: () => void;
+  clearSession: () => void;
   logout: () => Promise<void>;
   setAvatar: (value: string) => void;
 };
 
-const getRealtimeSSEUrl = () =>
-  `${import.meta.env.VITE_APP_BASE_API}/resource/sse`;
+const getRealtimeSSEUrl = () => {
+  const baseApi = import.meta.env.VITE_APP_BASE_API;
+  const proxyTarget = import.meta.env.VITE_APP_PROXY_TARGET;
+  if (
+    process.env.NODE_ENV !== 'production' &&
+    baseApi?.startsWith('/') &&
+    proxyTarget
+  ) {
+    return `${proxyTarget.replace(/\/$/, '')}/resource/sse`;
+  }
+  return `${baseApi}/resource/sse`;
+};
 
 const getRealtimeWebSocketUrl = () => {
   const baseApi = import.meta.env.VITE_APP_BASE_API;
@@ -73,6 +84,12 @@ const clearLocalSession = (set: (state: Partial<UserState>) => void) => {
   });
 };
 
+const clearRuntimeSession = (set: (state: Partial<UserState>) => void) => {
+  closeSSE();
+  closeWebSocket();
+  clearLocalSession(set);
+};
+
 export const useUserStore = create<UserState>((set) => ({
   token: getToken(),
   name: '',
@@ -107,6 +124,9 @@ export const useUserStore = create<UserState>((set) => ({
     });
   },
   initializeRealtimeChannels,
+  clearSession: () => {
+    clearRuntimeSession(set);
+  },
   logout: async () => {
     closeSSE();
     closeWebSocket();

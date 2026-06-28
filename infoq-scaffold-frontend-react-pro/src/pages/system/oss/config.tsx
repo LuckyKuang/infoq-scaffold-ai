@@ -1,28 +1,7 @@
-import {
-  DeleteOutlined,
-  EditOutlined,
-  PlusOutlined,
-  ReloadOutlined,
-  SearchOutlined,
-} from '@ant-design/icons';
-import {
-  Button,
-  Card,
-  Col,
-  Form,
-  Input,
-  Modal,
-  Radio,
-  Row,
-  Select,
-  Space,
-  Switch,
-  Table,
-  Tag,
-  Tooltip,
-} from 'antd';
-import type { ColumnsType } from 'antd/es/table';
-import { useCallback, useEffect, useState } from 'react';
+import {DeleteOutlined, EditOutlined, PlusOutlined, ReloadOutlined, SearchOutlined,} from '@ant-design/icons';
+import {Button, Card, Col, Form, Input, Modal, Radio, Row, Select, Space, Switch, Table, Tag, Tooltip,} from 'antd';
+import type {ColumnsType} from 'antd/es/table';
+import {useCallback, useState} from 'react';
 import {
   addOssConfig,
   changeOssConfigStatus,
@@ -31,13 +10,10 @@ import {
   listOssConfig,
   updateOssConfig,
 } from '@/api/system/ossConfig';
-import type {
-  OssConfigForm,
-  OssConfigQuery,
-  OssConfigVO,
-} from '@/api/system/ossConfig/types';
+import type {OssConfigForm, OssConfigQuery, OssConfigVO,} from '@/api/system/ossConfig/types';
 import Pagination from '@/components/Pagination';
 import RightToolbar from '@/components/RightToolbar';
+import useInitialLoadEffect from '@/hooks/useInitialLoadEffect';
 import useDictOptions from '@/hooks/useDictOptions';
 import modal from '@/utils/modal';
 
@@ -91,7 +67,7 @@ export default function OssConfigPage() {
     }
   }, []);
 
-  useEffect(() => {
+  useInitialLoadEffect(() => {
     loadList(initialQuery);
   }, [loadList]);
 

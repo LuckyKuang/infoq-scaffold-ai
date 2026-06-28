@@ -23,25 +23,19 @@ import {
   Tree,
   TreeSelect,
 } from 'antd';
-import type { ColumnsType } from 'antd/es/table';
-import type { DataNode } from 'antd/es/tree';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import type { DeptTreeVO } from '@/api/system/dept/types';
-import {
-  addPost,
-  delPost,
-  deptTreeSelect,
-  getPost,
-  listPost,
-  updatePost,
-} from '@/api/system/post';
-import type { PostForm, PostQuery, PostVO } from '@/api/system/post/types';
+import type {ColumnsType} from 'antd/es/table';
+import type {DataNode} from 'antd/es/tree';
+import {useCallback, useEffect, useMemo, useState} from 'react';
+import type {DeptTreeVO} from '@/api/system/dept/types';
+import {addPost, delPost, deptTreeSelect, getPost, listPost, updatePost,} from '@/api/system/post';
+import type {PostForm, PostQuery, PostVO} from '@/api/system/post/types';
 import DictTag from '@/components/DictTag';
 import Pagination from '@/components/Pagination';
 import RightToolbar from '@/components/RightToolbar';
+import useInitialLoadEffect from '@/hooks/useInitialLoadEffect';
 import useDictOptions from '@/hooks/useDictOptions';
 import modal from '@/utils/modal';
-import { download } from '@/utils/request';
+import {download} from '@/utils/request';
 
 const initialQuery: PostQuery = {
   pageNum: 1,
@@ -148,7 +142,7 @@ export default function PostPage() {
     }
   }, []);
 
-  useEffect(() => {
+  useInitialLoadEffect(() => {
     loadTree();
     loadList(initialQuery);
   }, [loadList, loadTree]);

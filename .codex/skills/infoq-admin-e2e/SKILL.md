@@ -10,7 +10,7 @@ description: 维护并执行本仓库 React/Vue 管理端 E2E 自动化，覆盖
 ## 模式选择
 
 1. 生成或校验管理端 Web 自动化测试矩阵，使用 `generate-case-matrix.mjs` 和 `validate-case-matrix.mjs`。
-2. 不关闭验证码、通过 `/auth/code` + OCR + `/auth/login` 完成真实登录并巡检动态路由，使用 `run_admin_e2e.mjs`。
+2. 不关闭验证码、通过 `/auth/code` + OCR + `/auth/login` 获取真实 token，使用共享入口 `captcha_login.mjs`；需要继续巡检动态路由时使用 `run_admin_e2e.mjs`。
 3. 设计用户、角色、菜单、部门、字典、配置、公告、OSS、定时任务等 CRUD E2E 时，读取 `references/crud/*`。
 4. 通用浏览器执行器仍使用 `infoq-browser-automate`；本 skill 负责业务范围和管理端专属流程。
 
@@ -37,9 +37,18 @@ node .codex/skills/infoq-admin-e2e/scripts/validate-case-matrix.mjs doc/test/fro
 ```bash
 node .codex/skills/infoq-admin-e2e/scripts/run_admin_e2e.mjs --client vue
 node .codex/skills/infoq-admin-e2e/scripts/run_admin_e2e.mjs --client react
+node .codex/skills/infoq-admin-e2e/scripts/run_admin_e2e.mjs --client react-pro
 ```
 
-`run_admin_e2e.mjs` 默认会在完成、失败或中断后停止本 skill 启动的 backend/admin dev server；只有成功且显式传 `--keep-stack-after` 才保留联调栈，失败或中断仍必须收口。栈状态按 client 稳定记录在 `doc/tmp/infoq-admin-e2e/stack/<vue|react>/state.json`，必须包含 pid、port、log、owned/reused 和 `running`/`stopped`/`failed`/`interrupted` 状态。
+仅获取真实验证码登录 token：
+
+```bash
+node .codex/skills/infoq-admin-e2e/scripts/captcha_login.mjs --backend-url http://127.0.0.1:8080 --print-token
+```
+
+`captcha_login.mjs` 是 `/auth/code` + `ddddocr` + 算术验证码归一化 + 加密 `/auth/login` 的共享入口，`run_admin_e2e.mjs` 与 `infoq-browser-automate` 的 `admin-route-probe` 验证码 fallback 都复用它。证据默认写入 `doc/tmp/infoq-admin-e2e/captcha-login/<run-id>/`。
+
+`run_admin_e2e.mjs` 默认会在完成、失败或中断后停止本 skill 启动的 backend/admin dev server；只有成功且显式传 `--keep-stack-after` 才保留联调栈，失败或中断仍必须收口。栈状态按 client 稳定记录在 `doc/tmp/infoq-admin-e2e/stack/<vue|react|react-pro>/state.json`，必须包含 pid、port、log、owned/reused 和 `running`/`stopped`/`failed`/`interrupted` 状态。
 
 只跑少量路由：
 

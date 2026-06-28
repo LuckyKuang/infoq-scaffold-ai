@@ -1,9 +1,9 @@
-import { Result, Spin } from 'antd';
-import { useEffect, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import {Result, Spin} from 'antd';
+import {useEffect, useRef, useState} from 'react';
+import {useTranslation} from 'react-i18next';
+import {Link, useNavigate, useSearchParams} from '@umijs/max';
 import AuthPageShell from '@/components/AuthPageShell';
-import { useUserStore } from '@/store/modules/user';
+import {useUserStore} from '@/store/modules/user';
 
 const normalizeRedirect = (redirect: string | null) => {
   const value = redirect || '/index';

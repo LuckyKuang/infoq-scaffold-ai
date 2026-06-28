@@ -46,7 +46,7 @@ pnpm --dir .codex/skills/infoq-browser-automate/scripts run playwright-cli flow 
 
 ### 3. 管理端受保护路由验证
 
-该命令是快速路由探测，不负责真实验证码登录。运行前必须已经有可直接登录的后端，或明确使用关闭验证码的诊断后端；需要覆盖真实验证码、OCR 与登录态时，改用 `infoq-admin-e2e`。
+该命令是快速路由探测。它会先通过 `infoq-backend-verify` 的无验证码快路径获取 token；如果后端明确返回 `captchaEnabled=true`，会自动调用 `infoq-admin-e2e/scripts/captcha_login.mjs` 走 `/auth/code` + OCR + `/auth/login` 获取真实 token。完整真实验证码路由矩阵和 CRUD E2E 仍使用 `infoq-admin-e2e`。
 
 先只列出后端真实返回路由：
 
@@ -63,10 +63,11 @@ pnpm --dir .codex/skills/infoq-browser-automate/scripts run playwright-cli admin
 该命令会：
 
 1. 通过 `.codex/skills/infoq-backend-verify/scripts/login_check.mjs` 获取 backend token。
-2. 在页面加载前写入 `Admin-Token`。
-3. 打开目标前端路由。
-4. 输出截图与 console 日志路径。
-5. 默认把 `console error` / `pageerror` 视为失败。
+2. 若检测到 `captchaEnabled=true`，自动调用 `.codex/skills/infoq-admin-e2e/scripts/captcha_login.mjs --print-token` 获取真实验证码 token，并把证据写入 `doc/tmp/infoq-admin-e2e/captcha-login/`。
+3. 在页面加载前写入 `Admin-Token`。
+4. 打开目标前端路由。
+5. 输出截图与 console 日志路径。
+6. 默认把 `console error` / `pageerror` 视为失败。
 
 ### 4. DevTools CLI
 
@@ -121,8 +122,8 @@ pnpm --dir .codex/skills/infoq-browser-automate/scripts run chrome-devtools-cli 
 
 - 默认优先复跑 CLI，不要先上 MCP。
 - CLI 失败时必须保留失败命令、错误摘要与证据路径，禁止静默切走 MCP。
-- backend 未运行、验证码仍开启且未使用真实验证码 E2E、或前端站点不可达时，必须显式失败。
-- 不要把 `admin-route-probe` 当成真实验证码登录验证；真实验证码链路使用 `infoq-admin-e2e`。
+- backend 未运行、验证码 OCR 登录失败、或前端站点不可达时，必须显式失败。
+- 不要把 `admin-route-probe` 当成完整真实验证码 E2E 验收；真实验证码路由矩阵和写入型链路使用 `infoq-admin-e2e`。
 - 批量截图、路由矩阵和登录态注入必须先列出目标路由、storage key、输出目录和失败条件。
 - `console error`、`pageerror`、等待条件超时、截图为空白或证据路径缺失时，不能标记浏览器验证通过。
 - skill 文档树只保留当前 CLI-first 入口与现行约束，不保留任何历史浏览器入口说明。

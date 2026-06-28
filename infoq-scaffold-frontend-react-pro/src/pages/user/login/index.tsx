@@ -1,11 +1,12 @@
 import {GithubOutlined, LockOutlined, LoginOutlined, SafetyCertificateOutlined, UserOutlined,} from '@ant-design/icons';
 import {LoginForm, ProFormCheckbox, ProFormText,} from '@ant-design/pro-components';
-import {Helmet, Link, SelectLang, useIntl, useModel} from '@umijs/max';
+import {Helmet, history, Link, useIntl, useModel} from '@umijs/max';
 import {App, Button, Divider} from 'antd';
 import {createStyles} from 'antd-style';
 import {useCallback, useEffect, useState} from 'react';
-import {Footer} from '@/components';
+import LangSelect from '@/components/LangSelect';
 import {getCodeImg, getOAuthProviders, login,} from '@/services/ant-design-pro/api';
+import {useUserStore} from '@/store/modules/user';
 import {setToken} from '@/utils/auth';
 import Settings from '../../../../config/defaultSettings';
 
@@ -52,7 +53,7 @@ const Lang = () => {
   const { styles } = useStyles();
   return (
     <div className={styles.lang} data-lang>
-      {SelectLang && <SelectLang />}
+      <LangSelect />
     </div>
   );
 };
@@ -75,6 +76,24 @@ const getSafeRedirectUrl = (redirect: string | null): string => {
   }
 };
 
+const getRememberedLoginValues = (): Partial<API.LoginParams> => ({
+  username: localStorage.getItem('username') || '',
+  password: localStorage.getItem('password') || '',
+  rememberMe: localStorage.getItem('rememberMe') === 'true',
+});
+
+const syncRememberedLoginValues = (values: API.LoginParams) => {
+  if (values.rememberMe) {
+    localStorage.setItem('username', values.username || '');
+    localStorage.setItem('password', values.password || '');
+    localStorage.setItem('rememberMe', 'true');
+    return;
+  }
+  localStorage.removeItem('username');
+  localStorage.removeItem('password');
+  localStorage.removeItem('rememberMe');
+};
+
 const renderProviderIcon = (providerCode: string) =>
   providerCode === 'github' ? <GithubOutlined /> : <LoginOutlined />;
 
@@ -92,6 +111,7 @@ const Login: React.FC = () => {
   const { styles } = useStyles();
   const { message } = App.useApp();
   const intl = useIntl();
+  const [rememberedLoginValues] = useState(() => getRememberedLoginValues());
 
   const loadCode = useCallback(async () => {
     try {
@@ -148,6 +168,8 @@ const Login: React.FC = () => {
         },
       );
       setToken(msg.data.access_token);
+      useUserStore.getState().initializeRealtimeChannels();
+      syncRememberedLoginValues(values);
       const authState = await initialState?.fetchUserInfo?.();
       setInitialState((s) => ({
         ...s,
@@ -160,7 +182,7 @@ const Login: React.FC = () => {
         }),
       );
       const urlParams = new URL(window.location.href).searchParams;
-      window.location.href = getSafeRedirectUrl(urlParams.get('redirect'));
+      history.replace(getSafeRedirectUrl(urlParams.get('redirect')));
     } catch {
       if (captchaEnabled) {
         await loadCode();
@@ -205,7 +227,7 @@ const Login: React.FC = () => {
           logo={<img alt="logo" src="/logo.svg" />}
           title={process.env.VITE_APP_LOGO_TITLE || 'infoq-scaffold-backend'}
           subTitle={process.env.VITE_APP_TITLE || '后台管理系统'}
-          initialValues={{ rememberMe: true }}
+          initialValues={rememberedLoginValues}
           onFinish={async (values) => {
             await handleSubmit(values as API.LoginParams);
           }}
@@ -332,7 +354,6 @@ const Login: React.FC = () => {
           )}
         </LoginForm>
       </div>
-      <Footer />
     </div>
   );
 };
