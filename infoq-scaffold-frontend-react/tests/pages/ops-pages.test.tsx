@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
 import { renderWithRouter } from '../helpers/renderWithRouter';
+import { useUserStore } from '@/store/modules/user';
 
 const dictOptions = vi.hoisted(() => ({
   sys_yes_no: [
@@ -217,6 +218,11 @@ function asResolvedValue<T>(value: unknown): T {
 }
 
 beforeEach(() => {
+  useUserStore.setState({
+    roles: ['admin'],
+    permissions: ['*:*:*']
+  });
+
   vi.mocked(configApi.listConfig).mockResolvedValue(
     asResolvedValue<Awaited<ReturnType<typeof configApi.listConfig>>>({
       rows: [{ configId: 1, configName: '系统皮肤', configKey: 'sys.index.skinName', configValue: 'blue', configType: 'Y' }],
@@ -316,8 +322,8 @@ describe('pages/ops', () => {
   it('renders the config page with list data', async () => {
     renderWithRouter(<ConfigPage />, '/system/config');
 
-    expect(await screen.findByPlaceholderText('搜索配置名称、键名或备注')).toBeInTheDocument();
     expect(await screen.findByText('系统皮肤')).toBeInTheDocument();
+    expect(screen.queryByPlaceholderText('搜索配置名称、键名或备注')).not.toBeInTheDocument();
     await waitFor(() => {
       expect(configApi.getConfigPanel).toHaveBeenCalled();
     });

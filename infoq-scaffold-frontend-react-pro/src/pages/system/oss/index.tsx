@@ -22,6 +22,7 @@ import Pagination from '@/components/Pagination';
 import RightToolbar from '@/components/RightToolbar';
 import useInitialLoadEffect from '@/hooks/useInitialLoadEffect';
 import modal from '@/utils/modal';
+import auth from '@/utils/permission';
 import {addDateRange} from '@/utils/scaffold';
 
 const initialQuery: OssQuery = {
@@ -154,22 +155,26 @@ export default function OssPage() {
       align: 'center',
       render: (_, record) => (
         <Space size={4}>
-          <Tooltip title="下载">
-            <Button
-              type="link"
-              icon={<DownloadOutlined />}
-              href={record.url}
-              target="_blank"
-            />
-          </Tooltip>
-          <Tooltip title="删除">
-            <Button
-              danger
-              type="link"
-              icon={<DeleteOutlined />}
-              onClick={() => handleDelete(record.ossId)}
-            />
-          </Tooltip>
+          {auth.hasPermiOr(['system:oss:download']) && (
+            <Tooltip title="下载">
+              <Button
+                type="link"
+                icon={<DownloadOutlined />}
+                href={record.url}
+                target="_blank"
+              />
+            </Tooltip>
+          )}
+          {auth.hasPermiOr(['system:oss:remove']) && (
+            <Tooltip title="删除">
+              <Button
+                danger
+                type="link"
+                icon={<DeleteOutlined />}
+                onClick={() => handleDelete(record.ossId)}
+              />
+            </Tooltip>
+          )}
         </Space>
       ),
     },
@@ -293,6 +298,7 @@ export default function OssPage() {
                 >
                   <DatePicker.RangePicker
                     showTime
+                    placeholder={['开始日期', '结束日期']}
                     style={{ width: '100%' }}
                     value={dateRange}
                     onChange={(value) =>
@@ -367,56 +373,63 @@ export default function OssPage() {
           }}
         >
           <Space wrap>
-            <Button
-              className="btn-plain-primary"
-              icon={<UploadOutlined />}
-              onClick={() => {
-                setUploadType('file');
-                form.setFieldsValue({ file: undefined });
-                setDialogOpen(true);
-              }}
-            >
-              上传文件
-            </Button>
-            <Button
-              className="btn-plain-primary"
-              icon={<UploadOutlined />}
-              onClick={() => {
-                setUploadType('image');
-                form.setFieldsValue({ file: undefined });
-                setDialogOpen(true);
-              }}
-            >
-              上传图片
-            </Button>
-            <Button
-              danger
-              icon={<DeleteOutlined />}
-              onClick={() => handleDelete()}
-              disabled={selectedIds.length === 0}
-              style={{ borderColor: '#ffccc7' }}
-            >
-              删除
-            </Button>
-            <Button
-              icon={
-                previewListResource ? <EyeInvisibleOutlined /> : <EyeOutlined />
-              }
-              loading={previewLoading}
-              style={{
-                color: previewListResource ? '#ff4d4f' : '#e6a23c',
-                borderColor: previewListResource ? '#ffccc7' : '#ffd591',
-              }}
-              onClick={handlePreviewListResource}
-            >
-              预览开关 : {previewListResource ? '禁用' : '启用'}
-            </Button>
-            <Button
-              icon={<SettingOutlined />}
-              onClick={() => navigate('/system/oss-config/index')}
-            >
-              配置管理
-            </Button>
+            {auth.hasPermiOr(['system:oss:upload']) && (
+              <Button
+                className="btn-plain-primary"
+                icon={<UploadOutlined />}
+                onClick={() => {
+                  setUploadType('file');
+                  form.setFieldsValue({ file: undefined });
+                  setDialogOpen(true);
+                }}
+              >
+                上传文件
+              </Button>
+            )}
+            {auth.hasPermiOr(['system:oss:upload']) && (
+              <Button
+                className="btn-plain-primary"
+                icon={<UploadOutlined />}
+                onClick={() => {
+                  setUploadType('image');
+                  form.setFieldsValue({ file: undefined });
+                  setDialogOpen(true);
+                }}
+              >
+                上传图片
+              </Button>
+            )}
+            {auth.hasPermiOr(['system:oss:remove']) && (
+              <Button
+                danger
+                icon={<DeleteOutlined />}
+                onClick={() => handleDelete()}
+                disabled={selectedIds.length === 0}
+                style={{ borderColor: '#ffccc7' }}
+              >
+                删除
+              </Button>
+            )}
+            {auth.hasPermiOr(['system:oss:edit']) && (
+              <Button
+                icon={
+                  previewListResource ? <EyeInvisibleOutlined /> : <EyeOutlined />
+                }
+                loading={previewLoading}
+                className={previewListResource ? 'btn-plain-danger' : 'btn-plain-warning'}
+                onClick={handlePreviewListResource}
+              >
+                预览开关 : {previewListResource ? '禁用' : '启用'}
+              </Button>
+            )}
+            {auth.hasPermiOr(['system:ossConfig:list']) && (
+              <Button
+                icon={<SettingOutlined />}
+                onClick={() => navigate('/system/oss-config/index')}
+              >
+                配置管理
+              </Button>
+            )}
           </Space>
           <RightToolbar
             showSearch={showSearch}

@@ -33,6 +33,7 @@ import RightToolbar from '@/components/RightToolbar';
 import useInitialLoadEffect from '@/hooks/useInitialLoadEffect';
 import useDictOptions from '@/hooks/useDictOptions';
 import modal from '@/utils/modal';
+import auth from '@/utils/permission';
 import {handleTree} from '@/utils/scaffold';
 
 const initialQuery: DeptQuery = {
@@ -178,28 +179,34 @@ export default function DeptPage() {
       align: 'center',
       render: (_, record) => (
         <Space size={4}>
-          <Tooltip title="修改">
-            <Button
-              type="link"
-              icon={<EditOutlined />}
-              onClick={() => handleEdit(record.deptId)}
-            />
-          </Tooltip>
-          <Tooltip title="新增">
-            <Button
-              type="link"
-              icon={<PlusOutlined />}
-              onClick={() => handleAdd(record.deptId)}
-            />
-          </Tooltip>
-          <Tooltip title="删除">
-            <Button
-              danger
-              type="link"
-              icon={<DeleteOutlined />}
-              onClick={() => handleDelete(record.deptId, record.deptName)}
-            />
-          </Tooltip>
+          {auth.hasPermiOr(['system:dept:edit']) && (
+            <Tooltip title="修改">
+              <Button
+                type="link"
+                icon={<EditOutlined />}
+                onClick={() => handleEdit(record.deptId)}
+              />
+            </Tooltip>
+          )}
+          {auth.hasPermiOr(['system:dept:add']) && (
+            <Tooltip title="新增">
+              <Button
+                type="link"
+                icon={<PlusOutlined />}
+                onClick={() => handleAdd(record.deptId)}
+              />
+            </Tooltip>
+          )}
+          {auth.hasPermiOr(['system:dept:remove']) && (
+            <Tooltip title="删除">
+              <Button
+                danger
+                type="link"
+                icon={<DeleteOutlined />}
+                onClick={() => handleDelete(record.deptId, record.deptName)}
+              />
+            </Tooltip>
+          )}
         </Space>
       ),
     },
@@ -358,13 +365,15 @@ export default function DeptPage() {
       <Card>
         <div className="table-toolbar">
           <Space wrap className="toolbar-buttons">
-            <Button
-              className="btn-plain-primary"
-              icon={<PlusOutlined />}
-              onClick={() => handleAdd()}
-            >
-              新增
-            </Button>
+            {auth.hasPermiOr(['system:dept:add']) && (
+              <Button
+                className="btn-plain-primary"
+                icon={<PlusOutlined />}
+                onClick={() => handleAdd()}
+              >
+                新增
+              </Button>
+            )}
             <Button
               icon={<SortAscendingOutlined />}
               onClick={() => {

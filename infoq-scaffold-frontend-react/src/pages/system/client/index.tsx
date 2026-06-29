@@ -9,6 +9,7 @@ import Pagination from '@/components/Pagination';
 import RightToolbar from '@/components/RightToolbar';
 import DictTag from '@/components/DictTag';
 import modal from '@/utils/modal';
+import auth from '@/utils/permission';
 import { download } from '@/utils/request';
 
 const initialQuery: ClientQuery = {
@@ -131,12 +132,16 @@ export default function ClientPage() {
       align: 'center',
       render: (_, record) => (
         <Space size={4}>
-          <Tooltip title="修改">
-            <Button className="table-action-link" type="link" icon={<EditOutlined />} onClick={() => handleEdit(record.id)} />
-          </Tooltip>
-          <Tooltip title="删除">
-            <Button className="table-action-link" type="link" icon={<DeleteOutlined />} onClick={() => handleDelete(record.id)} />
-          </Tooltip>
+          {auth.hasPermiOr(['system:client:edit']) && (
+            <Tooltip title="修改">
+              <Button className="table-action-link" type="link" icon={<EditOutlined />} onClick={() => handleEdit(record.id)} />
+            </Tooltip>
+          )}
+          {auth.hasPermiOr(['system:client:remove']) && (
+            <Tooltip title="删除">
+              <Button className="table-action-link" type="link" icon={<DeleteOutlined />} onClick={() => handleDelete(record.id)} />
+            </Tooltip>
+          )}
         </Space>
       )
     }
@@ -260,27 +265,35 @@ export default function ClientPage() {
       <Card>
         <div className="table-toolbar">
           <Space wrap className="toolbar-buttons">
-            <Button className="btn-plain-primary" icon={<PlusOutlined />} onClick={handleAdd}>
-              新增
-            </Button>
-            <Button
-              className="btn-plain-success"
-              icon={<EditOutlined />}
-              onClick={() => handleEdit(selectedIds[0])}
-              disabled={selectedIds.length !== 1}
-            >
-              修改
-            </Button>
-            <Button className="btn-plain-danger" icon={<DeleteOutlined />} onClick={() => handleDelete()} disabled={selectedIds.length === 0}>
-              删除
-            </Button>
-            <Button
-              className="btn-plain-warning"
-              icon={<DownloadOutlined />}
-              onClick={() => download('/system/client/export', { ...query }, `client_${Date.now()}.xlsx`)}
-            >
-              导出
-            </Button>
+            {auth.hasPermiOr(['system:client:add']) && (
+              <Button className="btn-plain-primary" icon={<PlusOutlined />} onClick={handleAdd}>
+                新增
+              </Button>
+            )}
+            {auth.hasPermiOr(['system:client:edit']) && (
+              <Button
+                className="btn-plain-success"
+                icon={<EditOutlined />}
+                onClick={() => handleEdit(selectedIds[0])}
+                disabled={selectedIds.length !== 1}
+              >
+                修改
+              </Button>
+            )}
+            {auth.hasPermiOr(['system:client:remove']) && (
+              <Button className="btn-plain-danger" icon={<DeleteOutlined />} onClick={() => handleDelete()} disabled={selectedIds.length === 0}>
+                删除
+              </Button>
+            )}
+            {auth.hasPermiOr(['system:client:export']) && (
+              <Button
+                className="btn-plain-warning"
+                icon={<DownloadOutlined />}
+                onClick={() => download('/system/client/export', { ...query }, `client_${Date.now()}.xlsx`)}
+              >
+                导出
+              </Button>
+            )}
           </Space>
           <div className="right-toolbar-wrap">
             <RightToolbar showSearch={showSearch} onShowSearchChange={setShowSearch} onQueryTable={() => loadList(query)} />

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
 import { renderWithRouter } from '../helpers/renderWithRouter';
+import { useUserStore } from '@/store/modules/user';
 
 const dictOptions = vi.hoisted(() => ({
   sys_device_type: [{ label: 'PC', value: 'pc' }],
@@ -183,63 +184,84 @@ function asResolvedValue<T>(value: unknown): T {
 }
 
 beforeEach(() => {
+  useUserStore.setState({
+    roles: ['admin'],
+    permissions: ['*:*:*']
+  });
+
   chartMocks.chartInit.mockReturnValue({
     setOption: chartMocks.chartSetOption,
     resize: chartMocks.chartResize,
     dispose: chartMocks.chartDispose
   });
-  vi.mocked(onlineApi.list).mockResolvedValue(asResolvedValue<Awaited<ReturnType<typeof onlineApi.list>>>({
-    rows: [{ tokenId: 'token-1', userName: 'admin', clientKey: 'pc-web', deviceType: 'pc', deptName: '研发部', loginLocation: '上海' }],
-    total: 1
-  }));
-  vi.mocked(onlineApi.getOnline).mockResolvedValue(asResolvedValue<Awaited<ReturnType<typeof onlineApi.getOnline>>>({
-    rows: [{ tokenId: 'token-1', userName: 'admin', clientKey: 'pc-web', deviceType: 'pc' }]
-  }));
-  vi.mocked(loginInfoApi.list).mockResolvedValue(asResolvedValue<Awaited<ReturnType<typeof loginInfoApi.list>>>({
-    rows: [{ infoId: 1, userName: 'admin', clientKey: 'pc-web', deviceType: 'pc', ipaddr: '127.0.0.1', status: '0', msg: '登录成功' }],
-    total: 1
-  }));
-  vi.mocked(operLogApi.list).mockResolvedValue(asResolvedValue<Awaited<ReturnType<typeof operLogApi.list>>>({
-    rows: [{ operId: 1, title: '用户管理', businessType: 0, operName: 'admin', status: 0, operTime: '2026-03-10 10:00:00', costTime: 12 }],
-    total: 1
-  }));
-  vi.mocked(cacheApi.getCache).mockResolvedValue(asResolvedValue<Awaited<ReturnType<typeof cacheApi.getCache>>>({
-    data: {
-      dbSize: 12,
-      info: {
-        redis_version: '7.2.0',
-        redis_mode: 'standalone',
-        tcp_port: '6379',
-        connected_clients: '3',
-        uptime_in_days: '9',
-        used_memory_human: '12M',
-        used_cpu_user_children: '0.11',
-        maxmemory_human: '256M',
-        aof_enabled: '1',
-        rdb_last_bgsave_status: 'ok',
-        instantaneous_input_kbps: '1.2',
-        instantaneous_output_kbps: '1.0'
-      },
-      commandStats: [{ name: 'get', value: '20' }]
-    }
-  }));
-  vi.mocked(roleApi.allocatedUserList).mockResolvedValue(asResolvedValue<Awaited<ReturnType<typeof roleApi.allocatedUserList>>>({
-    rows: [{ userId: 1, userName: 'admin', nickName: '管理员', phonenumber: '13800000000', status: '0' }],
-    total: 1
-  }));
-  vi.mocked(userApi.getAuthRole).mockResolvedValue(asResolvedValue<Awaited<ReturnType<typeof userApi.getAuthRole>>>({
-    data: {
-      user: { userId: 1, userName: 'admin', nickName: '管理员' },
-      roles: [{ roleId: 1, roleName: '管理员', roleKey: 'admin', status: '0', flag: true }]
-    }
-  }));
-  vi.mocked(userApi.getUserProfile).mockResolvedValue(asResolvedValue<Awaited<ReturnType<typeof userApi.getUserProfile>>>({
-    data: {
-      user: { userName: 'admin', phonenumber: '13800000000', email: 'admin@example.com', deptName: '研发部', createTime: '2026-03-10' },
-      roleGroup: '管理员',
-      postGroup: '研发岗'
-    }
-  }));
+  vi.mocked(onlineApi.list).mockResolvedValue(
+    asResolvedValue<Awaited<ReturnType<typeof onlineApi.list>>>({
+      rows: [{ tokenId: 'token-1', userName: 'admin', clientKey: 'pc-web', deviceType: 'pc', deptName: '研发部', loginLocation: '上海' }],
+      total: 1
+    })
+  );
+  vi.mocked(onlineApi.getOnline).mockResolvedValue(
+    asResolvedValue<Awaited<ReturnType<typeof onlineApi.getOnline>>>({
+      rows: [{ tokenId: 'token-1', userName: 'admin', clientKey: 'pc-web', deviceType: 'pc' }]
+    })
+  );
+  vi.mocked(loginInfoApi.list).mockResolvedValue(
+    asResolvedValue<Awaited<ReturnType<typeof loginInfoApi.list>>>({
+      rows: [{ infoId: 1, userName: 'admin', clientKey: 'pc-web', deviceType: 'pc', ipaddr: '127.0.0.1', status: '0', msg: '登录成功' }],
+      total: 1
+    })
+  );
+  vi.mocked(operLogApi.list).mockResolvedValue(
+    asResolvedValue<Awaited<ReturnType<typeof operLogApi.list>>>({
+      rows: [{ operId: 1, title: '用户管理', businessType: 0, operName: 'admin', status: 0, operTime: '2026-03-10 10:00:00', costTime: 12 }],
+      total: 1
+    })
+  );
+  vi.mocked(cacheApi.getCache).mockResolvedValue(
+    asResolvedValue<Awaited<ReturnType<typeof cacheApi.getCache>>>({
+      data: {
+        dbSize: 12,
+        info: {
+          redis_version: '7.2.0',
+          redis_mode: 'standalone',
+          tcp_port: '6379',
+          connected_clients: '3',
+          uptime_in_days: '9',
+          used_memory_human: '12M',
+          used_cpu_user_children: '0.11',
+          maxmemory_human: '256M',
+          aof_enabled: '1',
+          rdb_last_bgsave_status: 'ok',
+          instantaneous_input_kbps: '1.2',
+          instantaneous_output_kbps: '1.0'
+        },
+        commandStats: [{ name: 'get', value: '20' }]
+      }
+    })
+  );
+  vi.mocked(roleApi.allocatedUserList).mockResolvedValue(
+    asResolvedValue<Awaited<ReturnType<typeof roleApi.allocatedUserList>>>({
+      rows: [{ userId: 1, userName: 'admin', nickName: '管理员', phonenumber: '13800000000', status: '0' }],
+      total: 1
+    })
+  );
+  vi.mocked(userApi.getAuthRole).mockResolvedValue(
+    asResolvedValue<Awaited<ReturnType<typeof userApi.getAuthRole>>>({
+      data: {
+        user: { userId: 1, userName: 'admin', nickName: '管理员' },
+        roles: [{ roleId: 1, roleName: '管理员', roleKey: 'admin', status: '0', flag: true }]
+      }
+    })
+  );
+  vi.mocked(userApi.getUserProfile).mockResolvedValue(
+    asResolvedValue<Awaited<ReturnType<typeof userApi.getUserProfile>>>({
+      data: {
+        user: { userName: 'admin', phonenumber: '13800000000', email: 'admin@example.com', deptName: '研发部', createTime: '2026-03-10' },
+        roleGroup: '管理员',
+        postGroup: '研发岗'
+      }
+    })
+  );
 });
 
 describe('pages/monitor-auth-profile', () => {

@@ -1,6 +1,7 @@
 import {screen, waitFor} from '@testing-library/react';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {renderWithRouter} from '../helpers/renderWithRouter';
+import {setPermissionContext} from '@/utils/permission';
 
 const dictOptions = vi.hoisted(() => ({
   sys_yes_no: [
@@ -284,6 +285,8 @@ function asResolvedValue<T>(value: unknown): T {
 }
 
 beforeEach(() => {
+  setPermissionContext(['admin'], ['*:*:*']);
+
   vi.mocked(configApi.listConfig).mockResolvedValue(
     asResolvedValue<Awaited<ReturnType<typeof configApi.listConfig>>>({
       rows: [

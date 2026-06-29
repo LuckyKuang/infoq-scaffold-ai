@@ -20,6 +20,7 @@ import useInitialLoadEffect from '@/hooks/useInitialLoadEffect';
 import useDictOptions from '@/hooks/useDictOptions';
 import OperInfoDialog from '@/pages/monitor/operLog/oper-info-dialog';
 import modal from '@/utils/modal';
+import auth from '@/utils/permission';
 import {download} from '@/utils/request';
 import {addDateRange} from '@/utils/scaffold';
 
@@ -181,19 +182,20 @@ export default function OperLogPage() {
       width: 110,
       align: 'center',
       fixed: 'right',
-      render: (_, record) => (
-        <Tooltip title="详细">
-          <Button
-            className="table-action-link"
-            type="link"
-            icon={<EyeOutlined />}
-            onClick={() => {
-              setActiveRecord(record);
-              setDetailOpen(true);
-            }}
-          />
-        </Tooltip>
-      ),
+      render: (_, record) =>
+        auth.hasPermiOr(['monitor:operLog:query']) ? (
+          <Tooltip title="详细">
+            <Button
+              className="table-action-link"
+              type="link"
+              icon={<EyeOutlined />}
+              onClick={() => {
+                setActiveRecord(record);
+                setDetailOpen(true);
+              }}
+            />
+          </Tooltip>
+        ) : null,
     },
   ];
 
@@ -322,6 +324,7 @@ export default function OperLogPage() {
                 >
                   <DatePicker.RangePicker
                     showTime
+                    placeholder={['开始日期', '结束日期']}
                     style={{ width: '100%' }}
                     value={dateRange}
                     onChange={(value) =>
@@ -370,55 +373,61 @@ export default function OperLogPage() {
       <Card>
         <div className="table-toolbar">
           <Space wrap className="toolbar-buttons">
-            <Button
-              className="btn-plain-danger"
-              icon={<DeleteOutlined />}
-              disabled={selectedIds.length === 0}
-              onClick={async () => {
-                const confirmed = await modal.confirm(
-                  `是否确认删除日志编号为 "${selectedIds.join(',')}" 的数据项？`,
-                );
-                if (!confirmed) {
-                  return;
+            {auth.hasPermiOr(['monitor:operLog:remove']) && (
+              <Button
+                className="btn-plain-danger"
+                icon={<DeleteOutlined />}
+                disabled={selectedIds.length === 0}
+                onClick={async () => {
+                  const confirmed = await modal.confirm(
+                    `是否确认删除日志编号为 "${selectedIds.join(',')}" 的数据项？`,
+                  );
+                  if (!confirmed) {
+                    return;
+                  }
+                  await delOperLog(selectedIds);
+                  modal.msgSuccess('删除成功');
+                  setSelectedIds([]);
+                  loadList(query, dateRange);
+                }}
+              >
+                删除
+              </Button>
+            )}
+            {auth.hasPermiOr(['monitor:operLog:remove']) && (
+              <Button
+                className="btn-plain-danger"
+                icon={<WarningOutlined />}
+                onClick={async () => {
+                  const confirmed = await modal.confirm(
+                    '是否确认清空所有操作日志数据项？',
+                  );
+                  if (!confirmed) {
+                    return;
+                  }
+                  await cleanOperLog();
+                  modal.msgSuccess('清空成功');
+                  loadList(query, dateRange);
+                }}
+              >
+                清空
+              </Button>
+            )}
+            {auth.hasPermiOr(['monitor:operLog:export']) && (
+              <Button
+                className="btn-plain-warning"
+                icon={<DownloadOutlined />}
+                onClick={() =>
+                  download(
+                    '/monitor/operLog/export',
+                    addDateRange({ ...query }, formatRange(dateRange)),
+                    `operLog_${Date.now()}.xlsx`,
+                  )
                 }
-                await delOperLog(selectedIds);
-                modal.msgSuccess('删除成功');
-                setSelectedIds([]);
-                loadList(query, dateRange);
-              }}
-            >
-              删除
-            </Button>
-            <Button
-              className="btn-plain-danger"
-              icon={<WarningOutlined />}
-              onClick={async () => {
-                const confirmed = await modal.confirm(
-                  '是否确认清空所有操作日志数据项？',
-                );
-                if (!confirmed) {
-                  return;
-                }
-                await cleanOperLog();
-                modal.msgSuccess('清空成功');
-                loadList(query, dateRange);
-              }}
-            >
-              清空
-            </Button>
-            <Button
-              className="btn-plain-warning"
-              icon={<DownloadOutlined />}
-              onClick={() =>
-                download(
-                  '/monitor/operLog/export',
-                  addDateRange({ ...query }, formatRange(dateRange)),
-                  `operLog_${Date.now()}.xlsx`,
-                )
-              }
-            >
-              导出
-            </Button>
+              >
+                导出
+              </Button>
+            )}
           </Space>
           <div className="right-toolbar-wrap">
             <RightToolbar

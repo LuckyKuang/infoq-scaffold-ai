@@ -1,7 +1,9 @@
-import { fireEvent, screen, waitFor } from '@testing-library/react';
-import type { ChangeEvent, ReactElement } from 'react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { renderWithRouter } from '../helpers/renderWithRouter';
+import {fireEvent, screen, waitFor} from '@testing-library/react';
+import type {ChangeEvent, ReactElement} from 'react';
+import {beforeEach, describe, expect, it, vi} from 'vitest';
+import {renderWithRouter} from '../helpers/renderWithRouter';
+import {clearInitialLoadEffectDedupe} from '@/hooks/useInitialLoadEffect';
+import {setPermissionContext} from '@/utils/permission';
 
 type MockFormInstance = {
   __store: Record<string, unknown>;
@@ -280,6 +282,8 @@ const { default: InvitePage } = await import('@/pages/system/invite/index');
 describe('pages/system/invite', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    clearInitialLoadEffectDedupe();
+    setPermissionContext(['admin'], ['*:*:*']);
     invitePageMocks.listInvite.mockResolvedValue({
       rows: [
         {
@@ -308,6 +312,15 @@ describe('pages/system/invite', () => {
     await waitFor(() => {
       expect(invitePageMocks.listInvite).toHaveBeenCalled();
     });
+  });
+
+  it('hides generate action without add permission', async () => {
+    setPermissionContext([], []);
+
+    renderWithRouter(<InvitePage />, '/system/invite');
+
+    expect(await screen.findByText('INVITE-CODE')).toBeInTheDocument();
+    expect(screen.queryByText('生成邀请码')).not.toBeInTheDocument();
   });
 
   it('generates invite codes from modal', async () => {

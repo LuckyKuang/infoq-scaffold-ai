@@ -35,6 +35,7 @@ import RightToolbar from '@/components/RightToolbar';
 import useInitialLoadEffect from '@/hooks/useInitialLoadEffect';
 import useDictOptions from '@/hooks/useDictOptions';
 import modal from '@/utils/modal';
+import auth from '@/utils/permission';
 import {download} from '@/utils/request';
 
 const initialQuery: PostQuery = {
@@ -200,22 +201,26 @@ export default function PostPage() {
       align: 'center',
       render: (_, record) => (
         <Space size={4}>
-          <Tooltip title="修改">
-            <Button
-              className="table-action-link"
-              type="link"
-              icon={<EditOutlined />}
-              onClick={() => handleEdit(record.postId)}
-            />
-          </Tooltip>
-          <Tooltip title="删除">
-            <Button
-              className="table-action-link"
-              type="link"
-              icon={<DeleteOutlined />}
-              onClick={() => handleDelete(record.postId)}
-            />
-          </Tooltip>
+          {auth.hasPermiOr(['system:post:edit']) && (
+            <Tooltip title="修改">
+              <Button
+                className="table-action-link"
+                type="link"
+                icon={<EditOutlined />}
+                onClick={() => handleEdit(record.postId)}
+              />
+            </Tooltip>
+          )}
+          {auth.hasPermiOr(['system:post:remove']) && (
+            <Tooltip title="删除">
+              <Button
+                className="table-action-link"
+                type="link"
+                icon={<DeleteOutlined />}
+                onClick={() => handleDelete(record.postId)}
+              />
+            </Tooltip>
+          )}
         </Space>
       ),
     },
@@ -449,45 +454,53 @@ export default function PostPage() {
           <Card>
             <div className="table-toolbar">
               <Space wrap className="toolbar-buttons">
-                <Button
-                  className="btn-plain-primary"
-                  icon={<PlusOutlined />}
-                  onClick={() => {
-                    form.setFieldsValue(initialForm);
-                    setDialogOpen(true);
-                  }}
-                >
-                  新增
-                </Button>
-                <Button
-                  className="btn-plain-success"
-                  icon={<EditOutlined />}
-                  onClick={() => handleEdit(selectedIds[0])}
-                  disabled={selectedIds.length !== 1}
-                >
-                  修改
-                </Button>
-                <Button
-                  className="btn-plain-danger"
-                  icon={<DeleteOutlined />}
-                  onClick={() => handleDelete()}
-                  disabled={selectedIds.length === 0}
-                >
-                  删除
-                </Button>
-                <Button
-                  className="btn-plain-warning"
-                  icon={<DownloadOutlined />}
-                  onClick={() =>
-                    download(
-                      '/system/post/export',
-                      { ...query },
-                      `post_${Date.now()}.xlsx`,
-                    )
-                  }
-                >
-                  导出
-                </Button>
+                {auth.hasPermiOr(['system:post:add']) && (
+                  <Button
+                    className="btn-plain-primary"
+                    icon={<PlusOutlined />}
+                    onClick={() => {
+                      form.setFieldsValue(initialForm);
+                      setDialogOpen(true);
+                    }}
+                  >
+                    新增
+                  </Button>
+                )}
+                {auth.hasPermiOr(['system:post:edit']) && (
+                  <Button
+                    className="btn-plain-success"
+                    icon={<EditOutlined />}
+                    onClick={() => handleEdit(selectedIds[0])}
+                    disabled={selectedIds.length !== 1}
+                  >
+                    修改
+                  </Button>
+                )}
+                {auth.hasPermiOr(['system:post:remove']) && (
+                  <Button
+                    className="btn-plain-danger"
+                    icon={<DeleteOutlined />}
+                    onClick={() => handleDelete()}
+                    disabled={selectedIds.length === 0}
+                  >
+                    删除
+                  </Button>
+                )}
+                {auth.hasPermiOr(['system:post:export']) && (
+                  <Button
+                    className="btn-plain-warning"
+                    icon={<DownloadOutlined />}
+                    onClick={() =>
+                      download(
+                        '/system/post/export',
+                        { ...query },
+                        `post_${Date.now()}.xlsx`,
+                      )
+                    }
+                  >
+                    导出
+                  </Button>
+                )}
               </Space>
               <div className="right-toolbar-wrap">
                 <RightToolbar

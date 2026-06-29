@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { renderWithRouter } from '../helpers/renderWithRouter';
+import { useUserStore } from '@/store/modules/user';
 
 const dictOptions = vi.hoisted(() => ({
   sys_normal_disable: [
@@ -172,6 +173,11 @@ function asResolvedValue<T>(value: unknown): T {
 }
 
 beforeEach(() => {
+  useUserStore.setState({
+    roles: ['admin'],
+    permissions: ['*:*:*']
+  });
+
   vi.mocked(userApi.listUser).mockResolvedValue(
     asResolvedValue<Awaited<ReturnType<typeof userApi.listUser>>>({
       rows: [
@@ -305,7 +311,7 @@ describe('pages/system', () => {
     });
   });
 
-  it('opens the root department add dialog without parent selector jitter or default zoom motion', async () => {
+  it('opens the root department add dialog with a stable parent selector and without default zoom motion', async () => {
     renderWithRouter(<DeptPage />, '/system/dept');
 
     expect(await screen.findByPlaceholderText('请输入部门名称')).toBeInTheDocument();
@@ -318,7 +324,7 @@ describe('pages/system', () => {
     expect(dialog).toBeInTheDocument();
     expect(dialog).not.toHaveClass('ant-zoom');
     expect(dialog).not.toHaveClass('ant-zoom-appear');
-    expect(screen.queryByText('上级部门')).not.toBeInTheDocument();
+    expect(screen.getByText('上级部门')).toBeInTheDocument();
   });
 
   it('opens the child department add dialog with a stable parent selector', async () => {

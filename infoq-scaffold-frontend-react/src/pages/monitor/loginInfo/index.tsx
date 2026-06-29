@@ -11,6 +11,7 @@ import DictTag from '@/components/DictTag';
 import Pagination from '@/components/Pagination';
 import RightToolbar from '@/components/RightToolbar';
 import modal from '@/utils/modal';
+import auth from '@/utils/permission';
 import { addDateRange } from '@/utils/scaffold';
 import { download } from '@/utils/request';
 
@@ -236,6 +237,7 @@ export default function LoginInfoPage() {
                 <Form.Item label="登录时间" style={{ width: '100%', marginBottom: 12 }}>
                   <DatePicker.RangePicker
                     showTime
+                    placeholder={['开始日期', '结束日期']}
                     style={{ width: '100%' }}
                     value={dateRange}
                     onChange={(value) => setDateRange((value as [Dayjs, Dayjs]) || null)}
@@ -282,36 +284,44 @@ export default function LoginInfoPage() {
       <Card>
         <div className="table-toolbar">
           <Space wrap className="toolbar-buttons">
-            <Button className="btn-plain-danger" icon={<DeleteOutlined />} onClick={handleDelete} disabled={selectedIds.length === 0}>
-              删除
-            </Button>
-            <Button
-              className="btn-plain-danger"
-              icon={<DeleteOutlined />}
-              onClick={async () => {
-                const confirmed = await modal.confirm('是否确认清空所有登录日志数据项？');
-                if (!confirmed) {
-                  return;
+            {auth.hasPermiOr(['monitor:loginInfo:remove']) && (
+              <Button className="btn-plain-danger" icon={<DeleteOutlined />} onClick={handleDelete} disabled={selectedIds.length === 0}>
+                删除
+              </Button>
+            )}
+            {auth.hasPermiOr(['monitor:loginInfo:remove']) && (
+              <Button
+                className="btn-plain-danger"
+                icon={<DeleteOutlined />}
+                onClick={async () => {
+                  const confirmed = await modal.confirm('是否确认清空所有登录日志数据项？');
+                  if (!confirmed) {
+                    return;
+                  }
+                  await cleanLoginInfo();
+                  modal.msgSuccess('清空成功');
+                  loadList(query, dateRange);
+                }}
+              >
+                清空
+              </Button>
+            )}
+            {auth.hasPermiOr(['monitor:loginInfo:unlock']) && (
+              <Button className="btn-plain-primary" icon={<UnlockOutlined />} onClick={handleUnlock} disabled={selectedNames.length !== 1}>
+                解锁
+              </Button>
+            )}
+            {auth.hasPermiOr(['monitor:loginInfo:export']) && (
+              <Button
+                className="btn-plain-warning"
+                icon={<DownloadOutlined />}
+                onClick={() =>
+                  download('/monitor/loginInfo/export', addDateRange({ ...query }, formatRange(dateRange)), `loginInfo_${Date.now()}.xlsx`)
                 }
-                await cleanLoginInfo();
-                modal.msgSuccess('清空成功');
-                loadList(query, dateRange);
-              }}
-            >
-              清空
-            </Button>
-            <Button className="btn-plain-primary" icon={<UnlockOutlined />} onClick={handleUnlock} disabled={selectedNames.length !== 1}>
-              解锁
-            </Button>
-            <Button
-              className="btn-plain-warning"
-              icon={<DownloadOutlined />}
-              onClick={() =>
-                download('/monitor/loginInfo/export', addDateRange({ ...query }, formatRange(dateRange)), `loginInfo_${Date.now()}.xlsx`)
-              }
-            >
-              导出
-            </Button>
+              >
+                导出
+              </Button>
+            )}
           </Space>
           <div className="right-toolbar-wrap">
             <RightToolbar showSearch={showSearch} onShowSearchChange={setShowSearch} onQueryTable={() => loadList(query, dateRange)} />

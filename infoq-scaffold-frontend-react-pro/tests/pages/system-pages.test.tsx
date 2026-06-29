@@ -13,6 +13,7 @@ import MenuPage from '@/pages/system/menu/index';
 import PostPage from '@/pages/system/post/index';
 import RolePage from '@/pages/system/role/index';
 import UserPage from '@/pages/system/user/index';
+import {setPermissionContext} from '@/utils/permission';
 
 const dictOptions = vi.hoisted(() => ({
   sys_normal_disable: [
@@ -226,6 +227,7 @@ function asResolvedValue<T>(value: unknown): T {
 beforeEach(() => {
   vi.clearAllMocks();
   clearInitialLoadEffectDedupe();
+  setPermissionContext(['admin'], ['*:*:*']);
   vi.mocked(userApi.listUser).mockResolvedValue(
     asResolvedValue<Awaited<ReturnType<typeof userApi.listUser>>>({
       rows: [

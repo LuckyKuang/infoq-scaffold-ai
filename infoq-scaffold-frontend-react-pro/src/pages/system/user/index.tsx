@@ -61,6 +61,7 @@ import RightToolbar, {type ToolbarColumn} from '@/components/RightToolbar';
 import useInitialLoadEffect from '@/hooks/useInitialLoadEffect';
 import useDictOptions from '@/hooks/useDictOptions';
 import modal from '@/utils/modal';
+import auth from '@/utils/permission';
 import request, {download} from '@/utils/request';
 import {addDateRange} from '@/utils/scaffold';
 
@@ -315,16 +316,24 @@ export default function UserPage() {
       icon: <DownloadOutlined />,
       label: '下载模板',
     },
-    {
-      key: 'import',
-      icon: <UploadOutlined />,
-      label: '导入数据',
-    },
-    {
-      key: 'export',
-      icon: <DownloadOutlined />,
-      label: '导出数据',
-    },
+    ...(auth.hasPermiOr(['system:user:import'])
+      ? [
+          {
+            key: 'import',
+            icon: <UploadOutlined />,
+            label: '导入数据',
+          },
+        ]
+      : []),
+    ...(auth.hasPermiOr(['system:user:export'])
+      ? [
+          {
+            key: 'export',
+            icon: <DownloadOutlined />,
+            label: '导出数据',
+          },
+        ]
+      : []),
   ];
 
   const handleEdit = useCallback(
@@ -550,48 +559,54 @@ export default function UserPage() {
         fixed: 'right' as const,
         render: (_, record) => (
           <Space size={4}>
-            <Tooltip title="修改">
-              <Button
-                className="table-action-link"
-                type="link"
-                icon={<EditOutlined />}
-                disabled={record.userId === 1}
-                onClick={() => handleEdit(record.userId)}
-              />
-            </Tooltip>
-            <Tooltip title="删除">
-              <Button
-                className="table-action-link"
-                type="link"
-                icon={<DeleteOutlined />}
-                disabled={record.userId === 1}
-                onClick={() => handleDelete(record.userId)}
-              />
-            </Tooltip>
-            <Tooltip title="重置密码">
-              <Button
-                className="table-action-link"
-                type="link"
-                icon={<KeyOutlined />}
-                disabled={record.userId === 1}
-                onClick={() => {
-                  setActiveUserId(record.userId);
-                  pwdForm.setFieldsValue({ password: '' });
-                  setPwdDialogOpen(true);
-                }}
-              />
-            </Tooltip>
-            <Tooltip title="分配角色">
-              <Button
-                className="table-action-link"
-                type="link"
-                icon={<CheckCircleOutlined />}
-                disabled={record.userId === 1}
-                onClick={() =>
-                  navigate(`/system/user-auth/role/${record.userId}`)
-                }
-              />
-            </Tooltip>
+            {record.userId !== 1 && auth.hasPermiOr(['system:user:edit']) && (
+              <Tooltip title="修改">
+                <Button
+                  className="table-action-link"
+                  type="link"
+                  icon={<EditOutlined />}
+                  onClick={() => handleEdit(record.userId)}
+                />
+              </Tooltip>
+            )}
+            {record.userId !== 1 &&
+              auth.hasPermiOr(['system:user:remove']) && (
+                <Tooltip title="删除">
+                  <Button
+                    className="table-action-link"
+                    type="link"
+                    icon={<DeleteOutlined />}
+                    onClick={() => handleDelete(record.userId)}
+                  />
+                </Tooltip>
+              )}
+            {record.userId !== 1 &&
+              auth.hasPermiOr(['system:user:resetPwd']) && (
+                <Tooltip title="重置密码">
+                  <Button
+                    className="table-action-link"
+                    type="link"
+                    icon={<KeyOutlined />}
+                    onClick={() => {
+                      setActiveUserId(record.userId);
+                      pwdForm.setFieldsValue({ password: '' });
+                      setPwdDialogOpen(true);
+                    }}
+                  />
+                </Tooltip>
+              )}
+            {record.userId !== 1 && auth.hasPermiOr(['system:user:edit']) && (
+              <Tooltip title="分配角色">
+                <Button
+                  className="table-action-link"
+                  type="link"
+                  icon={<CheckCircleOutlined />}
+                  onClick={() =>
+                    navigate(`/system/user-auth/role/${record.userId}`)
+                  }
+                />
+              </Tooltip>
+            )}
           </Space>
         ),
       },
@@ -734,6 +749,7 @@ export default function UserPage() {
                     >
                       <DatePicker.RangePicker
                         showTime
+                        placeholder={['开始日期', '结束日期']}
                         style={{ width: '100%' }}
                         value={dateRange}
                         onChange={(value) =>
@@ -769,29 +785,35 @@ export default function UserPage() {
           <Card>
             <div className="table-toolbar">
               <Space wrap className="toolbar-buttons">
-                <Button
-                  className="btn-plain-primary"
-                  icon={<PlusOutlined />}
-                  onClick={handleAdd}
-                >
-                  新增
-                </Button>
-                <Button
-                  className="btn-plain-success"
-                  icon={<EditOutlined />}
-                  onClick={() => handleEdit(selectedIds[0])}
-                  disabled={selectedIds.length !== 1}
-                >
-                  修改
-                </Button>
-                <Button
-                  className="btn-plain-danger"
-                  icon={<DeleteOutlined />}
-                  onClick={() => handleDelete()}
-                  disabled={selectedIds.length === 0}
-                >
-                  删除
-                </Button>
+                {auth.hasPermiOr(['system:user:add']) && (
+                  <Button
+                    className="btn-plain-primary"
+                    icon={<PlusOutlined />}
+                    onClick={handleAdd}
+                  >
+                    新增
+                  </Button>
+                )}
+                {auth.hasPermiOr(['system:user:edit']) && (
+                  <Button
+                    className="btn-plain-success"
+                    icon={<EditOutlined />}
+                    onClick={() => handleEdit(selectedIds[0])}
+                    disabled={selectedIds.length !== 1}
+                  >
+                    修改
+                  </Button>
+                )}
+                {auth.hasPermiOr(['system:user:remove']) && (
+                  <Button
+                    className="btn-plain-danger"
+                    icon={<DeleteOutlined />}
+                    onClick={() => handleDelete()}
+                    disabled={selectedIds.length === 0}
+                  >
+                    删除
+                  </Button>
+                )}
                 <Dropdown
                   menu={{
                     items: moreActions,

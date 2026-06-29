@@ -27,6 +27,7 @@ import SvgIcon from '@/components/SvgIcon';
 import useInitialLoadEffect from '@/hooks/useInitialLoadEffect';
 import useDictOptions from '@/hooks/useDictOptions';
 import modal from '@/utils/modal';
+import auth from '@/utils/permission';
 import {handleTree} from '@/utils/scaffold';
 
 type MenuNode = MenuVO;
@@ -128,28 +129,34 @@ export default function MenuPage() {
       align: 'center',
       render: (_, record) => (
         <Space size={4}>
-          <Tooltip title="修改">
-            <Button
-              type="link"
-              icon={<EditOutlined />}
-              onClick={() => handleEdit(record.menuId)}
-            />
-          </Tooltip>
-          <Tooltip title="新增">
-            <Button
-              type="link"
-              icon={<PlusOutlined />}
-              onClick={() => handleAdd(record.menuId)}
-            />
-          </Tooltip>
-          <Tooltip title="删除">
-            <Button
-              danger
-              type="link"
-              icon={<DeleteOutlined />}
-              onClick={() => handleDelete(record.menuId, record.menuName)}
-            />
-          </Tooltip>
+          {auth.hasPermiOr(['system:menu:edit']) && (
+            <Tooltip title="修改">
+              <Button
+                type="link"
+                icon={<EditOutlined />}
+                onClick={() => handleEdit(record.menuId)}
+              />
+            </Tooltip>
+          )}
+          {auth.hasPermiOr(['system:menu:add']) && (
+            <Tooltip title="新增">
+              <Button
+                type="link"
+                icon={<PlusOutlined />}
+                onClick={() => handleAdd(record.menuId)}
+              />
+            </Tooltip>
+          )}
+          {auth.hasPermiOr(['system:menu:remove']) && (
+            <Tooltip title="删除">
+              <Button
+                danger
+                type="link"
+                icon={<DeleteOutlined />}
+                onClick={() => handleDelete(record.menuId, record.menuName)}
+              />
+            </Tooltip>
+          )}
         </Space>
       ),
     },
@@ -284,21 +291,25 @@ export default function MenuPage() {
       <Card>
         <div className="table-toolbar">
           <Space wrap className="toolbar-buttons">
-            <Button
-              className="btn-plain-primary"
-              icon={<PlusOutlined />}
-              onClick={() => handleAdd()}
-            >
-              新增
-            </Button>
-            <Button
-              danger
-              icon={<DeleteOutlined />}
-              onClick={() => setDeleteOpen(true)}
-              style={{ borderColor: '#ffccc7' }}
-            >
-              级联删除
-            </Button>
+            {auth.hasPermiOr(['system:menu:add']) && (
+              <Button
+                className="btn-plain-primary"
+                icon={<PlusOutlined />}
+                onClick={() => handleAdd()}
+              >
+                新增
+              </Button>
+            )}
+            {auth.hasPermiOr(['system:menu:remove']) && (
+              <Button
+                danger
+                icon={<DeleteOutlined />}
+                onClick={() => setDeleteOpen(true)}
+                style={{ borderColor: '#ffccc7' }}
+              >
+                级联删除
+              </Button>
+            )}
           </Space>
           <div className="right-toolbar-wrap">
             <RightToolbar

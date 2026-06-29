@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { renderWithRouter } from '../helpers/renderWithRouter';
 import type { ChangeEvent, ReactElement } from 'react';
+import { useUserStore } from '@/store/modules/user';
 
 type MockFormInstance = {
   __store: Record<string, unknown>;
@@ -14,15 +15,7 @@ type MockFormInstance = {
 
 vi.mock('antd', async () => {
   const React = await vi.importActual<typeof import('react')>('react');
-  const Form = (({
-    children,
-    form,
-    initialValues
-  }: {
-    children?: unknown;
-    form?: MockFormInstance;
-    initialValues?: Record<string, unknown>;
-  }) => {
+  const Form = (({ children, form, initialValues }: { children?: unknown; form?: MockFormInstance; initialValues?: Record<string, unknown> }) => {
     if (form?.__store && initialValues) {
       Object.entries(initialValues).forEach(([key, value]) => {
         if (typeof form.__store[key] === 'undefined') {
@@ -72,45 +65,37 @@ vi.mock('antd', async () => {
   };
   Form.useWatch = (name: string, form?: MockFormInstance) => form?.__store?.[name];
 
-  const Button = ({
-    children,
-    onClick,
-    disabled
-  }: {
-    children?: unknown;
-    onClick?: () => void;
-    disabled?: boolean;
-  }) => (
+  const Button = ({ children, onClick, disabled }: { children?: unknown; onClick?: () => void; disabled?: boolean }) => (
     <button disabled={disabled} onClick={onClick}>
       {children as never}
     </button>
   );
 
-  const Input = Object.assign(({ value, onChange, placeholder }: {
-    value?: string | number | readonly string[];
-    onChange?: (event: ChangeEvent<HTMLInputElement>) => void;
-    placeholder?: string;
-  }) => (
-    <input value={value ?? ''} onChange={onChange} placeholder={placeholder} />
-  ), {
-    TextArea: ({ value, onChange, placeholder }: {
+  const Input = Object.assign(
+    ({
+      value,
+      onChange,
+      placeholder
+    }: {
       value?: string | number | readonly string[];
-      onChange?: (event: ChangeEvent<HTMLTextAreaElement>) => void;
+      onChange?: (event: ChangeEvent<HTMLInputElement>) => void;
       placeholder?: string;
-    }) => (
-      <textarea value={value ?? ''} onChange={onChange} placeholder={placeholder} />
-    )
-  });
+    }) => <input value={value ?? ''} onChange={onChange} placeholder={placeholder} />,
+    {
+      TextArea: ({
+        value,
+        onChange,
+        placeholder
+      }: {
+        value?: string | number | readonly string[];
+        onChange?: (event: ChangeEvent<HTMLTextAreaElement>) => void;
+        placeholder?: string;
+      }) => <textarea value={value ?? ''} onChange={onChange} placeholder={placeholder} />
+    }
+  );
 
-  const InputNumber = ({ value, onChange }: {
-    value?: number | string;
-    onChange?: (value: number) => void;
-  }) => (
-    <input
-      type="number"
-      value={value ?? ''}
-      onChange={(event) => onChange?.(Number((event.target as HTMLInputElement).value))}
-    />
+  const InputNumber = ({ value, onChange }: { value?: number | string; onChange?: (value: number) => void }) => (
+    <input type="number" value={value ?? ''} onChange={(event) => onChange?.(Number((event.target as HTMLInputElement).value))} />
   );
 
   const DatePicker = Object.assign(() => <input data-testid="date-picker" />, {
@@ -120,7 +105,11 @@ vi.mock('antd', async () => {
   const Select = () => <select />;
   const Switch = ({ checked }: { checked?: boolean }) => <button role="switch" aria-checked={checked} />;
   const Table = ({ dataSource }: { dataSource?: Array<Record<string, unknown>> }) => (
-    <div>{dataSource?.map((item) => <div key={String(item.inviteId)}>{item.inviteCode as string}</div>)}</div>
+    <div>
+      {dataSource?.map((item) => (
+        <div key={String(item.inviteId)}>{item.inviteCode as string}</div>
+      ))}
+    </div>
   );
   const Modal = ({
     open,
@@ -230,6 +219,10 @@ const { default: InvitePage } = await import('@/pages/system/invite/index');
 describe('pages/system/invite', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    useUserStore.setState({
+      roles: ['admin'],
+      permissions: ['*:*:*']
+    });
     invitePageMocks.listInvite.mockResolvedValue({
       rows: [
         {
@@ -258,6 +251,18 @@ describe('pages/system/invite', () => {
     await waitFor(() => {
       expect(invitePageMocks.listInvite).toHaveBeenCalled();
     });
+  });
+
+  it('hides generate action without add permission', async () => {
+    useUserStore.setState({
+      roles: [],
+      permissions: []
+    });
+
+    renderWithRouter(<InvitePage />, '/system/invite');
+
+    expect(await screen.findByText('INVITE-CODE')).toBeInTheDocument();
+    expect(screen.queryByText('生成邀请码')).not.toBeInTheDocument();
   });
 
   it('generates invite codes from modal', async () => {

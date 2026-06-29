@@ -16,6 +16,7 @@ import RightToolbar from '@/components/RightToolbar';
 import useInitialLoadEffect from '@/hooks/useInitialLoadEffect';
 import useDictOptions from '@/hooks/useDictOptions';
 import modal from '@/utils/modal';
+import auth from '@/utils/permission';
 
 const initialQuery: OssConfigQuery = {
   pageNum: 1,
@@ -154,21 +155,25 @@ export default function OssConfigPage() {
       align: 'center',
       render: (_, record) => (
         <Space size={4}>
-          <Tooltip title="修改">
-            <Button
-              type="link"
-              icon={<EditOutlined />}
-              onClick={() => handleEdit(record.ossConfigId)}
-            />
-          </Tooltip>
-          <Tooltip title="删除">
-            <Button
-              danger
-              type="link"
-              icon={<DeleteOutlined />}
-              onClick={() => handleDelete(record.ossConfigId)}
-            />
-          </Tooltip>
+          {auth.hasPermiOr(['system:ossConfig:edit']) && (
+            <Tooltip title="修改">
+              <Button
+                type="link"
+                icon={<EditOutlined />}
+                onClick={() => handleEdit(record.ossConfigId)}
+              />
+            </Tooltip>
+          )}
+          {auth.hasPermiOr(['system:ossConfig:remove']) && (
+            <Tooltip title="删除">
+              <Button
+                danger
+                type="link"
+                icon={<DeleteOutlined />}
+                onClick={() => handleDelete(record.ossConfigId)}
+              />
+            </Tooltip>
+          )}
         </Space>
       ),
     },
@@ -334,33 +339,39 @@ export default function OssConfigPage() {
           }}
         >
           <Space wrap>
-            <Button
-              className="btn-plain-primary"
-              icon={<PlusOutlined />}
-              onClick={() => {
-                form.setFieldsValue(initialForm);
-                setDialogOpen(true);
-              }}
-            >
-              新增
-            </Button>
-            <Button
-              icon={<EditOutlined />}
-              style={{ color: '#67c23a', borderColor: '#b7eb8f' }}
-              onClick={() => handleEdit(selectedIds[0])}
-              disabled={selectedIds.length !== 1}
-            >
-              修改
-            </Button>
-            <Button
-              danger
-              icon={<DeleteOutlined />}
-              onClick={() => handleDelete()}
-              disabled={selectedIds.length === 0}
-              style={{ borderColor: '#ffccc7' }}
-            >
-              删除
-            </Button>
+            {auth.hasPermiOr(['system:ossConfig:add']) && (
+              <Button
+                className="btn-plain-primary"
+                icon={<PlusOutlined />}
+                onClick={() => {
+                  form.setFieldsValue(initialForm);
+                  setDialogOpen(true);
+                }}
+              >
+                新增
+              </Button>
+            )}
+            {auth.hasPermiOr(['system:ossConfig:edit']) && (
+              <Button
+                icon={<EditOutlined />}
+                style={{ color: '#67c23a', borderColor: '#b7eb8f' }}
+                onClick={() => handleEdit(selectedIds[0])}
+                disabled={selectedIds.length !== 1}
+              >
+                修改
+              </Button>
+            )}
+            {auth.hasPermiOr(['system:ossConfig:remove']) && (
+              <Button
+                danger
+                icon={<DeleteOutlined />}
+                onClick={() => handleDelete()}
+                disabled={selectedIds.length === 0}
+                style={{ borderColor: '#ffccc7' }}
+              >
+                删除
+              </Button>
+            )}
           </Space>
           <RightToolbar
             showSearch={showSearch}

@@ -8,6 +8,7 @@ import type { OnlineQuery, OnlineVO } from '@/api/monitor/online/types';
 import DictTag from '@/components/DictTag';
 import Pagination from '@/components/Pagination';
 import modal from '@/utils/modal';
+import auth from '@/utils/permission';
 import { parseTime } from '@/utils/scaffold';
 
 type OnlineRow = OnlineVO & {
@@ -122,24 +123,25 @@ export default function OnlinePage() {
         key: 'action',
         width: 80,
         align: 'center',
-        render: (_, record) => (
-          <Tooltip title="强退">
-            <Button
-              className="table-action-link"
-              type="link"
-              icon={<DeleteOutlined />}
-              onClick={async () => {
-                const confirmed = await modal.confirm(`是否确认强退名称为 "${record.userName}" 的用户？`);
-                if (!confirmed) {
-                  return;
-                }
-                await forceLogout(record.tokenId);
-                modal.msgSuccess('删除成功');
-                loadList();
-              }}
-            />
-          </Tooltip>
-        )
+        render: (_, record) =>
+          auth.hasPermiOr(['monitor:online:forceLogout']) ? (
+            <Tooltip title="强退">
+              <Button
+                className="table-action-link"
+                type="link"
+                icon={<DeleteOutlined />}
+                onClick={async () => {
+                  const confirmed = await modal.confirm(`是否确认强退名称为 "${record.userName}" 的用户？`);
+                  if (!confirmed) {
+                    return;
+                  }
+                  await forceLogout(record.tokenId);
+                  modal.msgSuccess('删除成功');
+                  loadList();
+                }}
+              />
+            </Tooltip>
+          ) : null
       }
     ],
     [dict.sys_device_type, loadList, query.pageNum, query.pageSize]
