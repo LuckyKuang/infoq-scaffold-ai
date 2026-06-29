@@ -160,6 +160,7 @@ const child = spawn(maxBin, ['dev', ...options.passthrough], {
     VITE_APP_PORT: process.env.VITE_APP_PORT || port,
     UMI_ENV: options.umiEnv,
     MOCK: options.mock,
+    DID_YOU_KNOW: 'none',
   },
   stdio: ['inherit', 'pipe', 'pipe'],
   windowsHide: false,

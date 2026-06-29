@@ -95,7 +95,7 @@ export default function OssPage() {
   useInitialLoadEffect(() => {
     loadPreviewSetting();
     loadList(initialQuery, null);
-  }, [loadList, loadPreviewSetting]);
+  }, [loadList, loadPreviewSetting], {dedupeKey: 'system-oss-initial-list'});
 
   const columns: ColumnsType<OssVO> = [
     {

@@ -96,7 +96,7 @@ export default function MenuPage() {
 
   useInitialLoadEffect(() => {
     loadList(initialQuery);
-  }, [loadList]);
+  }, [loadList], {dedupeKey: 'system-menu-initial-list'});
 
   const columns: ColumnsType<MenuVO> = [
     { title: '菜单名称', dataIndex: 'menuName', width: 160, ellipsis: true },

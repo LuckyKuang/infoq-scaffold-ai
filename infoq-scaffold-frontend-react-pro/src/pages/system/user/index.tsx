@@ -37,7 +37,7 @@ import type {ColumnsType} from 'antd/es/table';
 import type {DataNode} from 'antd/es/tree';
 import type {UploadFile} from 'antd/es/upload/interface';
 import type {Dayjs} from 'dayjs';
-import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import {useCallback, useEffect, useMemo, useState} from 'react';
 import {useNavigate} from '@umijs/max';
 import type {DeptTreeVO} from '@/api/system/dept/types';
 import {optionselect as getPostOptions} from '@/api/system/post';
@@ -58,6 +58,7 @@ import {assertUserDetailData} from '@/api/system/user/guards';
 import type {UserForm, UserQuery, UserVO} from '@/api/system/user/types';
 import Pagination from '@/components/Pagination';
 import RightToolbar, {type ToolbarColumn} from '@/components/RightToolbar';
+import useInitialLoadEffect from '@/hooks/useInitialLoadEffect';
 import useDictOptions from '@/hooks/useDictOptions';
 import modal from '@/utils/modal';
 import request, {download} from '@/utils/request';
@@ -240,8 +241,6 @@ export default function UserPage() {
     () => filterDisabledDeptTree(deptTree),
     [deptTree],
   );
-  const initialLoadStartedRef = useRef(false);
-
   const visibleColumnKeys = useMemo(
     () =>
       new Set(columns.filter((item) => item.visible).map((item) => item.key)),
@@ -287,15 +286,13 @@ export default function UserPage() {
     setPostOptions(postResponse.data);
   }, []);
 
-  useEffect(() => {
-    if (initialLoadStartedRef.current) {
-      return;
-    }
-    initialLoadStartedRef.current = true;
+  useInitialLoadEffect(() => {
     loadDeptTree();
     loadList(initialQuery, null);
     loadBaseOptions();
-  }, [loadBaseOptions, loadDeptTree, loadList]);
+  }, [loadBaseOptions, loadDeptTree, loadList], {
+    dedupeKey: 'system-user-initial-list',
+  });
 
   useEffect(() => {
     setExpandedDeptKeys(collectDeptKeys(deptTree));

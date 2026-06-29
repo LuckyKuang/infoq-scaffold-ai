@@ -145,7 +145,7 @@ export default function PostPage() {
   useInitialLoadEffect(() => {
     loadTree();
     loadList(initialQuery);
-  }, [loadList, loadTree]);
+  }, [loadList, loadTree], {dedupeKey: 'system-post-initial-list'});
 
   useEffect(() => {
     setExpandedDeptKeys(collectDeptKeys(deptTree));

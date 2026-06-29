@@ -136,7 +136,7 @@ export default function DeptPage() {
       .finally(() => {
         setLoading(false);
       });
-  }, [expandAll]);
+  }, [expandAll], {dedupeKey: 'system-dept-initial-list'});
 
   const columns: ColumnsType<DeptVO> = [
     {

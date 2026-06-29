@@ -57,7 +57,7 @@ export default function OnlinePage() {
 
   useInitialLoadEffect(() => {
     loadList(initialQuery);
-  }, [loadList]);
+  }, [loadList], {dedupeKey: 'monitor-online-initial-list'});
 
   const columns = useMemo<ColumnsType<OnlineRow>>(
     () => [

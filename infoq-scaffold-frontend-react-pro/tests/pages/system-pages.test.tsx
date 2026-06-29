@@ -1,7 +1,18 @@
-import { screen, waitFor } from '@testing-library/react';
-import { StrictMode } from 'react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { renderWithRouter } from '../helpers/renderWithRouter';
+import {screen, waitFor} from '@testing-library/react';
+import {StrictMode} from 'react';
+import {beforeEach, describe, expect, it, vi} from 'vitest';
+import {renderWithRouter} from '../helpers/renderWithRouter';
+import * as deptApi from '@/api/system/dept';
+import * as menuApi from '@/api/system/menu';
+import * as postApi from '@/api/system/post';
+import * as roleApi from '@/api/system/role';
+import * as userApi from '@/api/system/user';
+import {clearInitialLoadEffectDedupe} from '@/hooks/useInitialLoadEffect';
+import DeptPage from '@/pages/system/dept/index';
+import MenuPage from '@/pages/system/menu/index';
+import PostPage from '@/pages/system/post/index';
+import RolePage from '@/pages/system/role/index';
+import UserPage from '@/pages/system/user/index';
 
 const dictOptions = vi.hoisted(() => ({
   sys_normal_disable: [
@@ -208,23 +219,13 @@ vi.mock('@/api/system/post', () => ({
   updatePost: vi.fn(),
 }));
 
-const { default: UserPage } = await import('@/pages/system/user/index');
-const { default: RolePage } = await import('@/pages/system/role/index');
-const { default: MenuPage } = await import('@/pages/system/menu/index');
-const { default: DeptPage } = await import('@/pages/system/dept/index');
-const { default: PostPage } = await import('@/pages/system/post/index');
-const userApi = await import('@/api/system/user');
-const roleApi = await import('@/api/system/role');
-const menuApi = await import('@/api/system/menu');
-const deptApi = await import('@/api/system/dept');
-const postApi = await import('@/api/system/post');
-
 function asResolvedValue<T>(value: unknown): T {
   return value as T;
 }
 
 beforeEach(() => {
   vi.clearAllMocks();
+  clearInitialLoadEffectDedupe();
   vi.mocked(userApi.listUser).mockResolvedValue(
     asResolvedValue<Awaited<ReturnType<typeof userApi.listUser>>>({
       rows: [
@@ -397,6 +398,22 @@ describe('pages/system', () => {
     expect(screen.getAllByText('权限字符').length).toBeGreaterThan(0);
     await waitFor(() => {
       expect(roleApi.listRole).toHaveBeenCalled();
+    });
+  });
+
+  it('runs role management initial list once in strict mode', async () => {
+    renderWithRouter(
+      <StrictMode>
+        <RolePage />
+      </StrictMode>,
+      '/system/role',
+    );
+
+    expect(
+      await screen.findByPlaceholderText('请输入角色名称'),
+    ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(roleApi.listRole).toHaveBeenCalledTimes(1);
     });
   });
 

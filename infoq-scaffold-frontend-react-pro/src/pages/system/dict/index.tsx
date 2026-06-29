@@ -74,7 +74,7 @@ export default function DictTypePage() {
 
   useInitialLoadEffect(() => {
     loadList(initialQuery, null);
-  }, [loadList]);
+  }, [loadList], {dedupeKey: 'system-dict-initial-list'});
 
   const columns: ColumnsType<DictTypeVO> = [
     {

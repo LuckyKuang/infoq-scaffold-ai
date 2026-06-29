@@ -89,7 +89,7 @@ export default function ClientPage() {
 
   useInitialLoadEffect(() => {
     loadList(initialQuery);
-  }, [loadList]);
+  }, [loadList], {dedupeKey: 'system-client-initial-list'});
 
   const handleStatusToggle = async (record: ClientVO, checked: boolean) => {
     const nextStatus = checked ? '0' : '1';

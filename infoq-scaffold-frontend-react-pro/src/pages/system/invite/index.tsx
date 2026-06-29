@@ -111,7 +111,7 @@ export default function InvitePage() {
 
   useInitialLoadEffect(() => {
     loadList(initialQuery, null);
-  }, [loadList]);
+  }, [loadList], {dedupeKey: 'system-invite-initial-list'});
 
   const canCancel = (record: InviteCodeVO) => record.status === '0';
   const canDelete = (record: InviteCodeVO) => record.status !== '1';

@@ -104,7 +104,7 @@ export default function JobPage() {
   useInitialLoadEffect(() => {
     loadList(initialQuery);
     loadHandlerOptions();
-  }, [loadList, loadHandlerOptions]);
+  }, [loadList, loadHandlerOptions], {dedupeKey: 'monitor-job-initial-list'});
 
   const handleStatusToggle = async (record: JobVO, checked: boolean) => {
     const nextStatus = checked ? '0' : '1';

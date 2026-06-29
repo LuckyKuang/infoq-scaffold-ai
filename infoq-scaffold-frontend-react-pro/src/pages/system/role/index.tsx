@@ -169,7 +169,7 @@ export default function RolePage() {
 
   useInitialLoadEffect(() => {
     loadList(initialQuery, null);
-  }, [loadList]);
+  }, [loadList], {dedupeKey: 'system-role-initial-list'});
 
   const columns: ColumnsType<RoleVO> = [
     {

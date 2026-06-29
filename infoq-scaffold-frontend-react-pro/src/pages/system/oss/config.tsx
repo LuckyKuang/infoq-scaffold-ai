@@ -69,7 +69,7 @@ export default function OssConfigPage() {
 
   useInitialLoadEffect(() => {
     loadList(initialQuery);
-  }, [loadList]);
+  }, [loadList], {dedupeKey: 'system-oss-config-initial-list'});
 
   const columns: ColumnsType<OssConfigVO> = [
     {

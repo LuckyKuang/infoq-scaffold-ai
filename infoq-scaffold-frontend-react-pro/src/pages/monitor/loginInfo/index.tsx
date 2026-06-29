@@ -89,7 +89,7 @@ export default function LoginInfoPage() {
 
   useInitialLoadEffect(() => {
     loadList(initialQuery, null);
-  }, [loadList]);
+  }, [loadList], {dedupeKey: 'monitor-login-info-initial-list'});
 
   const columns: ColumnsType<LoginInfoRow> = [
     {

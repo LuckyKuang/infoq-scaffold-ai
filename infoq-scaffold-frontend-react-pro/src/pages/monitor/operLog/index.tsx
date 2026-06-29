@@ -95,7 +95,7 @@ export default function OperLogPage() {
 
   useInitialLoadEffect(() => {
     loadList(initialQuery, null);
-  }, [loadList]);
+  }, [loadList], {dedupeKey: 'monitor-oper-log-initial-list'});
 
   const columns: ColumnsType<OperLogVO> = [
     {

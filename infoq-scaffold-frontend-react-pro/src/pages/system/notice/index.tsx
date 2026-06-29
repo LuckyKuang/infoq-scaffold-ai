@@ -57,7 +57,7 @@ export default function NoticePage() {
 
   useInitialLoadEffect(() => {
     loadList(initialQuery);
-  }, [loadList]);
+  }, [loadList], {dedupeKey: 'system-notice-initial-list'});
 
   const columns: ColumnsType<NoticeVO> = [
     {

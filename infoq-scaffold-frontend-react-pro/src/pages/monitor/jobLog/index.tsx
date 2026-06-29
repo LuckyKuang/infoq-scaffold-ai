@@ -45,7 +45,7 @@ export default function JobLogPage() {
 
   useInitialLoadEffect(() => {
     loadList(initialQuery);
-  }, [loadList]);
+  }, [loadList], {dedupeKey: 'monitor-job-log-initial-list'});
 
   const columns: ColumnsType<JobLogVO> = [
     { title: '日志ID', dataIndex: 'jobLogId', align: 'center', width: 120 },
