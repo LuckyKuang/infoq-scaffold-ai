@@ -8,6 +8,7 @@ WORKDIR /infoq/react-pro
 RUN corepack enable pnpm
 
 COPY package.json pnpm-lock.yaml ./
+COPY scripts/max.mjs ./scripts/max.mjs
 
 RUN pnpm install --frozen-lockfile --network-concurrency=2
 

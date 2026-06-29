@@ -8,6 +8,8 @@
   - BOM `<revision>`
 - `infoq-scaffold-frontend-react/package.json`
   - 顶层 `"version"`
+- `infoq-scaffold-frontend-react-pro/package.json`
+  - 顶层 `"version"`
 - `infoq-scaffold-frontend-vue/package.json`
   - 顶层 `"version"`
 - `infoq-scaffold-frontend-weapp-react/package.json`
@@ -16,7 +18,7 @@
   - 顶层 `"version"`
 - `infoq-scaffold-frontend-weapp-vue/src/manifest.json`
   - 顶层 `"versionName"`
-  - 顶层 `"versionCode"`，由 `x.y.z` 去掉点号生成，例如 `2.1.5 -> 215`
+  - 顶层 `"versionCode"`，由 `x.y.z` 去掉点号生成，例如 `2.1.6 -> 216`
 - `infoq-scaffold-docs/package.json`
   - 顶层 `"version"`
 - `README.md`
@@ -30,6 +32,7 @@
   - `infoq/infoq-admin:x.y.z`
   - `infoq/infoq-frontend-vue:x.y.z`
   - `infoq/infoq-frontend-react:x.y.z`
+  - `infoq/infoq-frontend-react-pro:x.y.z`
 - `infoq-scaffold-backend/infoq-plugin/infoq-plugin-doc/src/test/java/cc/infoq/common/doc/config/SpringDocConfigTest.java`
   - `info.setVersion("x.y.z")`
   - `assertEquals("x.y.z", openAPI.getInfo().getVersion())`

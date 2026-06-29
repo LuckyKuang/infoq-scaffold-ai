@@ -67,6 +67,7 @@ if (!/^\d+\.\d+\.\d+$/.test(targetVersion)) {
 const rootPom = path.join(repoRoot, 'infoq-scaffold-backend', 'pom.xml');
 const bomPom = path.join(repoRoot, 'infoq-scaffold-backend', 'infoq-core', 'infoq-core-bom', 'pom.xml');
 const reactPackage = path.join(repoRoot, 'infoq-scaffold-frontend-react', 'package.json');
+const reactProPackage = path.join(repoRoot, 'infoq-scaffold-frontend-react-pro', 'package.json');
 const vuePackage = path.join(repoRoot, 'infoq-scaffold-frontend-vue', 'package.json');
 const weappReactPackage = path.join(repoRoot, 'infoq-scaffold-frontend-weapp-react', 'package.json');
 const weappVuePackage = path.join(repoRoot, 'infoq-scaffold-frontend-weapp-vue', 'package.json');
@@ -123,6 +124,7 @@ const filesToCheck = [
   rootPom,
   bomPom,
   reactPackage,
+  reactProPackage,
   vuePackage,
   weappReactPackage,
   weappVuePackage,
@@ -154,11 +156,15 @@ function assertContainsFixed(filePath, text, description) {
 
 function replaceOrThrow(filePath, pattern, replacement, description) {
   const content = fs.readFileSync(filePath, 'utf8');
+  const matcher = pattern instanceof RegExp ? new RegExp(pattern.source, pattern.flags.replace(/g/g, '')) : pattern;
+  const matched = matcher instanceof RegExp ? matcher.test(content) : content.includes(matcher);
   const updated = content.replace(pattern, replacement);
-  if (updated === content) {
+  if (updated === content && !matched) {
     fail(`replacement failed for ${description} in ${filePath}`);
   }
-  fs.writeFileSync(filePath, updated, 'utf8');
+  if (updated !== content) {
+    fs.writeFileSync(filePath, updated, 'utf8');
+  }
 }
 
 function updateJsonTopLevel(filePath, updates) {
@@ -212,6 +218,7 @@ for (const filePath of [
   rootPom,
   bomPom,
   reactPackage,
+  reactProPackage,
   vuePackage,
   weappReactPackage,
   weappVuePackage,
@@ -235,6 +242,7 @@ if (dryRun) {
 replaceOrThrow(rootPom, /<revision>[^<]+<\/revision>/, `<revision>${targetVersion}</revision>`, 'backend revision');
 replaceOrThrow(bomPom, /<revision>[^<]+<\/revision>/, `<revision>${targetVersion}</revision>`, 'bom revision');
 replaceOrThrow(reactPackage, /("version"\s*:\s*")[^"]+(")/, `$1${targetVersion}$2`, 'react package version');
+replaceOrThrow(reactProPackage, /("version"\s*:\s*")[^"]+(")/, `$1${targetVersion}$2`, 'react pro package version');
 replaceOrThrow(vuePackage, /("version"\s*:\s*")[^"]+(")/, `$1${targetVersion}$2`, 'vue package version');
 replaceOrThrow(weappReactPackage, /("version"\s*:\s*")[^"]+(")/, `$1${targetVersion}$2`, 'weapp react package version');
 replaceOrThrow(weappVuePackage, /("version"\s*:\s*")[^"]+(")/, `$1${targetVersion}$2`, 'weapp vue package version');
@@ -248,6 +256,7 @@ replaceOrThrow(deployDoc, /(当前文档对应项目基线版本为 `)[^`]+(`。
 replaceOrThrow(composeFile, /(image:\s+infoq\/infoq-admin:)\d+\.\d+\.\d+/, `$1${targetVersion}`, 'admin image tag');
 replaceOrThrow(composeFile, /(image:\s+infoq\/infoq-frontend-vue:)\d+\.\d+\.\d+/, `$1${targetVersion}`, 'vue image tag');
 replaceOrThrow(composeFile, /(image:\s+infoq\/infoq-frontend-react:)\d+\.\d+\.\d+/, `$1${targetVersion}`, 'react image tag');
+replaceOrThrow(composeFile, /(image:\s+infoq\/infoq-frontend-react-pro:)\d+\.\d+\.\d+/, `$1${targetVersion}`, 'react pro image tag');
 replaceOrThrow(springDocConfigTest, /(info\.setVersion\(")[^"]+("\);)/g, `$1${targetVersion}$2`, 'springdoc config test setVersion');
 replaceOrThrow(springDocConfigTest, /(assertEquals\(")[^"]+(",\s*openAPI\.getInfo\(\)\.getVersion\(\)\);)/g, `$1${targetVersion}$2`, 'springdoc config test assert');
 replaceOrThrow(springDocPropertiesTest, /(info\.setVersion\(")[^"]+("\);)/g, `$1${targetVersion}$2`, 'springdoc properties test setVersion');
@@ -260,6 +269,7 @@ await runCommandChecked(process.execPath, [docsSyncScript], {
 assertContainsFixed(rootPom, `<revision>${targetVersion}</revision>`, 'backend revision');
 assertContainsFixed(bomPom, `<revision>${targetVersion}</revision>`, 'bom revision');
 assertContainsFixed(reactPackage, `"version": "${targetVersion}"`, 'react package version');
+assertContainsFixed(reactProPackage, `"version": "${targetVersion}"`, 'react pro package version');
 assertContainsFixed(vuePackage, `"version": "${targetVersion}"`, 'vue package version');
 assertContainsFixed(weappReactPackage, `"version": "${targetVersion}"`, 'weapp react package version');
 assertContainsFixed(weappVuePackage, `"version": "${targetVersion}"`, 'weapp vue package version');
@@ -273,6 +283,7 @@ assertContainsFixed(docsSyncedDeployDoc, `当前文档对应项目基线版本�
 assertContainsFixed(composeFile, `image: infoq/infoq-admin:${targetVersion}`, 'admin image tag');
 assertContainsFixed(composeFile, `image: infoq/infoq-frontend-vue:${targetVersion}`, 'vue image tag');
 assertContainsFixed(composeFile, `image: infoq/infoq-frontend-react:${targetVersion}`, 'react image tag');
+assertContainsFixed(composeFile, `image: infoq/infoq-frontend-react-pro:${targetVersion}`, 'react pro image tag');
 assertContainsFixed(springDocConfigTest, `info.setVersion("${targetVersion}");`, 'springdoc config test setVersion');
 assertContainsFixed(springDocConfigTest, `assertEquals("${targetVersion}", openAPI.getInfo().getVersion());`, 'springdoc config test assert');
 assertContainsFixed(springDocPropertiesTest, `info.setVersion("${targetVersion}");`, 'springdoc properties test setVersion');
@@ -280,5 +291,5 @@ assertContainsFixed(springDocPropertiesTest, `assertEquals("${targetVersion}", p
 
 console.log('[version-bump] version bump completed successfully.');
 console.log('[version-bump] suggested follow-up:');
-console.log(`  rg -n "${targetVersion.replace(/\./g, '\\.')}" README.md doc script infoq-scaffold-backend infoq-scaffold-frontend-react infoq-scaffold-frontend-vue infoq-scaffold-frontend-weapp-react infoq-scaffold-frontend-weapp-vue infoq-scaffold-docs`);
+console.log(`  rg -n "${targetVersion.replace(/\./g, '\\.')}" README.md doc script infoq-scaffold-backend infoq-scaffold-frontend-react infoq-scaffold-frontend-react-pro infoq-scaffold-frontend-vue infoq-scaffold-frontend-weapp-react infoq-scaffold-frontend-weapp-vue infoq-scaffold-docs`);
 console.log('  node .codex/scripts/backend_mvn.mjs -- -pl infoq-plugin/infoq-plugin-doc -am -DskipTests=false -Dsurefire.failIfNoSpecifiedTests=false -Dtest=SpringDocConfigTest,SpringDocPropertiesTest test');

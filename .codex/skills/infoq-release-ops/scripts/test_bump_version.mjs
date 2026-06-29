@@ -58,6 +58,7 @@ const files = [
   'infoq-scaffold-docs/package.json',
   'infoq-scaffold-docs/scripts/sync-from-root-doc.mjs',
   'infoq-scaffold-frontend-react/package.json',
+  'infoq-scaffold-frontend-react-pro/package.json',
   'infoq-scaffold-frontend-vue/package.json',
   'infoq-scaffold-frontend-weapp-react/package.json',
   'infoq-scaffold-frontend-weapp-vue/package.json',
@@ -83,6 +84,7 @@ await runCommandChecked(process.execPath, [path.join(scriptDir, 'bump_version.mj
 assertContainsFixed(path.join(fixtureRoot, 'infoq-scaffold-backend', 'pom.xml'), '<revision>9.9.9</revision>');
 assertContainsFixed(path.join(fixtureRoot, 'infoq-scaffold-backend', 'infoq-core', 'infoq-core-bom', 'pom.xml'), '<revision>9.9.9</revision>');
 assertContainsFixed(path.join(fixtureRoot, 'infoq-scaffold-frontend-react', 'package.json'), '"version": "9.9.9"');
+assertContainsFixed(path.join(fixtureRoot, 'infoq-scaffold-frontend-react-pro', 'package.json'), '"version": "9.9.9"');
 assertContainsFixed(path.join(fixtureRoot, 'infoq-scaffold-frontend-vue', 'package.json'), '"version": "9.9.9"');
 assertContainsFixed(path.join(fixtureRoot, 'infoq-scaffold-frontend-weapp-react', 'package.json'), '"version": "9.9.9"');
 assertContainsFixed(path.join(fixtureRoot, 'infoq-scaffold-frontend-weapp-vue', 'package.json'), '"version": "9.9.9"');
@@ -95,6 +97,7 @@ assertContainsFixed(path.join(fixtureRoot, 'infoq-scaffold-docs', 'docs', 'devop
 assertContainsFixed(path.join(fixtureRoot, 'script', 'docker', 'docker-compose.yml'), 'image: infoq/infoq-admin:9.9.9');
 assertContainsFixed(path.join(fixtureRoot, 'script', 'docker', 'docker-compose.yml'), 'image: infoq/infoq-frontend-vue:9.9.9');
 assertContainsFixed(path.join(fixtureRoot, 'script', 'docker', 'docker-compose.yml'), 'image: infoq/infoq-frontend-react:9.9.9');
+assertContainsFixed(path.join(fixtureRoot, 'script', 'docker', 'docker-compose.yml'), 'image: infoq/infoq-frontend-react-pro:9.9.9');
 assertContainsFixed(path.join(fixtureRoot, 'README.md'), 'sql/infoq_scaffold_2.0.0.sql');
 assertContainsFixed(path.join(fixtureRoot, 'script', 'bin', 'infoq.sh'), 'sql/infoq_scaffold_2.0.0.sql');
 assertContainsFixed(path.join(fixtureRoot, 'script', 'docker', 'docker-compose.yml'), 'sql/infoq_scaffold_2.0.0.sql');

@@ -123,7 +123,7 @@ infoq:
       production-guard-enabled: true
       # 生产环境记录部署级 marker，确保同一 deploy-id 只执行一次 reconcile
       marker-enabled: true
-      # 当前部署批次唯一标识；推荐格式为 版本号-日期-序号，例如 2.1.5-20260602120000
+      # 当前部署批次唯一标识；推荐格式为 版本号-日期-序号，例如 2.1.6-20260602120000
       # 同一次部署的所有节点必须注入相同的 DEPLOY_ID；生产保护开启时空值会拒绝启动期 reconcile
       deploy-id: ${DEPLOY_ID:}
 

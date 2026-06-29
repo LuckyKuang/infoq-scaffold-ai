@@ -43,6 +43,10 @@ after the dev server reports its local URL. Override the port with `PORT` or
 `VITE_APP_PORT`. Disable browser opening with `INFOQ_REACT_PRO_OPEN=false`,
 `BROWSER=none`, or `pnpm run dev -- --no-open`.
 
+All package scripts that invoke Umi Max go through `scripts/max.mjs` or
+`scripts/start-dev.mjs` so the `@umijs/did-you-know` startup tip plugin is not
+registered during install, dev, build, preview, or analyze commands.
+
 Compose deployment exposes this workspace through `/react-pro/` and direct
 container port `9093`.
 

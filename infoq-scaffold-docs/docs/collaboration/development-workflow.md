@@ -100,6 +100,7 @@ backend 工作区基线是 JDK 17 与 Maven 3.9.x。
 说明：
 
 - `playwright-cli` 与 `chrome-devtools-cli` 是仓库内跨平台 CLI，位于 `.codex/skills/infoq-browser-automate/scripts/`。
+- `playwright-cli admin-route-probe` 遇到后端 `captchaEnabled=true` 时，会自动调用 `infoq-admin-e2e/scripts/captcha_login.mjs` 识别验证码并获取真实 token。
 - `playwright` MCP 用于临时交互探索。
 - `chrome-devtools` MCP 用于 Network / Console / Performance 深度诊断。
 - 不要回退到任何历史浏览器入口。

@@ -35,6 +35,8 @@ pnpm run build
 
 `pnpm run dev` 默认以端口 `80` 启动 Umi Max，并在 dev server 输出本地 URL 后自动打开浏览器。可用 `PORT` 或 `VITE_APP_PORT` 覆盖端口；可用 `INFOQ_REACT_PRO_OPEN=false`、`BROWSER=none` 或 `pnpm run dev -- --no-open` 禁止自动打开浏览器。
 
+所有调用 Umi Max 的 package scripts 都通过 `scripts/max.mjs` 或 `scripts/start-dev.mjs` 进入，统一避免在 install、dev、build、preview 和 analyze 命令中注册 `@umijs/did-you-know` 启动提示插件。
+
 Compose 部署通过 `/react-pro/` 暴露本工作区，容器直连端口为 `9093`。
 
 `pnpm run build` 当前已在 Codex 文件系统沙箱内通过。若后续 Umi / utoopack 因 worker 进程或本地端口限制失败，按仓库审批流程重跑同一命令并记录原因。

@@ -102,8 +102,10 @@
   - `infoq-scaffold-frontend-react-pro/src/app.tsx`
   - `infoq-scaffold-frontend-react-pro/.env.development`
   - `infoq-scaffold-frontend-react-pro/scripts/start-dev.mjs`
+  - `infoq-scaffold-frontend-react-pro/scripts/max.mjs`
 - 运行与部署真值：
   - `pnpm run dev` 通过 `scripts/start-dev.mjs` 启动 Umi Max，默认端口 `80`，ready 后自动打开浏览器。
+  - `pnpm run build`、`pnpm run prepare`、`pnpm run preview`、`pnpm run analyze` 通过 `scripts/max.mjs` 进入 Umi Max，统一设置 `DID_YOU_KNOW=none`。
   - 可用 `PORT` 或 `VITE_APP_PORT` 覆盖端口；可用 `INFOQ_REACT_PRO_OPEN=false`、`BROWSER=none` 或 `pnpm run dev -- --no-open` 禁止自动打开浏览器。
   - Compose 部署路径是 `/react-pro/`，容器直连端口是 `9093`。
 
