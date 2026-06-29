@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { renderWithRouter } from '../helpers/renderWithRouter';
 
 const dictOptions = vi.hoisted(() => ({
@@ -172,69 +172,93 @@ function asResolvedValue<T>(value: unknown): T {
 }
 
 beforeEach(() => {
-  vi.mocked(userApi.listUser).mockResolvedValue(asResolvedValue<Awaited<ReturnType<typeof userApi.listUser>>>({
-    rows: [
-      {
-        userId: 1,
-        userName: 'admin',
-        nickName: '管理员',
-        deptName: '研发部',
-        phonenumber: '13800000000',
-        status: '0',
-        createTime: '2026-03-10 10:00:00'
-      }
-    ],
-    total: 1
-  }));
-  vi.mocked(userApi.deptTreeSelect).mockResolvedValue(asResolvedValue<Awaited<ReturnType<typeof userApi.deptTreeSelect>>>({
-    data: [{ id: 100, label: '研发部', children: [] }]
-  }));
-  vi.mocked(userApi.listUserByDeptId).mockResolvedValue(asResolvedValue<Awaited<ReturnType<typeof userApi.listUserByDeptId>>>({
-    data: [{ userId: 1, userName: 'admin' }]
-  }));
+  vi.mocked(userApi.listUser).mockResolvedValue(
+    asResolvedValue<Awaited<ReturnType<typeof userApi.listUser>>>({
+      rows: [
+        {
+          userId: 1,
+          userName: 'admin',
+          nickName: '管理员',
+          deptName: '研发部',
+          phonenumber: '13800000000',
+          status: '0',
+          createTime: '2026-03-10 10:00:00'
+        }
+      ],
+      total: 1
+    })
+  );
+  vi.mocked(userApi.deptTreeSelect).mockResolvedValue(
+    asResolvedValue<Awaited<ReturnType<typeof userApi.deptTreeSelect>>>({
+      data: [{ id: 100, label: '研发部', children: [] }]
+    })
+  );
+  vi.mocked(userApi.listUserByDeptId).mockResolvedValue(
+    asResolvedValue<Awaited<ReturnType<typeof userApi.listUserByDeptId>>>({
+      data: [{ userId: 1, userName: 'admin' }]
+    })
+  );
 
-  vi.mocked(roleApi.listRole).mockResolvedValue(asResolvedValue<Awaited<ReturnType<typeof roleApi.listRole>>>({
-    rows: [
-      {
-        roleId: 1,
-        roleName: '管理员',
-        roleKey: 'admin',
-        roleSort: 1,
-        status: '0',
-        createTime: '2026-03-10 10:00:00'
-      }
-    ],
-    total: 1
-  }));
-  vi.mocked(roleApi.deptTreeSelect).mockResolvedValue(asResolvedValue<Awaited<ReturnType<typeof roleApi.deptTreeSelect>>>({
-    data: { depts: [{ id: 100, label: '研发部', children: [] }], checkedKeys: [100] }
-  }));
+  vi.mocked(roleApi.listRole).mockResolvedValue(
+    asResolvedValue<Awaited<ReturnType<typeof roleApi.listRole>>>({
+      rows: [
+        {
+          roleId: 1,
+          roleName: '管理员',
+          roleKey: 'admin',
+          roleSort: 1,
+          status: '0',
+          createTime: '2026-03-10 10:00:00'
+        }
+      ],
+      total: 1
+    })
+  );
+  vi.mocked(roleApi.deptTreeSelect).mockResolvedValue(
+    asResolvedValue<Awaited<ReturnType<typeof roleApi.deptTreeSelect>>>({
+      data: { depts: [{ id: 100, label: '研发部', children: [] }], checkedKeys: [100] }
+    })
+  );
 
-  vi.mocked(menuApi.listMenu).mockResolvedValue(asResolvedValue<Awaited<ReturnType<typeof menuApi.listMenu>>>({
-    data: [{ menuId: 1, parentId: 0, menuName: '系统管理', orderNum: 1, status: '0', createTime: '2026-03-10 10:00:00' }]
-  }));
-  vi.mocked(menuApi.roleMenuTreeselect).mockResolvedValue(asResolvedValue<Awaited<ReturnType<typeof menuApi.roleMenuTreeselect>>>({
-    data: { menus: [{ id: 1, label: '系统管理', children: [] }], checkedKeys: [1] }
-  }));
-  vi.mocked(menuApi.treeselect).mockResolvedValue(asResolvedValue<Awaited<ReturnType<typeof menuApi.treeselect>>>({
-    data: [{ id: 1, label: '系统管理', children: [] }]
-  }));
+  vi.mocked(menuApi.listMenu).mockResolvedValue(
+    asResolvedValue<Awaited<ReturnType<typeof menuApi.listMenu>>>({
+      data: [{ menuId: 1, parentId: 0, menuName: '系统管理', orderNum: 1, status: '0', createTime: '2026-03-10 10:00:00' }]
+    })
+  );
+  vi.mocked(menuApi.roleMenuTreeselect).mockResolvedValue(
+    asResolvedValue<Awaited<ReturnType<typeof menuApi.roleMenuTreeselect>>>({
+      data: { menus: [{ id: 1, label: '系统管理', children: [] }], checkedKeys: [1] }
+    })
+  );
+  vi.mocked(menuApi.treeselect).mockResolvedValue(
+    asResolvedValue<Awaited<ReturnType<typeof menuApi.treeselect>>>({
+      data: [{ id: 1, label: '系统管理', children: [] }]
+    })
+  );
 
-  vi.mocked(deptApi.listDept).mockResolvedValue(asResolvedValue<Awaited<ReturnType<typeof deptApi.listDept>>>({
-    data: [{ deptId: 100, parentId: 0, deptName: '研发部', deptCategory: 'RD', orderNum: 1, status: '0', createTime: '2026-03-10 10:00:00' }]
-  }));
+  vi.mocked(deptApi.listDept).mockResolvedValue(
+    asResolvedValue<Awaited<ReturnType<typeof deptApi.listDept>>>({
+      data: [{ deptId: 100, parentId: 0, deptName: '研发部', deptCategory: 'RD', orderNum: 1, status: '0', createTime: '2026-03-10 10:00:00' }]
+    })
+  );
   vi.mocked(deptApi.listDeptExcludeChild).mockResolvedValue(asResolvedValue<Awaited<ReturnType<typeof deptApi.listDeptExcludeChild>>>({ data: [] }));
 
-  vi.mocked(postApi.listPost).mockResolvedValue(asResolvedValue<Awaited<ReturnType<typeof postApi.listPost>>>({
-    rows: [{ postId: 10, postCode: 'RD-01', postCategory: 'TECH', postName: '研发岗', deptName: '研发部', postSort: 1, status: '0' }],
-    total: 1
-  }));
-  vi.mocked(postApi.deptTreeSelect).mockResolvedValue(asResolvedValue<Awaited<ReturnType<typeof postApi.deptTreeSelect>>>({
-    data: [{ id: 100, label: '研发部', children: [] }]
-  }));
-  vi.mocked(postApi.optionselect).mockResolvedValue(asResolvedValue<Awaited<ReturnType<typeof postApi.optionselect>>>({
-    data: [{ postId: 10, postName: '研发岗' }]
-  }));
+  vi.mocked(postApi.listPost).mockResolvedValue(
+    asResolvedValue<Awaited<ReturnType<typeof postApi.listPost>>>({
+      rows: [{ postId: 10, postCode: 'RD-01', postCategory: 'TECH', postName: '研发岗', deptName: '研发部', postSort: 1, status: '0' }],
+      total: 1
+    })
+  );
+  vi.mocked(postApi.deptTreeSelect).mockResolvedValue(
+    asResolvedValue<Awaited<ReturnType<typeof postApi.deptTreeSelect>>>({
+      data: [{ id: 100, label: '研发部', children: [] }]
+    })
+  );
+  vi.mocked(postApi.optionselect).mockResolvedValue(
+    asResolvedValue<Awaited<ReturnType<typeof postApi.optionselect>>>({
+      data: [{ postId: 10, postName: '研发岗' }]
+    })
+  );
 });
 
 describe('pages/system', () => {
@@ -279,6 +303,37 @@ describe('pages/system', () => {
     await waitFor(() => {
       expect(deptApi.listDept).toHaveBeenCalled();
     });
+  });
+
+  it('opens the root department add dialog without parent selector jitter or default zoom motion', async () => {
+    renderWithRouter(<DeptPage />, '/system/dept');
+
+    expect(await screen.findByPlaceholderText('请输入部门名称')).toBeInTheDocument();
+    const addButton = screen.getByText('新增').closest('button');
+    expect(addButton).not.toBeNull();
+    fireEvent.click(addButton!);
+
+    expect(await screen.findByText('新增部门')).toBeInTheDocument();
+    const dialog = document.querySelector('.ant-modal');
+    expect(dialog).toBeInTheDocument();
+    expect(dialog).not.toHaveClass('ant-zoom');
+    expect(dialog).not.toHaveClass('ant-zoom-appear');
+    expect(screen.queryByText('上级部门')).not.toBeInTheDocument();
+  });
+
+  it('opens the child department add dialog with a stable parent selector', async () => {
+    renderWithRouter(<DeptPage />, '/system/dept');
+
+    expect(await screen.findByPlaceholderText('请输入部门名称')).toBeInTheDocument();
+    const rowButtons = await waitFor(() => {
+      const buttons = document.querySelectorAll('.ant-table-tbody button');
+      expect(buttons.length).toBeGreaterThanOrEqual(2);
+      return buttons;
+    });
+    fireEvent.click(rowButtons[1]);
+
+    expect(await screen.findByText('新增部门')).toBeInTheDocument();
+    expect(screen.getByText('上级部门')).toBeInTheDocument();
   });
 
   it('renders the post management page with fetched rows', async () => {

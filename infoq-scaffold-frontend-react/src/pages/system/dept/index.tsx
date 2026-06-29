@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { DeleteOutlined, EditOutlined, PlusOutlined, ReloadOutlined, SearchOutlined, SortAscendingOutlined } from '@ant-design/icons';
-import { Button, Card, Col, Form, Input, InputNumber, Modal, Radio, Row, Select, Space, Table, TreeSelect, Tooltip } from 'antd';
+import { Button, Card, Col, Form, Input, InputNumber, Modal, Radio, Row, Select, Space, Table, Tooltip, TreeSelect } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import useDictOptions from '@/hooks/useDictOptions';
 import { addDept, delDept, getDept, listDept, listDeptExcludeChild, updateDept } from '@/api/system/dept';
@@ -42,6 +42,8 @@ const toTreeSelectData = (nodes: DeptVO[]) =>
 const collectDeptIds = (nodes: DeptVO[]): Array<string | number> =>
   nodes.flatMap((node) => (node.children?.length ? [node.deptId, ...collectDeptIds(node.children)] : []));
 
+const isRootParentId = (value?: string | number | null) => value === undefined || value === null || value === '' || value === 0 || value === '0';
+
 export default function DeptPage() {
   const [query, setQuery] = useState<DeptQuery>(initialQuery);
   const [loading, setLoading] = useState(false);
@@ -52,23 +54,27 @@ export default function DeptPage() {
   const [expandAll, setExpandAll] = useState(true);
   const [expandedRowKeys, setExpandedRowKeys] = useState<Array<string | number>>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [showParentDept, setShowParentDept] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [form] = Form.useForm<DeptForm>();
   const deptId = Form.useWatch('deptId', form);
-  const parentId = Form.useWatch('parentId', form);
+  const parentId = Form.useWatch('parentId', { form, preserve: true });
   const dict = useDictOptions('sys_normal_disable');
 
-  const loadList = useCallback(async (nextQuery: DeptQuery) => {
-    setLoading(true);
-    try {
-      const response = await listDept(nextQuery);
-      const treeData = handleTree<DeptVO>(response.data, 'deptId');
-      setList(treeData);
-      setExpandedRowKeys(expandAll ? collectDeptIds(treeData) : []);
-    } finally {
-      setLoading(false);
-    }
-  }, [expandAll]);
+  const loadList = useCallback(
+    async (nextQuery: DeptQuery) => {
+      setLoading(true);
+      try {
+        const response = await listDept(nextQuery);
+        const treeData = handleTree<DeptVO>(response.data, 'deptId');
+        setList(treeData);
+        setExpandedRowKeys(expandAll ? collectDeptIds(treeData) : []);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [expandAll]
+  );
 
   const loadDeptOptions = useCallback(async () => {
     const response = await listDept();
@@ -142,9 +148,11 @@ export default function DeptPage() {
   ];
 
   const handleAdd = async (parentId?: string | number) => {
+    const nextParentId = parentId ?? 0;
+    setShowParentDept(!isRootParentId(nextParentId));
     form.setFieldsValue({
       ...initialForm,
-      parentId: parentId ?? 0
+      parentId: nextParentId
     });
     await loadDeptOptions();
     await loadDeptUsers(parentId);
@@ -160,6 +168,7 @@ export default function DeptPage() {
     const optionsResponse = await listDeptExcludeChild(deptId);
     setDeptOptions(handleTree<DeptVO>(optionsResponse.data, 'deptId'));
     await loadDeptUsers(detail.deptId);
+    setShowParentDept(!isRootParentId(detail.parentId));
     form.setFieldsValue(detail);
     setDialogOpen(true);
   };
@@ -297,6 +306,7 @@ export default function DeptPage() {
       <Modal
         width={600}
         open={dialogOpen}
+        transitionName=""
         title={deptId ? '修改部门' : '新增部门'}
         confirmLoading={submitting}
         onCancel={() => setDialogOpen(false)}
@@ -304,7 +314,7 @@ export default function DeptPage() {
       >
         <Form form={form} layout="vertical" initialValues={initialForm}>
           <Row gutter={16}>
-            {parentId !== 0 && (
+            {showParentDept && (
               <Col span={24}>
                 <Form.Item label="上级部门" name="parentId">
                   <TreeSelect treeData={toTreeSelectData(deptOptions)} placeholder="选择上级部门" allowClear treeDefaultExpandAll />
@@ -331,20 +341,16 @@ export default function DeptPage() {
                 <Select
                   allowClear
                   options={deptUsers.map((item) => ({ label: item.userName, value: item.userId }))}
-                  onDropdownVisibleChange={(open) => {
+                  onOpenChange={(open) => {
                     if (open) {
-                      loadDeptUsers(parentId || deptId);
+                      loadDeptUsers(isRootParentId(parentId) ? deptId : parentId);
                     }
                   }}
                 />
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item
-                label="联系电话"
-                name="phone"
-                rules={[{ pattern: /^1[3456789][0-9]\d{8}$/, message: '请输入正确的手机号码' }]}
-              >
+              <Form.Item label="联系电话" name="phone" rules={[{ pattern: /^1[3456789][0-9]\d{8}$/, message: '请输入正确的手机号码' }]}>
                 <Input />
               </Form.Item>
             </Col>
