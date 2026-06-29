@@ -185,11 +185,24 @@ public class SysDeptServiceImpl implements SysDeptService, DeptService {
      */
     @Override
     public String selectDeptNameByIds(String deptIds) {
+        List<Long> ids = StringUtils.splitTo(deptIds, Convert::toLong);
+        if (ids.isEmpty()) {
+            return "";
+        }
+        Map<Long, String> deptNamesById = new HashMap<>();
+        List<SysDeptVo> depts = sysDeptMapper.selectVoList(new LambdaQueryWrapper<SysDept>()
+            .select(SysDept::getDeptId, SysDept::getDeptName)
+            .in(SysDept::getDeptId, ids));
+        for (SysDeptVo dept : depts) {
+            if (StringUtils.isNotBlank(dept.getDeptName())) {
+                deptNamesById.putIfAbsent(dept.getDeptId(), dept.getDeptName());
+            }
+        }
         List<String> list = new ArrayList<>();
-        for (Long id : StringUtils.splitTo(deptIds, Convert::toLong)) {
-            SysDeptVo vo = SpringUtils.getAopProxy(this).selectDeptById(id);
-            if (ObjectUtil.isNotNull(vo)) {
-                list.add(vo.getDeptName());
+        for (Long id : ids) {
+            String deptName = deptNamesById.get(id);
+            if (StringUtils.isNotBlank(deptName)) {
+                list.add(deptName);
             }
         }
         return StringUtils.joinComma(list);

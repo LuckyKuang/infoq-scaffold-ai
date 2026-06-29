@@ -1,0 +1,4 @@
+interface:
+  display_name: "InfoQ 管理端操作"
+  short_description: "规划和门禁管理端页面运营维护操作"
+  default_prompt: "使用 $infoq-admin-ops 规划或执行管理端真实页面运营维护操作；遵循只读探测、目标 ID 枚举、危险动作门禁、cleanup、回滚条件、操作后验证和 doc/tmp/infoq-admin-ops 证据留存；SQL、迁移和数据库侧数据修复转交 $infoq-data-ops。"

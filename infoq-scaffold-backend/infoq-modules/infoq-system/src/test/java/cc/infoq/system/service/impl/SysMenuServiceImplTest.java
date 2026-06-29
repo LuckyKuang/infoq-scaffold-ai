@@ -150,6 +150,28 @@ class SysMenuServiceImplTest {
     }
 
     @Test
+    @DisplayName("checkRouteConfigUnique: should return false when route name already exists")
+    void checkRouteConfigUniqueShouldReturnFalseForDuplicateRouteName() {
+        SysMenuServiceImpl service = new SysMenuServiceImpl(sysMenuMapper, sysRoleMapper, sysRoleMenuMapper);
+        SysMenuBo menuBo = new SysMenuBo();
+        menuBo.setMenuType(SystemConstants.TYPE_MENU);
+        menuBo.setParentId(1L);
+        menuBo.setPath("user");
+        menuBo.setIsFrame(SystemConstants.NO_FRAME);
+
+        SysMenu dbMenu = new SysMenu();
+        dbMenu.setMenuId(2L);
+        dbMenu.setParentId(2L);
+        dbMenu.setPath("User");
+        dbMenu.setMenuType(SystemConstants.TYPE_MENU);
+        dbMenu.setIsFrame(SystemConstants.NO_FRAME);
+        dbMenu.setMenuName("个人中心");
+        when(sysMenuMapper.selectList(any())).thenReturn(List.of(dbMenu));
+
+        assertFalse(service.checkRouteConfigUnique(menuBo));
+    }
+
+    @Test
     @DisplayName("checkRouteConfigUnique: should return true when no conflicting routes exist")
     void checkRouteConfigUniqueShouldReturnTrueWhenNoConflict() {
         SysMenuServiceImpl service = new SysMenuServiceImpl(sysMenuMapper, sysRoleMapper, sysRoleMenuMapper);

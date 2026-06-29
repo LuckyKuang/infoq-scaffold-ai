@@ -206,7 +206,7 @@ class SysRoleServiceImplTest {
         when(sysRoleMapper.selectRoleCount(List.of(9L))).thenReturn(1L);
         when(sysRoleMapper.selectByIds(List.of(9L))).thenReturn(List.of(role));
         when(sysRoleMapper.selectById(9L)).thenReturn(role);
-        when(sysUserRoleMapper.selectCount(any())).thenReturn(0L);
+        when(sysUserRoleMapper.selectList(any())).thenReturn(List.of());
         when(sysRoleMapper.deleteByIds(List.of(9L))).thenReturn(1);
 
         int rows;
@@ -219,6 +219,31 @@ class SysRoleServiceImplTest {
         assertEquals(1, rows);
         verify(sysRoleMenuMapper).delete(any());
         verify(sysRoleDeptMapper).delete(any());
+    }
+
+    @Test
+    @DisplayName("deleteRoleByIds: should throw when any role has assigned user")
+    void deleteRoleByIdsShouldThrowWhenRoleAssigned() {
+        SysRoleServiceImpl service = newService();
+        SysRole role = new SysRole();
+        role.setRoleId(9L);
+        role.setRoleName("自定义角色");
+        role.setRoleKey("custom_role");
+        SysUserRole userRole = new SysUserRole();
+        userRole.setRoleId(9L);
+        when(sysRoleMapper.selectRoleCount(List.of(9L))).thenReturn(1L);
+        when(sysRoleMapper.selectByIds(List.of(9L))).thenReturn(List.of(role));
+        when(sysRoleMapper.selectById(9L)).thenReturn(role);
+        when(sysUserRoleMapper.selectList(any())).thenReturn(List.of(userRole));
+
+        try (MockedStatic<LoginUserContext> loginHelper = mockStatic(LoginUserContext.class)) {
+            loginHelper.when(LoginUserContext::isSuperAdmin).thenReturn(false);
+            loginHelper.when(() -> LoginUserContext.isSuperAdmin(9L)).thenReturn(false);
+
+            ServiceException ex = assertThrows(ServiceException.class, () -> service.deleteRoleByIds(List.of(9L)));
+
+            assertTrue(ex.getMessage().contains("自定义角色已分配"));
+        }
     }
 
     @Test

@@ -7,7 +7,7 @@ import java.util.Locale;
 import java.util.Optional;
 
 /**
- * Resolves current frontend header tokens and realtime query tokens.
+ * 解析当前前端请求头令牌和实时连接查询参数令牌
  */
 public class SecurityTokenResolver {
 

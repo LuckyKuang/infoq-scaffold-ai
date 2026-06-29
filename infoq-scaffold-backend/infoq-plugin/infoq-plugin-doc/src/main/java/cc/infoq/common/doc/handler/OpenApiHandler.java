@@ -38,85 +38,85 @@ import java.util.stream.Stream;
 public class OpenApiHandler extends OpenAPIService {
 
     /**
-     * The Basic error controller.
+     * 基础错误控制器
      */
     private static Class<?> basicErrorController;
 
     /**
-     * The Security parser.
+     * 安全解析器
      */
     private final SecurityService securityParser;
 
     /**
-     * The Mappings map.
+     * 映射 Map
      */
     private final Map<String, Object> mappingsMap = new HashMap<>();
 
     /**
-     * The Springdoc tags.
+     * Springdoc 标签 Map
      */
     private final Map<HandlerMethod, Tag> springdocTags = new HashMap<>();
 
     /**
-     * The Open api builder customisers.
+     * OpenAPI 构建器定制器列表
      */
     private final Optional<List<OpenApiBuilderCustomizer>> openApiBuilderCustomisers;
 
     /**
-     * The server base URL customisers.
+     * 服务器基础 URL 定制器列表
      */
     private final Optional<List<ServerBaseUrlCustomizer>> serverBaseUrlCustomizers;
 
     /**
-     * The Spring doc config properties.
+     * Spring Doc 配置属性
      */
     private final SpringDocConfigProperties springDocConfigProperties;
 
     /**
-     * The Cached open api map.
+     * 缓存的 OpenAPI Map
      */
     private final Map<String, OpenAPI> cachedOpenAPI = new HashMap<>();
 
     /**
-     * The Property resolver utils.
+     * 属性解析工具类
      */
     private final PropertyResolverUtils propertyResolverUtils;
 
     /**
-     * The javadoc provider.
+     * Javadoc 提供器
      */
     private final Optional<JavadocProvider> javadocProvider;
 
     /**
-     * The Context.
+     * 应用上下文
      */
     private ApplicationContext context;
 
     /**
-     * The Open api.
+     * OpenAPI 对象
      */
     private OpenAPI openAPI;
 
     /**
-     * The Is servers present.
+     * 是否已设置服务器
      */
     private boolean isServersPresent;
 
     /**
-     * The Server base url.
+     * 服务器基础 URL
      */
     private String serverBaseUrl;
 
     /**
-     * Instantiates a new Open api builder.
+     * 构造 OpenAPI 构建器
      *
-     * @param openAPI                   the open api
-     * @param securityParser            the security parser
-     * @param springDocConfigProperties the spring doc config properties
-     * @param propertyResolverUtils     the property resolver utils
-     * @param openApiBuilderCustomizers the open api builder customisers
-     * @param serverBaseUrlCustomizers  the server base url customizers
-     * @param javadocProvider           the javadoc provider
+     * @param openAPI                   OpenAPI 对象
+     * @param securityParser            安全解析器
+     * @param springDocConfigProperties Spring Doc 配置属性
+     * @param propertyResolverUtils     属性解析工具
+     * @param openApiBuilderCustomizers OpenAPI 构建器定制器列表
+     * @param serverBaseUrlCustomizers  服务器基础 URL 定制器列表
+     * @param javadocProvider           Javadoc 提供器
      */
     public OpenApiHandler(Optional<OpenAPI> openAPI, SecurityService securityParser,
                           SpringDocConfigProperties springDocConfigProperties, PropertyResolverUtils propertyResolverUtils,
@@ -177,16 +177,13 @@ public class OpenApiHandler extends OpenAPIService {
         }
 
         if (isAutoTagClasses(operation)) {
-
-
             if (javadocProvider.isPresent()) {
                 String description = javadocProvider.get().getClassJavadoc(handlerMethod.getBeanType());
                 if (StringUtils.isNotBlank(description)) {
                     io.swagger.v3.oas.models.tags.Tag tag = new io.swagger.v3.oas.models.tags.Tag();
 
-                    // 自定义部分 修改使用java注释当tag名
+                    // 使用 Java 类的 Javadoc 首行作为 tag 名称
                     List<String> list = IoUtil.readLines(new StringReader(description), new ArrayList<>());
-                    // tag.setName(tagAutoName);
                     tag.setName(list.get(0));
                     operation.addTagsItem(list.get(0));
 
@@ -202,14 +199,14 @@ public class OpenApiHandler extends OpenAPIService {
         }
 
         if (!CollectionUtils.isEmpty(tags)) {
-            // Existing tags
+            // 已存在的标签
             List<io.swagger.v3.oas.models.tags.Tag> openApiTags = openAPI.getTags();
             if (!CollectionUtils.isEmpty(openApiTags))
                 tags.addAll(openApiTags);
             openAPI.setTags(new ArrayList<>(tags));
         }
 
-        // Handle SecurityRequirement at operation level
+        // 处理操作级别的安全要求
         io.swagger.v3.oas.annotations.security.SecurityRequirement[] securityRequirements = securityParser
             .getSecurityRequirements(handlerMethod);
         if (securityRequirements != null) {
@@ -223,7 +220,7 @@ public class OpenApiHandler extends OpenAPIService {
     }
 
     private void buildTagsFromMethod(Method method, Set<io.swagger.v3.oas.models.tags.Tag> tags, Set<String> tagsStr, Locale locale) {
-        // method tags
+        // 方法标签
         Set<Tags> tagsSet = AnnotatedElementUtils
             .findAllMergedAnnotations(method, Tags.class);
         Set<io.swagger.v3.oas.annotations.tags.Tag> methodTags = tagsSet.stream()

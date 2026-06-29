@@ -10,7 +10,7 @@ import lombok.EqualsAndHashCode;
 import java.io.Serial;
 
 /**
- * OAuth provider configuration.
+ * OAuth 提供方配置
  */
 @Data
 @EqualsAndHashCode(callSuper = true)

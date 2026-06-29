@@ -12,6 +12,116 @@ export function ensureDir(dirPath) {
   return dirPath;
 }
 
+export function readJsonFile(filePath, fallbackValue = null) {
+  if (!fs.existsSync(filePath)) {
+    return fallbackValue;
+  }
+  return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+}
+
+export function writeJsonFile(filePath, data) {
+  ensureDir(path.dirname(filePath));
+  fs.writeFileSync(filePath, `${JSON.stringify(data, null, 2)}\n`, 'utf8');
+  return data;
+}
+
+export function updateJsonFile(filePath, updater, fallbackValue = {}) {
+  const current = readJsonFile(filePath, fallbackValue);
+  const next = typeof updater === 'function' ? updater(current) : {...current, ...updater};
+  return writeJsonFile(filePath, next);
+}
+
+export function markRunState(stateFile, patch) {
+  return updateJsonFile(stateFile, (current) => ({
+    ...current,
+    ...patch,
+    updatedAt: new Date().toISOString()
+  }));
+}
+
+export function collectRunStateProcesses(state) {
+  const records = [];
+  const seen = new Set();
+  const add = (record) => {
+    const pid = String(record?.pid || '').trim();
+    if (!pid || seen.has(pid)) {
+      return;
+    }
+    seen.add(pid);
+    records.push({
+      ...record,
+      pid
+    });
+  };
+
+  for (const processRecord of Array.isArray(state?.processes) ? state.processes : []) {
+    add(processRecord);
+  }
+
+  if (state?.startedBackendPid) {
+    add({
+      role: 'backend',
+      pid: state.startedBackendPid,
+      port: state.backendPort,
+      logFile: state.backendLog
+    });
+  }
+  if (state?.startedFrontendPid) {
+    add({
+      role: 'frontend',
+      pid: state.startedFrontendPid,
+      host: state.frontendHost,
+      port: state.frontendPort,
+      logFile: state.frontendLog
+    });
+  }
+
+  return records;
+}
+
+export async function stopRecordedRunState(stateFile, options = {}) {
+  const state = readJsonFile(stateFile, null);
+  if (!state) {
+    return null;
+  }
+
+  const stoppedAt = new Date().toISOString();
+  const stoppedProcesses = [];
+
+  for (const record of collectRunStateProcesses(state)) {
+    if (record.owned === false) {
+      stoppedProcesses.push({
+        ...record,
+        aliveBeforeStop: isProcessAlive(record.pid),
+        stopped: false,
+        skippedReason: 'not-owned',
+        stoppedAt
+      });
+      continue;
+    }
+
+    const aliveBeforeStop = isProcessAlive(record.pid);
+    const stopped = aliveBeforeStop
+      ? await terminateProcessTree(record.pid, {graceMs: options.graceMs ?? 1000})
+      : false;
+    stoppedProcesses.push({
+      ...record,
+      aliveBeforeStop,
+      stopped,
+      stoppedAt
+    });
+  }
+
+  return writeJsonFile(stateFile, {
+    ...state,
+    status: options.status || 'stopped',
+    stopReason: options.reason || state.stopReason || '',
+    stoppedAt,
+    updatedAt: stoppedAt,
+    stoppedProcesses
+  });
+}
+
 export function resolveRepoRoot(scriptDir) {
   let currentDir = path.resolve(scriptDir);
   while (true) {

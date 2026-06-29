@@ -38,7 +38,7 @@ hero:
     </div>
     <div class="iq-step">
       <strong>2. 跑主链路</strong>
-      <p>先通后端和验证码接口，再起 Vue / React 管理端，最后再处理小程序和部署链路。</p>
+      <p>先通后端和验证码接口，再起 Vue / React / React Pro 管理端，最后再处理小程序和部署链路。</p>
     </div>
     <div class="iq-step">
       <strong>3. 进入协作闭环</strong>
@@ -56,7 +56,7 @@ hero:
   </a>
   <a class="iq-link-card" href="/admin/">
     <strong>管理端</strong>
-    <p>Vue / React 双管理端共通机制、动态菜单、请求封装与页面扩展方式。</p>
+    <p>Vue / React / React Pro 三管理端共通机制、动态菜单、请求封装与页面扩展方式。</p>
   </a>
   <a class="iq-link-card" href="/weapp/">
     <strong>小程序</strong>
@@ -80,4 +80,3 @@ hero:
     <p>项目级 MCP 的启用状态、只读边界、审批模式和使用场景。</p>
   </a>
 </div>
-

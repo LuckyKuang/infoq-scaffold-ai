@@ -1,4 +1,0 @@
-interface:
-  display_name: "InfoQ 插件引入器"
-  short_description: "按仓库治理模型引入或重构插件"
-  default_prompt: "使用 $infoq-plugin-introducer 按本仓库的治理模型引入新插件或重构现有插件。"

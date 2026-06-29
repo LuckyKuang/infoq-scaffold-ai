@@ -5,24 +5,24 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 COMPOSE_FILE="${REPO_ROOT}/script/docker/docker-compose.yml"
 NGINX_CONF_SOURCE="${REPO_ROOT}/script/docker/nginx/conf/nginx.conf"
-FRONTEND_SERVICES=(infoq-frontend-vue infoq-frontend-react nginx-web)
+FRONTEND_SERVICES=(infoq-frontend-vue infoq-frontend-react infoq-frontend-react-pro nginx-web)
 DEFAULT_DEPLOY_ROOT="/infoq"
 DEPLOY_ROOT=""
 COMPOSE_CMD=()
 
 usage() {
   cat <<'EOF'
-用法: bash script/bin/deploy-frontend.sh {prepare|build|deploy|start|stop|restart|status|logs} [vue|react|nginx|all]
+用法: bash script/bin/deploy-frontend.sh {prepare|build|deploy|start|stop|restart|status|logs} [vue|react|react-pro|nginx|all]
 
 命令说明:
   prepare   创建前端与网关所需宿主机目录，并同步 nginx.conf
-  build     顺序构建 Vue 与 React 前端镜像
-  deploy    prepare + 顺序构建前端镜像 + 启动 Vue、React 与 nginx-web
-  start     启动 Vue、React 与 nginx-web
-  stop      停止 Vue、React 与 nginx-web
-  restart   重启 Vue、React 与 nginx-web
+  build     顺序构建 Vue、React 与 React Pro 前端镜像
+  deploy    prepare + 顺序构建前端镜像 + 启动 Vue、React、React Pro 与 nginx-web
+  start     启动 Vue、React、React Pro 与 nginx-web
+  stop      停止 Vue、React、React Pro 与 nginx-web
+  restart   重启 Vue、React、React Pro 与 nginx-web
   status    查看前端相关服务状态
-  logs      查看日志，默认 all，可选 vue|react|nginx|all
+  logs      查看日志，默认 all，可选 vue|react|react-pro|nginx|all
 EOF
 }
 
@@ -80,6 +80,8 @@ prepare_dirs() {
     "${DEPLOY_ROOT}/vue/logs"
     "${DEPLOY_ROOT}/react"
     "${DEPLOY_ROOT}/react/logs"
+    "${DEPLOY_ROOT}/react-pro"
+    "${DEPLOY_ROOT}/react-pro/logs"
   )
 
   for dir in "${dirs[@]}"; do
@@ -98,6 +100,8 @@ build_frontends() {
   compose build infoq-frontend-vue
   echo "[frontend] 构建 React 前端镜像"
   compose build infoq-frontend-react
+  echo "[frontend] 构建 React Pro 前端镜像"
+  compose build infoq-frontend-react-pro
 }
 
 deploy_frontends() {
@@ -106,8 +110,8 @@ deploy_frontends() {
   build_frontends
   compose up -d --no-deps "${FRONTEND_SERVICES[@]}"
   echo "[frontend] 部署完成"
-  echo "[frontend] 网关入口: http://localhost/vue/ 和 http://localhost/react/"
-  echo "[frontend] 直连端口: Vue=9091 React=9092"
+  echo "[frontend] 网关入口: http://localhost/vue/、http://localhost/react/ 和 http://localhost/react-pro/"
+  echo "[frontend] 直连端口: Vue=9091 React=9092 ReactPro=9093"
 }
 
 start_frontends() {
@@ -139,11 +143,14 @@ show_logs() {
     react)
       compose logs -f infoq-frontend-react
       ;;
+    react-pro)
+      compose logs -f infoq-frontend-react-pro
+      ;;
     nginx)
       compose logs -f nginx-web
       ;;
     all)
-      compose logs -f infoq-frontend-vue infoq-frontend-react nginx-web
+      compose logs -f infoq-frontend-vue infoq-frontend-react infoq-frontend-react-pro nginx-web
       ;;
     *)
       usage

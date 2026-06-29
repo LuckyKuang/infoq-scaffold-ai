@@ -42,6 +42,7 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -75,6 +76,8 @@ class SseEmitterManagerTest {
     @AfterEach
     void clearEmitterStore() {
         SseEmitterManager.emitterStore().clear();
+        reset(topic, redissonClient);
+        when(redissonClient.getTopic("global:sse")).thenReturn(topic);
     }
 
     @Test
@@ -88,6 +91,33 @@ class SseEmitterManagerTest {
 
         verify(oldEmitter).complete();
         assertSame(newEmitter, SseEmitterManager.emitterStore().get(1L).get("t1"));
+    }
+
+    @Test
+    @DisplayName("connect callbacks: old completion should not remove replacement emitter")
+    void oldCompletionShouldNotRemoveReplacementEmitter() {
+        SseEmitterManager manager = newManager();
+        List<Runnable> completionCallbacks = new ArrayList<>();
+
+        try (MockedConstruction<SseEmitter> construction = org.mockito.Mockito.mockConstruction(
+            SseEmitter.class,
+            (mock, context) -> doAnswer(invocation -> {
+                completionCallbacks.add(invocation.getArgument(0));
+                return null;
+            }).when(mock).onCompletion(any(Runnable.class))
+        )) {
+            manager.connect(1L, "tk");
+            SseEmitter oldEmitter = construction.constructed().get(0);
+
+            manager.connect(1L, "tk");
+            SseEmitter newEmitter = construction.constructed().get(1);
+
+            completionCallbacks.get(0).run();
+
+            verify(oldEmitter).complete();
+            verify(newEmitter, times(0)).complete();
+            assertSame(newEmitter, SseEmitterManager.emitterStore().get(1L).get("tk"));
+        }
     }
 
     @Test
@@ -137,10 +167,10 @@ class SseEmitterManagerTest {
             timeoutCallbacks.get(1).run();
             errorCallbacks.get(2).accept(new RuntimeException("boom"));
 
-            assertFalse(SseEmitterManager.emitterStore().get(100L).containsKey("c1"));
-            assertFalse(SseEmitterManager.emitterStore().get(101L).containsKey("t1"));
-            assertFalse(SseEmitterManager.emitterStore().get(102L).containsKey("e1"));
-            verify(construction.constructed().get(0)).complete();
+            assertFalse(SseEmitterManager.emitterStore().containsKey(100L));
+            assertFalse(SseEmitterManager.emitterStore().containsKey(101L));
+            assertFalse(SseEmitterManager.emitterStore().containsKey(102L));
+            verify(construction.constructed().get(0), times(0)).complete();
             verify(construction.constructed().get(1)).complete();
             verify(construction.constructed().get(2)).complete();
         }
@@ -262,7 +292,22 @@ class SseEmitterManagerTest {
         List<SseMessageDto> published = captor.getAllValues();
         assertEquals(List.of(1L, 2L), published.get(0).getUserIds());
         assertEquals("hello", published.get(0).getMessage());
+        assertEquals(manager.currentNodeId(), published.get(0).getSourceNodeId());
         assertEquals("all-message", published.get(1).getMessage());
+        assertEquals(manager.currentNodeId(), published.get(1).getSourceNodeId());
+    }
+
+    @Test
+    @DisplayName("publishAll: should deliver message to local emitters after redis publish")
+    void publishAllShouldDeliverToLocalEmitters() throws IOException {
+        SseEmitterManager manager = newManager();
+        SseEmitter emitter = mock(SseEmitter.class);
+        SseEmitterManager.emitterStore().put(1L, new ConcurrentHashMap<>(Map.of("tk", emitter)));
+
+        manager.publishAll("local-broadcast");
+
+        verify(topic).publish(any(SseMessageDto.class));
+        verify(emitter).send(any(SseEmitter.SseEventBuilder.class));
     }
 
     private SseEmitterManager newManager() {

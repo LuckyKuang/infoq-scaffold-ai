@@ -17,6 +17,6 @@
 |Runtime Secrets:运行或部署保持现有仓库默认密码。
 |OpenSpec Routing:分级执行。|L3(强制):backend 新功能、API 契约变更、跨工作区交付，编码前先创建或定位 `openspec/changes/<change-id>/`。|L2(Lite):单 backend 行为变更且不改 API 契约，至少维护 `proposal.md`+`tasks.md`。|L1(可豁免):单 backend 小修复且不改契约、改动范围小可不建 OpenSpec，但必须先写 acceptance contract。|不确定分级时默认 L3。|OpenSpec 文档正文默认中文，路径名称/命令/文件名保持英文原样。|scope、verification、rollback notes 以 change artifacts 或 acceptance contract 为准。
 |Testing Boundary:优先在 `infoq-modules/infoq-system/src/test/java`、`infoq-plugin/**/src/test/java`、`infoq-core/**/src/test/java` 下写有针对性的 JUnit 5 测试。|默认使用 `@Tag("dev")` 匹配 Surefire groups。|Mapper default methods 可用 unit tests；纯 SQL 或 XML mapper methods 归入 mapper XML integration tests。
-|Verification:backend 行为变更先验证 main flow，再跑目标 `mvn` tests，再做相关 package/build verification。|auth/login/token 相关改动先跑 infoq-login-success-check，再跑 infoq-backend-smoke-test。|mapper、XML、permission、runtime wiring 改动后运行 infoq-backend-smoke-test。
-|Skill Routing:backend 测试设计和补测使用 infoq-backend-unit-test-patterns。|smoke 或 API verification 使用 infoq-backend-smoke-test。|登录验证与失败诊断使用 infoq-login-success-check。
+|Verification:backend 行为变更先验证 main flow，再跑目标 `mvn` tests，再做相关 package/build verification。|auth/login/token、mapper、XML、permission、runtime wiring 相关改动统一使用 infoq-backend-verify 覆盖登录、单测和 smoke；SQL、数据库、Redis、迁移、数据修复和一致性核对使用 infoq-data-ops。
+|Skill Routing:backend 测试设计、补测、smoke、API verification、登录验证与失败诊断统一使用 infoq-backend-verify；SQL migration、数据修复、测试数据维护和数据库/Redis 只读诊断统一使用 infoq-data-ops。
 |Boundaries:本工作区不要套用前端的 pnpm、lint、AppID 或 DevTools 规则。|交付时明确说明 config、SQL、dependency、observability 和 rollback impact。

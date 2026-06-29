@@ -1,4 +1,0 @@
-interface:
-  display_name: "InfoQ 后端单测模式"
-  short_description: "编写可确定的后端测试并覆盖 Redisson OSS 回归"
-  default_prompt: "使用 $infoq-backend-unit-test-patterns 为本仓库补充或重构可确定的后端测试，包括 Redisson OSS 兼容性回归。"

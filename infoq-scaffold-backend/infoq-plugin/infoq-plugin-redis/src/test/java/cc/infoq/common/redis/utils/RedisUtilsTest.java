@@ -76,8 +76,8 @@ class RedisUtilsTest {
     }
 
     @Test
-    @DisplayName("rateLimiter: should use OSS keepAlive api instead of standalone expire")
-    void rateLimiterShouldUseOssKeepAliveApi() {
+    @DisplayName("rateLimiter: should use OSS rate api and expire when timeout is configured")
+    void rateLimiterShouldUseOssApiAndExpireWhenTimeoutConfigured() {
         when(rateLimiter.tryAcquire()).thenReturn(true);
         when(rateLimiter.availablePermits()).thenReturn(9L);
 
@@ -86,10 +86,25 @@ class RedisUtilsTest {
         verify(rateLimiter).trySetRate(
             RateType.OVERALL,
             10L,
-            Duration.ofSeconds(60),
-            Duration.ofSeconds(300)
+            Duration.ofSeconds(60)
         );
-        verify(rateLimiter, times(0)).expire(any(Duration.class));
+        verify(rateLimiter).expire(Duration.ofSeconds(300));
+    }
+
+    @Test
+    @DisplayName("rateLimiter: should skip expire when timeout is not configured")
+    void rateLimiterShouldSkipExpireWhenTimeoutIsNotConfigured() {
+        when(rateLimiter.tryAcquire()).thenReturn(true);
+        when(rateLimiter.availablePermits()).thenReturn(4L);
+
+        assertEquals(4L, RedisUtils.rateLimiter("limiter", RateType.OVERALL, 5, 30));
+
+        verify(rateLimiter).trySetRate(
+            RateType.OVERALL,
+            5L,
+            Duration.ofSeconds(30)
+        );
+        verify(rateLimiter, never()).expire(any(Duration.class));
     }
 
     @Test
@@ -102,10 +117,9 @@ class RedisUtilsTest {
         verify(rateLimiter).trySetRate(
             RateType.OVERALL,
             10L,
-            Duration.ofSeconds(1),
             Duration.ofSeconds(1)
         );
-        verify(rateLimiter, times(0)).expire(any(Duration.class));
+        verify(rateLimiter).expire(Duration.ofSeconds(1));
     }
 
     @Test

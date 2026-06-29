@@ -55,12 +55,12 @@ export const sections = [
       description: '配置、认证、菜单权限、插件与调试建议。'
     }
   ]),
-  defineSection('admin', '管理端', 'Vue / React 管理端的路由、请求封装和页面扩展方式。', [
+  defineSection('admin', '管理端', 'Vue / React / React Pro 管理端的路由、请求封装和页面扩展方式。', [
     {
       source: 'admin/handbook.md',
       target: 'admin/handbook.md',
       title: '管理端手册',
-      description: '双管理端的共通机制与栈内差异。'
+      description: '三套管理端的共通机制与栈内差异。'
     }
   ]),
   defineSection('weapp', '小程序', 'Vue / React 小程序端的构建、环境变量和 DevTools 打开流程。', [

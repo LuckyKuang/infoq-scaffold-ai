@@ -1,7 +1,7 @@
 package cc.infoq.common.security.config;
 
 /**
- * Shared security route constants.
+ * 安全路由共享常量
  *
  * @author Pontus
  */

@@ -138,7 +138,7 @@ flowchart TB
 
 #### 3.2.2 Profile 文件 `application-{dev,prod,local}.yml`
 
-仓库当前存在三份 profile 文件，且 `pom.xml` 把 `<id>dev</id>` 设为 `<activeByDefault>true</activeByDefault>`，因此"不指定 profile"时运行的是 dev profile。
+仓库当前存在三份 profile 文件，且 `pom.xml` 把 `<id>dev</id>` 设为 `<activeByDefault>true</activeByDefault>`，因此直接依赖 Maven / `java -jar` 且不指定 profile 时，默认仍会运行 `dev` profile。仓库本地联调脚本会在存在 `application-local.yml` 时优先选择 `local`，所以这里的“默认”只指手动直跑场景。
 
 - [application-dev.yml](../infoq-admin/src/main/resources/application-dev.yml) 补充/覆写开发环境基础设施：
   - `spring.datasource`（HikariCP + dynamic-datasource，默认 `master` 指向本地 MySQL）。

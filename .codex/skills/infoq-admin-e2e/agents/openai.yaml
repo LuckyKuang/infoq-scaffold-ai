@@ -1,0 +1,4 @@
+interface:
+  display_name: "InfoQ 管理端 E2E"
+  short_description: "沉淀真实验证码登录入口，生成管理端测试矩阵并执行路由 smoke 与栈收口"
+  default_prompt: "使用 $infoq-admin-e2e 为 React/Vue/React Pro 管理端生成自动化矩阵、通过 captcha_login.mjs 执行真实验证码登录、运行路由 smoke，或设计 CRUD E2E；遵循只读优先、目标枚举、测试数据 cleanup、危险动作门禁、证据留存与运行态栈收口。"

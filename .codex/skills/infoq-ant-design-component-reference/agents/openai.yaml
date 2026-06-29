@@ -1,4 +1,0 @@
-interface:
-  display_name: "InfoQ Ant Design 组件参考"
-  short_description: "基于官方文档选择并应用 Ant Design 组件"
-  default_prompt: "使用 $infoq-ant-design-component-reference 根据官方文档选择合适的 Ant Design 组件，并以正确 API 实现 React 页面。"

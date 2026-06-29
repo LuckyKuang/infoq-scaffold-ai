@@ -1,5 +1,5 @@
 import type { ChangeEvent } from 'react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { EditOutlined, PlusOutlined, ReloadOutlined, SaveOutlined, SettingOutlined } from '@ant-design/icons';
 import { Button, Card, Drawer, Empty, Form, Input, InputNumber, Select, Space, Spin, Switch, Table, Tabs, Tag, Tooltip, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
@@ -41,7 +41,7 @@ const getAllItems = (panel: ConfigPanel) => panel.groups.flatMap((group) => grou
 const maskValue = (value?: string) => (value ? '•'.repeat(Math.min(Math.max(value.length, 6), 12)) : '未设置');
 const hasDefaultValue = (item: ConfigPanelItem) => item.defaultValue !== null && item.defaultValue !== undefined;
 const toBooleanString = (checked: boolean) => (checked ? 'true' : 'false');
-const defaultPageSize = 10;
+const defaultPageSize = 5;
 
 const assertConfigPanel = (value: unknown): ConfigPanel => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
@@ -56,7 +56,6 @@ const assertConfigPanel = (value: unknown): ConfigPanel => {
 export default function ConfigPage() {
   const [panel, setPanel] = useState<ConfigPanel>(initialPanel);
   const [loading, setLoading] = useState(false);
-  const [keyword, setKeyword] = useState('');
   const [activeGroupKey, setActiveGroupKey] = useState('all');
   const [savingKeys, setSavingKeys] = useState<Record<string, boolean>>({});
   const [editingKeys, setEditingKeys] = useState<Record<string, boolean>>({});
@@ -66,7 +65,6 @@ export default function ConfigPage() {
   const [submitting, setSubmitting] = useState(false);
   const [orderRows, setOrderRows] = useState<ConfigReorderForm[]>([]);
   const [form] = Form.useForm<ConfigForm>();
-  const listScrollRef = useRef<HTMLDivElement>(null);
   const roles = useUserStore((state) => state.roles);
   const isSuperAdmin = roles.includes('superadmin');
   const watchedValueType = Form.useWatch('valueType', form) as ConfigValueType | undefined;
@@ -97,31 +95,22 @@ export default function ConfigPage() {
   }, [loadPanel]);
 
   const filteredGroups = useMemo(() => {
-    const normalizedKeyword = keyword.trim().toLowerCase();
     return panel.groups
       .map((group) => ({
         ...group,
         items: group.items.filter((item) => {
-          const matchedGroup = activeGroupKey === 'all' || item.groupKey === activeGroupKey;
-          const matchedKeyword =
-            !normalizedKeyword ||
-            [item.configName, item.configKey, item.remark, item.configValue]
-              .filter(Boolean)
-              .some((value) => String(value).toLowerCase().includes(normalizedKeyword));
-          return matchedGroup && matchedKeyword;
+          return activeGroupKey === 'all' || item.groupKey === activeGroupKey;
         })
       }))
       .filter((group) => group.items.length > 0 || activeGroupKey === group.groupKey);
-  }, [activeGroupKey, keyword, panel.groups]);
+  }, [activeGroupKey, panel.groups]);
 
   const filteredItemTotal = useMemo(() => filteredGroups.reduce((total, group) => total + group.items.length, 0), [filteredGroups]);
 
   const pagedGroups = useMemo(() => {
     const start = (listPagination.page - 1) * listPagination.limit;
     const end = start + listPagination.limit;
-    const pagedItems = filteredGroups
-      .flatMap((group) => group.items.map((item) => ({ groupKey: group.groupKey, item })))
-      .slice(start, end);
+    const pagedItems = filteredGroups.flatMap((group) => group.items.map((item) => ({ groupKey: group.groupKey, item }))).slice(start, end);
     return filteredGroups
       .map((group) => {
         const items = pagedItems.filter((entry) => entry.groupKey === group.groupKey).map((entry) => entry.item);
@@ -132,7 +121,7 @@ export default function ConfigPage() {
 
   useEffect(() => {
     setListPagination((prev) => (prev.page === 1 ? prev : { ...prev, page: 1 }));
-  }, [activeGroupKey, keyword]);
+  }, [activeGroupKey]);
 
   useEffect(() => {
     const maxPage = Math.max(1, Math.ceil(filteredItemTotal / listPagination.limit));
@@ -142,10 +131,8 @@ export default function ConfigPage() {
   }, [filteredItemTotal, listPagination.limit, listPagination.page]);
 
   useEffect(() => {
-    if (listScrollRef.current) {
-      listScrollRef.current.scrollTop = 0;
-    }
-  }, [activeGroupKey, keyword, listPagination.limit, listPagination.page]);
+    window.scrollTo({ top: 0 });
+  }, [activeGroupKey, listPagination.limit, listPagination.page]);
 
   const updatePanelItemValue = (configKey: string, configValue: string) => {
     setPanel((prev) => ({
@@ -423,16 +410,6 @@ export default function ConfigPage() {
             </Text>
           </div>
           <Space wrap className="config-hero-actions">
-            <Input.Search
-              allowClear
-              placeholder="搜索配置名称、键名或备注"
-              value={keyword}
-              onChange={(event) => setKeyword(event.target.value)}
-              style={{ width: 260, maxWidth: '100%' }}
-            />
-            <Button icon={<ReloadOutlined />} onClick={loadPanel}>
-              刷新
-            </Button>
             <Button
               onClick={async () => {
                 await refreshCache();
@@ -478,8 +455,8 @@ export default function ConfigPage() {
         </div>
 
         <div className="config-list-panel">
-          <Spin spinning={loading} wrapperClassName="config-list-spin">
-            <div className="config-list-scroll" ref={listScrollRef}>
+          <Spin spinning={loading} classNames={{ root: 'config-list-spin' }}>
+            <div className="config-list-scroll">
               <div className="config-group-list">
                 {filteredItemTotal === 0 ? (
                   <Card>

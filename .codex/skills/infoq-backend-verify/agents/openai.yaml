@@ -1,0 +1,4 @@
+interface:
+  display_name: "InfoQ 后端验证"
+  short_description: "执行后端单测、登录校验、HTTP/集群 smoke 与端口收口"
+  default_prompt: "使用 $infoq-backend-verify 为本仓库后端执行单测、Mapper/XML 验证、登录鉴权诊断、HTTP smoke、WebSocket 集群 smoke、Redisson OSS 兼容性检查；遵循只读探测、最小闭环、写入门禁、显式失败和运行态端口收口；SQL、迁移和数据修复转交 $infoq-data-ops。"

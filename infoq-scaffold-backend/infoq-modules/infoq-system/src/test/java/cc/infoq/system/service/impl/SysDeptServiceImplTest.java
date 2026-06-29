@@ -46,9 +46,9 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.eq;
 
 @ExtendWith(MockitoExtension.class)
 @Tag("dev")
@@ -239,17 +239,21 @@ class SysDeptServiceImplTest {
     }
 
     @Test
-    @DisplayName("selectDeptNameByIds/selectDeptLeaderById: should read from aop proxy")
-    void selectDeptNameByIdsAndLeaderShouldReadFromAopProxy() {
+    @DisplayName("selectDeptNameByIds/selectDeptLeaderById: should batch names and keep leader cache proxy")
+    void selectDeptNameByIdsShouldBatchNamesAndLeaderShouldUseCacheProxy() {
         SysDeptServiceImpl service = spy(newService());
-        doReturn(deptVo(1L, "研发中心", 100L)).when(service).selectDeptById(1L);
-        doReturn(null).when(service).selectDeptById(2L);
-        doReturn(deptVo(3L, "测试中心", 101L)).when(service).selectDeptById(3L);
+        SysDeptVo deptA = deptVo(1L, "研发中心", 100L);
+        SysDeptVo deptC = deptVo(3L, "测试中心", 101L);
+        when(sysDeptMapper.selectVoList(any())).thenReturn(List.of(deptC, deptA));
 
+        assertEquals("研发中心,测试中心", service.selectDeptNameByIds("1,2,3"));
+        verify(sysDeptMapper).selectVoList(any());
+        verify(service, never()).selectDeptById(anyLong());
+
+        doReturn(deptVo(1L, "研发中心", 100L)).when(service).selectDeptById(1L);
         try (MockedStatic<SpringUtils> springUtils = mockStatic(SpringUtils.class)) {
             springUtils.when(() -> SpringUtils.getAopProxy(service)).thenReturn(service);
 
-            assertEquals("研发中心,测试中心", service.selectDeptNameByIds("1,2,3"));
             assertEquals(100L, service.selectDeptLeaderById(1L));
         }
     }

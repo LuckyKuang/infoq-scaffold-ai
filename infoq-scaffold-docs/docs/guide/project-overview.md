@@ -16,7 +16,7 @@ outline: [2, 3]
 
 这意味着本项目有两层结构：
 
-- 业务交付层：Spring Boot 后端、Vue / React 管理端、Vue / React 小程序端。
+- 业务交付层：Spring Boot 后端、Vue / React / React Pro 管理端、Vue / React 小程序端。
 - 协作治理层：`AGENTS.md`、`.codex/skills`、`OpenSpec`、`.codex/config.toml`、部署脚本、运行验证脚本、文档。
 
 ## 2. 仓库结构
@@ -30,6 +30,7 @@ infoq-scaffold-ai
 ├── infoq-scaffold-backend
 ├── infoq-scaffold-frontend-vue
 ├── infoq-scaffold-frontend-react
+├── infoq-scaffold-frontend-react-pro
 ├── infoq-scaffold-frontend-weapp-vue
 ├── infoq-scaffold-frontend-weapp-react
 ├── infoq-scaffold-docs
@@ -45,6 +46,7 @@ infoq-scaffold-ai
 | `infoq-scaffold-backend` | 认证、权限、菜单、系统管理、监控、OSS、客户端、插件能力 | Controller / Service / Mapper / Entity、配置、后端测试 |
 | `infoq-scaffold-frontend-vue` | Vue 管理端 | 页面、组件、状态管理、Element Plus 表单表格、Vitest |
 | `infoq-scaffold-frontend-react` | React 管理端 | 页面、布局、路由转换、Ant Design、Vitest |
+| `infoq-scaffold-frontend-react-pro` | React Pro 管理端 | Ant Design Pro、Umi Max、ProLayout、ProComponents、Vitest |
 | `infoq-scaffold-frontend-weapp-vue` | uni-app Vue 小程序端 | 页面路由、移动端请求封装、构建产物、DevTools |
 | `infoq-scaffold-frontend-weapp-react` | Taro React 小程序端 | 页面路由、移动端请求封装、构建产物、DevTools |
 | `infoq-scaffold-docs` | VitePress 文档站展示层 | 站点导航、主题样式、正文同步、链接校验、构建与部署 |
@@ -60,10 +62,11 @@ infoq-scaffold-ai
 | 后端 | JDK 17、Spring Boot 3.5.14、Spring Security、MyBatis-Plus 3.5.16、Springdoc |
 | Vue 管理端 | Vue 3.5.35、Vite 8.0.16、Element Plus 2.14.1、Vue Router 5.1.0、Pinia、Vitest 4.1.8 |
 | React 管理端 | React 19.2.7、Vite 8.0.16、Ant Design 6.4.3、React Router 7.16.0、Zustand、Vitest 4.1.8 |
+| React Pro 管理端 | React 19.2.5、Umi Max 4.6.57、Ant Design 6.4.3、ProComponents 3.1.12-0、Vitest 4.1.8 |
 | Vue 小程序端 | uni-app 3、Vue 3、Pinia、Vitest、微信开发者工具 |
 | React 小程序端 | Taro 4、React 18、Zustand、Vitest、微信开发者工具 |
 | 中间件 | MySQL 8、Redis 7、MinIO |
-| 自动化 | Maven、pnpm、Playwright、Chrome DevTools MCP、OpenAI Docs MCP |
+| 自动化 | Maven、pnpm、Playwright、Chrome DevTools MCP、OpenAI Docs skill |
 
 ## 5. 业务能力地图
 
@@ -136,13 +139,15 @@ infoq-scaffold-ai
 | Compose 后端 | `http://127.0.0.1:9090` | `infoq.sh deploy` 产物 |
 | Vue 管理端 dev | `VITE_APP_PORT`，默认 `80` | 通过 `/dev-api` 代理后端 |
 | React 管理端 dev | `VITE_APP_PORT`，默认 `80` | 通过 `/dev-api` 代理后端 |
+| React Pro 管理端 dev | `VITE_APP_PORT`，默认 `80` | 通过 `/dev-api` 代理后端，`pnpm run dev` 默认自动打开浏览器 |
 | Vue 前端容器直连 | `9091` | Compose 部署 |
 | React 前端容器直连 | `9092` | Compose 部署 |
-| Nginx 聚合入口 | `/vue/`、`/react/`、`/prod-api/` | Compose / 手动部署统一入口 |
+| React Pro 前端容器直连 | `9093` | Compose 部署 |
+| Nginx 聚合入口 | `/vue/`、`/react/`、`/react-pro/`、`/prod-api/` | Compose / 手动部署统一入口 |
 
 注意：
 
-- Vue 和 React 管理端的 `.env.development` 默认都把 `VITE_APP_PORT` 设为 `80`。如果你打算同时在同一台机器直接启动两个 dev server，必须先调整其中一个端口。
+- Vue、React 和 React Pro 管理端的 `.env.development` 默认都把 `VITE_APP_PORT` 设为 `80`。如果你打算同时在同一台机器直接启动多个 dev server，必须先调整其中至少一个端口。
 - 小程序端不是靠固定 HTTP 端口访问，而是通过 H5 预览或微信开发者工具加载构建产物。
 
 ## 7. 配置真值源
@@ -153,6 +158,7 @@ infoq-scaffold-ai
 | 后端 dev/local/prod 差异 | `application-dev.yml`、`application-local.yml`、`application-prod.yml` |
 | Vue 管理端环境变量 | `infoq-scaffold-frontend-vue/.env.*` |
 | React 管理端环境变量 | `infoq-scaffold-frontend-react/.env.*` |
+| React Pro 管理端环境变量 | `infoq-scaffold-frontend-react-pro/.env.*` |
 | Vue 小程序端环境变量 | `infoq-scaffold-frontend-weapp-vue/.env.*` |
 | React 小程序端环境变量 | `infoq-scaffold-frontend-weapp-react/.env.*` |
 | MCP server 配置 | `.codex/config.toml` |

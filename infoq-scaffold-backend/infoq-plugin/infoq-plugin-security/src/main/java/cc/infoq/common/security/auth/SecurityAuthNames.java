@@ -4,7 +4,7 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
 /**
- * Shared names for the Spring Security authentication migration.
+ * Spring Security 认证共享名称
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class SecurityAuthNames {

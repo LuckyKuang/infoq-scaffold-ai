@@ -1,0 +1,6014 @@
+{
+  "generatedAt": "2026-06-04T17:10:58.186Z",
+  "repoRoot": "/Users/pontus/DevTools/code/GitHub/infoq-scaffold-ai",
+  "sources": {
+    "sqlFiles": [
+      "sql/infoq_scaffold_2.0.0.sql",
+      "sql/infoq_scaffold_update_20260425.sql",
+      "sql/infoq_scaffold_update_20260429.sql",
+      "sql/infoq_scaffold_update_20260526.sql",
+      "sql/infoq_scaffold_update_20260529.sql"
+    ],
+    "reactPages": [
+      "infoq-scaffold-frontend-react/src/pages/error/401.tsx",
+      "infoq-scaffold-frontend-react/src/pages/error/404.tsx",
+      "infoq-scaffold-frontend-react/src/pages/forgot-password.tsx",
+      "infoq-scaffold-frontend-react/src/pages/index.tsx",
+      "infoq-scaffold-frontend-react/src/pages/login.tsx",
+      "infoq-scaffold-frontend-react/src/pages/monitor/cache/index.tsx",
+      "infoq-scaffold-frontend-react/src/pages/monitor/dataSource/index.tsx",
+      "infoq-scaffold-frontend-react/src/pages/monitor/job/index.tsx",
+      "infoq-scaffold-frontend-react/src/pages/monitor/jobLog/index.tsx",
+      "infoq-scaffold-frontend-react/src/pages/monitor/loginInfo/index.tsx",
+      "infoq-scaffold-frontend-react/src/pages/monitor/online/index.tsx",
+      "infoq-scaffold-frontend-react/src/pages/monitor/operLog/index.tsx",
+      "infoq-scaffold-frontend-react/src/pages/monitor/operLog/oper-info-dialog.tsx",
+      "infoq-scaffold-frontend-react/src/pages/monitor/server/index.tsx",
+      "infoq-scaffold-frontend-react/src/pages/oauth-callback.tsx",
+      "infoq-scaffold-frontend-react/src/pages/redirect/index.tsx",
+      "infoq-scaffold-frontend-react/src/pages/register.tsx",
+      "infoq-scaffold-frontend-react/src/pages/system/client/index.tsx",
+      "infoq-scaffold-frontend-react/src/pages/system/config/index.tsx",
+      "infoq-scaffold-frontend-react/src/pages/system/dept/index.tsx",
+      "infoq-scaffold-frontend-react/src/pages/system/dict/data.tsx",
+      "infoq-scaffold-frontend-react/src/pages/system/dict/index.tsx",
+      "infoq-scaffold-frontend-react/src/pages/system/invite/index.tsx",
+      "infoq-scaffold-frontend-react/src/pages/system/menu/index.tsx",
+      "infoq-scaffold-frontend-react/src/pages/system/notice/index.tsx",
+      "infoq-scaffold-frontend-react/src/pages/system/oss/config.tsx",
+      "infoq-scaffold-frontend-react/src/pages/system/oss/index.tsx",
+      "infoq-scaffold-frontend-react/src/pages/system/post/index.tsx",
+      "infoq-scaffold-frontend-react/src/pages/system/role/authUser.tsx",
+      "infoq-scaffold-frontend-react/src/pages/system/role/index.tsx",
+      "infoq-scaffold-frontend-react/src/pages/system/role/selectUser.tsx",
+      "infoq-scaffold-frontend-react/src/pages/system/user/authRole.tsx",
+      "infoq-scaffold-frontend-react/src/pages/system/user/index.tsx",
+      "infoq-scaffold-frontend-react/src/pages/system/user/profile/index.tsx",
+      "infoq-scaffold-frontend-react/src/pages/system/user/profile/onlineDevice.tsx",
+      "infoq-scaffold-frontend-react/src/pages/system/user/profile/resetPwd.tsx",
+      "infoq-scaffold-frontend-react/src/pages/system/user/profile/userAvatar.tsx",
+      "infoq-scaffold-frontend-react/src/pages/system/user/profile/userInfo.tsx"
+    ],
+    "vueViews": [
+      "infoq-scaffold-frontend-vue/src/views/error/401.vue",
+      "infoq-scaffold-frontend-vue/src/views/error/404.vue",
+      "infoq-scaffold-frontend-vue/src/views/forgot-password.vue",
+      "infoq-scaffold-frontend-vue/src/views/index.vue",
+      "infoq-scaffold-frontend-vue/src/views/login.vue",
+      "infoq-scaffold-frontend-vue/src/views/monitor/cache/index.vue",
+      "infoq-scaffold-frontend-vue/src/views/monitor/dataSource/index.vue",
+      "infoq-scaffold-frontend-vue/src/views/monitor/job/index.vue",
+      "infoq-scaffold-frontend-vue/src/views/monitor/jobLog/index.vue",
+      "infoq-scaffold-frontend-vue/src/views/monitor/loginInfo/index.vue",
+      "infoq-scaffold-frontend-vue/src/views/monitor/online/index.vue",
+      "infoq-scaffold-frontend-vue/src/views/monitor/operLog/index.vue",
+      "infoq-scaffold-frontend-vue/src/views/monitor/operLog/oper-info-dialog.vue",
+      "infoq-scaffold-frontend-vue/src/views/monitor/server/index.vue",
+      "infoq-scaffold-frontend-vue/src/views/oauth-callback.vue",
+      "infoq-scaffold-frontend-vue/src/views/redirect/index.vue",
+      "infoq-scaffold-frontend-vue/src/views/register.vue",
+      "infoq-scaffold-frontend-vue/src/views/system/client/index.vue",
+      "infoq-scaffold-frontend-vue/src/views/system/config/index.vue",
+      "infoq-scaffold-frontend-vue/src/views/system/dept/index.vue",
+      "infoq-scaffold-frontend-vue/src/views/system/dict/data.vue",
+      "infoq-scaffold-frontend-vue/src/views/system/dict/index.vue",
+      "infoq-scaffold-frontend-vue/src/views/system/invite/index.vue",
+      "infoq-scaffold-frontend-vue/src/views/system/menu/index.vue",
+      "infoq-scaffold-frontend-vue/src/views/system/notice/index.vue",
+      "infoq-scaffold-frontend-vue/src/views/system/oss/config.vue",
+      "infoq-scaffold-frontend-vue/src/views/system/oss/index.vue",
+      "infoq-scaffold-frontend-vue/src/views/system/post/index.vue",
+      "infoq-scaffold-frontend-vue/src/views/system/role/authUser.vue",
+      "infoq-scaffold-frontend-vue/src/views/system/role/index.vue",
+      "infoq-scaffold-frontend-vue/src/views/system/role/selectUser.vue",
+      "infoq-scaffold-frontend-vue/src/views/system/user/authRole.vue",
+      "infoq-scaffold-frontend-vue/src/views/system/user/index.vue",
+      "infoq-scaffold-frontend-vue/src/views/system/user/profile/index.vue",
+      "infoq-scaffold-frontend-vue/src/views/system/user/profile/onlineDevice.vue",
+      "infoq-scaffold-frontend-vue/src/views/system/user/profile/resetPwd.vue",
+      "infoq-scaffold-frontend-vue/src/views/system/user/profile/userAvatar.vue",
+      "infoq-scaffold-frontend-vue/src/views/system/user/profile/userInfo.vue"
+    ],
+    "reactTests": [
+      "infoq-scaffold-frontend-react/tests/api/login.test.ts",
+      "infoq-scaffold-frontend-react/tests/api/system/invite.test.ts",
+      "infoq-scaffold-frontend-react/tests/api/type-contract.test.ts",
+      "infoq-scaffold-frontend-react/tests/api/user-guards.test.ts",
+      "infoq-scaffold-frontend-react/tests/components/bridge-components.test.tsx",
+      "infoq-scaffold-frontend-react/tests/components/common-components.test.tsx",
+      "infoq-scaffold-frontend-react/tests/components/svg-icon.test.tsx",
+      "infoq-scaffold-frontend-react/tests/components/upload-editor.test.tsx",
+      "infoq-scaffold-frontend-react/tests/layout/keep-alive.test.tsx",
+      "infoq-scaffold-frontend-react/tests/layout/main-layout-icons.test.tsx",
+      "infoq-scaffold-frontend-react/tests/layout/tags-view-bar.test.tsx",
+      "infoq-scaffold-frontend-react/tests/pages/cache-page.test.tsx",
+      "infoq-scaffold-frontend-react/tests/pages/data-source-page.test.tsx",
+      "infoq-scaffold-frontend-react/tests/pages/forgot-password.test.tsx",
+      "infoq-scaffold-frontend-react/tests/pages/home.test.tsx",
+      "infoq-scaffold-frontend-react/tests/pages/login.test.tsx",
+      "infoq-scaffold-frontend-react/tests/pages/monitor-auth-profile.test.tsx",
+      "infoq-scaffold-frontend-react/tests/pages/monitor-scheduler.test.tsx",
+      "infoq-scaffold-frontend-react/tests/pages/ops-pages.test.tsx",
+      "infoq-scaffold-frontend-react/tests/pages/register.test.tsx",
+      "infoq-scaffold-frontend-react/tests/pages/server-page.test.tsx",
+      "infoq-scaffold-frontend-react/tests/pages/system-config.test.tsx",
+      "infoq-scaffold-frontend-react/tests/pages/system-invite.test.tsx",
+      "infoq-scaffold-frontend-react/tests/pages/system-pages.test.tsx",
+      "infoq-scaffold-frontend-react/tests/router/app-router.test.tsx",
+      "infoq-scaffold-frontend-react/tests/router/auth-permission.test.tsx",
+      "infoq-scaffold-frontend-react/tests/router/backend-route-view.test.tsx",
+      "infoq-scaffold-frontend-react/tests/router/component-map.test.ts",
+      "infoq-scaffold-frontend-react/tests/router/path-to-component.test.ts",
+      "infoq-scaffold-frontend-react/tests/router/route-transform.test.ts",
+      "infoq-scaffold-frontend-react/tests/store/layout-store.test.ts",
+      "infoq-scaffold-frontend-react/tests/store/permission-store.test.ts",
+      "infoq-scaffold-frontend-react/tests/store/user.test.ts",
+      "infoq-scaffold-frontend-react/tests/utils/auth.test.ts",
+      "infoq-scaffold-frontend-react/tests/utils/crypto.test.ts",
+      "infoq-scaffold-frontend-react/tests/utils/modal.test.ts",
+      "infoq-scaffold-frontend-react/tests/utils/realtime.test.ts",
+      "infoq-scaffold-frontend-react/tests/utils/request.test.ts",
+      "infoq-scaffold-frontend-react/tests/utils/scaffold-lang.test.ts"
+    ],
+    "vueTests": [
+      "infoq-scaffold-frontend-vue/tests/animate.test.ts",
+      "infoq-scaffold-frontend-vue/tests/api/login.test.ts",
+      "infoq-scaffold-frontend-vue/tests/api/menu.test.ts",
+      "infoq-scaffold-frontend-vue/tests/api/system/invite.test.ts",
+      "infoq-scaffold-frontend-vue/tests/app.test.ts",
+      "infoq-scaffold-frontend-vue/tests/components/Breadcrumb.test.ts",
+      "infoq-scaffold-frontend-vue/tests/components/DictTag.test.ts",
+      "infoq-scaffold-frontend-vue/tests/components/Editor.test.ts",
+      "infoq-scaffold-frontend-vue/tests/components/Hamburger.test.ts",
+      "infoq-scaffold-frontend-vue/tests/components/IconSelect.test.ts",
+      "infoq-scaffold-frontend-vue/tests/components/InfoQGit.test.ts",
+      "infoq-scaffold-frontend-vue/tests/components/LangSelect.test.ts",
+      "infoq-scaffold-frontend-vue/tests/components/Pagination.test.ts",
+      "infoq-scaffold-frontend-vue/tests/components/RightToolbar.test.ts",
+      "infoq-scaffold-frontend-vue/tests/components/ScreenFull.test.ts",
+      "infoq-scaffold-frontend-vue/tests/components/SizeSelect.test.ts",
+      "infoq-scaffold-frontend-vue/tests/components/TopNav.test.ts",
+      "infoq-scaffold-frontend-vue/tests/components/requireIcons.test.ts",
+      "infoq-scaffold-frontend-vue/tests/directive/copyText.test.ts",
+      "infoq-scaffold-frontend-vue/tests/directive/permission.test.ts",
+      "infoq-scaffold-frontend-vue/tests/layout/components/AppMain.test.ts",
+      "infoq-scaffold-frontend-vue/tests/layout/components/Navbar.test.ts",
+      "infoq-scaffold-frontend-vue/tests/layout/components/ScrollPane.test.ts",
+      "infoq-scaffold-frontend-vue/tests/layout/components/Settings.test.ts",
+      "infoq-scaffold-frontend-vue/tests/layout/components/TagsViewIndex.test.ts",
+      "infoq-scaffold-frontend-vue/tests/layout/components/TopBarSearch.test.ts",
+      "infoq-scaffold-frontend-vue/tests/layout/components/notice.test.ts",
+      "infoq-scaffold-frontend-vue/tests/permission.guard.test.ts",
+      "infoq-scaffold-frontend-vue/tests/plugins/auth.test.ts",
+      "infoq-scaffold-frontend-vue/tests/plugins/cache.test.ts",
+      "infoq-scaffold-frontend-vue/tests/plugins/download.test.ts",
+      "infoq-scaffold-frontend-vue/tests/plugins/modal.test.ts",
+      "infoq-scaffold-frontend-vue/tests/plugins/svgicon.test.ts",
+      "infoq-scaffold-frontend-vue/tests/plugins/tab.test.ts",
+      "infoq-scaffold-frontend-vue/tests/router/index.test.ts",
+      "infoq-scaffold-frontend-vue/tests/store/app.test.ts",
+      "infoq-scaffold-frontend-vue/tests/store/dict.test.ts",
+      "infoq-scaffold-frontend-vue/tests/store/notice.test.ts",
+      "infoq-scaffold-frontend-vue/tests/store/permission-store.test.ts",
+      "infoq-scaffold-frontend-vue/tests/store/permission-utils.test.ts",
+      "infoq-scaffold-frontend-vue/tests/store/settings.test.ts",
+      "infoq-scaffold-frontend-vue/tests/store/tagsView.test.ts",
+      "infoq-scaffold-frontend-vue/tests/store/user.test.ts",
+      "infoq-scaffold-frontend-vue/tests/utils/auth.test.ts",
+      "infoq-scaffold-frontend-vue/tests/utils/createCustomNameComponent.test.ts",
+      "infoq-scaffold-frontend-vue/tests/utils/crypto.test.ts",
+      "infoq-scaffold-frontend-vue/tests/utils/devtools-protection.test.ts",
+      "infoq-scaffold-frontend-vue/tests/utils/dict.test.ts",
+      "infoq-scaffold-frontend-vue/tests/utils/dynamicTitle.test.ts",
+      "infoq-scaffold-frontend-vue/tests/utils/jsencrypt.test.ts",
+      "infoq-scaffold-frontend-vue/tests/utils/permission.test.ts",
+      "infoq-scaffold-frontend-vue/tests/utils/propTypes.test.ts",
+      "infoq-scaffold-frontend-vue/tests/utils/request.test.ts",
+      "infoq-scaffold-frontend-vue/tests/utils/scaffold.test.ts",
+      "infoq-scaffold-frontend-vue/tests/utils/scroll-to.test.ts",
+      "infoq-scaffold-frontend-vue/tests/utils/sse.test.ts",
+      "infoq-scaffold-frontend-vue/tests/utils/theme.test.ts",
+      "infoq-scaffold-frontend-vue/tests/utils/validate.test.ts",
+      "infoq-scaffold-frontend-vue/tests/utils/websocket.test.ts",
+      "infoq-scaffold-frontend-vue/tests/views/error401.test.ts",
+      "infoq-scaffold-frontend-vue/tests/views/error404.test.ts",
+      "infoq-scaffold-frontend-vue/tests/views/forgot-password.test.ts",
+      "infoq-scaffold-frontend-vue/tests/views/index.test.ts",
+      "infoq-scaffold-frontend-vue/tests/views/login.test.ts",
+      "infoq-scaffold-frontend-vue/tests/views/monitor/cache/index.test.ts",
+      "infoq-scaffold-frontend-vue/tests/views/monitor/dataSource/index.test.ts",
+      "infoq-scaffold-frontend-vue/tests/views/monitor/job/index.test.ts",
+      "infoq-scaffold-frontend-vue/tests/views/monitor/jobLog/index.test.ts",
+      "infoq-scaffold-frontend-vue/tests/views/monitor/loginInfo/index.test.ts",
+      "infoq-scaffold-frontend-vue/tests/views/monitor/online/index.test.ts",
+      "infoq-scaffold-frontend-vue/tests/views/monitor/operLog/index.test.ts",
+      "infoq-scaffold-frontend-vue/tests/views/monitor/operLog/oper-info-dialog.test.ts",
+      "infoq-scaffold-frontend-vue/tests/views/monitor/server/index.test.ts",
+      "infoq-scaffold-frontend-vue/tests/views/redirect.test.ts",
+      "infoq-scaffold-frontend-vue/tests/views/register.test.ts",
+      "infoq-scaffold-frontend-vue/tests/views/system/client/index.test.ts",
+      "infoq-scaffold-frontend-vue/tests/views/system/config/index.test.ts",
+      "infoq-scaffold-frontend-vue/tests/views/system/dept/index.test.ts",
+      "infoq-scaffold-frontend-vue/tests/views/system/dict/data.test.ts",
+      "infoq-scaffold-frontend-vue/tests/views/system/dict/index.test.ts",
+      "infoq-scaffold-frontend-vue/tests/views/system/invite/index.test.ts",
+      "infoq-scaffold-frontend-vue/tests/views/system/menu/index.test.ts",
+      "infoq-scaffold-frontend-vue/tests/views/system/notice/index.test.ts",
+      "infoq-scaffold-frontend-vue/tests/views/system/oss/config.test.ts",
+      "infoq-scaffold-frontend-vue/tests/views/system/oss/index.test.ts",
+      "infoq-scaffold-frontend-vue/tests/views/system/post/index.test.ts",
+      "infoq-scaffold-frontend-vue/tests/views/system/role/authUser.test.ts",
+      "infoq-scaffold-frontend-vue/tests/views/system/role/index.test.ts",
+      "infoq-scaffold-frontend-vue/tests/views/system/role/selectUser.test.ts",
+      "infoq-scaffold-frontend-vue/tests/views/system/user/authRole.test.ts",
+      "infoq-scaffold-frontend-vue/tests/views/system/user/index.test.ts",
+      "infoq-scaffold-frontend-vue/tests/views/system/user/profile/index.test.ts",
+      "infoq-scaffold-frontend-vue/tests/views/system/user/profile/onlineDevice.test.ts",
+      "infoq-scaffold-frontend-vue/tests/views/system/user/profile/resetPwd.test.ts",
+      "infoq-scaffold-frontend-vue/tests/views/system/user/profile/userAvatar.test.ts",
+      "infoq-scaffold-frontend-vue/tests/views/system/user/profile/userInfo.test.ts"
+    ]
+  },
+  "summary": {
+    "totalCases": 114,
+    "p0": 24,
+    "p1": 69,
+    "p2": 21,
+    "reactCases": 114,
+    "vueCases": 114,
+    "sideEffectCases": 51,
+    "gaps": 4
+  },
+  "cases": [
+    {
+      "id": "FE-AUTH-FORGOT-PASSWORD",
+      "source": "fixed-route",
+      "menuId": "fixed-3",
+      "parentMenuId": "",
+      "moduleKey": "auth.forgot-password",
+      "menuName": "忘记密码",
+      "menuType": "fixed",
+      "routePath": "/forgot-password",
+      "component": "forgot-password",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [],
+      "priority": "P1",
+      "automationType": "smoke",
+      "sideEffect": false,
+      "dependencies": [
+        "backend",
+        "captcha"
+      ],
+      "preconditions": [
+        "前端应用已启动",
+        "公开路由无需登录；受保护固定路由需要有效登录态"
+      ],
+      "steps": [
+        "打开 /forgot-password",
+        "等待 忘记密码 首屏渲染"
+      ],
+      "assertions": [
+        "忘记密码 路由可访问",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "只读或固定入口数据。",
+      "cleanup": "无需业务数据清理。",
+      "existingTests": [
+        "infoq-scaffold-frontend-react/tests/pages/forgot-password.test.tsx",
+        "infoq-scaffold-frontend-vue/tests/views/forgot-password.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": ""
+    },
+    {
+      "id": "FE-AUTH-LOGIN",
+      "source": "fixed-route",
+      "menuId": "fixed-1",
+      "parentMenuId": "",
+      "moduleKey": "auth.login",
+      "menuName": "登录",
+      "menuType": "fixed",
+      "routePath": "/login",
+      "component": "login",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [],
+      "priority": "P0",
+      "automationType": "smoke",
+      "sideEffect": false,
+      "dependencies": [
+        "backend",
+        "captcha"
+      ],
+      "preconditions": [
+        "前端应用已启动",
+        "公开路由无需登录；受保护固定路由需要有效登录态"
+      ],
+      "steps": [
+        "打开 /login",
+        "等待 登录 首屏渲染"
+      ],
+      "assertions": [
+        "登录 路由可访问",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "只读或固定入口数据。",
+      "cleanup": "无需业务数据清理。",
+      "existingTests": [
+        "infoq-scaffold-frontend-react/tests/api/login.test.ts",
+        "infoq-scaffold-frontend-react/tests/pages/login.test.tsx",
+        "infoq-scaffold-frontend-vue/tests/api/login.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/login.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/monitor/loginInfo/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": ""
+    },
+    {
+      "id": "FE-AUTH-OAUTH-CALLBACK",
+      "source": "fixed-route",
+      "menuId": "fixed-4",
+      "parentMenuId": "",
+      "moduleKey": "auth.oauth-callback",
+      "menuName": "OAuth 回调",
+      "menuType": "fixed",
+      "routePath": "/oauth/callback",
+      "component": "oauth-callback",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [],
+      "priority": "P1",
+      "automationType": "smoke",
+      "sideEffect": false,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "前端应用已启动",
+        "公开路由无需登录；受保护固定路由需要有效登录态"
+      ],
+      "steps": [
+        "打开 /oauth/callback",
+        "等待 OAuth 回调 首屏渲染"
+      ],
+      "assertions": [
+        "OAuth 回调 路由可访问",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "只读或固定入口数据。",
+      "cleanup": "无需业务数据清理。",
+      "existingTests": [],
+      "gaps": [],
+      "sourceFile": ""
+    },
+    {
+      "id": "FE-AUTH-REGISTER",
+      "source": "fixed-route",
+      "menuId": "fixed-2",
+      "parentMenuId": "",
+      "moduleKey": "auth.register",
+      "menuName": "注册",
+      "menuType": "fixed",
+      "routePath": "/register",
+      "component": "register",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [],
+      "priority": "P1",
+      "automationType": "smoke",
+      "sideEffect": false,
+      "dependencies": [
+        "backend",
+        "captcha"
+      ],
+      "preconditions": [
+        "前端应用已启动",
+        "公开路由无需登录；受保护固定路由需要有效登录态"
+      ],
+      "steps": [
+        "打开 /register",
+        "等待 注册 首屏渲染"
+      ],
+      "assertions": [
+        "注册 路由可访问",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "只读或固定入口数据。",
+      "cleanup": "无需业务数据清理。",
+      "existingTests": [
+        "infoq-scaffold-frontend-react/tests/pages/register.test.tsx",
+        "infoq-scaffold-frontend-vue/tests/views/register.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": ""
+    },
+    {
+      "id": "FE-ERROR-401",
+      "source": "fixed-route",
+      "menuId": "fixed-7",
+      "parentMenuId": "",
+      "moduleKey": "error.401",
+      "menuName": "401",
+      "menuType": "fixed",
+      "routePath": "/401",
+      "component": "error/401",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [],
+      "priority": "P0",
+      "automationType": "smoke",
+      "sideEffect": false,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "前端应用已启动",
+        "公开路由无需登录；受保护固定路由需要有效登录态"
+      ],
+      "steps": [
+        "打开 /401",
+        "等待 401 首屏渲染"
+      ],
+      "assertions": [
+        "401 路由可访问",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "只读或固定入口数据。",
+      "cleanup": "无需业务数据清理。",
+      "existingTests": [],
+      "gaps": [
+        "未发现直接关联的页面或路由单测"
+      ],
+      "sourceFile": ""
+    },
+    {
+      "id": "FE-ERROR-404",
+      "source": "fixed-route",
+      "menuId": "fixed-8",
+      "parentMenuId": "",
+      "moduleKey": "error.404",
+      "menuName": "404",
+      "menuType": "fixed",
+      "routePath": "/404",
+      "component": "error/404",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [],
+      "priority": "P0",
+      "automationType": "smoke",
+      "sideEffect": false,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "前端应用已启动",
+        "公开路由无需登录；受保护固定路由需要有效登录态"
+      ],
+      "steps": [
+        "打开 /404",
+        "等待 404 首屏渲染"
+      ],
+      "assertions": [
+        "404 路由可访问",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "只读或固定入口数据。",
+      "cleanup": "无需业务数据清理。",
+      "existingTests": [],
+      "gaps": [
+        "未发现直接关联的页面或路由单测"
+      ],
+      "sourceFile": ""
+    },
+    {
+      "id": "FE-HOME-INDEX",
+      "source": "fixed-route",
+      "menuId": "fixed-5",
+      "parentMenuId": "",
+      "moduleKey": "home.index",
+      "menuName": "首页",
+      "menuType": "fixed",
+      "routePath": "/index",
+      "component": "index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [],
+      "priority": "P0",
+      "automationType": "smoke",
+      "sideEffect": false,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "前端应用已启动",
+        "公开路由无需登录；受保护固定路由需要有效登录态"
+      ],
+      "steps": [
+        "打开 /index",
+        "等待 首页 首屏渲染"
+      ],
+      "assertions": [
+        "首页 路由可访问",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "只读或固定入口数据。",
+      "cleanup": "无需业务数据清理。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/layout/components/TagsViewIndex.test.ts",
+        "infoq-scaffold-frontend-vue/tests/router/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/monitor/cache/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/monitor/dataSource/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/monitor/job/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/monitor/jobLog/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/monitor/loginInfo/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/monitor/online/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/monitor/operLog/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/monitor/server/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/client/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/config/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/dept/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/dict/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/invite/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/menu/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/notice/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/oss/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/post/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/role/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/user/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": ""
+    },
+    {
+      "id": "FE-MONITOR-2",
+      "source": "menu",
+      "menuId": "2",
+      "parentMenuId": "0",
+      "moduleKey": "monitor",
+      "menuName": "系统监控",
+      "menuType": "M",
+      "routePath": "/monitor",
+      "component": "",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [],
+      "priority": "P1",
+      "automationType": "route",
+      "sideEffect": false,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "完成真实验证码登录",
+        "加载用户信息和动态菜单",
+        "打开 /monitor",
+        "等待 系统监控 页面首屏渲染"
+      ],
+      "assertions": [
+        "系统监控 首屏可渲染",
+        "不误跳 401 或 404",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "只读或固定入口数据。",
+      "cleanup": "无需业务数据清理。",
+      "existingTests": [
+        "infoq-scaffold-frontend-react/tests/pages/monitor-auth-profile.test.tsx",
+        "infoq-scaffold-frontend-react/tests/pages/monitor-scheduler.test.tsx",
+        "infoq-scaffold-frontend-vue/tests/views/monitor/cache/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/monitor/dataSource/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/monitor/job/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/monitor/jobLog/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/monitor/loginInfo/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/monitor/online/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/monitor/operLog/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/monitor/operLog/oper-info-dialog.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/monitor/server/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-MONITOR-CACHE-113",
+      "source": "menu",
+      "menuId": "113",
+      "parentMenuId": "2",
+      "moduleKey": "monitor.cache",
+      "menuName": "缓存监控",
+      "menuType": "C",
+      "routePath": "/monitor/cache",
+      "component": "monitor/cache/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "monitor:cache:list"
+      ],
+      "priority": "P0",
+      "automationType": "smoke",
+      "sideEffect": false,
+      "dependencies": [
+        "backend",
+        "Redis"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录"
+      ],
+      "steps": [
+        "完成真实验证码登录",
+        "加载用户信息和动态菜单",
+        "打开 /monitor/cache",
+        "等待 缓存监控 页面首屏渲染"
+      ],
+      "assertions": [
+        "缓存监控 首屏可渲染",
+        "不误跳 401 或 404",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "只读或固定入口数据。",
+      "cleanup": "无需业务数据清理。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/monitor/cache/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-MONITOR-DATA-SOURCE-2026042920",
+      "source": "menu",
+      "menuId": "2026042920",
+      "parentMenuId": "2",
+      "moduleKey": "monitor.dataSource",
+      "menuName": "连接池监控",
+      "menuType": "C",
+      "routePath": "/monitor/dataSource",
+      "component": "monitor/dataSource/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "monitor:dataSource:list"
+      ],
+      "priority": "P0",
+      "automationType": "smoke",
+      "sideEffect": false,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录"
+      ],
+      "steps": [
+        "完成真实验证码登录",
+        "加载用户信息和动态菜单",
+        "打开 /monitor/dataSource",
+        "等待 连接池监控 页面首屏渲染"
+      ],
+      "assertions": [
+        "连接池监控 首屏可渲染",
+        "不误跳 401 或 404",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "只读或固定入口数据。",
+      "cleanup": "无需业务数据清理。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/monitor/dataSource/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_update_20260429.sql"
+    },
+    {
+      "id": "FE-MONITOR-DATA-SOURCE-2026042921",
+      "source": "permission",
+      "menuId": "2026042921",
+      "parentMenuId": "2026042920",
+      "moduleKey": "monitor.dataSource",
+      "menuName": "连接池监控查询",
+      "menuType": "F",
+      "routePath": "/monitor/dataSource",
+      "component": "monitor/dataSource/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "monitor:dataSource:list"
+      ],
+      "priority": "P1",
+      "automationType": "permission",
+      "sideEffect": false,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 连接池监控查询 所属页面",
+        "校验权限按钮显示或隐藏",
+        "校验无越权入口"
+      ],
+      "assertions": [
+        "权限入口符合当前账号权限",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "只读或固定入口数据。",
+      "cleanup": "无需业务数据清理。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/monitor/dataSource/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_update_20260429.sql"
+    },
+    {
+      "id": "FE-MONITOR-JOB-2026042510",
+      "source": "menu",
+      "menuId": "2026042510",
+      "parentMenuId": "2",
+      "moduleKey": "monitor.job",
+      "menuName": "定时任务",
+      "menuType": "C",
+      "routePath": "/monitor/job",
+      "component": "monitor/job/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "monitor:job:list"
+      ],
+      "priority": "P0",
+      "automationType": "smoke",
+      "sideEffect": false,
+      "dependencies": [
+        "backend",
+        "scheduled-job"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录"
+      ],
+      "steps": [
+        "完成真实验证码登录",
+        "加载用户信息和动态菜单",
+        "打开 /monitor/job",
+        "等待 定时任务 页面首屏渲染"
+      ],
+      "assertions": [
+        "定时任务 首屏可渲染",
+        "不误跳 401 或 404",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "只读或固定入口数据。",
+      "cleanup": "无需业务数据清理。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/monitor/job/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/monitor/jobLog/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_update_20260425.sql"
+    },
+    {
+      "id": "FE-MONITOR-JOB-2026042511",
+      "source": "permission",
+      "menuId": "2026042511",
+      "parentMenuId": "2026042510",
+      "moduleKey": "monitor.job",
+      "menuName": "任务查询",
+      "menuType": "F",
+      "routePath": "/monitor/job",
+      "component": "monitor/job/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "monitor:job:query"
+      ],
+      "priority": "P1",
+      "automationType": "permission",
+      "sideEffect": false,
+      "dependencies": [
+        "backend",
+        "scheduled-job"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 任务查询 所属页面",
+        "校验权限按钮显示或隐藏",
+        "校验无越权入口"
+      ],
+      "assertions": [
+        "权限入口符合当前账号权限",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "只读或固定入口数据。",
+      "cleanup": "无需业务数据清理。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/monitor/job/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/monitor/jobLog/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_update_20260425.sql"
+    },
+    {
+      "id": "FE-MONITOR-JOB-2026042512",
+      "source": "permission",
+      "menuId": "2026042512",
+      "parentMenuId": "2026042510",
+      "moduleKey": "monitor.job",
+      "menuName": "任务新增",
+      "menuType": "F",
+      "routePath": "/monitor/job",
+      "component": "monitor/job/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "monitor:job:add"
+      ],
+      "priority": "P1",
+      "automationType": "CRUD",
+      "sideEffect": true,
+      "dependencies": [
+        "backend",
+        "scheduled-job"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 任务新增 所属页面",
+        "执行对应按钮或表单操作",
+        "校验接口结果和页面反馈",
+        "执行 cleanup"
+      ],
+      "assertions": [
+        "操作结果可见",
+        "数据状态符合预期",
+        "失败时错误提示明确",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
+      "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/monitor/job/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/monitor/jobLog/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_update_20260425.sql"
+    },
+    {
+      "id": "FE-MONITOR-JOB-2026042513",
+      "source": "permission",
+      "menuId": "2026042513",
+      "parentMenuId": "2026042510",
+      "moduleKey": "monitor.job",
+      "menuName": "任务修改",
+      "menuType": "F",
+      "routePath": "/monitor/job",
+      "component": "monitor/job/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "monitor:job:edit"
+      ],
+      "priority": "P1",
+      "automationType": "CRUD",
+      "sideEffect": true,
+      "dependencies": [
+        "backend",
+        "scheduled-job"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 任务修改 所属页面",
+        "执行对应按钮或表单操作",
+        "校验接口结果和页面反馈",
+        "执行 cleanup"
+      ],
+      "assertions": [
+        "操作结果可见",
+        "数据状态符合预期",
+        "失败时错误提示明确",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
+      "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/monitor/job/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/monitor/jobLog/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_update_20260425.sql"
+    },
+    {
+      "id": "FE-MONITOR-JOB-2026042514",
+      "source": "permission",
+      "menuId": "2026042514",
+      "parentMenuId": "2026042510",
+      "moduleKey": "monitor.job",
+      "menuName": "任务删除",
+      "menuType": "F",
+      "routePath": "/monitor/job",
+      "component": "monitor/job/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "monitor:job:remove"
+      ],
+      "priority": "P2",
+      "automationType": "CRUD",
+      "sideEffect": true,
+      "dependencies": [
+        "backend",
+        "scheduled-job"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 任务删除 所属页面",
+        "执行对应按钮或表单操作",
+        "校验接口结果和页面反馈",
+        "执行 cleanup"
+      ],
+      "assertions": [
+        "操作结果可见",
+        "数据状态符合预期",
+        "失败时错误提示明确",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
+      "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/monitor/job/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/monitor/jobLog/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_update_20260425.sql"
+    },
+    {
+      "id": "FE-MONITOR-JOB-2026042515",
+      "source": "permission",
+      "menuId": "2026042515",
+      "parentMenuId": "2026042510",
+      "moduleKey": "monitor.job",
+      "menuName": "任务导出",
+      "menuType": "F",
+      "routePath": "/monitor/job",
+      "component": "monitor/job/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "monitor:job:export"
+      ],
+      "priority": "P1",
+      "automationType": "CRUD",
+      "sideEffect": false,
+      "dependencies": [
+        "backend",
+        "scheduled-job"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 任务导出 所属页面",
+        "执行对应按钮或表单操作",
+        "校验接口结果和页面反馈",
+        "执行 cleanup"
+      ],
+      "assertions": [
+        "操作结果可见",
+        "数据状态符合预期",
+        "失败时错误提示明确",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "只读或固定入口数据。",
+      "cleanup": "无需业务数据清理。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/monitor/job/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/monitor/jobLog/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_update_20260425.sql"
+    },
+    {
+      "id": "FE-MONITOR-JOB-2026042516",
+      "source": "permission",
+      "menuId": "2026042516",
+      "parentMenuId": "2026042510",
+      "moduleKey": "monitor.job",
+      "menuName": "状态切换",
+      "menuType": "F",
+      "routePath": "/monitor/job",
+      "component": "monitor/job/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "monitor:job:changeStatus"
+      ],
+      "priority": "P1",
+      "automationType": "CRUD",
+      "sideEffect": true,
+      "dependencies": [
+        "backend",
+        "scheduled-job"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 状态切换 所属页面",
+        "执行对应按钮或表单操作",
+        "校验接口结果和页面反馈",
+        "执行 cleanup"
+      ],
+      "assertions": [
+        "操作结果可见",
+        "数据状态符合预期",
+        "失败时错误提示明确",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
+      "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/monitor/job/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/monitor/jobLog/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_update_20260425.sql"
+    },
+    {
+      "id": "FE-MONITOR-JOB-2026042517",
+      "source": "permission",
+      "menuId": "2026042517",
+      "parentMenuId": "2026042510",
+      "moduleKey": "monitor.job",
+      "menuName": "立即执行",
+      "menuType": "F",
+      "routePath": "/monitor/job",
+      "component": "monitor/job/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "monitor:job:run"
+      ],
+      "priority": "P2",
+      "automationType": "CRUD",
+      "sideEffect": true,
+      "dependencies": [
+        "backend",
+        "scheduled-job"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 立即执行 所属页面",
+        "执行对应按钮或表单操作",
+        "校验接口结果和页面反馈",
+        "执行 cleanup"
+      ],
+      "assertions": [
+        "操作结果可见",
+        "数据状态符合预期",
+        "失败时错误提示明确",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
+      "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/monitor/job/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/monitor/jobLog/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_update_20260425.sql"
+    },
+    {
+      "id": "FE-MONITOR-JOB-LOG-2026042520",
+      "source": "menu",
+      "menuId": "2026042520",
+      "parentMenuId": "2",
+      "moduleKey": "monitor.jobLog",
+      "menuName": "任务日志",
+      "menuType": "C",
+      "routePath": "/monitor/jobLog",
+      "component": "monitor/jobLog/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "monitor:jobLog:list"
+      ],
+      "priority": "P0",
+      "automationType": "smoke",
+      "sideEffect": false,
+      "dependencies": [
+        "backend",
+        "scheduled-job"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录"
+      ],
+      "steps": [
+        "完成真实验证码登录",
+        "加载用户信息和动态菜单",
+        "打开 /monitor/jobLog",
+        "等待 任务日志 页面首屏渲染"
+      ],
+      "assertions": [
+        "任务日志 首屏可渲染",
+        "不误跳 401 或 404",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "只读或固定入口数据。",
+      "cleanup": "无需业务数据清理。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/monitor/jobLog/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_update_20260425.sql"
+    },
+    {
+      "id": "FE-MONITOR-JOB-LOG-2026042521",
+      "source": "permission",
+      "menuId": "2026042521",
+      "parentMenuId": "2026042520",
+      "moduleKey": "monitor.jobLog",
+      "menuName": "日志查询",
+      "menuType": "F",
+      "routePath": "/monitor/jobLog",
+      "component": "monitor/jobLog/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "monitor:jobLog:query"
+      ],
+      "priority": "P1",
+      "automationType": "permission",
+      "sideEffect": false,
+      "dependencies": [
+        "backend",
+        "scheduled-job"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 日志查询 所属页面",
+        "校验权限按钮显示或隐藏",
+        "校验无越权入口"
+      ],
+      "assertions": [
+        "权限入口符合当前账号权限",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "只读或固定入口数据。",
+      "cleanup": "无需业务数据清理。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/monitor/jobLog/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_update_20260425.sql"
+    },
+    {
+      "id": "FE-MONITOR-JOB-LOG-2026042522",
+      "source": "permission",
+      "menuId": "2026042522",
+      "parentMenuId": "2026042520",
+      "moduleKey": "monitor.jobLog",
+      "menuName": "日志删除",
+      "menuType": "F",
+      "routePath": "/monitor/jobLog",
+      "component": "monitor/jobLog/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "monitor:jobLog:remove"
+      ],
+      "priority": "P2",
+      "automationType": "CRUD",
+      "sideEffect": true,
+      "dependencies": [
+        "backend",
+        "scheduled-job"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 日志删除 所属页面",
+        "执行对应按钮或表单操作",
+        "校验接口结果和页面反馈",
+        "执行 cleanup"
+      ],
+      "assertions": [
+        "操作结果可见",
+        "数据状态符合预期",
+        "失败时错误提示明确",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
+      "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/monitor/jobLog/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_update_20260425.sql"
+    },
+    {
+      "id": "FE-MONITOR-JOB-LOG-2026042523",
+      "source": "permission",
+      "menuId": "2026042523",
+      "parentMenuId": "2026042520",
+      "moduleKey": "monitor.jobLog",
+      "menuName": "日志导出",
+      "menuType": "F",
+      "routePath": "/monitor/jobLog",
+      "component": "monitor/jobLog/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "monitor:jobLog:export"
+      ],
+      "priority": "P1",
+      "automationType": "CRUD",
+      "sideEffect": false,
+      "dependencies": [
+        "backend",
+        "scheduled-job"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 日志导出 所属页面",
+        "执行对应按钮或表单操作",
+        "校验接口结果和页面反馈",
+        "执行 cleanup"
+      ],
+      "assertions": [
+        "操作结果可见",
+        "数据状态符合预期",
+        "失败时错误提示明确",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "只读或固定入口数据。",
+      "cleanup": "无需业务数据清理。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/monitor/jobLog/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_update_20260425.sql"
+    },
+    {
+      "id": "FE-MONITOR-JOB-LOG-2026042524",
+      "source": "permission",
+      "menuId": "2026042524",
+      "parentMenuId": "2026042520",
+      "moduleKey": "monitor.jobLog",
+      "menuName": "日志清空",
+      "menuType": "F",
+      "routePath": "/monitor/jobLog",
+      "component": "monitor/jobLog/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "monitor:jobLog:remove"
+      ],
+      "priority": "P2",
+      "automationType": "CRUD",
+      "sideEffect": true,
+      "dependencies": [
+        "backend",
+        "scheduled-job"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 日志清空 所属页面",
+        "执行对应按钮或表单操作",
+        "校验接口结果和页面反馈",
+        "执行 cleanup"
+      ],
+      "assertions": [
+        "操作结果可见",
+        "数据状态符合预期",
+        "失败时错误提示明确",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
+      "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/monitor/jobLog/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_update_20260425.sql"
+    },
+    {
+      "id": "FE-MONITOR-LOGIN-INFO-1043",
+      "source": "permission",
+      "menuId": "1043",
+      "parentMenuId": "501",
+      "moduleKey": "monitor.loginInfo",
+      "menuName": "登录查询",
+      "menuType": "F",
+      "routePath": "/system/log/loginInfo",
+      "component": "monitor/loginInfo/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "monitor:loginInfo:query"
+      ],
+      "priority": "P1",
+      "automationType": "permission",
+      "sideEffect": false,
+      "dependencies": [
+        "backend",
+        "Redis"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 登录查询 所属页面",
+        "校验权限按钮显示或隐藏",
+        "校验无越权入口"
+      ],
+      "assertions": [
+        "权限入口符合当前账号权限",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "只读或固定入口数据。",
+      "cleanup": "无需业务数据清理。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/monitor/loginInfo/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-MONITOR-LOGIN-INFO-1044",
+      "source": "permission",
+      "menuId": "1044",
+      "parentMenuId": "501",
+      "moduleKey": "monitor.loginInfo",
+      "menuName": "登录删除",
+      "menuType": "F",
+      "routePath": "/system/log/loginInfo",
+      "component": "monitor/loginInfo/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "monitor:loginInfo:remove"
+      ],
+      "priority": "P2",
+      "automationType": "CRUD",
+      "sideEffect": true,
+      "dependencies": [
+        "backend",
+        "Redis"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 登录删除 所属页面",
+        "执行对应按钮或表单操作",
+        "校验接口结果和页面反馈",
+        "执行 cleanup"
+      ],
+      "assertions": [
+        "操作结果可见",
+        "数据状态符合预期",
+        "失败时错误提示明确",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
+      "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/monitor/loginInfo/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-MONITOR-LOGIN-INFO-1045",
+      "source": "permission",
+      "menuId": "1045",
+      "parentMenuId": "501",
+      "moduleKey": "monitor.loginInfo",
+      "menuName": "日志导出",
+      "menuType": "F",
+      "routePath": "/system/log/loginInfo",
+      "component": "monitor/loginInfo/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "monitor:loginInfo:export"
+      ],
+      "priority": "P1",
+      "automationType": "CRUD",
+      "sideEffect": false,
+      "dependencies": [
+        "backend",
+        "Redis"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 日志导出 所属页面",
+        "执行对应按钮或表单操作",
+        "校验接口结果和页面反馈",
+        "执行 cleanup"
+      ],
+      "assertions": [
+        "操作结果可见",
+        "数据状态符合预期",
+        "失败时错误提示明确",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "只读或固定入口数据。",
+      "cleanup": "无需业务数据清理。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/monitor/loginInfo/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-MONITOR-LOGIN-INFO-1050",
+      "source": "permission",
+      "menuId": "1050",
+      "parentMenuId": "501",
+      "moduleKey": "monitor.loginInfo",
+      "menuName": "账户解锁",
+      "menuType": "F",
+      "routePath": "/system/log/loginInfo",
+      "component": "monitor/loginInfo/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "monitor:loginInfo:unlock"
+      ],
+      "priority": "P2",
+      "automationType": "CRUD",
+      "sideEffect": true,
+      "dependencies": [
+        "backend",
+        "Redis"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 账户解锁 所属页面",
+        "执行对应按钮或表单操作",
+        "校验接口结果和页面反馈",
+        "执行 cleanup"
+      ],
+      "assertions": [
+        "操作结果可见",
+        "数据状态符合预期",
+        "失败时错误提示明确",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
+      "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/monitor/loginInfo/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-MONITOR-LOGIN-INFO-501",
+      "source": "menu",
+      "menuId": "501",
+      "parentMenuId": "108",
+      "moduleKey": "monitor.loginInfo",
+      "menuName": "登录日志",
+      "menuType": "C",
+      "routePath": "/system/log/loginInfo",
+      "component": "monitor/loginInfo/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "monitor:loginInfo:list"
+      ],
+      "priority": "P0",
+      "automationType": "smoke",
+      "sideEffect": false,
+      "dependencies": [
+        "backend",
+        "Redis"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录"
+      ],
+      "steps": [
+        "完成真实验证码登录",
+        "加载用户信息和动态菜单",
+        "打开 /system/log/loginInfo",
+        "等待 登录日志 页面首屏渲染"
+      ],
+      "assertions": [
+        "登录日志 首屏可渲染",
+        "不误跳 401 或 404",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "只读或固定入口数据。",
+      "cleanup": "无需业务数据清理。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/monitor/loginInfo/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-MONITOR-ONLINE-1046",
+      "source": "permission",
+      "menuId": "1046",
+      "parentMenuId": "109",
+      "moduleKey": "monitor.online",
+      "menuName": "在线查询",
+      "menuType": "F",
+      "routePath": "/monitor/online",
+      "component": "monitor/online/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "monitor:online:query"
+      ],
+      "priority": "P1",
+      "automationType": "permission",
+      "sideEffect": false,
+      "dependencies": [
+        "backend",
+        "Redis"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 在线查询 所属页面",
+        "校验权限按钮显示或隐藏",
+        "校验无越权入口"
+      ],
+      "assertions": [
+        "权限入口符合当前账号权限",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "只读或固定入口数据。",
+      "cleanup": "无需业务数据清理。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/monitor/online/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-MONITOR-ONLINE-1047",
+      "source": "permission",
+      "menuId": "1047",
+      "parentMenuId": "109",
+      "moduleKey": "monitor.online",
+      "menuName": "批量强退",
+      "menuType": "F",
+      "routePath": "/monitor/online",
+      "component": "monitor/online/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "monitor:online:batchLogout"
+      ],
+      "priority": "P2",
+      "automationType": "CRUD",
+      "sideEffect": true,
+      "dependencies": [
+        "backend",
+        "Redis"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 批量强退 所属页面",
+        "执行对应按钮或表单操作",
+        "校验接口结果和页面反馈",
+        "执行 cleanup"
+      ],
+      "assertions": [
+        "操作结果可见",
+        "数据状态符合预期",
+        "失败时错误提示明确",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
+      "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/monitor/online/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-MONITOR-ONLINE-1048",
+      "source": "permission",
+      "menuId": "1048",
+      "parentMenuId": "109",
+      "moduleKey": "monitor.online",
+      "menuName": "单条强退",
+      "menuType": "F",
+      "routePath": "/monitor/online",
+      "component": "monitor/online/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "monitor:online:forceLogout"
+      ],
+      "priority": "P2",
+      "automationType": "CRUD",
+      "sideEffect": true,
+      "dependencies": [
+        "backend",
+        "Redis"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 单条强退 所属页面",
+        "执行对应按钮或表单操作",
+        "校验接口结果和页面反馈",
+        "执行 cleanup"
+      ],
+      "assertions": [
+        "操作结果可见",
+        "数据状态符合预期",
+        "失败时错误提示明确",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
+      "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/monitor/online/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-MONITOR-ONLINE-109",
+      "source": "menu",
+      "menuId": "109",
+      "parentMenuId": "2",
+      "moduleKey": "monitor.online",
+      "menuName": "在线用户",
+      "menuType": "C",
+      "routePath": "/monitor/online",
+      "component": "monitor/online/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "monitor:online:list"
+      ],
+      "priority": "P0",
+      "automationType": "smoke",
+      "sideEffect": false,
+      "dependencies": [
+        "backend",
+        "Redis"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录"
+      ],
+      "steps": [
+        "完成真实验证码登录",
+        "加载用户信息和动态菜单",
+        "打开 /monitor/online",
+        "等待 在线用户 页面首屏渲染"
+      ],
+      "assertions": [
+        "在线用户 首屏可渲染",
+        "不误跳 401 或 404",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "只读或固定入口数据。",
+      "cleanup": "无需业务数据清理。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/monitor/online/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-MONITOR-OPER-LOG-1040",
+      "source": "permission",
+      "menuId": "1040",
+      "parentMenuId": "500",
+      "moduleKey": "monitor.operLog",
+      "menuName": "操作查询",
+      "menuType": "F",
+      "routePath": "/system/log/operLog",
+      "component": "monitor/operLog/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "monitor:operLog:query"
+      ],
+      "priority": "P1",
+      "automationType": "permission",
+      "sideEffect": false,
+      "dependencies": [
+        "backend",
+        "Redis"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 操作查询 所属页面",
+        "校验权限按钮显示或隐藏",
+        "校验无越权入口"
+      ],
+      "assertions": [
+        "权限入口符合当前账号权限",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "只读或固定入口数据。",
+      "cleanup": "无需业务数据清理。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/monitor/operLog/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/monitor/operLog/oper-info-dialog.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-MONITOR-OPER-LOG-1041",
+      "source": "permission",
+      "menuId": "1041",
+      "parentMenuId": "500",
+      "moduleKey": "monitor.operLog",
+      "menuName": "操作删除",
+      "menuType": "F",
+      "routePath": "/system/log/operLog",
+      "component": "monitor/operLog/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "monitor:operLog:remove"
+      ],
+      "priority": "P2",
+      "automationType": "CRUD",
+      "sideEffect": true,
+      "dependencies": [
+        "backend",
+        "Redis"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 操作删除 所属页面",
+        "执行对应按钮或表单操作",
+        "校验接口结果和页面反馈",
+        "执行 cleanup"
+      ],
+      "assertions": [
+        "操作结果可见",
+        "数据状态符合预期",
+        "失败时错误提示明确",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
+      "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/monitor/operLog/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/monitor/operLog/oper-info-dialog.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-MONITOR-OPER-LOG-1042",
+      "source": "permission",
+      "menuId": "1042",
+      "parentMenuId": "500",
+      "moduleKey": "monitor.operLog",
+      "menuName": "日志导出",
+      "menuType": "F",
+      "routePath": "/system/log/operLog",
+      "component": "monitor/operLog/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "monitor:operLog:export"
+      ],
+      "priority": "P1",
+      "automationType": "CRUD",
+      "sideEffect": false,
+      "dependencies": [
+        "backend",
+        "Redis"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 日志导出 所属页面",
+        "执行对应按钮或表单操作",
+        "校验接口结果和页面反馈",
+        "执行 cleanup"
+      ],
+      "assertions": [
+        "操作结果可见",
+        "数据状态符合预期",
+        "失败时错误提示明确",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "只读或固定入口数据。",
+      "cleanup": "无需业务数据清理。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/monitor/operLog/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/monitor/operLog/oper-info-dialog.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-MONITOR-OPER-LOG-500",
+      "source": "menu",
+      "menuId": "500",
+      "parentMenuId": "108",
+      "moduleKey": "monitor.operLog",
+      "menuName": "操作日志",
+      "menuType": "C",
+      "routePath": "/system/log/operLog",
+      "component": "monitor/operLog/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "monitor:operLog:list"
+      ],
+      "priority": "P0",
+      "automationType": "smoke",
+      "sideEffect": false,
+      "dependencies": [
+        "backend",
+        "Redis"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录"
+      ],
+      "steps": [
+        "完成真实验证码登录",
+        "加载用户信息和动态菜单",
+        "打开 /system/log/operLog",
+        "等待 操作日志 页面首屏渲染"
+      ],
+      "assertions": [
+        "操作日志 首屏可渲染",
+        "不误跳 401 或 404",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "只读或固定入口数据。",
+      "cleanup": "无需业务数据清理。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/monitor/operLog/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/monitor/operLog/oper-info-dialog.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-MONITOR-SERVER-2026042910",
+      "source": "menu",
+      "menuId": "2026042910",
+      "parentMenuId": "2",
+      "moduleKey": "monitor.server",
+      "menuName": "服务监控",
+      "menuType": "C",
+      "routePath": "/monitor/server",
+      "component": "monitor/server/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "monitor:server:list"
+      ],
+      "priority": "P0",
+      "automationType": "smoke",
+      "sideEffect": false,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录"
+      ],
+      "steps": [
+        "完成真实验证码登录",
+        "加载用户信息和动态菜单",
+        "打开 /monitor/server",
+        "等待 服务监控 页面首屏渲染"
+      ],
+      "assertions": [
+        "服务监控 首屏可渲染",
+        "不误跳 401 或 404",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "只读或固定入口数据。",
+      "cleanup": "无需业务数据清理。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/monitor/server/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_update_20260429.sql"
+    },
+    {
+      "id": "FE-MONITOR-SERVER-2026042911",
+      "source": "permission",
+      "menuId": "2026042911",
+      "parentMenuId": "2026042910",
+      "moduleKey": "monitor.server",
+      "menuName": "服务监控查询",
+      "menuType": "F",
+      "routePath": "/monitor/server",
+      "component": "monitor/server/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "monitor:server:list"
+      ],
+      "priority": "P1",
+      "automationType": "permission",
+      "sideEffect": false,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 服务监控查询 所属页面",
+        "校验权限按钮显示或隐藏",
+        "校验无越权入口"
+      ],
+      "assertions": [
+        "权限入口符合当前账号权限",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "只读或固定入口数据。",
+      "cleanup": "无需业务数据清理。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/monitor/server/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_update_20260429.sql"
+    },
+    {
+      "id": "FE-ROUTE-REDIRECT",
+      "source": "fixed-route",
+      "menuId": "fixed-9",
+      "parentMenuId": "",
+      "moduleKey": "route.redirect",
+      "menuName": "路由跳转",
+      "menuType": "fixed",
+      "routePath": "/redirect/:path*",
+      "component": "redirect/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [],
+      "priority": "P0",
+      "automationType": "smoke",
+      "sideEffect": false,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "前端应用已启动",
+        "公开路由无需登录；受保护固定路由需要有效登录态"
+      ],
+      "steps": [
+        "打开 /redirect/:path*",
+        "等待 路由跳转 首屏渲染"
+      ],
+      "assertions": [
+        "路由跳转 路由可访问",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "只读或固定入口数据。",
+      "cleanup": "无需业务数据清理。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/redirect.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": ""
+    },
+    {
+      "id": "FE-SYSTEM-1",
+      "source": "menu",
+      "menuId": "1",
+      "parentMenuId": "0",
+      "moduleKey": "system",
+      "menuName": "系统管理",
+      "menuType": "M",
+      "routePath": "/system",
+      "component": "",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [],
+      "priority": "P1",
+      "automationType": "route",
+      "sideEffect": false,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "完成真实验证码登录",
+        "加载用户信息和动态菜单",
+        "打开 /system",
+        "等待 系统管理 页面首屏渲染"
+      ],
+      "assertions": [
+        "系统管理 首屏可渲染",
+        "不误跳 401 或 404",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "只读或固定入口数据。",
+      "cleanup": "无需业务数据清理。",
+      "existingTests": [
+        "infoq-scaffold-frontend-react/tests/api/system/invite.test.ts",
+        "infoq-scaffold-frontend-react/tests/pages/system-config.test.tsx",
+        "infoq-scaffold-frontend-react/tests/pages/system-invite.test.tsx",
+        "infoq-scaffold-frontend-react/tests/pages/system-pages.test.tsx",
+        "infoq-scaffold-frontend-vue/tests/api/system/invite.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/client/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/config/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/dept/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/dict/data.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/dict/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/invite/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/menu/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/notice/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/oss/config.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/oss/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/post/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/role/authUser.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/role/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/role/selectUser.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/user/authRole.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/user/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/onlineDevice.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/resetPwd.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/userAvatar.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/userInfo.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-CLIENT-1061",
+      "source": "permission",
+      "menuId": "1061",
+      "parentMenuId": "123",
+      "moduleKey": "system.client",
+      "menuName": "客户端管理查询",
+      "menuType": "F",
+      "routePath": "/system/client",
+      "component": "system/client/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:client:query"
+      ],
+      "priority": "P1",
+      "automationType": "permission",
+      "sideEffect": false,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 客户端管理查询 所属页面",
+        "校验权限按钮显示或隐藏",
+        "校验无越权入口"
+      ],
+      "assertions": [
+        "权限入口符合当前账号权限",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "只读或固定入口数据。",
+      "cleanup": "无需业务数据清理。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/system/client/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-CLIENT-1062",
+      "source": "permission",
+      "menuId": "1062",
+      "parentMenuId": "123",
+      "moduleKey": "system.client",
+      "menuName": "客户端管理新增",
+      "menuType": "F",
+      "routePath": "/system/client",
+      "component": "system/client/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:client:add"
+      ],
+      "priority": "P1",
+      "automationType": "CRUD",
+      "sideEffect": true,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 客户端管理新增 所属页面",
+        "执行对应按钮或表单操作",
+        "校验接口结果和页面反馈",
+        "执行 cleanup"
+      ],
+      "assertions": [
+        "操作结果可见",
+        "数据状态符合预期",
+        "失败时错误提示明确",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
+      "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/system/client/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-CLIENT-1063",
+      "source": "permission",
+      "menuId": "1063",
+      "parentMenuId": "123",
+      "moduleKey": "system.client",
+      "menuName": "客户端管理修改",
+      "menuType": "F",
+      "routePath": "/system/client",
+      "component": "system/client/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:client:edit"
+      ],
+      "priority": "P1",
+      "automationType": "CRUD",
+      "sideEffect": true,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 客户端管理修改 所属页面",
+        "执行对应按钮或表单操作",
+        "校验接口结果和页面反馈",
+        "执行 cleanup"
+      ],
+      "assertions": [
+        "操作结果可见",
+        "数据状态符合预期",
+        "失败时错误提示明确",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
+      "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/system/client/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-CLIENT-1064",
+      "source": "permission",
+      "menuId": "1064",
+      "parentMenuId": "123",
+      "moduleKey": "system.client",
+      "menuName": "客户端管理删除",
+      "menuType": "F",
+      "routePath": "/system/client",
+      "component": "system/client/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:client:remove"
+      ],
+      "priority": "P2",
+      "automationType": "CRUD",
+      "sideEffect": true,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 客户端管理删除 所属页面",
+        "执行对应按钮或表单操作",
+        "校验接口结果和页面反馈",
+        "执行 cleanup"
+      ],
+      "assertions": [
+        "操作结果可见",
+        "数据状态符合预期",
+        "失败时错误提示明确",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
+      "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/system/client/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-CLIENT-1065",
+      "source": "permission",
+      "menuId": "1065",
+      "parentMenuId": "123",
+      "moduleKey": "system.client",
+      "menuName": "客户端管理导出",
+      "menuType": "F",
+      "routePath": "/system/client",
+      "component": "system/client/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:client:export"
+      ],
+      "priority": "P1",
+      "automationType": "CRUD",
+      "sideEffect": false,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 客户端管理导出 所属页面",
+        "执行对应按钮或表单操作",
+        "校验接口结果和页面反馈",
+        "执行 cleanup"
+      ],
+      "assertions": [
+        "操作结果可见",
+        "数据状态符合预期",
+        "失败时错误提示明确",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "只读或固定入口数据。",
+      "cleanup": "无需业务数据清理。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/system/client/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-CLIENT-123",
+      "source": "menu",
+      "menuId": "123",
+      "parentMenuId": "1",
+      "moduleKey": "system.client",
+      "menuName": "客户端管理",
+      "menuType": "C",
+      "routePath": "/system/client",
+      "component": "system/client/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:client:list"
+      ],
+      "priority": "P0",
+      "automationType": "smoke",
+      "sideEffect": false,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录"
+      ],
+      "steps": [
+        "完成真实验证码登录",
+        "加载用户信息和动态菜单",
+        "打开 /system/client",
+        "等待 客户端管理 页面首屏渲染"
+      ],
+      "assertions": [
+        "客户端管理 首屏可渲染",
+        "不误跳 401 或 404",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "只读或固定入口数据。",
+      "cleanup": "无需业务数据清理。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/system/client/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-CONFIG-1031",
+      "source": "permission",
+      "menuId": "1031",
+      "parentMenuId": "106",
+      "moduleKey": "system.config",
+      "menuName": "参数查询",
+      "menuType": "F",
+      "routePath": "/system/config",
+      "component": "system/config/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:config:query"
+      ],
+      "priority": "P1",
+      "automationType": "permission",
+      "sideEffect": false,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 参数查询 所属页面",
+        "校验权限按钮显示或隐藏",
+        "校验无越权入口"
+      ],
+      "assertions": [
+        "权限入口符合当前账号权限",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "只读或固定入口数据。",
+      "cleanup": "无需业务数据清理。",
+      "existingTests": [
+        "infoq-scaffold-frontend-react/tests/pages/system-config.test.tsx",
+        "infoq-scaffold-frontend-vue/tests/views/system/config/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-CONFIG-1032",
+      "source": "permission",
+      "menuId": "1032",
+      "parentMenuId": "106",
+      "moduleKey": "system.config",
+      "menuName": "参数新增",
+      "menuType": "F",
+      "routePath": "/system/config",
+      "component": "system/config/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:config:add"
+      ],
+      "priority": "P1",
+      "automationType": "CRUD",
+      "sideEffect": true,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 参数新增 所属页面",
+        "执行对应按钮或表单操作",
+        "校验接口结果和页面反馈",
+        "执行 cleanup"
+      ],
+      "assertions": [
+        "操作结果可见",
+        "数据状态符合预期",
+        "失败时错误提示明确",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
+      "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
+      "existingTests": [
+        "infoq-scaffold-frontend-react/tests/pages/system-config.test.tsx",
+        "infoq-scaffold-frontend-vue/tests/views/system/config/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-CONFIG-1033",
+      "source": "permission",
+      "menuId": "1033",
+      "parentMenuId": "106",
+      "moduleKey": "system.config",
+      "menuName": "参数修改",
+      "menuType": "F",
+      "routePath": "/system/config",
+      "component": "system/config/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:config:edit"
+      ],
+      "priority": "P1",
+      "automationType": "CRUD",
+      "sideEffect": true,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 参数修改 所属页面",
+        "执行对应按钮或表单操作",
+        "校验接口结果和页面反馈",
+        "执行 cleanup"
+      ],
+      "assertions": [
+        "操作结果可见",
+        "数据状态符合预期",
+        "失败时错误提示明确",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
+      "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
+      "existingTests": [
+        "infoq-scaffold-frontend-react/tests/pages/system-config.test.tsx",
+        "infoq-scaffold-frontend-vue/tests/views/system/config/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-CONFIG-1034",
+      "source": "permission",
+      "menuId": "1034",
+      "parentMenuId": "106",
+      "moduleKey": "system.config",
+      "menuName": "参数删除",
+      "menuType": "F",
+      "routePath": "/system/config",
+      "component": "system/config/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:config:remove"
+      ],
+      "priority": "P2",
+      "automationType": "CRUD",
+      "sideEffect": true,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 参数删除 所属页面",
+        "执行对应按钮或表单操作",
+        "校验接口结果和页面反馈",
+        "执行 cleanup"
+      ],
+      "assertions": [
+        "操作结果可见",
+        "数据状态符合预期",
+        "失败时错误提示明确",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
+      "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
+      "existingTests": [
+        "infoq-scaffold-frontend-react/tests/pages/system-config.test.tsx",
+        "infoq-scaffold-frontend-vue/tests/views/system/config/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-CONFIG-1035",
+      "source": "permission",
+      "menuId": "1035",
+      "parentMenuId": "106",
+      "moduleKey": "system.config",
+      "menuName": "参数导出",
+      "menuType": "F",
+      "routePath": "/system/config",
+      "component": "system/config/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:config:export"
+      ],
+      "priority": "P1",
+      "automationType": "CRUD",
+      "sideEffect": false,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 参数导出 所属页面",
+        "执行对应按钮或表单操作",
+        "校验接口结果和页面反馈",
+        "执行 cleanup"
+      ],
+      "assertions": [
+        "操作结果可见",
+        "数据状态符合预期",
+        "失败时错误提示明确",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "只读或固定入口数据。",
+      "cleanup": "无需业务数据清理。",
+      "existingTests": [
+        "infoq-scaffold-frontend-react/tests/pages/system-config.test.tsx",
+        "infoq-scaffold-frontend-vue/tests/views/system/config/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-CONFIG-106",
+      "source": "menu",
+      "menuId": "106",
+      "parentMenuId": "1",
+      "moduleKey": "system.config",
+      "menuName": "参数设置",
+      "menuType": "C",
+      "routePath": "/system/config",
+      "component": "system/config/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:config:list"
+      ],
+      "priority": "P0",
+      "automationType": "smoke",
+      "sideEffect": false,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录"
+      ],
+      "steps": [
+        "完成真实验证码登录",
+        "加载用户信息和动态菜单",
+        "打开 /system/config",
+        "等待 参数设置 页面首屏渲染"
+      ],
+      "assertions": [
+        "参数设置 首屏可渲染",
+        "不误跳 401 或 404",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "只读或固定入口数据。",
+      "cleanup": "无需业务数据清理。",
+      "existingTests": [
+        "infoq-scaffold-frontend-react/tests/pages/system-config.test.tsx",
+        "infoq-scaffold-frontend-vue/tests/views/system/config/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-DEPT-1017",
+      "source": "permission",
+      "menuId": "1017",
+      "parentMenuId": "103",
+      "moduleKey": "system.dept",
+      "menuName": "部门查询",
+      "menuType": "F",
+      "routePath": "/system/dept",
+      "component": "system/dept/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:dept:query"
+      ],
+      "priority": "P1",
+      "automationType": "permission",
+      "sideEffect": false,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 部门查询 所属页面",
+        "校验权限按钮显示或隐藏",
+        "校验无越权入口"
+      ],
+      "assertions": [
+        "权限入口符合当前账号权限",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "只读或固定入口数据。",
+      "cleanup": "无需业务数据清理。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/system/dept/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-DEPT-1018",
+      "source": "permission",
+      "menuId": "1018",
+      "parentMenuId": "103",
+      "moduleKey": "system.dept",
+      "menuName": "部门新增",
+      "menuType": "F",
+      "routePath": "/system/dept",
+      "component": "system/dept/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:dept:add"
+      ],
+      "priority": "P1",
+      "automationType": "CRUD",
+      "sideEffect": true,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 部门新增 所属页面",
+        "执行对应按钮或表单操作",
+        "校验接口结果和页面反馈",
+        "执行 cleanup"
+      ],
+      "assertions": [
+        "操作结果可见",
+        "数据状态符合预期",
+        "失败时错误提示明确",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
+      "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/system/dept/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-DEPT-1019",
+      "source": "permission",
+      "menuId": "1019",
+      "parentMenuId": "103",
+      "moduleKey": "system.dept",
+      "menuName": "部门修改",
+      "menuType": "F",
+      "routePath": "/system/dept",
+      "component": "system/dept/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:dept:edit"
+      ],
+      "priority": "P1",
+      "automationType": "CRUD",
+      "sideEffect": true,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 部门修改 所属页面",
+        "执行对应按钮或表单操作",
+        "校验接口结果和页面反馈",
+        "执行 cleanup"
+      ],
+      "assertions": [
+        "操作结果可见",
+        "数据状态符合预期",
+        "失败时错误提示明确",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
+      "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/system/dept/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-DEPT-1020",
+      "source": "permission",
+      "menuId": "1020",
+      "parentMenuId": "103",
+      "moduleKey": "system.dept",
+      "menuName": "部门删除",
+      "menuType": "F",
+      "routePath": "/system/dept",
+      "component": "system/dept/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:dept:remove"
+      ],
+      "priority": "P2",
+      "automationType": "CRUD",
+      "sideEffect": true,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 部门删除 所属页面",
+        "执行对应按钮或表单操作",
+        "校验接口结果和页面反馈",
+        "执行 cleanup"
+      ],
+      "assertions": [
+        "操作结果可见",
+        "数据状态符合预期",
+        "失败时错误提示明确",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
+      "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/system/dept/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-DEPT-103",
+      "source": "menu",
+      "menuId": "103",
+      "parentMenuId": "1",
+      "moduleKey": "system.dept",
+      "menuName": "部门管理",
+      "menuType": "C",
+      "routePath": "/system/dept",
+      "component": "system/dept/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:dept:list"
+      ],
+      "priority": "P0",
+      "automationType": "smoke",
+      "sideEffect": false,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录"
+      ],
+      "steps": [
+        "完成真实验证码登录",
+        "加载用户信息和动态菜单",
+        "打开 /system/dept",
+        "等待 部门管理 页面首屏渲染"
+      ],
+      "assertions": [
+        "部门管理 首屏可渲染",
+        "不误跳 401 或 404",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "只读或固定入口数据。",
+      "cleanup": "无需业务数据清理。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/system/dept/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-DICT-1026",
+      "source": "permission",
+      "menuId": "1026",
+      "parentMenuId": "105",
+      "moduleKey": "system.dict",
+      "menuName": "字典查询",
+      "menuType": "F",
+      "routePath": "/system/dict",
+      "component": "system/dict/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:dict:query"
+      ],
+      "priority": "P1",
+      "automationType": "permission",
+      "sideEffect": false,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 字典查询 所属页面",
+        "校验权限按钮显示或隐藏",
+        "校验无越权入口"
+      ],
+      "assertions": [
+        "权限入口符合当前账号权限",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "只读或固定入口数据。",
+      "cleanup": "无需业务数据清理。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/system/dict/data.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/dict/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-DICT-1027",
+      "source": "permission",
+      "menuId": "1027",
+      "parentMenuId": "105",
+      "moduleKey": "system.dict",
+      "menuName": "字典新增",
+      "menuType": "F",
+      "routePath": "/system/dict",
+      "component": "system/dict/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:dict:add"
+      ],
+      "priority": "P1",
+      "automationType": "CRUD",
+      "sideEffect": true,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 字典新增 所属页面",
+        "执行对应按钮或表单操作",
+        "校验接口结果和页面反馈",
+        "执行 cleanup"
+      ],
+      "assertions": [
+        "操作结果可见",
+        "数据状态符合预期",
+        "失败时错误提示明确",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
+      "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/system/dict/data.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/dict/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-DICT-1028",
+      "source": "permission",
+      "menuId": "1028",
+      "parentMenuId": "105",
+      "moduleKey": "system.dict",
+      "menuName": "字典修改",
+      "menuType": "F",
+      "routePath": "/system/dict",
+      "component": "system/dict/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:dict:edit"
+      ],
+      "priority": "P1",
+      "automationType": "CRUD",
+      "sideEffect": true,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 字典修改 所属页面",
+        "执行对应按钮或表单操作",
+        "校验接口结果和页面反馈",
+        "执行 cleanup"
+      ],
+      "assertions": [
+        "操作结果可见",
+        "数据状态符合预期",
+        "失败时错误提示明确",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
+      "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/system/dict/data.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/dict/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-DICT-1029",
+      "source": "permission",
+      "menuId": "1029",
+      "parentMenuId": "105",
+      "moduleKey": "system.dict",
+      "menuName": "字典删除",
+      "menuType": "F",
+      "routePath": "/system/dict",
+      "component": "system/dict/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:dict:remove"
+      ],
+      "priority": "P2",
+      "automationType": "CRUD",
+      "sideEffect": true,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 字典删除 所属页面",
+        "执行对应按钮或表单操作",
+        "校验接口结果和页面反馈",
+        "执行 cleanup"
+      ],
+      "assertions": [
+        "操作结果可见",
+        "数据状态符合预期",
+        "失败时错误提示明确",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
+      "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/system/dict/data.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/dict/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-DICT-1030",
+      "source": "permission",
+      "menuId": "1030",
+      "parentMenuId": "105",
+      "moduleKey": "system.dict",
+      "menuName": "字典导出",
+      "menuType": "F",
+      "routePath": "/system/dict",
+      "component": "system/dict/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:dict:export"
+      ],
+      "priority": "P1",
+      "automationType": "CRUD",
+      "sideEffect": false,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 字典导出 所属页面",
+        "执行对应按钮或表单操作",
+        "校验接口结果和页面反馈",
+        "执行 cleanup"
+      ],
+      "assertions": [
+        "操作结果可见",
+        "数据状态符合预期",
+        "失败时错误提示明确",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "只读或固定入口数据。",
+      "cleanup": "无需业务数据清理。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/system/dict/data.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/dict/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-DICT-105",
+      "source": "menu",
+      "menuId": "105",
+      "parentMenuId": "1",
+      "moduleKey": "system.dict",
+      "menuName": "字典管理",
+      "menuType": "C",
+      "routePath": "/system/dict",
+      "component": "system/dict/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:dict:list"
+      ],
+      "priority": "P0",
+      "automationType": "smoke",
+      "sideEffect": false,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录"
+      ],
+      "steps": [
+        "完成真实验证码登录",
+        "加载用户信息和动态菜单",
+        "打开 /system/dict",
+        "等待 字典管理 页面首屏渲染"
+      ],
+      "assertions": [
+        "字典管理 首屏可渲染",
+        "不误跳 401 或 404",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "只读或固定入口数据。",
+      "cleanup": "无需业务数据清理。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/system/dict/data.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/dict/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-DICT-DATA-132",
+      "source": "menu",
+      "menuId": "132",
+      "parentMenuId": "1",
+      "moduleKey": "system.dict.data",
+      "menuName": "字典数据",
+      "menuType": "C",
+      "routePath": "/system/dict-data/index/:dictId",
+      "component": "system/dict/data",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:dict:list"
+      ],
+      "priority": "P1",
+      "automationType": "route",
+      "sideEffect": false,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "完成真实验证码登录",
+        "加载用户信息和动态菜单",
+        "打开 /system/dict-data/index/:dictId",
+        "等待 字典数据 页面首屏渲染"
+      ],
+      "assertions": [
+        "字典数据 首屏可渲染",
+        "不误跳 401 或 404",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "只读或固定入口数据。",
+      "cleanup": "无需业务数据清理。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/system/dict/data.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-INVITE-1066",
+      "source": "permission",
+      "menuId": "1066",
+      "parentMenuId": "124",
+      "moduleKey": "system.invite",
+      "menuName": "邀请码管理新增",
+      "menuType": "F",
+      "routePath": "/system/invite",
+      "component": "system/invite/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:invite:add"
+      ],
+      "priority": "P1",
+      "automationType": "CRUD",
+      "sideEffect": true,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 邀请码管理新增 所属页面",
+        "执行对应按钮或表单操作",
+        "校验接口结果和页面反馈",
+        "执行 cleanup"
+      ],
+      "assertions": [
+        "操作结果可见",
+        "数据状态符合预期",
+        "失败时错误提示明确",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
+      "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
+      "existingTests": [
+        "infoq-scaffold-frontend-react/tests/api/system/invite.test.ts",
+        "infoq-scaffold-frontend-react/tests/pages/system-invite.test.tsx",
+        "infoq-scaffold-frontend-vue/tests/api/system/invite.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/invite/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-INVITE-1067",
+      "source": "permission",
+      "menuId": "1067",
+      "parentMenuId": "124",
+      "moduleKey": "system.invite",
+      "menuName": "邀请码管理修改",
+      "menuType": "F",
+      "routePath": "/system/invite",
+      "component": "system/invite/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:invite:edit"
+      ],
+      "priority": "P1",
+      "automationType": "CRUD",
+      "sideEffect": true,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 邀请码管理修改 所属页面",
+        "执行对应按钮或表单操作",
+        "校验接口结果和页面反馈",
+        "执行 cleanup"
+      ],
+      "assertions": [
+        "操作结果可见",
+        "数据状态符合预期",
+        "失败时错误提示明确",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
+      "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
+      "existingTests": [
+        "infoq-scaffold-frontend-react/tests/api/system/invite.test.ts",
+        "infoq-scaffold-frontend-react/tests/pages/system-invite.test.tsx",
+        "infoq-scaffold-frontend-vue/tests/api/system/invite.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/invite/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-INVITE-1068",
+      "source": "permission",
+      "menuId": "1068",
+      "parentMenuId": "124",
+      "moduleKey": "system.invite",
+      "menuName": "邀请码管理删除",
+      "menuType": "F",
+      "routePath": "/system/invite",
+      "component": "system/invite/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:invite:remove"
+      ],
+      "priority": "P2",
+      "automationType": "CRUD",
+      "sideEffect": true,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 邀请码管理删除 所属页面",
+        "执行对应按钮或表单操作",
+        "校验接口结果和页面反馈",
+        "执行 cleanup"
+      ],
+      "assertions": [
+        "操作结果可见",
+        "数据状态符合预期",
+        "失败时错误提示明确",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
+      "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
+      "existingTests": [
+        "infoq-scaffold-frontend-react/tests/api/system/invite.test.ts",
+        "infoq-scaffold-frontend-react/tests/pages/system-invite.test.tsx",
+        "infoq-scaffold-frontend-vue/tests/api/system/invite.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/invite/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-INVITE-1069",
+      "source": "permission",
+      "menuId": "1069",
+      "parentMenuId": "124",
+      "moduleKey": "system.invite",
+      "menuName": "邀请码管理导出",
+      "menuType": "F",
+      "routePath": "/system/invite",
+      "component": "system/invite/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:invite:export"
+      ],
+      "priority": "P1",
+      "automationType": "CRUD",
+      "sideEffect": false,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 邀请码管理导出 所属页面",
+        "执行对应按钮或表单操作",
+        "校验接口结果和页面反馈",
+        "执行 cleanup"
+      ],
+      "assertions": [
+        "操作结果可见",
+        "数据状态符合预期",
+        "失败时错误提示明确",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "只读或固定入口数据。",
+      "cleanup": "无需业务数据清理。",
+      "existingTests": [
+        "infoq-scaffold-frontend-react/tests/api/system/invite.test.ts",
+        "infoq-scaffold-frontend-react/tests/pages/system-invite.test.tsx",
+        "infoq-scaffold-frontend-vue/tests/api/system/invite.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/invite/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-INVITE-124",
+      "source": "menu",
+      "menuId": "124",
+      "parentMenuId": "1",
+      "moduleKey": "system.invite",
+      "menuName": "邀请码管理",
+      "menuType": "C",
+      "routePath": "/system/invite",
+      "component": "system/invite/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:invite:list"
+      ],
+      "priority": "P0",
+      "automationType": "smoke",
+      "sideEffect": false,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录"
+      ],
+      "steps": [
+        "完成真实验证码登录",
+        "加载用户信息和动态菜单",
+        "打开 /system/invite",
+        "等待 邀请码管理 页面首屏渲染"
+      ],
+      "assertions": [
+        "邀请码管理 首屏可渲染",
+        "不误跳 401 或 404",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "只读或固定入口数据。",
+      "cleanup": "无需业务数据清理。",
+      "existingTests": [
+        "infoq-scaffold-frontend-react/tests/api/system/invite.test.ts",
+        "infoq-scaffold-frontend-react/tests/pages/system-invite.test.tsx",
+        "infoq-scaffold-frontend-vue/tests/api/system/invite.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/invite/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-LOG-108",
+      "source": "menu",
+      "menuId": "108",
+      "parentMenuId": "1",
+      "moduleKey": "system.log",
+      "menuName": "日志管理",
+      "menuType": "M",
+      "routePath": "/system/log",
+      "component": "",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [],
+      "priority": "P1",
+      "automationType": "route",
+      "sideEffect": false,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "完成真实验证码登录",
+        "加载用户信息和动态菜单",
+        "打开 /system/log",
+        "等待 日志管理 页面首屏渲染"
+      ],
+      "assertions": [
+        "日志管理 首屏可渲染",
+        "不误跳 401 或 404",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "只读或固定入口数据。",
+      "cleanup": "无需业务数据清理。",
+      "existingTests": [],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-MENU-1013",
+      "source": "permission",
+      "menuId": "1013",
+      "parentMenuId": "102",
+      "moduleKey": "system.menu",
+      "menuName": "菜单查询",
+      "menuType": "F",
+      "routePath": "/system/menu",
+      "component": "system/menu/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:menu:query"
+      ],
+      "priority": "P1",
+      "automationType": "permission",
+      "sideEffect": false,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 菜单查询 所属页面",
+        "校验权限按钮显示或隐藏",
+        "校验无越权入口"
+      ],
+      "assertions": [
+        "权限入口符合当前账号权限",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "只读或固定入口数据。",
+      "cleanup": "无需业务数据清理。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/system/menu/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-MENU-1014",
+      "source": "permission",
+      "menuId": "1014",
+      "parentMenuId": "102",
+      "moduleKey": "system.menu",
+      "menuName": "菜单新增",
+      "menuType": "F",
+      "routePath": "/system/menu",
+      "component": "system/menu/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:menu:add"
+      ],
+      "priority": "P1",
+      "automationType": "CRUD",
+      "sideEffect": true,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 菜单新增 所属页面",
+        "执行对应按钮或表单操作",
+        "校验接口结果和页面反馈",
+        "执行 cleanup"
+      ],
+      "assertions": [
+        "操作结果可见",
+        "数据状态符合预期",
+        "失败时错误提示明确",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
+      "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/system/menu/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-MENU-1015",
+      "source": "permission",
+      "menuId": "1015",
+      "parentMenuId": "102",
+      "moduleKey": "system.menu",
+      "menuName": "菜单修改",
+      "menuType": "F",
+      "routePath": "/system/menu",
+      "component": "system/menu/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:menu:edit"
+      ],
+      "priority": "P1",
+      "automationType": "CRUD",
+      "sideEffect": true,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 菜单修改 所属页面",
+        "执行对应按钮或表单操作",
+        "校验接口结果和页面反馈",
+        "执行 cleanup"
+      ],
+      "assertions": [
+        "操作结果可见",
+        "数据状态符合预期",
+        "失败时错误提示明确",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
+      "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/system/menu/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-MENU-1016",
+      "source": "permission",
+      "menuId": "1016",
+      "parentMenuId": "102",
+      "moduleKey": "system.menu",
+      "menuName": "菜单删除",
+      "menuType": "F",
+      "routePath": "/system/menu",
+      "component": "system/menu/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:menu:remove"
+      ],
+      "priority": "P2",
+      "automationType": "CRUD",
+      "sideEffect": true,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 菜单删除 所属页面",
+        "执行对应按钮或表单操作",
+        "校验接口结果和页面反馈",
+        "执行 cleanup"
+      ],
+      "assertions": [
+        "操作结果可见",
+        "数据状态符合预期",
+        "失败时错误提示明确",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
+      "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/system/menu/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-MENU-102",
+      "source": "menu",
+      "menuId": "102",
+      "parentMenuId": "1",
+      "moduleKey": "system.menu",
+      "menuName": "菜单管理",
+      "menuType": "C",
+      "routePath": "/system/menu",
+      "component": "system/menu/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:menu:list"
+      ],
+      "priority": "P0",
+      "automationType": "smoke",
+      "sideEffect": false,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录"
+      ],
+      "steps": [
+        "完成真实验证码登录",
+        "加载用户信息和动态菜单",
+        "打开 /system/menu",
+        "等待 菜单管理 页面首屏渲染"
+      ],
+      "assertions": [
+        "菜单管理 首屏可渲染",
+        "不误跳 401 或 404",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "只读或固定入口数据。",
+      "cleanup": "无需业务数据清理。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/system/menu/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-NOTICE-1036",
+      "source": "permission",
+      "menuId": "1036",
+      "parentMenuId": "107",
+      "moduleKey": "system.notice",
+      "menuName": "公告查询",
+      "menuType": "F",
+      "routePath": "/system/notice",
+      "component": "system/notice/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:notice:query"
+      ],
+      "priority": "P1",
+      "automationType": "permission",
+      "sideEffect": false,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 公告查询 所属页面",
+        "校验权限按钮显示或隐藏",
+        "校验无越权入口"
+      ],
+      "assertions": [
+        "权限入口符合当前账号权限",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "只读或固定入口数据。",
+      "cleanup": "无需业务数据清理。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/system/notice/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-NOTICE-1037",
+      "source": "permission",
+      "menuId": "1037",
+      "parentMenuId": "107",
+      "moduleKey": "system.notice",
+      "menuName": "公告新增",
+      "menuType": "F",
+      "routePath": "/system/notice",
+      "component": "system/notice/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:notice:add"
+      ],
+      "priority": "P1",
+      "automationType": "CRUD",
+      "sideEffect": true,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 公告新增 所属页面",
+        "执行对应按钮或表单操作",
+        "校验接口结果和页面反馈",
+        "执行 cleanup"
+      ],
+      "assertions": [
+        "操作结果可见",
+        "数据状态符合预期",
+        "失败时错误提示明确",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
+      "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/system/notice/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-NOTICE-1038",
+      "source": "permission",
+      "menuId": "1038",
+      "parentMenuId": "107",
+      "moduleKey": "system.notice",
+      "menuName": "公告修改",
+      "menuType": "F",
+      "routePath": "/system/notice",
+      "component": "system/notice/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:notice:edit"
+      ],
+      "priority": "P1",
+      "automationType": "CRUD",
+      "sideEffect": true,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 公告修改 所属页面",
+        "执行对应按钮或表单操作",
+        "校验接口结果和页面反馈",
+        "执行 cleanup"
+      ],
+      "assertions": [
+        "操作结果可见",
+        "数据状态符合预期",
+        "失败时错误提示明确",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
+      "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/system/notice/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-NOTICE-1039",
+      "source": "permission",
+      "menuId": "1039",
+      "parentMenuId": "107",
+      "moduleKey": "system.notice",
+      "menuName": "公告删除",
+      "menuType": "F",
+      "routePath": "/system/notice",
+      "component": "system/notice/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:notice:remove"
+      ],
+      "priority": "P2",
+      "automationType": "CRUD",
+      "sideEffect": true,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 公告删除 所属页面",
+        "执行对应按钮或表单操作",
+        "校验接口结果和页面反馈",
+        "执行 cleanup"
+      ],
+      "assertions": [
+        "操作结果可见",
+        "数据状态符合预期",
+        "失败时错误提示明确",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
+      "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/system/notice/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-NOTICE-107",
+      "source": "menu",
+      "menuId": "107",
+      "parentMenuId": "1",
+      "moduleKey": "system.notice",
+      "menuName": "通知公告",
+      "menuType": "C",
+      "routePath": "/system/notice",
+      "component": "system/notice/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:notice:list"
+      ],
+      "priority": "P0",
+      "automationType": "smoke",
+      "sideEffect": false,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录"
+      ],
+      "steps": [
+        "完成真实验证码登录",
+        "加载用户信息和动态菜单",
+        "打开 /system/notice",
+        "等待 通知公告 页面首屏渲染"
+      ],
+      "assertions": [
+        "通知公告 首屏可渲染",
+        "不误跳 401 或 404",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "只读或固定入口数据。",
+      "cleanup": "无需业务数据清理。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/system/notice/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-OSS-118",
+      "source": "menu",
+      "menuId": "118",
+      "parentMenuId": "1",
+      "moduleKey": "system.oss",
+      "menuName": "文件管理",
+      "menuType": "C",
+      "routePath": "/system/oss",
+      "component": "system/oss/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:oss:list"
+      ],
+      "priority": "P0",
+      "automationType": "smoke",
+      "sideEffect": false,
+      "dependencies": [
+        "backend",
+        "OSS",
+        "file"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录"
+      ],
+      "steps": [
+        "完成真实验证码登录",
+        "加载用户信息和动态菜单",
+        "打开 /system/oss",
+        "等待 文件管理 页面首屏渲染"
+      ],
+      "assertions": [
+        "文件管理 首屏可渲染",
+        "不误跳 401 或 404",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "只读或固定入口数据。",
+      "cleanup": "无需业务数据清理。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/system/oss/config.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/oss/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-OSS-1600",
+      "source": "permission",
+      "menuId": "1600",
+      "parentMenuId": "118",
+      "moduleKey": "system.oss",
+      "menuName": "文件查询",
+      "menuType": "F",
+      "routePath": "/system/oss",
+      "component": "system/oss/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:oss:query"
+      ],
+      "priority": "P1",
+      "automationType": "permission",
+      "sideEffect": false,
+      "dependencies": [
+        "backend",
+        "OSS",
+        "file"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 文件查询 所属页面",
+        "校验权限按钮显示或隐藏",
+        "校验无越权入口"
+      ],
+      "assertions": [
+        "权限入口符合当前账号权限",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "只读或固定入口数据。",
+      "cleanup": "无需业务数据清理。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/system/oss/config.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/oss/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-OSS-1601",
+      "source": "permission",
+      "menuId": "1601",
+      "parentMenuId": "118",
+      "moduleKey": "system.oss",
+      "menuName": "文件上传",
+      "menuType": "F",
+      "routePath": "/system/oss",
+      "component": "system/oss/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:oss:upload"
+      ],
+      "priority": "P1",
+      "automationType": "CRUD",
+      "sideEffect": true,
+      "dependencies": [
+        "backend",
+        "OSS",
+        "file"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 文件上传 所属页面",
+        "执行对应按钮或表单操作",
+        "校验接口结果和页面反馈",
+        "执行 cleanup"
+      ],
+      "assertions": [
+        "操作结果可见",
+        "数据状态符合预期",
+        "失败时错误提示明确",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
+      "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/system/oss/config.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/oss/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-OSS-1602",
+      "source": "permission",
+      "menuId": "1602",
+      "parentMenuId": "118",
+      "moduleKey": "system.oss",
+      "menuName": "文件下载",
+      "menuType": "F",
+      "routePath": "/system/oss",
+      "component": "system/oss/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:oss:download"
+      ],
+      "priority": "P1",
+      "automationType": "CRUD",
+      "sideEffect": false,
+      "dependencies": [
+        "backend",
+        "OSS",
+        "file"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 文件下载 所属页面",
+        "执行对应按钮或表单操作",
+        "校验接口结果和页面反馈",
+        "执行 cleanup"
+      ],
+      "assertions": [
+        "操作结果可见",
+        "数据状态符合预期",
+        "失败时错误提示明确",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "只读或固定入口数据。",
+      "cleanup": "无需业务数据清理。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/system/oss/config.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/oss/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-OSS-1603",
+      "source": "permission",
+      "menuId": "1603",
+      "parentMenuId": "118",
+      "moduleKey": "system.oss",
+      "menuName": "文件删除",
+      "menuType": "F",
+      "routePath": "/system/oss",
+      "component": "system/oss/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:oss:remove"
+      ],
+      "priority": "P2",
+      "automationType": "CRUD",
+      "sideEffect": true,
+      "dependencies": [
+        "backend",
+        "OSS",
+        "file"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 文件删除 所属页面",
+        "执行对应按钮或表单操作",
+        "校验接口结果和页面反馈",
+        "执行 cleanup"
+      ],
+      "assertions": [
+        "操作结果可见",
+        "数据状态符合预期",
+        "失败时错误提示明确",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
+      "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/system/oss/config.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/oss/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-OSS-1620",
+      "source": "permission",
+      "menuId": "1620",
+      "parentMenuId": "118",
+      "moduleKey": "system.oss",
+      "menuName": "配置列表",
+      "menuType": "F",
+      "routePath": "/system/oss",
+      "component": "system/oss/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:ossConfig:list"
+      ],
+      "priority": "P1",
+      "automationType": "permission",
+      "sideEffect": false,
+      "dependencies": [
+        "backend",
+        "OSS",
+        "file"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 配置列表 所属页面",
+        "校验权限按钮显示或隐藏",
+        "校验无越权入口"
+      ],
+      "assertions": [
+        "权限入口符合当前账号权限",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "只读或固定入口数据。",
+      "cleanup": "无需业务数据清理。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/system/oss/config.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/oss/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-OSS-1621",
+      "source": "permission",
+      "menuId": "1621",
+      "parentMenuId": "118",
+      "moduleKey": "system.oss",
+      "menuName": "配置添加",
+      "menuType": "F",
+      "routePath": "/system/oss",
+      "component": "system/oss/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:ossConfig:add"
+      ],
+      "priority": "P1",
+      "automationType": "CRUD",
+      "sideEffect": true,
+      "dependencies": [
+        "backend",
+        "OSS",
+        "file"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 配置添加 所属页面",
+        "执行对应按钮或表单操作",
+        "校验接口结果和页面反馈",
+        "执行 cleanup"
+      ],
+      "assertions": [
+        "操作结果可见",
+        "数据状态符合预期",
+        "失败时错误提示明确",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
+      "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/system/oss/config.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/oss/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-OSS-1622",
+      "source": "permission",
+      "menuId": "1622",
+      "parentMenuId": "118",
+      "moduleKey": "system.oss",
+      "menuName": "配置编辑",
+      "menuType": "F",
+      "routePath": "/system/oss",
+      "component": "system/oss/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:ossConfig:edit"
+      ],
+      "priority": "P1",
+      "automationType": "CRUD",
+      "sideEffect": true,
+      "dependencies": [
+        "backend",
+        "OSS",
+        "file"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 配置编辑 所属页面",
+        "执行对应按钮或表单操作",
+        "校验接口结果和页面反馈",
+        "执行 cleanup"
+      ],
+      "assertions": [
+        "操作结果可见",
+        "数据状态符合预期",
+        "失败时错误提示明确",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
+      "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/system/oss/config.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/oss/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-OSS-1623",
+      "source": "permission",
+      "menuId": "1623",
+      "parentMenuId": "118",
+      "moduleKey": "system.oss",
+      "menuName": "配置删除",
+      "menuType": "F",
+      "routePath": "/system/oss",
+      "component": "system/oss/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:ossConfig:remove"
+      ],
+      "priority": "P2",
+      "automationType": "CRUD",
+      "sideEffect": true,
+      "dependencies": [
+        "backend",
+        "OSS",
+        "file"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 配置删除 所属页面",
+        "执行对应按钮或表单操作",
+        "校验接口结果和页面反馈",
+        "执行 cleanup"
+      ],
+      "assertions": [
+        "操作结果可见",
+        "数据状态符合预期",
+        "失败时错误提示明确",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
+      "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/system/oss/config.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/oss/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-OSS-CONFIG-133",
+      "source": "menu",
+      "menuId": "133",
+      "parentMenuId": "1",
+      "moduleKey": "system.oss.config",
+      "menuName": "文件配置管理",
+      "menuType": "C",
+      "routePath": "/system/oss-config/index",
+      "component": "system/oss/config",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:ossConfig:list"
+      ],
+      "priority": "P1",
+      "automationType": "route",
+      "sideEffect": false,
+      "dependencies": [
+        "backend",
+        "OSS",
+        "file"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "完成真实验证码登录",
+        "加载用户信息和动态菜单",
+        "打开 /system/oss-config/index",
+        "等待 文件配置管理 页面首屏渲染"
+      ],
+      "assertions": [
+        "文件配置管理 首屏可渲染",
+        "不误跳 401 或 404",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "只读或固定入口数据。",
+      "cleanup": "无需业务数据清理。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/system/oss/config.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-POST-1021",
+      "source": "permission",
+      "menuId": "1021",
+      "parentMenuId": "104",
+      "moduleKey": "system.post",
+      "menuName": "岗位查询",
+      "menuType": "F",
+      "routePath": "/system/post",
+      "component": "system/post/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:post:query"
+      ],
+      "priority": "P1",
+      "automationType": "permission",
+      "sideEffect": false,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 岗位查询 所属页面",
+        "校验权限按钮显示或隐藏",
+        "校验无越权入口"
+      ],
+      "assertions": [
+        "权限入口符合当前账号权限",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "只读或固定入口数据。",
+      "cleanup": "无需业务数据清理。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/system/post/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-POST-1022",
+      "source": "permission",
+      "menuId": "1022",
+      "parentMenuId": "104",
+      "moduleKey": "system.post",
+      "menuName": "岗位新增",
+      "menuType": "F",
+      "routePath": "/system/post",
+      "component": "system/post/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:post:add"
+      ],
+      "priority": "P1",
+      "automationType": "CRUD",
+      "sideEffect": true,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 岗位新增 所属页面",
+        "执行对应按钮或表单操作",
+        "校验接口结果和页面反馈",
+        "执行 cleanup"
+      ],
+      "assertions": [
+        "操作结果可见",
+        "数据状态符合预期",
+        "失败时错误提示明确",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
+      "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/system/post/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-POST-1023",
+      "source": "permission",
+      "menuId": "1023",
+      "parentMenuId": "104",
+      "moduleKey": "system.post",
+      "menuName": "岗位修改",
+      "menuType": "F",
+      "routePath": "/system/post",
+      "component": "system/post/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:post:edit"
+      ],
+      "priority": "P1",
+      "automationType": "CRUD",
+      "sideEffect": true,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 岗位修改 所属页面",
+        "执行对应按钮或表单操作",
+        "校验接口结果和页面反馈",
+        "执行 cleanup"
+      ],
+      "assertions": [
+        "操作结果可见",
+        "数据状态符合预期",
+        "失败时错误提示明确",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
+      "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/system/post/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-POST-1024",
+      "source": "permission",
+      "menuId": "1024",
+      "parentMenuId": "104",
+      "moduleKey": "system.post",
+      "menuName": "岗位删除",
+      "menuType": "F",
+      "routePath": "/system/post",
+      "component": "system/post/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:post:remove"
+      ],
+      "priority": "P2",
+      "automationType": "CRUD",
+      "sideEffect": true,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 岗位删除 所属页面",
+        "执行对应按钮或表单操作",
+        "校验接口结果和页面反馈",
+        "执行 cleanup"
+      ],
+      "assertions": [
+        "操作结果可见",
+        "数据状态符合预期",
+        "失败时错误提示明确",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
+      "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/system/post/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-POST-1025",
+      "source": "permission",
+      "menuId": "1025",
+      "parentMenuId": "104",
+      "moduleKey": "system.post",
+      "menuName": "岗位导出",
+      "menuType": "F",
+      "routePath": "/system/post",
+      "component": "system/post/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:post:export"
+      ],
+      "priority": "P1",
+      "automationType": "CRUD",
+      "sideEffect": false,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 岗位导出 所属页面",
+        "执行对应按钮或表单操作",
+        "校验接口结果和页面反馈",
+        "执行 cleanup"
+      ],
+      "assertions": [
+        "操作结果可见",
+        "数据状态符合预期",
+        "失败时错误提示明确",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "只读或固定入口数据。",
+      "cleanup": "无需业务数据清理。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/system/post/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-POST-104",
+      "source": "menu",
+      "menuId": "104",
+      "parentMenuId": "1",
+      "moduleKey": "system.post",
+      "menuName": "岗位管理",
+      "menuType": "C",
+      "routePath": "/system/post",
+      "component": "system/post/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:post:list"
+      ],
+      "priority": "P0",
+      "automationType": "smoke",
+      "sideEffect": false,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录"
+      ],
+      "steps": [
+        "完成真实验证码登录",
+        "加载用户信息和动态菜单",
+        "打开 /system/post",
+        "等待 岗位管理 页面首屏渲染"
+      ],
+      "assertions": [
+        "岗位管理 首屏可渲染",
+        "不误跳 401 或 404",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "只读或固定入口数据。",
+      "cleanup": "无需业务数据清理。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/system/post/index.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-ROLE-1008",
+      "source": "permission",
+      "menuId": "1008",
+      "parentMenuId": "101",
+      "moduleKey": "system.role",
+      "menuName": "角色查询",
+      "menuType": "F",
+      "routePath": "/system/role",
+      "component": "system/role/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:role:query"
+      ],
+      "priority": "P1",
+      "automationType": "permission",
+      "sideEffect": false,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 角色查询 所属页面",
+        "校验权限按钮显示或隐藏",
+        "校验无越权入口"
+      ],
+      "assertions": [
+        "权限入口符合当前账号权限",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "只读或固定入口数据。",
+      "cleanup": "无需业务数据清理。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/system/role/authUser.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/role/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/role/selectUser.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-ROLE-1009",
+      "source": "permission",
+      "menuId": "1009",
+      "parentMenuId": "101",
+      "moduleKey": "system.role",
+      "menuName": "角色新增",
+      "menuType": "F",
+      "routePath": "/system/role",
+      "component": "system/role/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:role:add"
+      ],
+      "priority": "P1",
+      "automationType": "CRUD",
+      "sideEffect": true,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 角色新增 所属页面",
+        "执行对应按钮或表单操作",
+        "校验接口结果和页面反馈",
+        "执行 cleanup"
+      ],
+      "assertions": [
+        "操作结果可见",
+        "数据状态符合预期",
+        "失败时错误提示明确",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
+      "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/system/role/authUser.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/role/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/role/selectUser.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-ROLE-101",
+      "source": "menu",
+      "menuId": "101",
+      "parentMenuId": "1",
+      "moduleKey": "system.role",
+      "menuName": "角色管理",
+      "menuType": "C",
+      "routePath": "/system/role",
+      "component": "system/role/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:role:list"
+      ],
+      "priority": "P0",
+      "automationType": "smoke",
+      "sideEffect": false,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录"
+      ],
+      "steps": [
+        "完成真实验证码登录",
+        "加载用户信息和动态菜单",
+        "打开 /system/role",
+        "等待 角色管理 页面首屏渲染"
+      ],
+      "assertions": [
+        "角色管理 首屏可渲染",
+        "不误跳 401 或 404",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "只读或固定入口数据。",
+      "cleanup": "无需业务数据清理。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/system/role/authUser.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/role/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/role/selectUser.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-ROLE-1010",
+      "source": "permission",
+      "menuId": "1010",
+      "parentMenuId": "101",
+      "moduleKey": "system.role",
+      "menuName": "角色修改",
+      "menuType": "F",
+      "routePath": "/system/role",
+      "component": "system/role/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:role:edit"
+      ],
+      "priority": "P1",
+      "automationType": "CRUD",
+      "sideEffect": true,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 角色修改 所属页面",
+        "执行对应按钮或表单操作",
+        "校验接口结果和页面反馈",
+        "执行 cleanup"
+      ],
+      "assertions": [
+        "操作结果可见",
+        "数据状态符合预期",
+        "失败时错误提示明确",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
+      "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/system/role/authUser.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/role/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/role/selectUser.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-ROLE-1011",
+      "source": "permission",
+      "menuId": "1011",
+      "parentMenuId": "101",
+      "moduleKey": "system.role",
+      "menuName": "角色删除",
+      "menuType": "F",
+      "routePath": "/system/role",
+      "component": "system/role/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:role:remove"
+      ],
+      "priority": "P2",
+      "automationType": "CRUD",
+      "sideEffect": true,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 角色删除 所属页面",
+        "执行对应按钮或表单操作",
+        "校验接口结果和页面反馈",
+        "执行 cleanup"
+      ],
+      "assertions": [
+        "操作结果可见",
+        "数据状态符合预期",
+        "失败时错误提示明确",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
+      "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/system/role/authUser.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/role/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/role/selectUser.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-ROLE-1012",
+      "source": "permission",
+      "menuId": "1012",
+      "parentMenuId": "101",
+      "moduleKey": "system.role",
+      "menuName": "角色导出",
+      "menuType": "F",
+      "routePath": "/system/role",
+      "component": "system/role/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:role:export"
+      ],
+      "priority": "P1",
+      "automationType": "CRUD",
+      "sideEffect": false,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 角色导出 所属页面",
+        "执行对应按钮或表单操作",
+        "校验接口结果和页面反馈",
+        "执行 cleanup"
+      ],
+      "assertions": [
+        "操作结果可见",
+        "数据状态符合预期",
+        "失败时错误提示明确",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "只读或固定入口数据。",
+      "cleanup": "无需业务数据清理。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/system/role/authUser.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/role/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/role/selectUser.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-ROLE-AUTH-USER-130",
+      "source": "menu",
+      "menuId": "130",
+      "parentMenuId": "1",
+      "moduleKey": "system.role.authUser",
+      "menuName": "分配用户",
+      "menuType": "C",
+      "routePath": "/system/role-auth/user/:roleId",
+      "component": "system/role/authUser",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:role:edit"
+      ],
+      "priority": "P1",
+      "automationType": "route",
+      "sideEffect": true,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "完成真实验证码登录",
+        "加载用户信息和动态菜单",
+        "打开 /system/role-auth/user/:roleId",
+        "等待 分配用户 页面首屏渲染"
+      ],
+      "assertions": [
+        "分配用户 首屏可渲染",
+        "不误跳 401 或 404",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
+      "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/system/role/authUser.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-USER-100",
+      "source": "menu",
+      "menuId": "100",
+      "parentMenuId": "1",
+      "moduleKey": "system.user",
+      "menuName": "用户管理",
+      "menuType": "C",
+      "routePath": "/system/user",
+      "component": "system/user/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:user:list"
+      ],
+      "priority": "P0",
+      "automationType": "smoke",
+      "sideEffect": false,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录"
+      ],
+      "steps": [
+        "完成真实验证码登录",
+        "加载用户信息和动态菜单",
+        "打开 /system/user",
+        "等待 用户管理 页面首屏渲染"
+      ],
+      "assertions": [
+        "用户管理 首屏可渲染",
+        "不误跳 401 或 404",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "只读或固定入口数据。",
+      "cleanup": "无需业务数据清理。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/system/user/authRole.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/user/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/onlineDevice.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/resetPwd.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/userAvatar.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/userInfo.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-USER-1001",
+      "source": "permission",
+      "menuId": "1001",
+      "parentMenuId": "100",
+      "moduleKey": "system.user",
+      "menuName": "用户查询",
+      "menuType": "F",
+      "routePath": "/system/user",
+      "component": "system/user/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:user:query"
+      ],
+      "priority": "P1",
+      "automationType": "permission",
+      "sideEffect": false,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 用户查询 所属页面",
+        "校验权限按钮显示或隐藏",
+        "校验无越权入口"
+      ],
+      "assertions": [
+        "权限入口符合当前账号权限",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "只读或固定入口数据。",
+      "cleanup": "无需业务数据清理。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/system/user/authRole.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/user/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/onlineDevice.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/resetPwd.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/userAvatar.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/userInfo.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-USER-1002",
+      "source": "permission",
+      "menuId": "1002",
+      "parentMenuId": "100",
+      "moduleKey": "system.user",
+      "menuName": "用户新增",
+      "menuType": "F",
+      "routePath": "/system/user",
+      "component": "system/user/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:user:add"
+      ],
+      "priority": "P1",
+      "automationType": "CRUD",
+      "sideEffect": true,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 用户新增 所属页面",
+        "执行对应按钮或表单操作",
+        "校验接口结果和页面反馈",
+        "执行 cleanup"
+      ],
+      "assertions": [
+        "操作结果可见",
+        "数据状态符合预期",
+        "失败时错误提示明确",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
+      "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/system/user/authRole.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/user/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/onlineDevice.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/resetPwd.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/userAvatar.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/userInfo.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-USER-1003",
+      "source": "permission",
+      "menuId": "1003",
+      "parentMenuId": "100",
+      "moduleKey": "system.user",
+      "menuName": "用户修改",
+      "menuType": "F",
+      "routePath": "/system/user",
+      "component": "system/user/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:user:edit"
+      ],
+      "priority": "P1",
+      "automationType": "CRUD",
+      "sideEffect": true,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 用户修改 所属页面",
+        "执行对应按钮或表单操作",
+        "校验接口结果和页面反馈",
+        "执行 cleanup"
+      ],
+      "assertions": [
+        "操作结果可见",
+        "数据状态符合预期",
+        "失败时错误提示明确",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
+      "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/system/user/authRole.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/user/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/onlineDevice.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/resetPwd.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/userAvatar.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/userInfo.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-USER-1004",
+      "source": "permission",
+      "menuId": "1004",
+      "parentMenuId": "100",
+      "moduleKey": "system.user",
+      "menuName": "用户删除",
+      "menuType": "F",
+      "routePath": "/system/user",
+      "component": "system/user/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:user:remove"
+      ],
+      "priority": "P2",
+      "automationType": "CRUD",
+      "sideEffect": true,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 用户删除 所属页面",
+        "执行对应按钮或表单操作",
+        "校验接口结果和页面反馈",
+        "执行 cleanup"
+      ],
+      "assertions": [
+        "操作结果可见",
+        "数据状态符合预期",
+        "失败时错误提示明确",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
+      "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/system/user/authRole.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/user/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/onlineDevice.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/resetPwd.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/userAvatar.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/userInfo.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-USER-1005",
+      "source": "permission",
+      "menuId": "1005",
+      "parentMenuId": "100",
+      "moduleKey": "system.user",
+      "menuName": "用户导出",
+      "menuType": "F",
+      "routePath": "/system/user",
+      "component": "system/user/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:user:export"
+      ],
+      "priority": "P1",
+      "automationType": "CRUD",
+      "sideEffect": false,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 用户导出 所属页面",
+        "执行对应按钮或表单操作",
+        "校验接口结果和页面反馈",
+        "执行 cleanup"
+      ],
+      "assertions": [
+        "操作结果可见",
+        "数据状态符合预期",
+        "失败时错误提示明确",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "只读或固定入口数据。",
+      "cleanup": "无需业务数据清理。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/system/user/authRole.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/user/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/onlineDevice.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/resetPwd.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/userAvatar.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/userInfo.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-USER-1006",
+      "source": "permission",
+      "menuId": "1006",
+      "parentMenuId": "100",
+      "moduleKey": "system.user",
+      "menuName": "用户导入",
+      "menuType": "F",
+      "routePath": "/system/user",
+      "component": "system/user/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:user:import"
+      ],
+      "priority": "P1",
+      "automationType": "CRUD",
+      "sideEffect": true,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 用户导入 所属页面",
+        "执行对应按钮或表单操作",
+        "校验接口结果和页面反馈",
+        "执行 cleanup"
+      ],
+      "assertions": [
+        "操作结果可见",
+        "数据状态符合预期",
+        "失败时错误提示明确",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
+      "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/system/user/authRole.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/user/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/onlineDevice.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/resetPwd.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/userAvatar.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/userInfo.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-USER-1007",
+      "source": "permission",
+      "menuId": "1007",
+      "parentMenuId": "100",
+      "moduleKey": "system.user",
+      "menuName": "重置密码",
+      "menuType": "F",
+      "routePath": "/system/user",
+      "component": "system/user/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:user:resetPwd"
+      ],
+      "priority": "P1",
+      "automationType": "CRUD",
+      "sideEffect": true,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "进入 重置密码 所属页面",
+        "执行对应按钮或表单操作",
+        "校验接口结果和页面反馈",
+        "执行 cleanup"
+      ],
+      "assertions": [
+        "操作结果可见",
+        "数据状态符合预期",
+        "失败时错误提示明确",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
+      "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/system/user/authRole.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/user/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/onlineDevice.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/resetPwd.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/userAvatar.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/userInfo.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-USER-AUTH-ROLE-131",
+      "source": "menu",
+      "menuId": "131",
+      "parentMenuId": "1",
+      "moduleKey": "system.user.authRole",
+      "menuName": "分配角色",
+      "menuType": "C",
+      "routePath": "/system/user-auth/role/:userId",
+      "component": "system/user/authRole",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [
+        "system:user:edit"
+      ],
+      "priority": "P1",
+      "automationType": "route",
+      "sideEffect": true,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "后端服务可用",
+        "管理端前端已启动",
+        "可通过真实验证码登录",
+        "具备对应权限和受控测试数据"
+      ],
+      "steps": [
+        "完成真实验证码登录",
+        "加载用户信息和动态菜单",
+        "打开 /system/user-auth/role/:userId",
+        "等待 分配角色 页面首屏渲染"
+      ],
+      "assertions": [
+        "分配角色 首屏可渲染",
+        "不误跳 401 或 404",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
+      "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/system/user/authRole.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": "sql/infoq_scaffold_2.0.0.sql"
+    },
+    {
+      "id": "FE-SYSTEM-USER-PROFILE",
+      "source": "fixed-route",
+      "menuId": "fixed-6",
+      "parentMenuId": "",
+      "moduleKey": "system.user.profile",
+      "menuName": "个人中心",
+      "menuType": "fixed",
+      "routePath": "/user/profile",
+      "component": "system/user/profile/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [],
+      "priority": "P1",
+      "automationType": "smoke",
+      "sideEffect": false,
+      "dependencies": [
+        "backend",
+        "OSS",
+        "file"
+      ],
+      "preconditions": [
+        "前端应用已启动",
+        "公开路由无需登录；受保护固定路由需要有效登录态"
+      ],
+      "steps": [
+        "打开 /user/profile",
+        "等待 个人中心 首屏渲染"
+      ],
+      "assertions": [
+        "个人中心 路由可访问",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "只读或固定入口数据。",
+      "cleanup": "无需业务数据清理。",
+      "existingTests": [
+        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/onlineDevice.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/resetPwd.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/userAvatar.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/userInfo.test.ts"
+      ],
+      "gaps": [],
+      "sourceFile": ""
+    }
+  ],
+  "gaps": [
+    {
+      "type": "case-gap",
+      "id": "FE-ERROR-401",
+      "moduleKey": "error.401",
+      "message": "未发现直接关联的页面或路由单测"
+    },
+    {
+      "type": "case-gap",
+      "id": "FE-ERROR-404",
+      "moduleKey": "error.404",
+      "message": "未发现直接关联的页面或路由单测"
+    },
+    {
+      "type": "react-page-without-menu",
+      "component": "system/role/selectUser",
+      "message": "React 页面未直接匹配菜单组件"
+    },
+    {
+      "type": "vue-view-without-menu",
+      "component": "system/role/selectUser",
+      "message": "Vue 页面未直接匹配菜单组件"
+    }
+  ]
+}

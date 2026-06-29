@@ -1,4 +1,3 @@
-/* eslint-disable react-refresh/only-export-components -- backend route registry exports lazy component mappings, not Fast Refresh component modules. */
 import { type ComponentType, lazy, type LazyExoticComponent } from 'react';
 
 const NotFoundPage = lazy(() => import('@/pages/error/404'));

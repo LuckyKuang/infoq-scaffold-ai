@@ -3,6 +3,7 @@ import path from 'node:path';
 import {
     ensureDir,
     fetchJson,
+    markRunState,
     resolveDocTmpPath,
     resolvePackageManager,
     runCommandChecked,
@@ -185,107 +186,156 @@ export async function runWeappSmoke(config, argv) {
     throw new Error(`[${config.label}] Invalid suite: ${options.suite}. Supported: smoke|core|full`);
   }
 
-  const weappDir = path.join(config.repoRoot, config.workspaceDirName);
-  if (!fs.existsSync(weappDir)) {
-    throw new Error(`[${config.label}] Workspace not found: ${weappDir}`);
-  }
-
-  if (options.loginHomeOnly) {
-    options.suite = 'smoke';
-    console.log(`[${config.label}] login-home-only mode enabled; force suite=smoke.`);
-  }
-
-  const pkg = resolvePackageManager();
-  const logPath = resolveLogPath(config.repoRoot, config.stateSlug);
-  ensureDir(path.dirname(logPath));
-
-  if (options.buildFirst) {
-    console.log(`[${config.label}] Building dist with ${pkg.name} run build:weapp:dev ...`);
-    await runCommandChecked(pkg.command, ['run', 'build:weapp:dev'], {cwd: weappDir});
-  }
-
-  console.log(
-    `[${config.label}] Launching suite=${options.suite}, autoLogin=${options.autoLogin}, keepExistingSession=${options.keepExistingSession}, urlCheck=${options.urlCheck}`
-  );
-
-  const runnerEnv = {
-    ...process.env,
-    WECHAT_DEVTOOLS_URL_CHECK: options.urlCheck,
-    WEAPP_E2E_AUTO_LOGIN: options.autoLogin,
-    WEAPP_E2E_KEEP_EXISTING_SESSION: options.keepExistingSession,
-    WEAPP_E2E_FAIL_ON_CONSOLE_ERROR: options.failOnConsoleError
+  const stateFile = resolveDocTmpPath(config.repoRoot, config.stateSlug, 'state.json');
+  const writeState = (patch) => markRunState(stateFile, patch);
+  const handleInterrupt = (signal) => {
+    writeState({
+      status: 'interrupted',
+      stopReason: signal
+    });
+    process.exit(signal === 'SIGINT' ? 130 : signal === 'SIGHUP' ? 129 : 143);
   };
+  const handleSigint = () => handleInterrupt('SIGINT');
+  const handleSigterm = () => handleInterrupt('SIGTERM');
+  const handleSighup = () => handleInterrupt('SIGHUP');
+  process.once('SIGINT', handleSigint);
+  process.once('SIGTERM', handleSigterm);
+  process.once('SIGHUP', handleSighup);
 
-  if (options.devtoolsCliPath) {
-    runnerEnv.WECHAT_DEVTOOLS_CLI = options.devtoolsCliPath;
-  }
-  if (options.token) {
-    runnerEnv.WEAPP_E2E_TOKEN = options.token;
-  }
-  if (options.username) {
-    runnerEnv.WEAPP_E2E_AUTO_LOGIN_USERNAME = options.username;
-  }
-  if (options.password) {
-    runnerEnv.WEAPP_E2E_AUTO_LOGIN_PASSWORD = options.password;
-  }
-  if (options.loginCandidates) {
-    runnerEnv.WEAPP_E2E_AUTO_LOGIN_CANDIDATES = options.loginCandidates;
-  }
-  if (options.baseUrl) {
-    runnerEnv.WEAPP_E2E_BASE_URL = options.baseUrl;
-  }
-
-  const shouldProbeBackend = options.autoLogin === 'true' || options.loginHomeOnly;
-  if (shouldProbeBackend) {
-    const probeBaseUrl = options.healthUrl || options.baseUrl || 'http://127.0.0.1:8080';
-    const probeEndpoint = `${probeBaseUrl.replace(/\/$/, '')}/auth/code`;
-    const probeOutput = resolveDocTmpPath(config.repoRoot, config.stateSlug, 'weapp-smoke-auth-code.json');
-    const {response, body} = await fetchJson(probeEndpoint, {headers: {'Content-Type': 'application/json'}});
-    if (!response.ok) {
-      throw new Error(`[${config.label}] Backend health probe failed: ${probeEndpoint}`);
+  const weappDir = path.join(config.repoRoot, config.workspaceDirName);
+  try {
+    if (!fs.existsSync(weappDir)) {
+      throw new Error(`[${config.label}] Workspace not found: ${weappDir}`);
     }
-    fs.writeFileSync(probeOutput, `${JSON.stringify(body, null, 2)}\n`, 'utf8');
-    if (body?.data?.captchaEnabled === true) {
-      throw new Error(`[${config.label}] Backend health probe returned captchaEnabled=true at ${probeEndpoint}`);
+
+    if (options.loginHomeOnly) {
+      options.suite = 'smoke';
+      console.log(`[${config.label}] login-home-only mode enabled; force suite=smoke.`);
     }
-    console.log(`[${config.label}] Backend health probe passed: ${probeEndpoint}`);
-  }
 
-  const runnerResult = await runCommandStreaming(
-    process.execPath,
-    ['./tests/e2e/weapp/runner.mjs', ...buildRunnerArgs(options)],
-    {
-      cwd: weappDir,
-      env: runnerEnv,
-      logFile: logPath
+    const pkg = resolvePackageManager();
+    const logPath = resolveLogPath(config.repoRoot, config.stateSlug);
+    ensureDir(path.dirname(logPath));
+    writeState({
+      schemaVersion: 1,
+      skill: 'infoq-frontend-verify',
+      script: 'run_weapp_smoke.mjs',
+      label: config.label,
+      status: 'running',
+      startedAt: new Date().toISOString(),
+      suite: options.suite,
+      workspaceDir: weappDir,
+      logFiles: [logPath],
+      processes: []
+    });
+
+    if (options.buildFirst) {
+      console.log(`[${config.label}] Building dist with ${pkg.name} run build:weapp:dev ...`);
+      await runCommandChecked(pkg.command, ['run', 'build:weapp:dev'], {cwd: weappDir});
     }
-  );
 
-  const logText = fs.existsSync(logPath) ? fs.readFileSync(logPath, 'utf8') : '';
-
-  if (logText.includes('[object Object]')) {
-    throw new Error(
-      `[${config.label}] Detected "[object Object]" in runner log, which violates mini-program error-message contract.\n[${config.label}] Runner log: ${logPath}`
+    console.log(
+      `[${config.label}] Launching suite=${options.suite}, autoLogin=${options.autoLogin}, keepExistingSession=${options.keepExistingSession}, urlCheck=${options.urlCheck}`
     );
-  }
 
-  if (options.loginHomeOnly) {
-    const verdict = evaluateLoginHomeOnly(logText, runnerResult.code);
-    if (!verdict.passed) {
-      throw new Error(`[${config.label}] ${verdict.reason}\n[${config.label}] Runner log: ${logPath}`);
+    const runnerEnv = {
+      ...process.env,
+      WECHAT_DEVTOOLS_URL_CHECK: options.urlCheck,
+      WEAPP_E2E_AUTO_LOGIN: options.autoLogin,
+      WEAPP_E2E_KEEP_EXISTING_SESSION: options.keepExistingSession,
+      WEAPP_E2E_FAIL_ON_CONSOLE_ERROR: options.failOnConsoleError
+    };
+
+    if (options.devtoolsCliPath) {
+      runnerEnv.WECHAT_DEVTOOLS_CLI = options.devtoolsCliPath;
     }
-    console.log(`[${config.label}] ${verdict.reason}`);
+    if (options.token) {
+      runnerEnv.WEAPP_E2E_TOKEN = options.token;
+    }
+    if (options.username) {
+      runnerEnv.WEAPP_E2E_AUTO_LOGIN_USERNAME = options.username;
+    }
+    if (options.password) {
+      runnerEnv.WEAPP_E2E_AUTO_LOGIN_PASSWORD = options.password;
+    }
+    if (options.loginCandidates) {
+      runnerEnv.WEAPP_E2E_AUTO_LOGIN_CANDIDATES = options.loginCandidates;
+    }
+    if (options.baseUrl) {
+      runnerEnv.WEAPP_E2E_BASE_URL = options.baseUrl;
+    }
+
+    const shouldProbeBackend = options.autoLogin === 'true' || options.loginHomeOnly;
+    if (shouldProbeBackend) {
+      const probeBaseUrl = options.healthUrl || options.baseUrl || 'http://127.0.0.1:8080';
+      const probeEndpoint = `${probeBaseUrl.replace(/\/$/, '')}/auth/code`;
+      const probeOutput = resolveDocTmpPath(config.repoRoot, config.stateSlug, 'weapp-smoke-auth-code.json');
+      const {response, body} = await fetchJson(probeEndpoint, {headers: {'Content-Type': 'application/json'}});
+      if (!response.ok) {
+        throw new Error(`[${config.label}] Backend health probe failed: ${probeEndpoint}`);
+      }
+      fs.writeFileSync(probeOutput, `${JSON.stringify(body, null, 2)}\n`, 'utf8');
+      if (body?.data?.captchaEnabled === true) {
+        throw new Error(`[${config.label}] Backend health probe returned captchaEnabled=true at ${probeEndpoint}`);
+      }
+      console.log(`[${config.label}] Backend health probe passed: ${probeEndpoint}`);
+    }
+
+    const runnerResult = await runCommandStreaming(
+      process.execPath,
+      ['./tests/e2e/weapp/runner.mjs', ...buildRunnerArgs(options)],
+      {
+        cwd: weappDir,
+        env: runnerEnv,
+        logFile: logPath
+      }
+    );
+
+    const logText = fs.existsSync(logPath) ? fs.readFileSync(logPath, 'utf8') : '';
+
+    if (logText.includes('[object Object]')) {
+      throw new Error(
+        `[${config.label}] Detected "[object Object]" in runner log, which violates mini-program error-message contract.\n[${config.label}] Runner log: ${logPath}`
+      );
+    }
+
+    if (options.loginHomeOnly) {
+      const verdict = evaluateLoginHomeOnly(logText, runnerResult.code);
+      if (!verdict.passed) {
+        throw new Error(`[${config.label}] ${verdict.reason}\n[${config.label}] Runner log: ${logPath}`);
+      }
+      writeState({
+        status: 'passed',
+        finishedAt: new Date().toISOString()
+      });
+      console.log(`[${config.label}] ${verdict.reason}`);
+      console.log(`[${config.label}] Runner log: ${logPath}`);
+      return;
+    }
+
+    if (runnerResult.signal) {
+      throw new Error(`[${config.label}] Smoke suite terminated by signal ${runnerResult.signal}. Runner log: ${logPath}`);
+    }
+    if (runnerResult.code !== 0) {
+      throw new Error(`[${config.label}] Smoke suite failed. Runner log: ${logPath}`);
+    }
+
+    writeState({
+      status: 'passed',
+      finishedAt: new Date().toISOString()
+    });
+    console.log(`[${config.label}] Smoke suite passed.`);
     console.log(`[${config.label}] Runner log: ${logPath}`);
-    return;
+  } catch (error) {
+    writeState({
+      status: 'failed',
+      stopReason: error.message || String(error),
+      finishedAt: new Date().toISOString()
+    });
+    throw error;
+  } finally {
+    process.removeListener('SIGINT', handleSigint);
+    process.removeListener('SIGTERM', handleSigterm);
+    process.removeListener('SIGHUP', handleSighup);
   }
-
-  if (runnerResult.signal) {
-    throw new Error(`[${config.label}] Smoke suite terminated by signal ${runnerResult.signal}. Runner log: ${logPath}`);
-  }
-  if (runnerResult.code !== 0) {
-    throw new Error(`[${config.label}] Smoke suite failed. Runner log: ${logPath}`);
-  }
-
-  console.log(`[${config.label}] Smoke suite passed.`);
-  console.log(`[${config.label}] Runner log: ${logPath}`);
 }

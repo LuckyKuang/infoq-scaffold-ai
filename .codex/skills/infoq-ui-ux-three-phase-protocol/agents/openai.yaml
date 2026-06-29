@@ -1,4 +1,0 @@
-interface:
-  display_name: "InfoQ UI 三阶段审批协议"
-  short_description: "以四阶段审批流程门禁重大 UI 任务，并支持解耦的设计智能覆盖层。"
-  default_prompt: "使用 $infoq-ui-ux-three-phase-protocol 在正式实现前执行仓库级 UI 审批工作流。"

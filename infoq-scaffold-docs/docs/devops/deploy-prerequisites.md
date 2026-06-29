@@ -62,6 +62,7 @@ outline: [2, 3]
 | 后端 `infoq-admin` | 9090 |
 | Vue 前端直连 | 9091 |
 | React 前端直连 | 9092 |
+| React Pro 前端直连 | 9093 |
 | MySQL | 3306 |
 | Redis | 6379 |
 | MinIO API | 9000 |
@@ -96,6 +97,7 @@ outline: [2, 3]
 /infoq/nginx/log
 /infoq/vue/logs
 /infoq/react/logs
+/infoq/react-pro/logs
 ```
 
 ### 4.2 手动部署推荐目录
@@ -170,6 +172,7 @@ outline: [2, 3]
 
 - Vue：[infoq-scaffold-frontend-vue/.env.production](https://github.com/luckykuang/infoq-scaffold-ai/blob/main/infoq-scaffold-frontend-vue/.env.production)
 - React：[infoq-scaffold-frontend-react/.env.production](https://github.com/luckykuang/infoq-scaffold-ai/blob/main/infoq-scaffold-frontend-react/.env.production)
+- React Pro：[infoq-scaffold-frontend-react-pro/.env.production](https://github.com/luckykuang/infoq-scaffold-ai/blob/main/infoq-scaffold-frontend-react-pro/.env.production)
 
 ### 5.4 网关配置
 
@@ -177,6 +180,7 @@ outline: [2, 3]
 
 - `/vue/` 指向 Vue 静态资源
 - `/react/` 指向 React 静态资源
+- `/react-pro/` 指向 React Pro 静态资源
 - `/prod-api/` 反代到后端 `9090`
 - HTTPS 证书路径和域名配置正确
 

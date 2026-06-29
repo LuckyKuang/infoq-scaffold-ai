@@ -6,7 +6,7 @@ import java.io.Serial;
 import java.io.Serializable;
 
 /**
- * OAuth provider option for login pages.
+ * 登录页 OAuth 提供方选项
  */
 @Data
 public class OAuthProviderOptionVo implements Serializable {

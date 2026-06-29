@@ -1,0 +1,4 @@
+interface:
+  display_name: "InfoQ 交付工作流"
+  short_description: "编排 Acceptance Contract、OpenSpec、UI 门禁和插件治理交付"
+  default_prompt: "使用 $infoq-delivery-workflow 为高影响需求、契约变更、跨工作区任务、重大 UI/UX、插件治理或高风险数据变更执行可验证交付流程；涉及 SQL 迁移、共享环境数据变更或批量修复时联动 $infoq-data-ops。"

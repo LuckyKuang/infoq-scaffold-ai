@@ -22,14 +22,15 @@
 
 ### 后端
 
-- 默认 Maven profile 是 `dev`。
+- 直接使用 Maven 或 `java -jar` 时，默认 Maven profile 仍是 `dev`。
+- 仓库本地联调脚本 `start_admin_dev_stack.mjs` / `run_admin_e2e.mjs` 会在存在 `application-local.yml` 时优先选择 `local`。
 - 若要稳定命中指定 profile，优先使用 `java -jar` 显式传入 `--spring.profiles.active=...`。
 - 本仓库当前推荐的确定性运行路径是先 `node .codex/scripts/backend_mvn.mjs -- clean install -DskipTests`，再运行 `infoq-scaffold-backend/infoq-admin/target/infoq-admin.jar`。
 
 ### 管理端
 
-- Vue / React 管理端都通过 `.env.development` 控制端口、代理、客户端 ID、加密和 SSE / WebSocket 开关。
-- 两边默认都把 `VITE_APP_PORT` 设成了 `80`。如果你想同时起两个 dev server，记得先改端口。
+- Vue / React / React Pro 管理端都通过 `.env.development` 控制端口、代理、客户端 ID、加密和 SSE / WebSocket 开关。
+- 三个管理端默认都把 `VITE_APP_PORT` 设成了 `80`。如果你想同时起多个 dev server，记得先改其中至少一个端口。
 
 ### 小程序端
 
@@ -59,6 +60,8 @@ node .codex/scripts/backend_mvn.mjs -- clean install -DskipTests
 java -jar infoq-scaffold-backend/infoq-admin/target/infoq-admin.jar --spring.profiles.active=dev
 ```
 
+> 说明：上面是手动直跑示例。仓库本地联调脚本会在存在 `application-local.yml` 时优先切到 `local`，以减少本地联调时的数据库和 Redis 错配。
+
 ### 4.2 使用 `local` profile
 
 ```bash
@@ -80,7 +83,7 @@ java -jar infoq-scaffold-backend/infoq-admin/target/infoq-admin.jar --spring.pro
 
 ## 5. 启动管理端
 
-Vue 和 React 管理端都依赖后端的 `/dev-api` 代理。默认代理目标是 `http://localhost:8080`，也可以通过 `VITE_APP_PROXY_TARGET` 覆盖。
+Vue、React 和 React Pro 管理端都依赖后端的 `/dev-api` 代理。默认代理目标是 `http://localhost:8080`，也可以通过 `VITE_APP_PROXY_TARGET` 覆盖。
 
 ### 5.1 Vue 管理端
 
@@ -98,7 +101,17 @@ pnpm install
 pnpm run dev
 ```
 
-### 5.3 管理端启动前必须知道的两件事
+### 5.3 React Pro 管理端
+
+```bash
+cd infoq-scaffold-frontend-react-pro
+pnpm install
+pnpm run dev
+```
+
+React Pro 默认使用端口 `80`，并在 Umi Max dev server ready 后自动打开浏览器。需要关闭自动打开时，执行 `pnpm run dev -- --no-open`。
+
+### 5.4 管理端启动前必须知道的两件事
 
 1. `VITE_APP_ENCRYPT` 默认开启。前端加密开关、RSA 密钥必须和后端 `api-decrypt.enabled` / RSA 配置保持一致，否则登录会直接失败。
 2. 前端登录默认会带 `clientId` 和 `grantType=password`。这些值必须和初始化 SQL 里的 `sys_client` 数据对应。
@@ -178,6 +191,16 @@ pnpm run lint
 pnpm run build:prod
 ```
 
+### React Pro 管理端
+
+```bash
+cd infoq-scaffold-frontend-react-pro
+pnpm run test
+pnpm run test:coverage
+pnpm run lint
+pnpm run build
+```
+
 ### React 小程序端
 
 ```bash
@@ -204,7 +227,7 @@ pnpm run verify:local
 | --- | --- |
 | 后端起不来 | `application-*.yml`、控制台日志、数据库 / Redis 连通性 |
 | 管理端 401 / 登录失败 | 前端 env、后端 `sys_client`、加密开关、`/auth/code` |
-| Vue / React 页面白屏 | `pnpm run dev` 控制台、浏览器 Console、路由组件路径 |
+| Vue / React / React Pro 页面白屏 | `pnpm run dev` 控制台、浏览器 Console、路由组件路径 |
 | 小程序请求失败 | `TARO_APP_API_ORIGIN`、合法域名、DevTools Network |
 | 部署跑不通 | [`deploy-prerequisites.md`](../devops/deploy-prerequisites.md)、[`docker-compose-deploy.md`](../devops/docker-compose-deploy.md)、[`manual-deploy.md`](../devops/manual-deploy.md) |
 

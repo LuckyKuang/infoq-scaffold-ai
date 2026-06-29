@@ -1,0 +1,81 @@
+{
+  "name": "infoq-scaffold-frontend-react-pro",
+  "version": "2.1.6",
+  "private": true,
+  "description": "infoq-scaffold React Ant Design Pro admin",
+  "packageManager": "pnpm@10.34.1",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/luckykuang/infoq-scaffold-ai.git"
+  },
+  "scripts": {
+    "analyze": "cross-env ANALYZE=1 node scripts/max.mjs build",
+    "build": "node scripts/max.mjs build",
+    "dev": "node scripts/start-dev.mjs --umi-env dev --mock none",
+    "lint": "pnpm run biome:lint && pnpm run tsc",
+    "biome:lint": "biome lint",
+    "biome": "biome check --write",
+    "prepare": "node scripts/max.mjs setup",
+    "preview": "node scripts/max.mjs preview --port 80",
+    "preview:build": "node scripts/max.mjs build && node scripts/max.mjs preview --port 80",
+    "start": "node scripts/start-dev.mjs --umi-env dev --mock none",
+    "start:no-mock": "node scripts/start-dev.mjs --umi-env dev --mock none",
+    "start:pre": "node scripts/start-dev.mjs --umi-env pre --mock none",
+    "start:test": "node scripts/start-dev.mjs --umi-env test --mock none",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "tsc": "tsc --noEmit"
+  },
+  "browserslist": [
+    "defaults"
+  ],
+  "dependencies": {
+    "@ant-design/icons": "^6.2.3",
+    "@ant-design/pro-components": "^3.1.12-0",
+    "@rc-component/util": "^1.11.0",
+    "@tanstack/react-query": "^5.101.0",
+    "antd": "^6.4.3",
+    "antd-style": "^4.1.0",
+    "axios": "^1.18.0",
+    "clsx": "^2.1.1",
+    "crypto-js": "^4.2.0",
+    "dayjs": "^1.11.20",
+    "echarts": "^6.1.0",
+    "file-saver": "^2.0.5",
+    "i18next": "^26.3.1",
+    "jsencrypt": "^3.5.4",
+    "nprogress": "^0.2.0",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
+    "react-easy-crop": "^5.5.7",
+    "react-i18next": "^17.0.8",
+    "react-router-dom": "6.3.0",
+    "sass": "^1.101.0",
+    "zustand": "^5.0.14"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.16",
+    "@tailwindcss/postcss": "^4.3.0",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@types/node": "^25.9.1",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@umijs/max": "^4.6.57",
+    "@vitest/coverage-v8": "4.1.8",
+    "@vitest/ui": "4.1.8",
+    "cross-env": "^10.1.0",
+    "happy-dom": "^20.10.1",
+    "jsdom": "^29.1.1",
+    "tailwindcss": "^4.3.0",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.16",
+    "vitest": "4.1.8"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}

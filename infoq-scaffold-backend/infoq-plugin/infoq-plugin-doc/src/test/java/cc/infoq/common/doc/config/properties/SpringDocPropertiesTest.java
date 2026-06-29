@@ -31,7 +31,7 @@ class SpringDocPropertiesTest {
 
         info.setTitle("InfoQ API");
         info.setDescription("API docs");
-        info.setVersion("2.1.5");
+        info.setVersion("2.1.6");
         info.setContact(contact);
         info.setLicense(license);
 
@@ -43,7 +43,7 @@ class SpringDocPropertiesTest {
 
         assertEquals("InfoQ API", properties.getInfo().getTitle());
         assertEquals("API docs", properties.getInfo().getDescription());
-        assertEquals("2.1.5", properties.getInfo().getVersion());
+        assertEquals("2.1.6", properties.getInfo().getVersion());
         assertSame(contact, properties.getInfo().getContact());
         assertSame(license, properties.getInfo().getLicense());
         assertSame(externalDocs, properties.getExternalDocs());

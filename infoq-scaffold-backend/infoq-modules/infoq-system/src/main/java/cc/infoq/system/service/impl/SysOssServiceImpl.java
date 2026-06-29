@@ -30,11 +30,11 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
 import java.io.IOException;
@@ -43,6 +43,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 文件上传 服务层实现
@@ -81,9 +82,13 @@ public class SysOssServiceImpl implements SysOssService, OssService {
     @Override
     public List<SysOssVo> listByIds(Collection<Long> ossIds) {
         List<SysOssVo> list = new ArrayList<>();
-        SysOssServiceImpl ossService = SpringUtils.getAopProxy(this);
+        if (ossIds.isEmpty()) {
+            return list;
+        }
+        Map<Long, SysOssVo> ossById = sysOssMapper.selectVoByIds(ossIds).stream()
+            .collect(Collectors.toMap(SysOssVo::getOssId, vo -> vo, (first, ignored) -> first));
         for (Long id : ossIds) {
-            SysOssVo vo = ossService.getById(id);
+            SysOssVo vo = ossById.get(id);
             if (ObjectUtil.isNotNull(vo)) {
                 list.add(this.resolveAccessibleUrl(vo));
             }
@@ -100,9 +105,14 @@ public class SysOssServiceImpl implements SysOssService, OssService {
     @Override
     public String selectUrlByIds(String ossIds) {
         List<String> list = new ArrayList<>();
-        SysOssServiceImpl ossService = SpringUtils.getAopProxy(this);
-        for (Long id : StringUtils.splitTo(ossIds, Convert::toLong)) {
-            SysOssVo vo = ossService.getById(id);
+        List<Long> ids = StringUtils.splitTo(ossIds, Convert::toLong);
+        if (ids.isEmpty()) {
+            return "";
+        }
+        Map<Long, SysOssVo> ossById = sysOssMapper.selectVoByIds(ids).stream()
+            .collect(Collectors.toMap(SysOssVo::getOssId, vo -> vo, (first, ignored) -> first));
+        for (Long id : ids) {
+            SysOssVo vo = ossById.get(id);
             if (ObjectUtil.isNotNull(vo)) {
                 list.add(this.resolveAccessibleUrl(vo).getUrl());
             }
@@ -113,8 +123,14 @@ public class SysOssServiceImpl implements SysOssService, OssService {
     @Override
     public List<OssDTO> selectByIds(String ossIds) {
         List<OssDTO> list = new ArrayList<>();
-        for (Long id : StringUtils.splitTo(ossIds, Convert::toLong)) {
-            SysOssVo vo = SpringUtils.getAopProxy(this).getById(id);
+        List<Long> ids = StringUtils.splitTo(ossIds, Convert::toLong);
+        if (ids.isEmpty()) {
+            return list;
+        }
+        Map<Long, SysOssVo> ossById = sysOssMapper.selectVoByIds(ids).stream()
+            .collect(Collectors.toMap(SysOssVo::getOssId, vo -> vo, (first, ignored) -> first));
+        for (Long id : ids) {
+            SysOssVo vo = ossById.get(id);
             if (ObjectUtil.isNotNull(vo)) {
                 vo.setUrl(this.resolveAccessibleUrl(vo).getUrl());
                 list.add(BeanUtil.toBean(vo, OssDTO.class));

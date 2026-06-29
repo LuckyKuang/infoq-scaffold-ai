@@ -8,7 +8,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 
 /**
- * Token settings for the Spring Security authentication base.
+ * Spring Security 认证令牌配置
  */
 @Data
 @ConfigurationProperties(prefix = "security.token")
@@ -17,32 +17,32 @@ public class SecurityTokenProperties {
     private static final String LEGACY_DEMO_SECRET = "abcdefghijklmnopqrstuvwxyz";
 
     /**
-     * Header name used by current frontend clients.
+     * 当前前端客户端使用的请求头名称
      */
     private String tokenName = SecurityAuthNames.AUTHORIZATION;
 
     /**
-     * Authorization token prefix.
+     * 认证令牌前缀
      */
     private String tokenPrefix = SecurityAuthNames.BEARER;
 
     /**
-     * HMAC signing secret. It must come from external config.
+     * HMAC 签名密钥，必须来自外部配置
      */
     private String secret;
 
     /**
-     * Fixed token lifetime. The legacy default was 30 days.
+     * 固定令牌有效期，旧版默认值为 30 天
      */
     private Duration ttl = Duration.ofDays(30);
 
     /**
-     * Inactivity timeout. Negative means disabled.
+     * 无操作超时时间，负数表示禁用
      */
     private Duration activeTimeout = Duration.ofSeconds(-1);
 
     /**
-     * Allows SSE/WebSocket style query token.
+     * 是否允许 SSE/WebSocket 使用查询参数传递令牌
      */
     private boolean queryTokenEnabled = true;
 

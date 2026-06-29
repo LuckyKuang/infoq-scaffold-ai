@@ -1,4 +1,0 @@
-interface:
-  display_name: "InfoQ 登录成功校验"
-  short_description: "在 Redisson OSS 基线下验证登录、token 与受保护接口"
-  default_prompt: "使用 $infoq-login-success-check 校验本仓库的登录成功、token 下发、受保护接口访问和 Redisson OSS 兼容性。"

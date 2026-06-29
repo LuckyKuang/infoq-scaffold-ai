@@ -1,7 +1,7 @@
 package cc.infoq.common.security.auth;
 
 /**
- * Explicit authentication failure used before the HTTP exception adapter maps it to 401.
+ * HTTP 异常适配器映射为 401 前使用的显式认证失败
  */
 public class SecurityAuthenticationException extends RuntimeException {
 

@@ -14,7 +14,7 @@
     </description>
 
     <properties>
-        <revision>2.1.5</revision>
+        <revision>2.1.6</revision>
     </properties>
 
     <dependencyManagement>

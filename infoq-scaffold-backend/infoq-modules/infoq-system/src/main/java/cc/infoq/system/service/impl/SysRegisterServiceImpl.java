@@ -31,7 +31,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Register validation service.
+ * 注册校验服务
  *
  * @author Pontus
  */

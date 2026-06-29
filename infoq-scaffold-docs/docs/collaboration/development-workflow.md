@@ -58,7 +58,7 @@ repo-level 或高风险治理变更，除 active change 外，还应在 `doc/pla
 
 1. 一次只改一类问题。
 2. 优先最小闭环，不绑无关重构。
-3. `tasks.md` 默认显式评估 backend、React admin、Vue admin、React weapp、Vue weapp、docs、script/deploy。
+3. `tasks.md` 默认显式评估 backend、React admin、React Pro admin、Vue admin、React weapp、Vue weapp、docs、script/deploy。
 4. 任何命令、环境变量、skill 入口、文档站同步链路或 MCP 配置变更，都要同步更新 `README.md` 与 `doc/*.md`。
 
 ### 4.3 修改后
@@ -84,17 +84,23 @@ backend 工作区基线是 JDK 17 与 Maven 3.9.x。
 
 `skills` 负责把高频任务沉淀成仓库内 SOP；`MCP` 负责补充交互探索或深度诊断能力。
 
+仓库级 skill 默认是领域型可执行 SOP。维护时优先重构现有领域 skill，不新增职责模糊的泛化 skill；只有出现无法归入现有 skill 的新工作域时才新增。标准执行顺序是：判定范围 -> 只读探测/预览 -> 目标与影响枚举 -> 写入或危险动作门禁 -> 执行验证 -> `doc/tmp/` 证据留存与显式失败。
+
 当前默认组合：
 
-- 浏览器主流程：`infoq-browser-automation` + repo-owned `playwright-cli`
-- React admin / weapp 运行态：`infoq-react-runtime-verification`
-- Vue admin / weapp 运行态：`infoq-vue-runtime-verification`
-- OpenAI / Codex / AGENTS / MCP 问题：`openai-docs`
+- 浏览器主流程：`infoq-browser-automate` + repo-owned `playwright-cli`
+- 真实验证码 admin E2E、测试矩阵和 CRUD E2E 模式：`infoq-admin-e2e`
+- 真实管理端页面运营维护、权限巡检和危险操作门禁：`infoq-admin-ops`
+- SQL、数据库、Redis、数据修复、迁移和一致性核对：`infoq-data-ops`
+- React/Vue admin 与 weapp 单测、构建和运行态：`infoq-frontend-verify`
+- 后端登录、smoke 和单测验证：`infoq-backend-verify`
+- OpenAI / Codex / AGENTS / MCP 问题：`openai-docs`（本机/系统 skill，不作为项目级 MCP 固定配置）
 - 前端深度调试：`chrome-devtools`
 
 说明：
 
-- `playwright-cli` 与 `chrome-devtools-cli` 是仓库内跨平台 CLI，位于 `.codex/skills/infoq-browser-automation/scripts/`。
+- `playwright-cli` 与 `chrome-devtools-cli` 是仓库内跨平台 CLI，位于 `.codex/skills/infoq-browser-automate/scripts/`。
+- `playwright-cli admin-route-probe` 遇到后端 `captchaEnabled=true` 时，会自动调用 `infoq-admin-e2e/scripts/captcha_login.mjs` 识别验证码并获取真实 token。
 - `playwright` MCP 用于临时交互探索。
 - `chrome-devtools` MCP 用于 Network / Console / Performance 深度诊断。
 - 不要回退到任何历史浏览器入口。

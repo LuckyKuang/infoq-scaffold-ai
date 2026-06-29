@@ -340,45 +340,32 @@ public class SysMenuServiceImpl implements SysMenuService {
      */
     @Override
     public boolean checkRouteConfigUnique(SysMenuBo menuBo) {
-        SysMenu menu = null;
-        try {
-            menu = MapstructUtils.convert(menuBo, SysMenu.class);
-        } catch (Throwable ex) {
-            log.debug("Mapstruct conversion unavailable in route uniqueness check, fallback to manual mapping. menuId={}",
-                menuBo.getMenuId(), ex);
-        }
-        if (ObjectUtil.isNull(menu)) {
-            menu = new SysMenu();
-            menu.setMenuId(menuBo.getMenuId());
-            menu.setParentId(menuBo.getParentId());
-            menu.setPath(menuBo.getPath());
-            menu.setMenuType(menuBo.getMenuType());
-        }
-        if (ObjectUtil.isNull(menu.getMenuType())) {
-            menu.setMenuType(menuBo.getMenuType());
-        }
-        if (ObjectUtil.isNull(menu.getParentId())) {
-            menu.setParentId(menuBo.getParentId());
-        }
-        if (StringUtils.isBlank(menu.getPath())) {
-            menu.setPath(menuBo.getPath());
-        }
-        if (ObjectUtil.isNull(menu.getMenuType()) || ObjectUtil.isNull(menu.getParentId()) || StringUtils.isBlank(menu.getPath())) {
+        String menuType = menuBo.getMenuType();
+        Long parentId = menuBo.getParentId();
+        String path = menuBo.getPath();
+        if (ObjectUtil.isNull(menuType) || ObjectUtil.isNull(parentId) || StringUtils.isBlank(path)) {
             log.warn("[路由配置校验失败] 菜单基础信息缺失 menuId={}, parentId={}, path={}, menuType={}",
-                menu.getMenuId(), menu.getParentId(), menu.getPath(), menu.getMenuType());
+                menuBo.getMenuId(), parentId, path, menuType);
             return false;
         }
-        if (SystemConstants.TYPE_BUTTON.equals(menu.getMenuType())) {
+        if (SystemConstants.TYPE_BUTTON.equals(menuType)) {
             return true;
         }
-        long menuId = ObjectUtil.isNull(menu.getMenuId()) ? -1L : menu.getMenuId();
-        Long parentId = menu.getParentId();
-        String path = menu.getPath();
-        String routeName = StringUtils.isEmpty(menu.getRouteName()) ? path : menu.getRouteName();
+        long menuId = ObjectUtil.isNull(menuBo.getMenuId()) ? -1L : menuBo.getMenuId();
+        SysMenu menu = new SysMenu();
+        menu.setParentId(parentId);
+        menu.setPath(path);
+        menu.setMenuType(menuType);
+        menu.setIsFrame(menuBo.getIsFrame());
+        String derivedRouteName = StringUtils.isNotEmpty(menu.getIsFrame()) ? menu.getRouteName() : StringUtils.EMPTY;
+        String routeName = StringUtils.isEmpty(derivedRouteName) ? path : derivedRouteName;
         List<SysMenu> sysMenuList = sysMenuMapper.selectList(
             new LambdaQueryWrapper<SysMenu>()
                 .in(SysMenu::getMenuType, SystemConstants.TYPE_DIR, SystemConstants.TYPE_MENU)
-                .eq(SysMenu::getPath, path).or().eq(SysMenu::getPath, routeName));
+                .and(wrapper -> wrapper
+                    .eq(SysMenu::getPath, path)
+                    .or()
+                    .eq(SysMenu::getPath, routeName)));
         for (SysMenu sysMenu : sysMenuList) {
             if (sysMenu.getMenuId() != menuId) {
                 Long dbParentId = sysMenu.getParentId();

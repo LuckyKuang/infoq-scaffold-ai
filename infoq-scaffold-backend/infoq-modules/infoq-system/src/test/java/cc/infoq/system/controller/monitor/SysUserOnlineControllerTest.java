@@ -18,6 +18,7 @@ import org.springframework.context.support.GenericApplicationContext;
 
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -98,8 +99,8 @@ class SysUserOnlineControllerTest {
         SecurityTokenSession expired = session("t2", "sys_user:200", "guest", "10.0.0.5", true);
         when(tokenService.digest("t1")).thenReturn("d1");
         when(tokenService.digest("t2")).thenReturn("d2");
-        when(tokenStore.findByDigest("d1")).thenReturn(Optional.of(active));
-        when(tokenStore.findByDigest("d2")).thenReturn(Optional.of(expired));
+        when(tokenStore.findByDigests(argThat(digests -> digests.size() == 2 && digests.containsAll(List.of("d1", "d2")))))
+            .thenReturn(Map.of("d1", active, "d2", expired));
 
         try (MockedStatic<RedisUtils> redisUtils = mockStatic(RedisUtils.class)) {
             redisUtils.when(() -> RedisUtils.keys(CacheConstants.ONLINE_TOKEN_KEY + "*"))
@@ -109,6 +110,8 @@ class SysUserOnlineControllerTest {
 
             assertEquals(1, result.getRows().size());
             assertEquals("admin", result.getRows().get(0).getUserName());
+            verify(tokenStore).findByDigests(argThat(digests -> digests.size() == 2 && digests.containsAll(List.of("d1", "d2"))));
+            verify(tokenStore, never()).findByDigest(anyString());
         }
     }
 
@@ -117,8 +120,10 @@ class SysUserOnlineControllerTest {
     void listShouldFilterByUsernameOnly() {
         when(tokenService.digest("t1")).thenReturn("d1");
         when(tokenService.digest("t2")).thenReturn("d2");
-        when(tokenStore.findByDigest("d1")).thenReturn(Optional.of(session("t1", "sys_user:100", "admin", "127.0.0.1", false)));
-        when(tokenStore.findByDigest("d2")).thenReturn(Optional.of(session("t2", "sys_user:200", "guest", "10.0.0.5", false)));
+        when(tokenStore.findByDigests(argThat(digests -> digests.size() == 2 && digests.containsAll(List.of("d1", "d2"))))).thenReturn(Map.of(
+            "d1", session("t1", "sys_user:100", "admin", "127.0.0.1", false),
+            "d2", session("t2", "sys_user:200", "guest", "10.0.0.5", false)
+        ));
 
         try (MockedStatic<RedisUtils> redisUtils = mockStatic(RedisUtils.class)) {
             redisUtils.when(() -> RedisUtils.keys(CacheConstants.ONLINE_TOKEN_KEY + "*"))
@@ -128,6 +133,8 @@ class SysUserOnlineControllerTest {
 
             assertEquals(1, result.getRows().size());
             assertEquals("guest", result.getRows().get(0).getUserName());
+            verify(tokenStore).findByDigests(argThat(digests -> digests.size() == 2 && digests.containsAll(List.of("d1", "d2"))));
+            verify(tokenStore, never()).findByDigest(anyString());
         }
     }
 
@@ -136,15 +143,18 @@ class SysUserOnlineControllerTest {
     void getInfoShouldReturnActiveSessionsForCurrentLoginOnly() {
         when(currentUserService.getAuthentication()).thenReturn(authentication("sys_user:100"));
         when(tokenStore.findTokenDigestsByLoginId("sys_user:100")).thenReturn(new LinkedHashSet<>(List.of("d1", "d2", "d3")));
-        when(tokenStore.findByDigest("d1")).thenReturn(Optional.of(session("t1", "sys_user:100", "admin", "127.0.0.1", false)));
-        when(tokenStore.findByDigest("d2")).thenReturn(Optional.of(session("t2", "sys_user:100", "admin", "127.0.0.1", true)));
-        when(tokenStore.findByDigest("d3")).thenReturn(Optional.empty());
+        when(tokenStore.findByDigests(new LinkedHashSet<>(List.of("d1", "d2", "d3")))).thenReturn(Map.of(
+            "d1", session("t1", "sys_user:100", "admin", "127.0.0.1", false),
+            "d2", session("t2", "sys_user:100", "admin", "127.0.0.1", true)
+        ));
 
         TableDataInfo<SysUserOnline> result = controller.getInfo();
 
         assertEquals(1, result.getRows().size());
         assertEquals("t1", result.getRows().get(0).getTokenId());
         assertEquals("admin", result.getRows().get(0).getUserName());
+        verify(tokenStore).findByDigests(new LinkedHashSet<>(List.of("d1", "d2", "d3")));
+        verify(tokenStore, never()).findByDigest(anyString());
     }
 
     private SecurityTokenAuthentication authentication(String loginId) {

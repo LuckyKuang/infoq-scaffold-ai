@@ -16,7 +16,7 @@ import org.springframework.context.annotation.Bean;
 import java.util.List;
 
 /**
- * OAuth protocol auto configuration.
+ * OAuth 协议自动配置
  */
 @AutoConfiguration
 @EnableConfigurationProperties(OAuthProperties.class)

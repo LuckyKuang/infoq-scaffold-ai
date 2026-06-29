@@ -21,9 +21,11 @@ outline: [2, 3]
 
 如果你改过 `VITE_APP_ENCRYPT`、`TARO_APP_ENCRYPT`、RSA 密钥或 `api-decrypt.enabled`，先假设是配置不一致，不要先怀疑页面代码。
 
-## 2. Vue 和 React 管理端为什么不能同时启动
+## 2. 多个管理端为什么不能同时启动
 
-因为两边 `.env.development` 默认都把 `VITE_APP_PORT` 设成了 `80`。如果你需要同时启动两个 dev server，先修改其中一个端口，再分别运行。
+因为 Vue、React 和 React Pro 管理端的 `.env.development` 默认都把 `VITE_APP_PORT` 设成了 `80`。如果你需要同时启动多个 dev server，先修改其中至少一个端口，再分别运行。
+
+React Pro 的 `pnpm run dev` 会在 Umi Max dev server ready 后自动打开浏览器；如需关闭，执行 `pnpm run dev -- --no-open`。
 
 ## 3. 管理端页面能打开，但接口全是 404 或网络错误
 
@@ -38,7 +40,7 @@ outline: [2, 3]
 
 ## 4. 我改了 `application-local.yml`，为什么启动时没生效
 
-因为默认 profile 是 `dev`。如果你没有显式传 `--spring.profiles.active=local`，运行时不会自动切到 `local`。
+如果你是手动直跑 `java -jar`，不显式传 `--spring.profiles.active=local` 时仍会落到 `dev`。如果你是用仓库本地联调脚本，`start_admin_dev_stack.mjs` 和 `run_admin_e2e.mjs` 会在存在 `application-local.yml` 时优先选择 `local`。
 
 错误示例：
 

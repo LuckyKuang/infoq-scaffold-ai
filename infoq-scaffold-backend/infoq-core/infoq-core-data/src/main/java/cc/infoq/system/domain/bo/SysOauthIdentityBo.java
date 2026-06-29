@@ -7,7 +7,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 /**
- * OAuth identity business object.
+ * OAuth 身份绑定业务对象
  */
 @Data
 @EqualsAndHashCode(callSuper = true)

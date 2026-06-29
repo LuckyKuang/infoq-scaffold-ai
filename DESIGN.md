@@ -11,7 +11,7 @@
 
 ## 2. 色彩系统 (Color Palette)
 
-系统支持动态主题切换，核心色彩基于 Ant Design 6 的 Token 系统并进行了编辑感定制。
+系统支持动态主题切换，核心色彩基于 Ant Design 和 Element Plus 的 Token 系统，并通过 Vanilla CSS 进行极简编辑感定制。
 
 ### 2.1 模式基准 (Theme Modes)
 
@@ -55,15 +55,18 @@ font-family: Helvetica Neue, Helvetica, PingFang SC, Hiragino Sans GB, Microsoft
 ## 4. 布局与容器 (Layout & Containers)
 
 ### 4.1 页面容器 (.app-container)
-- 标准内边距: `20px`。
+- 标准内边距: `24px`，确保充足的呼吸感。
+- 底层背景: `#f6f8fb` (Light) / `#141414` (Dark)，为悬浮卡片提供层次基础。
 
-### 4.2 面板与搜索栏 (.panel, .search)
+### 4.2 卡片面板与组件载体 (.panel, .app-card)
 - **视觉特征**: 
-  - 边框: `1px solid #e4e7ed`
-  - 圆角: `0.75rem` (12px)
-  - 背景: `#ffffff`
+  - 边框: 极淡或隐藏（例如 `1px solid rgba(15, 23, 42, 0.08)` 或通过背景色区分）。
+  - 圆角: 内容卡片统一 `12px`，内部表单/按钮控件统一 `8px`。
+  - 背景: 纯白 `#ffffff` (Light) / `#1f1f1f` (Dark)。
 - **状态反馈**: 
-  - Hover 时产生柔和阴影: `box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1)`
+  - 静态阴影: 极柔和的底层投影 `box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06)`。
+  - Hover 阴影: 提升悬浮感 `box-shadow: 0 12px 32px rgba(15, 23, 42, 0.10)`。
+  - 交互过渡: 全局卡片交互必须包含 `transition: all 0.3s ease`。
 
 ### 4.3 标签栏 (TagsViewBar)
 - 位于 Header 下方的窄条，用于快速切换历史页面。

@@ -11,7 +11,7 @@ import java.io.Serial;
 import java.util.Date;
 
 /**
- * OAuth identity binding.
+ * OAuth 身份绑定
  */
 @Data
 @EqualsAndHashCode(callSuper = true)

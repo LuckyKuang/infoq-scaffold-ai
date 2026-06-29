@@ -1,4 +1,0 @@
-interface:
-  display_name: "InfoQ 后端冒烟测试"
-  short_description: "执行后端冒烟与 Redisson OSS 兼容登录校验"
-  default_prompt: "使用 $infoq-backend-smoke-test 在后端改动后执行 HTTP smoke 或双节点 WebSocket 集群 smoke，并保持 Redisson OSS 兼容性验证。"

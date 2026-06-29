@@ -9,7 +9,10 @@ import cc.infoq.common.mybatis.core.page.TableDataInfo;
 import cc.infoq.common.mybatis.helper.DataPermissionHelper;
 import cc.infoq.common.security.auth.LoginUserContext;
 import cc.infoq.common.service.UserService;
-import cc.infoq.common.utils.*;
+import cc.infoq.common.utils.MapstructUtils;
+import cc.infoq.common.utils.ObjectUtils;
+import cc.infoq.common.utils.StreamUtils;
+import cc.infoq.common.utils.StringUtils;
 import cc.infoq.system.domain.bo.SysUserBo;
 import cc.infoq.system.domain.entity.SysUser;
 import cc.infoq.system.domain.entity.SysUserPost;
@@ -362,9 +365,9 @@ public class SysUserServiceImpl implements SysUserService, UserService {
     @CacheEvict(cacheNames = CacheNames.SYS_NICKNAME, key = "#user.userId")
     @Transactional(rollbackFor = Exception.class)
     public int updateUser(SysUserBo user) {
-        // 新增用户与角色管理
+        // 修改用户角色（先清空旧关联再写入新关联）
         insertUserRole(user, true);
-        // 新增用户与岗位管理
+        // 修改用户岗位（先清空旧关联再写入新关联）
         insertUserPost(user, true);
         SysUser sysUser = MapstructUtils.convert(user, SysUser.class);
         // 防止错误更新后导致的数据误删除
@@ -564,11 +567,25 @@ public class SysUserServiceImpl implements SysUserService, UserService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public int deleteUserByIds(Long[] userIds) {
+        Set<Long> scopedUserIds = new HashSet<>();
         for (Long userId : userIds) {
             checkUserAllowed(userId);
-            checkUserDataScope(userId);
+            if (ObjectUtil.isNotNull(userId)) {
+                scopedUserIds.add(userId);
+            }
         }
         List<Long> ids = List.of(userIds);
+        if (CollUtil.isNotEmpty(scopedUserIds) && !LoginUserContext.isSuperAdmin()) {
+            List<SysUserVo> accessibleUsers = sysUserMapper.selectUserList(new LambdaQueryWrapper<SysUser>()
+                .in(SysUser::getUserId, scopedUserIds));
+            Set<Long> accessibleUserIds = new HashSet<>();
+            for (SysUserVo user : accessibleUsers) {
+                accessibleUserIds.add(user.getUserId());
+            }
+            if (!accessibleUserIds.containsAll(scopedUserIds)) {
+                throw new ServiceException("没有权限访问用户数据！");
+            }
+        }
         // 删除用户与角色关联
         sysUserRoleMapper.delete(new LambdaQueryWrapper<SysUserRole>().in(SysUserRole::getUserId, ids));
         // 删除用户与岗位表
@@ -631,9 +648,22 @@ public class SysUserServiceImpl implements SysUserService, UserService {
      */
     @Override
     public String selectNicknameByIds(String userIds) {
+        List<Long> ids = StringUtils.splitTo(userIds, Convert::toLong);
+        if (ids.isEmpty()) {
+            return "";
+        }
+        Map<Long, String> nicknamesById = new HashMap<>();
+        List<SysUser> users = sysUserMapper.selectList(new LambdaQueryWrapper<SysUser>()
+            .select(SysUser::getUserId, SysUser::getNickName)
+            .in(SysUser::getUserId, ids));
+        for (SysUser user : users) {
+            if (StringUtils.isNotBlank(user.getNickName())) {
+                nicknamesById.putIfAbsent(user.getUserId(), user.getNickName());
+            }
+        }
         List<String> list = new ArrayList<>();
-        for (Long id : StringUtils.splitTo(userIds, Convert::toLong)) {
-            String nickname = SpringUtils.getAopProxy(this).selectNicknameById(id);
+        for (Long id : ids) {
+            String nickname = nicknamesById.get(id);
             if (StringUtils.isNotBlank(nickname)) {
                 list.add(nickname);
             }

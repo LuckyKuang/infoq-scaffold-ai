@@ -44,19 +44,23 @@ public class SysUserOnlineController extends BaseController {
     @PreAuthorize("@securityAuthorizationService.hasPermission('monitor:online:list')")
     @GetMapping("/list")
     public TableDataInfo<SysUserOnline> list(String ipaddr, String userName) {
-        // 获取所有未过期的 token
+        // 获取在线 token 索引后批量加载 session，避免在线用户多时逐条访问 Redis。
         Collection<String> keys = RedisUtils.keys(CacheConstants.ONLINE_TOKEN_KEY + "*");
-        List<UserOnlineDTO> userOnlineDTOList = new ArrayList<>();
+        Map<String, String> digestByToken = new LinkedHashMap<>();
         for (String key : keys) {
             String token = StringUtils.substringAfterLast(key, ":");
             if (StringUtils.isBlank(token)) {
                 continue;
             }
-            tokenStore.findByDigest(tokenService.digest(token))
-                .filter(this::isActive)
-                .map(this::resolveOnlineUser)
-                .ifPresent(userOnlineDTOList::add);
+            digestByToken.put(token, tokenService.digest(token));
         }
+        Map<String, SecurityTokenSession> sessionsByDigest = tokenStore.findByDigests(digestByToken.values());
+        List<UserOnlineDTO> userOnlineDTOList = digestByToken.values().stream()
+            .map(sessionsByDigest::get)
+            .filter(this::isActive)
+            .map(this::resolveOnlineUser)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toList());
         if (StringUtils.isNotEmpty(ipaddr) && StringUtils.isNotEmpty(userName)) {
             userOnlineDTOList = StreamUtils.filter(userOnlineDTOList, userOnline ->
                 StringUtils.equals(ipaddr, userOnline.getIpaddr()) &&
@@ -97,11 +101,13 @@ public class SysUserOnlineController extends BaseController {
     @GetMapping()
     public TableDataInfo<SysUserOnline> getInfo() {
         SecurityTokenAuthentication authentication = currentUserService.getAuthentication();
-        List<UserOnlineDTO> userOnlineDTOList = tokenStore.findTokenDigestsByLoginId(authentication.session().getLoginId()).stream()
-            .map(tokenStore::findByDigest)
-            .flatMap(Optional::stream)
+        Set<String> tokenDigests = tokenStore.findTokenDigestsByLoginId(authentication.session().getLoginId());
+        Map<String, SecurityTokenSession> sessionsByDigest = tokenStore.findByDigests(tokenDigests);
+        List<UserOnlineDTO> userOnlineDTOList = tokenDigests.stream()
+            .map(sessionsByDigest::get)
             .filter(this::isActive)
             .map(this::resolveOnlineUser)
+            .filter(Objects::nonNull)
             .collect(Collectors.toList());
         //复制和处理 SysUserOnline 对象列表
         Collections.reverse(userOnlineDTOList);

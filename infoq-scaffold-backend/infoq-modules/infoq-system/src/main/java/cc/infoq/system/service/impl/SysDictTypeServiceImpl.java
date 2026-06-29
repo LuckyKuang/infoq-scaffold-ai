@@ -139,10 +139,19 @@ public class SysDictTypeServiceImpl implements SysDictTypeService, DictService {
     @Override
     public void deleteDictTypeByIds(List<Long> dictIds) {
         List<SysDictType> list = sysDictTypeMapper.selectByIds(dictIds);
+        Set<String> assignedDictTypes;
+        if (CollUtil.isNotEmpty(list)) {
+            Set<String> dictTypes = list.stream().map(SysDictType::getDictType).collect(Collectors.toSet());
+            assignedDictTypes = sysDictDataMapper.selectList(new LambdaQueryWrapper<SysDictData>()
+                    .in(SysDictData::getDictType, dictTypes))
+                .stream()
+                .map(SysDictData::getDictType)
+                .collect(Collectors.toSet());
+        } else {
+            assignedDictTypes = Set.of();
+        }
         list.forEach(x -> {
-            boolean assigned = sysDictDataMapper.exists(new LambdaQueryWrapper<SysDictData>()
-                .eq(SysDictData::getDictType, x.getDictType()));
-            if (assigned) {
+            if (assignedDictTypes.contains(x.getDictType())) {
                 throw new ServiceException("{}已分配,不能删除", x.getDictName());
             }
         });
@@ -205,7 +214,7 @@ public class SysDictTypeServiceImpl implements SysDictTypeService, DictService {
     }
 
     /**
-     * 校验字典类型称是否唯一
+     * 校验字典类型名称是否唯一
      *
      * @param dictType 字典类型
      * @return 结果

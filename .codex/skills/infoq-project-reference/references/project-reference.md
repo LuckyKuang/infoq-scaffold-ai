@@ -6,6 +6,7 @@
 - 后端参考
 - 管理端前端参考
   - React Admin
+  - React Pro Admin
   - Vue Admin
 - 小程序前端参考
   - React Weapp
@@ -26,6 +27,7 @@
 - 活跃工作区：
   - `infoq-scaffold-backend`
   - `infoq-scaffold-frontend-react`
+  - `infoq-scaffold-frontend-react-pro`
   - `infoq-scaffold-frontend-vue`
   - `infoq-scaffold-frontend-weapp-react`
   - `infoq-scaffold-frontend-weapp-vue`
@@ -38,6 +40,7 @@
   - `AGENTS.md`
   - `infoq-scaffold-backend/AGENTS.md`
   - `infoq-scaffold-frontend-react/AGENTS.md`
+  - `infoq-scaffold-frontend-react-pro/AGENTS.md`
   - `infoq-scaffold-frontend-vue/AGENTS.md`
   - `infoq-scaffold-frontend-weapp-react/AGENTS.md`
   - `infoq-scaffold-frontend-weapp-vue/AGENTS.md`
@@ -82,6 +85,29 @@
   - `src/router/AppRouter.tsx` 中的 `AuthGuard`、`MainLayout`、`BackendRouteView`、`login`、`register`、`401`、`redirect` 已改为 `lazy()`；入口首包优化依赖这些真实路由边界。
   - 处理 chunk warning 时，优先保留“按路由边界拆 + 按 rc 重模块拆”的思路，不要回到按 `antd/es/*` 或 `antd/lib/*` 细粒度手工拆包；旧策略容易触发 circular chunk warning。
   - 验证标准以 `pnpm run build:prod` 输出为准：既要避免 circular chunk warning，也要避免 `Some chunks are larger than 500 kB after minification`。
+
+### React Pro Admin
+
+- 关键目录：
+  - `infoq-scaffold-frontend-react-pro/src/pages`
+  - `infoq-scaffold-frontend-react-pro/src/components`
+  - `infoq-scaffold-frontend-react-pro/src/api`
+  - `infoq-scaffold-frontend-react-pro/src/utils`
+  - `infoq-scaffold-frontend-react-pro/config`
+  - `infoq-scaffold-frontend-react-pro/tests`
+- 关键文件：
+  - `infoq-scaffold-frontend-react-pro/package.json`
+  - `infoq-scaffold-frontend-react-pro/config/config.ts`
+  - `infoq-scaffold-frontend-react-pro/config/routes.ts`
+  - `infoq-scaffold-frontend-react-pro/src/app.tsx`
+  - `infoq-scaffold-frontend-react-pro/.env.development`
+  - `infoq-scaffold-frontend-react-pro/scripts/start-dev.mjs`
+  - `infoq-scaffold-frontend-react-pro/scripts/max.mjs`
+- 运行与部署真值：
+  - `pnpm run dev` 通过 `scripts/start-dev.mjs` 启动 Umi Max，默认端口 `80`，ready 后自动打开浏览器。
+  - `pnpm run build`、`pnpm run prepare`、`pnpm run preview`、`pnpm run analyze` 通过 `scripts/max.mjs` 进入 Umi Max，统一设置 `DID_YOU_KNOW=none`。
+  - 可用 `PORT` 或 `VITE_APP_PORT` 覆盖端口；可用 `INFOQ_REACT_PRO_OPEN=false`、`BROWSER=none` 或 `pnpm run dev -- --no-open` 禁止自动打开浏览器。
+  - Compose 部署路径是 `/react-pro/`，容器直连端口是 `9093`。
 
 ### Vue Admin
 
@@ -201,6 +227,15 @@
 - Lint：`cd infoq-scaffold-frontend-react && pnpm run lint`
 - 构建：`cd infoq-scaffold-frontend-react && pnpm run build:prod`
 
+### React Pro Admin
+
+- 安装：`cd infoq-scaffold-frontend-react-pro && pnpm install`
+- 开发：`cd infoq-scaffold-frontend-react-pro && pnpm run dev`
+- 测试：`cd infoq-scaffold-frontend-react-pro && pnpm run test`
+- 覆盖率：`cd infoq-scaffold-frontend-react-pro && pnpm run test:coverage`
+- Lint：`cd infoq-scaffold-frontend-react-pro && pnpm run lint`
+- 构建：`cd infoq-scaffold-frontend-react-pro && pnpm run build`
+
 ### Vue Admin
 
 - 安装：`cd infoq-scaffold-frontend-vue && pnpm install`
@@ -248,6 +283,8 @@
 - 交付规划应定义 acceptance contract，覆盖功能范围、非目标、异常处理、所需日志/可观测性、回滚条件
 - 可发布变更在部署前必须验证环境/配置前置条件与外部依赖
 - 影响共享环境、数据或部署状态的破坏性/高风险操作必须显式确认
-- 后端运行时/登录改动应使用 `infoq-login-success-check` 与 `infoq-backend-smoke-test`
-- Admin 运行态验证归属 `infoq-react-runtime-verification` 或 `infoq-vue-runtime-verification`
-- Weapp 运行态验证归属同家族 React/Vue 运行态技能（通过 `references/weapp/*`）
+- SQL、数据库、Redis、数据修复、迁移、测试数据维护和 API/UI/DB 一致性验证归属 `infoq-data-ops`
+- 后端运行时、登录、smoke 与单测验证归属 `infoq-backend-verify`
+- React/Vue admin 与 weapp 运行态、单测、coverage、lint/build 归属 `infoq-frontend-verify`
+- React Pro admin 当前先使用 `infoq-scaffold-frontend-react-pro` 工作区 package scripts 执行单测、lint、build 与运行态验证
+- 管理端真实验证码登录、动态路由 smoke、测试矩阵与 CRUD E2E 模式归属 `infoq-admin-e2e`

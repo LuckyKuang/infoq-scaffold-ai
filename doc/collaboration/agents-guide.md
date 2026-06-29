@@ -13,11 +13,12 @@
 
 ## 2. 当前分层方式
 
-本仓库现在是六层入口：
+本仓库现在是七层入口：
 
 - 根规则：`/AGENTS.md`
 - 后端：`infoq-scaffold-backend/AGENTS.md`
 - React 管理端：`infoq-scaffold-frontend-react/AGENTS.md`
+- React Pro 管理端：`infoq-scaffold-frontend-react-pro/AGENTS.md`
 - Vue 管理端：`infoq-scaffold-frontend-vue/AGENTS.md`
 - React 小程序端：`infoq-scaffold-frontend-weapp-react/AGENTS.md`
 - Vue 小程序端：`infoq-scaffold-frontend-weapp-vue/AGENTS.md`
@@ -127,21 +128,28 @@ repo 级 custom agents 的真值不写在 `AGENTS.md` 之外的任意散落文�
 
 以下职责默认回到主线程，而不是继续保留独立 custom agent：
 
-- `design.md`：按需维护；重大 UI/UX 任务优先走 `infoq-ui-ux-three-phase-protocol`
+- `design.md`：按需维护；重大 UI/UX 任务优先走 `infoq-delivery-workflow` 的四阶段 UI 门禁
 - `materials.md`：确有 copy、mock data、图标建议价值时再写
 - 最终验收与 blocker 总结：主线程基于真实验证证据完成，必要时再写 `review.md`
 
 ## 7. 当前 skill 路由策略
 
-当前仓库采用的是“家族 skill + 客户端 references”的策略：
+当前仓库采用的是“工作域 skill + 参数 / references 区分变体”的策略：
 
-- 后端单测与回归补测：`infoq-backend-unit-test-patterns`
-- 后端接口与运行态冒烟：`infoq-backend-smoke-test`、`infoq-login-success-check`
-- React 家族运行态验证：`infoq-react-runtime-verification`
-- Vue 家族运行态验证：`infoq-vue-runtime-verification`
-- React 家族单测：`infoq-react-unit-test-patterns`
-- Vue 家族单测：`infoq-vue-unit-test-patterns`
-admin 和 weapp 的差异留在 skill 的 `references/admin` 与 `references/weapp`，而 backend 测试 / smoke 则通过独立 skill 保持边界清晰，而不是重新拆共享底座。
+- 仓库静态参考：`infoq-project-reference`
+- 高影响交付、OpenSpec、重大 UI/UX 门禁和插件治理：`infoq-delivery-workflow`
+- 后端单测、登录、HTTP smoke、WebSocket cluster smoke：`infoq-backend-verify`
+- React/Vue admin 与 weapp 单测、构建和运行态：`infoq-frontend-verify`
+- SQL、数据库、Redis、数据修复、迁移和一致性核对：`infoq-data-ops`
+- 管理端测试矩阵、真实验证码 E2E、CRUD E2E 模式：`infoq-admin-e2e`
+- 管理端真实页面运营维护、权限巡检和危险操作门禁：`infoq-admin-ops`
+- 通用浏览器执行器：`infoq-browser-automate`
+- Ant Design / Element Plus 组件参考：`infoq-component-reference`
+- 版本升级、package / 小程序 manifest 同步和发布操作：`infoq-release-ops`
+
+React / Vue 与 admin / weapp 的差异留在 `references/*` 或 `--client react|vue` 参数里。真实验证码、OCR、登录态和动态路由 smoke 由 `infoq-admin-e2e` 负责；真实后台页面运营维护和权限巡检由 `infoq-admin-ops` 负责；SQL、数据库、Redis、数据修复、迁移和一致性核对由 `infoq-data-ops` 负责；普通页面交互、截图和 console/pageerror 证据由 `infoq-browser-automate` 负责；前端单测、构建和本地栈由 `infoq-frontend-verify` 负责。
+
+维护这些 skill 时优先破坏性重构现有领域 skill，不用新增泛化 skill 绕开边界。每个可执行 skill 默认遵循：判定范围、只读探测或 dry-run、目标与影响枚举、写入或危险动作门禁、执行后验证、`doc/tmp/` 证据留存和显式失败。
 
 ## 8. AGENTS 什么时候需要更新
 
@@ -169,4 +177,4 @@ admin 和 weapp 的差异留在 skill 的 `references/admin` 与 `references/wea
 - skill 指南：`./skills-guide.md`
 - subagents 使用指南：`./subagents-guide.md`
 - 项目静态参考：`../.codex/skills/infoq-project-reference/references/project-reference.md`
-- 压缩维护 skill：`../.codex/skills/infoq-agents-md-compress/SKILL.md`
+- AGENTS 压缩与路由格式：以根 `AGENTS.md`、本指南和 `./skills-guide.md` 为当前真值；如需工具化压缩，使用系统级或通用级 AGENTS 工具，不保留仓库级重复 skill。
