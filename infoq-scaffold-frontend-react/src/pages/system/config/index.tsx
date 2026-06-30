@@ -406,7 +406,7 @@ export default function ConfigPage() {
               参数设置
             </Title>
             <Text type="secondary" className="config-subtitle">
-              按类型直接修改配置，恢复默认由后端读取 default_value 执行，旧配置缺元数据时归入高级配置。
+              按类型直接修改配置，恢复默认由后端读取 default_value 执行。
             </Text>
           </div>
           <Space wrap className="config-hero-actions">

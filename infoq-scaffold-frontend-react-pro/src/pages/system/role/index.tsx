@@ -8,6 +8,7 @@ import {
   SearchOutlined,
   UserOutlined,
 } from '@ant-design/icons';
+import {useNavigate} from '@umijs/max';
 import {
   Button,
   Card,
@@ -17,7 +18,6 @@ import {
   Form,
   Input,
   InputNumber,
-  Modal,
   Radio,
   Row,
   Select,
@@ -31,7 +31,6 @@ import type {ColumnsType} from 'antd/es/table';
 import type {DataNode} from 'antd/es/tree';
 import type {Dayjs} from 'dayjs';
 import {useCallback, useState} from 'react';
-import {useNavigate} from '@umijs/max';
 import {roleMenuTreeselect, treeselect as menuTreeselect,} from '@/api/system/menu';
 import type {MenuTreeOption} from '@/api/system/menu/types';
 import {
@@ -45,11 +44,13 @@ import {
   updateRole,
 } from '@/api/system/role';
 import type {RoleDeptTree, RoleForm, RoleQuery, RoleVO,} from '@/api/system/role/types';
+import CrudModal from '@/components/CrudModal';
 import Pagination from '@/components/Pagination';
 import RightToolbar from '@/components/RightToolbar';
-import useInitialLoadEffect from '@/hooks/useInitialLoadEffect';
 import useDictOptions from '@/hooks/useDictOptions';
+import useInitialLoadEffect from '@/hooks/useInitialLoadEffect';
 import modal from '@/utils/modal';
+import auth from '@/utils/permission';
 import {download} from '@/utils/request';
 import {addDateRange} from '@/utils/scaffold';
 
@@ -167,9 +168,13 @@ export default function RolePage() {
     setCheckedDeptKeys(response.data.checkedKeys.map(String));
   };
 
-  useInitialLoadEffect(() => {
-    loadList(initialQuery, null);
-  }, [loadList], {dedupeKey: 'system-role-initial-list'});
+  useInitialLoadEffect(
+    () => {
+      loadList(initialQuery, null);
+    },
+    [loadList],
+    { dedupeKey: 'system-role-initial-list' },
+  );
 
   const columns: ColumnsType<RoleVO> = [
     {
@@ -221,37 +226,45 @@ export default function RolePage() {
         <Space size={4}>
           {record.roleId !== 1 && (
             <>
-              <Tooltip title="修改">
-                <Button
-                  type="link"
-                  icon={<EditOutlined />}
-                  onClick={() => handleEdit(record.roleId)}
-                />
-              </Tooltip>
-              <Tooltip title="删除">
-                <Button
-                  danger
-                  type="link"
-                  icon={<DeleteOutlined />}
-                  onClick={() => handleDelete(record.roleId)}
-                />
-              </Tooltip>
-              <Tooltip title="数据权限">
-                <Button
-                  type="link"
-                  icon={<CheckCircleOutlined />}
-                  onClick={() => handleDataScope(record.roleId)}
-                />
-              </Tooltip>
-              <Tooltip title="分配用户">
-                <Button
-                  type="link"
-                  icon={<UserOutlined />}
-                  onClick={() =>
-                    navigate(`/system/role-auth/user/${record.roleId}`)
-                  }
-                />
-              </Tooltip>
+              {auth.hasPermiOr(['system:role:edit']) && (
+                <Tooltip title="修改">
+                  <Button
+                    type="link"
+                    icon={<EditOutlined />}
+                    onClick={() => handleEdit(record.roleId)}
+                  />
+                </Tooltip>
+              )}
+              {auth.hasPermiOr(['system:role:remove']) && (
+                <Tooltip title="删除">
+                  <Button
+                    danger
+                    type="link"
+                    icon={<DeleteOutlined />}
+                    onClick={() => handleDelete(record.roleId)}
+                  />
+                </Tooltip>
+              )}
+              {auth.hasPermiOr(['system:role:edit']) && (
+                <Tooltip title="数据权限">
+                  <Button
+                    type="link"
+                    icon={<CheckCircleOutlined />}
+                    onClick={() => handleDataScope(record.roleId)}
+                  />
+                </Tooltip>
+              )}
+              {auth.hasPermiOr(['system:role:edit']) && (
+                <Tooltip title="分配用户">
+                  <Button
+                    type="link"
+                    icon={<UserOutlined />}
+                    onClick={() =>
+                      navigate(`/system/role-auth/user/${record.roleId}`)
+                    }
+                  />
+                </Tooltip>
+              )}
             </>
           )}
         </Space>
@@ -399,6 +412,7 @@ export default function RolePage() {
                 >
                   <DatePicker.RangePicker
                     showTime
+                    placeholder={['开始日期', '结束日期']}
                     style={{ width: '100%' }}
                     value={dateRange}
                     onChange={(value) =>
@@ -442,47 +456,55 @@ export default function RolePage() {
       <Card>
         <div className="table-toolbar">
           <Space wrap className="toolbar-buttons">
-            <Button
-              className="btn-plain-primary"
-              icon={<PlusOutlined />}
-              onClick={async () => {
-                form.setFieldsValue(initialForm);
-                await loadMenuTree();
-                setDialogOpen(true);
-              }}
-            >
-              新增
-            </Button>
-            <Button
-              icon={<EditOutlined />}
-              onClick={() => handleEdit(selectedIds[0])}
-              disabled={selectedIds.length !== 1}
-              style={{ color: '#67c23a', borderColor: '#b7eb8f' }}
-            >
-              修改
-            </Button>
-            <Button
-              danger
-              icon={<DeleteOutlined />}
-              onClick={() => handleDelete()}
-              disabled={selectedIds.length === 0}
-              style={{ borderColor: '#ffccc7' }}
-            >
-              删除
-            </Button>
-            <Button
-              icon={<DownloadOutlined />}
-              onClick={() =>
-                download(
-                  '/system/role/export',
-                  addDateRange({ ...query }, formatRange(dateRange)),
-                  `role_${Date.now()}.xlsx`,
-                )
-              }
-              style={{ color: '#e6a23c', borderColor: '#ffd591' }}
-            >
-              导出
-            </Button>
+            {auth.hasPermiOr(['system:role:add']) && (
+              <Button
+                className="btn-plain-primary"
+                icon={<PlusOutlined />}
+                onClick={async () => {
+                  form.setFieldsValue(initialForm);
+                  await loadMenuTree();
+                  setDialogOpen(true);
+                }}
+              >
+                新增
+              </Button>
+            )}
+            {auth.hasPermiOr(['system:role:edit']) && (
+              <Button
+                icon={<EditOutlined />}
+                onClick={() => handleEdit(selectedIds[0])}
+                disabled={selectedIds.length !== 1}
+                style={{ color: '#67c23a', borderColor: '#b7eb8f' }}
+              >
+                修改
+              </Button>
+            )}
+            {auth.hasPermiOr(['system:role:remove']) && (
+              <Button
+                danger
+                icon={<DeleteOutlined />}
+                onClick={() => handleDelete()}
+                disabled={selectedIds.length === 0}
+                style={{ borderColor: '#ffccc7' }}
+              >
+                删除
+              </Button>
+            )}
+            {auth.hasPermiOr(['system:role:export']) && (
+              <Button
+                icon={<DownloadOutlined />}
+                onClick={() =>
+                  download(
+                    '/system/role/export',
+                    addDateRange({ ...query }, formatRange(dateRange)),
+                    `role_${Date.now()}.xlsx`,
+                  )
+                }
+                style={{ color: '#e6a23c', borderColor: '#ffd591' }}
+              >
+                导出
+              </Button>
+            )}
           </Space>
           <div className="right-toolbar-wrap">
             <RightToolbar
@@ -519,7 +541,7 @@ export default function RolePage() {
         />
       </Card>
 
-      <Modal
+      <CrudModal
         width={760}
         open={dialogOpen}
         title={editingRoleId ? '修改角色' : '新增角色'}
@@ -582,9 +604,9 @@ export default function RolePage() {
             <Input.TextArea rows={4} />
           </Form.Item>
         </Form>
-      </Modal>
+      </CrudModal>
 
-      <Modal
+      <CrudModal
         width={760}
         open={scopeOpen}
         title="分配数据权限"
@@ -634,7 +656,7 @@ export default function RolePage() {
             </>
           )}
         </Form>
-      </Modal>
+      </CrudModal>
     </Space>
   );
 }

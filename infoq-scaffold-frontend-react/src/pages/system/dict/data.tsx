@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { CloseOutlined, DeleteOutlined, DownloadOutlined, EditOutlined, PlusOutlined, ReloadOutlined, SearchOutlined } from '@ant-design/icons';
-import { Button, Card, Col, Form, Input, InputNumber, Modal, Row, Select, Space, Table, Tooltip } from 'antd';
+import { Button, Card, Col, Form, Input, InputNumber, Row, Select, Space, Table, Tooltip } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { getType, optionselect as getDictTypeOptions } from '@/api/system/dict/type';
@@ -10,7 +10,9 @@ import type { DictDataForm, DictDataQuery, DictDataVO } from '@/api/system/dict/
 import Pagination from '@/components/Pagination';
 import RightToolbar from '@/components/RightToolbar';
 import DictTag from '@/components/DictTag';
+import CrudModal from '@/components/CrudModal';
 import modal from '@/utils/modal';
+import auth from '@/utils/permission';
 import { download } from '@/utils/request';
 
 const initialQuery: DictDataQuery = {
@@ -149,12 +151,16 @@ export default function DictDataPage() {
       align: 'center',
       render: (_, record) => (
         <Space size={4}>
-          <Tooltip title="修改">
-            <Button type="link" icon={<EditOutlined />} onClick={() => handleEdit(record.dictCode)} />
-          </Tooltip>
-          <Tooltip title="删除">
-            <Button danger type="link" icon={<DeleteOutlined />} onClick={() => handleDelete(record.dictCode)} />
-          </Tooltip>
+          {auth.hasPermiOr(['system:dict:edit']) && (
+            <Tooltip title="修改">
+              <Button type="link" icon={<EditOutlined />} onClick={() => handleEdit(record.dictCode)} />
+            </Tooltip>
+          )}
+          {auth.hasPermiOr(['system:dict:remove']) && (
+            <Tooltip title="删除">
+              <Button danger type="link" icon={<DeleteOutlined />} onClick={() => handleDelete(record.dictCode)} />
+            </Tooltip>
+          )}
         </Space>
       )
     }
@@ -274,33 +280,41 @@ export default function DictDataPage() {
       <Card>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, marginBottom: 12, flexWrap: 'wrap' }}>
           <Space wrap>
-            <Button className="btn-plain-primary" icon={<PlusOutlined />} onClick={handleAdd}>
-              新增
-            </Button>
-            <Button
-              icon={<EditOutlined />}
-              style={{ color: '#67c23a', borderColor: '#b7eb8f' }}
-              onClick={() => handleEdit(selectedIds[0])}
-              disabled={selectedIds.length !== 1}
-            >
-              修改
-            </Button>
-            <Button
-              danger
-              icon={<DeleteOutlined />}
-              onClick={() => handleDelete()}
-              disabled={selectedIds.length === 0}
-              style={{ borderColor: '#ffccc7' }}
-            >
-              删除
-            </Button>
-            <Button
-              icon={<DownloadOutlined />}
-              style={{ color: '#e6a23c', borderColor: '#ffd591' }}
-              onClick={() => download('/system/dict/data/export', { ...query }, `dict_data_${Date.now()}.xlsx`)}
-            >
-              导出
-            </Button>
+            {auth.hasPermiOr(['system:dict:add']) && (
+              <Button className="btn-plain-primary" icon={<PlusOutlined />} onClick={handleAdd}>
+                新增
+              </Button>
+            )}
+            {auth.hasPermiOr(['system:dict:edit']) && (
+              <Button
+                icon={<EditOutlined />}
+                style={{ color: '#67c23a', borderColor: '#b7eb8f' }}
+                onClick={() => handleEdit(selectedIds[0])}
+                disabled={selectedIds.length !== 1}
+              >
+                修改
+              </Button>
+            )}
+            {auth.hasPermiOr(['system:dict:remove']) && (
+              <Button
+                danger
+                icon={<DeleteOutlined />}
+                onClick={() => handleDelete()}
+                disabled={selectedIds.length === 0}
+                style={{ borderColor: '#ffccc7' }}
+              >
+                删除
+              </Button>
+            )}
+            {auth.hasPermiOr(['system:dict:export']) && (
+              <Button
+                icon={<DownloadOutlined />}
+                style={{ color: '#e6a23c', borderColor: '#ffd591' }}
+                onClick={() => download('/system/dict/data/export', { ...query }, `dict_data_${Date.now()}.xlsx`)}
+              >
+                导出
+              </Button>
+            )}
             <Button icon={<CloseOutlined />} style={{ color: '#e6a23c', borderColor: '#ffd591' }} onClick={() => navigate('/system/dict')}>
               关闭
             </Button>
@@ -333,7 +347,7 @@ export default function DictDataPage() {
         />
       </Card>
 
-      <Modal
+      <CrudModal
         open={dialogOpen}
         title={dictCode ? '修改字典数据' : '新增字典数据'}
         confirmLoading={submitting}
@@ -363,7 +377,7 @@ export default function DictDataPage() {
             <Input.TextArea rows={4} />
           </Form.Item>
         </Form>
-      </Modal>
+      </CrudModal>
     </Space>
   );
 }

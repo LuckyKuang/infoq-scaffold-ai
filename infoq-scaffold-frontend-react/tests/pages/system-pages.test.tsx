@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { renderWithRouter } from '../helpers/renderWithRouter';
+import { useUserStore } from '@/store/modules/user';
 
 const dictOptions = vi.hoisted(() => ({
   sys_normal_disable: [
@@ -172,6 +173,11 @@ function asResolvedValue<T>(value: unknown): T {
 }
 
 beforeEach(() => {
+  useUserStore.setState({
+    roles: ['admin'],
+    permissions: ['*:*:*']
+  });
+
   vi.mocked(userApi.listUser).mockResolvedValue(
     asResolvedValue<Awaited<ReturnType<typeof userApi.listUser>>>({
       rows: [
@@ -196,6 +202,46 @@ beforeEach(() => {
   vi.mocked(userApi.listUserByDeptId).mockResolvedValue(
     asResolvedValue<Awaited<ReturnType<typeof userApi.listUserByDeptId>>>({
       data: [{ userId: 1, userName: 'admin' }]
+    })
+  );
+  vi.mocked(userApi.getUser).mockResolvedValue(
+    asResolvedValue<Awaited<ReturnType<typeof userApi.getUser>>>({
+      data: {
+        user: {
+          userId: 2,
+          deptId: 100,
+          userName: 'demo',
+          nickName: '演示用户',
+          userType: 'sys_user',
+          email: '',
+          phonenumber: '',
+          sex: '0',
+          avatar: '',
+          status: '0',
+          delFlag: '0',
+          loginIp: '',
+          loginDate: '',
+          remark: '',
+          deptName: '研发部',
+          roles: [],
+          admin: false
+        },
+        roles: [
+          {
+            roleId: 1,
+            roleName: '管理员',
+            roleKey: 'admin',
+            roleSort: 1,
+            status: '0',
+            createTime: '2026-03-10 10:00:00'
+          }
+        ],
+        roleIds: [],
+        posts: [{ postId: 10, postName: '研发岗' }],
+        postIds: [],
+        roleGroup: '',
+        postGroup: ''
+      }
     })
   );
 
@@ -275,6 +321,40 @@ describe('pages/system', () => {
     });
   });
 
+  it('opens the user add dialog when create options omit posts', async () => {
+    vi.mocked(userApi.getUser).mockResolvedValueOnce(
+      asResolvedValue<Awaited<ReturnType<typeof userApi.getUser>>>({
+        data: {
+          roles: [
+            {
+              roleId: 1,
+              roleName: '管理员',
+              roleKey: 'admin',
+              roleSort: 1,
+              status: '0',
+              createTime: '2026-03-10 10:00:00'
+            }
+          ],
+          roleIds: [],
+          postIds: [],
+          roleGroup: '',
+          postGroup: ''
+        }
+      })
+    );
+
+    renderWithRouter(<UserPage />, '/system/user');
+
+    expect(await screen.findByPlaceholderText('请输入用户名称')).toBeInTheDocument();
+    const addButton = screen.getByText('新增').closest('button');
+    expect(addButton).not.toBeNull();
+    fireEvent.click(addButton!);
+
+    expect(await screen.findByText('新增用户')).toBeInTheDocument();
+    expect(screen.getByText('角色')).toBeInTheDocument();
+    expect(userApi.getUser).toHaveBeenCalledWith();
+  });
+
   it('renders the role management page with fetched rows', async () => {
     renderWithRouter(<RolePage />, '/system/role');
 
@@ -305,7 +385,7 @@ describe('pages/system', () => {
     });
   });
 
-  it('opens the root department add dialog without parent selector jitter or default zoom motion', async () => {
+  it('opens the root department add dialog with a stable parent selector and without default zoom motion', async () => {
     renderWithRouter(<DeptPage />, '/system/dept');
 
     expect(await screen.findByPlaceholderText('请输入部门名称')).toBeInTheDocument();
@@ -318,7 +398,7 @@ describe('pages/system', () => {
     expect(dialog).toBeInTheDocument();
     expect(dialog).not.toHaveClass('ant-zoom');
     expect(dialog).not.toHaveClass('ant-zoom-appear');
-    expect(screen.queryByText('上级部门')).not.toBeInTheDocument();
+    expect(screen.getByText('上级部门')).toBeInTheDocument();
   });
 
   it('opens the child department add dialog with a stable parent selector', async () => {

@@ -6,14 +6,15 @@ import {
   UploadOutlined,
   UserOutlined,
 } from '@ant-design/icons';
-import type { UploadProps } from 'antd';
-import { Avatar, Button, Col, Modal, Row, Space, Upload } from 'antd';
-import { useEffect, useState } from 'react';
-import Cropper, { type Area } from 'react-easy-crop';
+import type {UploadProps} from 'antd';
+import {Avatar, Button, Col, Row, Space, Upload} from 'antd';
+import {useEffect, useState} from 'react';
+import Cropper, {type Area} from 'react-easy-crop';
+import CrudModal from '@/components/CrudModal';
 import 'react-easy-crop/react-easy-crop.css';
-import { uploadAvatar } from '@/api/system/user';
-import { assertAvatarUploadData } from '@/api/system/user/guards';
-import { useUserStore } from '@/store/modules/user';
+import {uploadAvatar} from '@/api/system/user';
+import {assertAvatarUploadData} from '@/api/system/user/guards';
+import {useUserStore} from '@/store/modules/user';
 import modal from '@/utils/modal';
 import '@/pages/system/user/profile/user-avatar.css';
 
@@ -235,7 +236,12 @@ export default function UserAvatar({ avatar, onUploaded }: UserAvatarProps) {
 
   return (
     <>
-      <button className="user-avatar-head" type="button" onClick={handleOpen}>
+      <button
+        className="user-avatar-head"
+        type="button"
+        title="点击上传头像"
+        onClick={handleOpen}
+      >
         <Avatar
           size={120}
           src={currentAvatar || undefined}
@@ -247,7 +253,7 @@ export default function UserAvatar({ avatar, onUploaded }: UserAvatarProps) {
         <Button style={{ marginTop: 12 }}>上传头像</Button>
       </Upload>
 
-      <Modal
+      <CrudModal
         open={open}
         title="修改头像"
         width={800}
@@ -320,7 +326,7 @@ export default function UserAvatar({ avatar, onUploaded }: UserAvatarProps) {
             提 交
           </Button>
         </Space>
-      </Modal>
+      </CrudModal>
     </>
   );
 }

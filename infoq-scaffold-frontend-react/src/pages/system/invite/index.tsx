@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { CloseCircleOutlined, DeleteOutlined, DownloadOutlined, PlusOutlined, ReloadOutlined, SearchOutlined } from '@ant-design/icons';
-import { Button, Card, Col, DatePicker, Form, Input, InputNumber, Modal, Row, Select, Space, Switch, Table, Tooltip, Typography } from 'antd';
+import { Button, Card, Col, DatePicker, Form, Input, InputNumber, Row, Select, Space, Switch, Table, Tooltip, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { Dayjs } from 'dayjs';
 import useDictOptions from '@/hooks/useDictOptions';
@@ -9,7 +9,9 @@ import type { InviteCodeGenerateForm, InviteCodeQuery, InviteCodeVO } from '@/ap
 import Pagination from '@/components/Pagination';
 import RightToolbar from '@/components/RightToolbar';
 import DictTag from '@/components/DictTag';
+import CrudModal from '@/components/CrudModal';
 import modal from '@/utils/modal';
+import auth from '@/utils/permission';
 import { addDateRange } from '@/utils/scaffold';
 import { download } from '@/utils/request';
 
@@ -163,24 +165,28 @@ export default function InvitePage() {
       align: 'center',
       render: (_, record) => (
         <Space size={4}>
-          <Tooltip title="作废">
-            <Button
-              className="table-action-link"
-              type="link"
-              icon={<CloseCircleOutlined />}
-              disabled={!canCancel(record)}
-              onClick={() => openCancelDialog(record)}
-            />
-          </Tooltip>
-          <Tooltip title="删除">
-            <Button
-              className="table-action-link"
-              type="link"
-              icon={<DeleteOutlined />}
-              disabled={!canDelete(record)}
-              onClick={() => handleDelete(record)}
-            />
-          </Tooltip>
+          {auth.hasPermiOr(['system:invite:edit']) && (
+            <Tooltip title="作废">
+              <Button
+                className="table-action-link"
+                type="link"
+                icon={<CloseCircleOutlined />}
+                disabled={!canCancel(record)}
+                onClick={() => openCancelDialog(record)}
+              />
+            </Tooltip>
+          )}
+          {auth.hasPermiOr(['system:invite:remove']) && (
+            <Tooltip title="删除">
+              <Button
+                className="table-action-link"
+                type="link"
+                icon={<DeleteOutlined />}
+                disabled={!canDelete(record)}
+                onClick={() => handleDelete(record)}
+              />
+            </Tooltip>
+          )}
         </Space>
       )
     }
@@ -350,6 +356,7 @@ export default function InvitePage() {
                 <Form.Item label="生成时间" style={{ width: '100%', marginBottom: 12 }}>
                   <DatePicker.RangePicker
                     showTime
+                    placeholder={['开始时间', '结束时间']}
                     style={{ width: '100%' }}
                     value={dateRange}
                     onChange={(value) => setDateRange((value as [Dayjs, Dayjs]) || null)}
@@ -376,27 +383,35 @@ export default function InvitePage() {
       <Card>
         <div className="table-toolbar">
           <Space wrap className="toolbar-buttons">
-            <Button className="btn-plain-primary" icon={<PlusOutlined />} onClick={openGenerateDialog}>
-              生成邀请码
-            </Button>
-            <Button
-              className="btn-plain-warning"
-              icon={<CloseCircleOutlined />}
-              onClick={() => openCancelDialog()}
-              disabled={selectedRows.length !== 1}
-            >
-              作废
-            </Button>
-            <Button className="btn-plain-danger" icon={<DeleteOutlined />} onClick={() => handleDelete()} disabled={selectedRows.length === 0}>
-              删除
-            </Button>
-            <Button
-              className="btn-plain-warning"
-              icon={<DownloadOutlined />}
-              onClick={() => download('/system/invite/export', addDateRange({ ...query }, formatRange(dateRange)), `invite_${Date.now()}.xlsx`)}
-            >
-              导出
-            </Button>
+            {auth.hasPermiOr(['system:invite:add']) && (
+              <Button className="btn-plain-primary" icon={<PlusOutlined />} onClick={openGenerateDialog}>
+                生成邀请码
+              </Button>
+            )}
+            {auth.hasPermiOr(['system:invite:edit']) && (
+              <Button
+                className="btn-plain-warning"
+                icon={<CloseCircleOutlined />}
+                onClick={() => openCancelDialog()}
+                disabled={selectedRows.length !== 1}
+              >
+                作废
+              </Button>
+            )}
+            {auth.hasPermiOr(['system:invite:remove']) && (
+              <Button className="btn-plain-danger" icon={<DeleteOutlined />} onClick={() => handleDelete()} disabled={selectedRows.length === 0}>
+                删除
+              </Button>
+            )}
+            {auth.hasPermiOr(['system:invite:export']) && (
+              <Button
+                className="btn-plain-warning"
+                icon={<DownloadOutlined />}
+                onClick={() => download('/system/invite/export', addDateRange({ ...query }, formatRange(dateRange)), `invite_${Date.now()}.xlsx`)}
+              >
+                导出
+              </Button>
+            )}
           </Space>
           <div className="right-toolbar-wrap">
             <RightToolbar showSearch={showSearch} onShowSearchChange={setShowSearch} onQueryTable={() => loadList(query, dateRange)} />
@@ -431,7 +446,7 @@ export default function InvitePage() {
         />
       </Card>
 
-      <Modal open={generateDialogOpen} title="生成邀请码" confirmLoading={submitting} onCancel={closeGenerateDialog} onOk={handleGenerateSubmit}>
+      <CrudModal open={generateDialogOpen} title="生成邀请码" confirmLoading={submitting} onCancel={closeGenerateDialog} onOk={handleGenerateSubmit}>
         <Form form={generateForm} layout="vertical" initialValues={initialGenerateForm}>
           <Form.Item label="生成数量" name="generateCount" rules={[{ required: true, message: '生成数量不能为空' }]}>
             <InputNumber min={1} max={100} precision={0} style={{ width: '100%' }} />
@@ -448,15 +463,15 @@ export default function InvitePage() {
             <Input.TextArea rows={4} maxLength={255} showCount placeholder="请输入用途备注" />
           </Form.Item>
         </Form>
-      </Modal>
+      </CrudModal>
 
-      <Modal open={cancelDialogOpen} title="作废邀请码" confirmLoading={submitting} onCancel={closeCancelDialog} onOk={handleCancelSubmit}>
+      <CrudModal open={cancelDialogOpen} title="作废邀请码" confirmLoading={submitting} onCancel={closeCancelDialog} onOk={handleCancelSubmit}>
         <Form form={cancelForm} layout="vertical" initialValues={initialCancelForm}>
           <Form.Item label="作废原因" name="canceledReason" rules={[{ required: true, message: '作废原因不能为空' }]}>
             <Input.TextArea rows={4} maxLength={255} showCount placeholder="请输入作废原因" />
           </Form.Item>
         </Form>
-      </Modal>
+      </CrudModal>
     </Space>
   );
 }

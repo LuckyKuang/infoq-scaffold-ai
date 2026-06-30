@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { DeleteOutlined, EditOutlined, PlusOutlined, ReloadOutlined, SearchOutlined, SortAscendingOutlined } from '@ant-design/icons';
-import { Button, Card, Col, Form, Input, InputNumber, Modal, Radio, Row, Select, Space, Table, Tooltip, TreeSelect } from 'antd';
+import { Button, Card, Col, Form, Input, InputNumber, Radio, Row, Select, Space, Table, Tooltip, TreeSelect } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import useDictOptions from '@/hooks/useDictOptions';
 import { addDept, delDept, getDept, listDept, listDeptExcludeChild, updateDept } from '@/api/system/dept';
@@ -9,7 +9,9 @@ import { listUserByDeptId } from '@/api/system/user';
 import type { UserVO } from '@/api/system/user/types';
 import RightToolbar from '@/components/RightToolbar';
 import DictTag from '@/components/DictTag';
+import CrudModal from '@/components/CrudModal';
 import modal from '@/utils/modal';
+import auth from '@/utils/permission';
 import { handleTree } from '@/utils/scaffold';
 
 const initialQuery: DeptQuery = {
@@ -22,7 +24,7 @@ const initialQuery: DeptQuery = {
 
 const initialForm: DeptForm = {
   deptId: undefined,
-  parentId: 0,
+  parentId: undefined,
   deptName: '',
   deptCategory: '',
   orderNum: 0,
@@ -54,11 +56,11 @@ export default function DeptPage() {
   const [expandAll, setExpandAll] = useState(true);
   const [expandedRowKeys, setExpandedRowKeys] = useState<Array<string | number>>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [showParentDept, setShowParentDept] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [form] = Form.useForm<DeptForm>();
-  const deptId = Form.useWatch('deptId', form);
+  const deptId = Form.useWatch('deptId', { form, preserve: true });
   const parentId = Form.useWatch('parentId', { form, preserve: true });
+  const showParentDept = !deptId || !isRootParentId(parentId);
   const dict = useDictOptions('sys_normal_disable');
 
   const loadList = useCallback(
@@ -133,26 +135,30 @@ export default function DeptPage() {
       align: 'center',
       render: (_, record) => (
         <Space size={4}>
-          <Tooltip title="修改">
-            <Button type="link" icon={<EditOutlined />} onClick={() => handleEdit(record.deptId)} />
-          </Tooltip>
-          <Tooltip title="新增">
-            <Button type="link" icon={<PlusOutlined />} onClick={() => handleAdd(record.deptId)} />
-          </Tooltip>
-          <Tooltip title="删除">
-            <Button danger type="link" icon={<DeleteOutlined />} onClick={() => handleDelete(record.deptId, record.deptName)} />
-          </Tooltip>
+          {auth.hasPermiOr(['system:dept:edit']) && (
+            <Tooltip title="修改">
+              <Button type="link" icon={<EditOutlined />} onClick={() => handleEdit(record.deptId)} />
+            </Tooltip>
+          )}
+          {auth.hasPermiOr(['system:dept:add']) && (
+            <Tooltip title="新增">
+              <Button type="link" icon={<PlusOutlined />} onClick={() => handleAdd(record.deptId)} />
+            </Tooltip>
+          )}
+          {auth.hasPermiOr(['system:dept:remove']) && (
+            <Tooltip title="删除">
+              <Button danger type="link" icon={<DeleteOutlined />} onClick={() => handleDelete(record.deptId, record.deptName)} />
+            </Tooltip>
+          )}
         </Space>
       )
     }
   ];
 
   const handleAdd = async (parentId?: string | number) => {
-    const nextParentId = parentId ?? 0;
-    setShowParentDept(!isRootParentId(nextParentId));
     form.setFieldsValue({
       ...initialForm,
-      parentId: nextParentId
+      parentId
     });
     await loadDeptOptions();
     await loadDeptUsers(parentId);
@@ -168,7 +174,6 @@ export default function DeptPage() {
     const optionsResponse = await listDeptExcludeChild(deptId);
     setDeptOptions(handleTree<DeptVO>(optionsResponse.data, 'deptId'));
     await loadDeptUsers(detail.deptId);
-    setShowParentDept(!isRootParentId(detail.parentId));
     form.setFieldsValue(detail);
     setDialogOpen(true);
   };
@@ -270,9 +275,11 @@ export default function DeptPage() {
       <Card>
         <div className="table-toolbar">
           <Space wrap className="toolbar-buttons">
-            <Button className="btn-plain-primary" icon={<PlusOutlined />} onClick={() => handleAdd()}>
-              新增
-            </Button>
+            {auth.hasPermiOr(['system:dept:add']) && (
+              <Button className="btn-plain-primary" icon={<PlusOutlined />} onClick={() => handleAdd()}>
+                新增
+              </Button>
+            )}
             <Button
               icon={<SortAscendingOutlined />}
               onClick={() => {
@@ -303,7 +310,7 @@ export default function DeptPage() {
         />
       </Card>
 
-      <Modal
+      <CrudModal
         width={600}
         open={dialogOpen}
         transitionName=""
@@ -316,7 +323,7 @@ export default function DeptPage() {
           <Row gutter={16}>
             {showParentDept && (
               <Col span={24}>
-                <Form.Item label="上级部门" name="parentId">
+                <Form.Item label="上级部门" name="parentId" rules={[{ required: true, message: '上级部门不能为空' }]}>
                   <TreeSelect treeData={toTreeSelectData(deptOptions)} placeholder="选择上级部门" allowClear treeDefaultExpandAll />
                 </Form.Item>
               </Col>
@@ -366,7 +373,7 @@ export default function DeptPage() {
             </Col>
           </Row>
         </Form>
-      </Modal>
+      </CrudModal>
     </Space>
   );
 }

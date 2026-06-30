@@ -1,9 +1,10 @@
-import { ReloadOutlined, SearchOutlined } from '@ant-design/icons';
-import { Button, Form, Input, Modal, Space, Table } from 'antd';
-import type { ColumnsType } from 'antd/es/table';
-import { useEffect, useMemo, useState } from 'react';
-import { authUserSelectAll, unallocatedUserList } from '@/api/system/role';
-import type { UserQuery, UserVO } from '@/api/system/user/types';
+import {ReloadOutlined, SearchOutlined} from '@ant-design/icons';
+import {Button, Form, Input, Space, Table} from 'antd';
+import type {ColumnsType} from 'antd/es/table';
+import {useEffect, useMemo, useState} from 'react';
+import {authUserSelectAll, unallocatedUserList} from '@/api/system/role';
+import type {UserQuery, UserVO} from '@/api/system/user/types';
+import CrudModal from '@/components/CrudModal';
 import DictTag from '@/components/DictTag';
 import Pagination from '@/components/Pagination';
 import useDictOptions from '@/hooks/useDictOptions';
@@ -116,11 +117,11 @@ export default function SelectUser({
   };
 
   if (typeof open === 'undefined') {
-    return <Modal open title="选择用户" footer={null} onCancel={onClose} />;
+    return <CrudModal open title="选择用户" footer={null} onCancel={onClose} />;
   }
 
   return (
-    <Modal
+    <CrudModal
       width={800}
       open={visible}
       title="选择用户"
@@ -218,6 +219,6 @@ export default function SelectUser({
           loadList(next);
         }}
       />
-    </Modal>
+    </CrudModal>
   );
 }

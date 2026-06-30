@@ -1,6 +1,7 @@
-import { screen, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { renderWithRouter } from '../helpers/renderWithRouter';
+import {screen, waitFor} from '@testing-library/react';
+import {beforeEach, describe, expect, it, vi} from 'vitest';
+import {renderWithRouter} from '../helpers/renderWithRouter';
+import {setPermissionContext} from '@/utils/permission';
 
 const dictOptions = vi.hoisted(() => ({
   sys_device_type: [{ label: 'PC', value: 'pc' }],
@@ -264,6 +265,8 @@ function asResolvedValue<T>(value: unknown): T {
 }
 
 beforeEach(() => {
+  setPermissionContext(['admin'], ['*:*:*']);
+
   chartMocks.chartInit.mockReturnValue({
     setOption: chartMocks.chartSetOption,
     resize: chartMocks.chartResize,

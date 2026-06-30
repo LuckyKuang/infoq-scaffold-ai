@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Button, Card, Col, Form, Input, InputNumber, Modal, Radio, Row, Select, Space, Table, Tooltip, Tree, TreeSelect } from 'antd';
+import { Button, Card, Col, Form, Input, InputNumber, Radio, Row, Select, Space, Table, Tooltip, Tree, TreeSelect } from 'antd';
 import type { DataNode } from 'antd/es/tree';
 import type { ColumnsType } from 'antd/es/table';
 import { DeleteOutlined, EditOutlined, PlusOutlined, ReloadOutlined, SearchOutlined } from '@ant-design/icons';
@@ -9,7 +9,9 @@ import type { MenuForm, MenuQuery, MenuVO } from '@/api/system/menu/types';
 import RightToolbar from '@/components/RightToolbar';
 import DictTag from '@/components/DictTag';
 import SvgIcon from '@/components/SvgIcon';
+import CrudModal from '@/components/CrudModal';
 import modal from '@/utils/modal';
+import auth from '@/utils/permission';
 import { handleTree } from '@/utils/scaffold';
 
 type MenuNode = MenuVO;
@@ -61,17 +63,20 @@ export default function MenuPage() {
   const menuId = Form.useWatch('menuId', form);
   const dict = useDictOptions('sys_show_hide', 'sys_normal_disable');
 
-  const loadList = useCallback(async (nextQuery: MenuQuery = query) => {
-    setLoading(true);
-    try {
-      const response = await listMenu(nextQuery);
-      const data = handleTree<MenuNode>(response.data, 'menuId');
-      setList(data);
-      setMenuOptions(data);
-    } finally {
-      setLoading(false);
-    }
-  }, [query]);
+  const loadList = useCallback(
+    async (nextQuery: MenuQuery = query) => {
+      setLoading(true);
+      try {
+        const response = await listMenu(nextQuery);
+        const data = handleTree<MenuNode>(response.data, 'menuId');
+        setList(data);
+        setMenuOptions(data);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [query]
+  );
 
   useEffect(() => {
     loadList(initialQuery);
@@ -84,12 +89,7 @@ export default function MenuPage() {
       dataIndex: 'icon',
       width: 120,
       align: 'center',
-      render: (value: string) =>
-        value && value !== '#' ? (
-          <SvgIcon iconClass={value} size={16} />
-        ) : (
-          '-'
-        )
+      render: (value: string) => (value && value !== '#' ? <SvgIcon iconClass={value} size={16} /> : '-')
     },
     { title: '排序', dataIndex: 'orderNum', width: 60, align: 'center' },
     { title: '权限标识', dataIndex: 'perms' },
@@ -109,15 +109,21 @@ export default function MenuPage() {
       align: 'center',
       render: (_, record) => (
         <Space size={4}>
-          <Tooltip title="修改">
-            <Button type="link" icon={<EditOutlined />} onClick={() => handleEdit(record.menuId)} />
-          </Tooltip>
-          <Tooltip title="新增">
-            <Button type="link" icon={<PlusOutlined />} onClick={() => handleAdd(record.menuId)} />
-          </Tooltip>
-          <Tooltip title="删除">
-            <Button danger type="link" icon={<DeleteOutlined />} onClick={() => handleDelete(record.menuId, record.menuName)} />
-          </Tooltip>
+          {auth.hasPermiOr(['system:menu:edit']) && (
+            <Tooltip title="修改">
+              <Button type="link" icon={<EditOutlined />} onClick={() => handleEdit(record.menuId)} />
+            </Tooltip>
+          )}
+          {auth.hasPermiOr(['system:menu:add']) && (
+            <Tooltip title="新增">
+              <Button type="link" icon={<PlusOutlined />} onClick={() => handleAdd(record.menuId)} />
+            </Tooltip>
+          )}
+          {auth.hasPermiOr(['system:menu:remove']) && (
+            <Tooltip title="删除">
+              <Button danger type="link" icon={<DeleteOutlined />} onClick={() => handleDelete(record.menuId, record.menuName)} />
+            </Tooltip>
+          )}
         </Space>
       )
     }
@@ -230,12 +236,16 @@ export default function MenuPage() {
       <Card>
         <div className="table-toolbar">
           <Space wrap className="toolbar-buttons">
-            <Button className="btn-plain-primary" icon={<PlusOutlined />} onClick={() => handleAdd()}>
-              新增
-            </Button>
-            <Button danger icon={<DeleteOutlined />} onClick={() => setDeleteOpen(true)} style={{ borderColor: '#ffccc7' }}>
-              级联删除
-            </Button>
+            {auth.hasPermiOr(['system:menu:add']) && (
+              <Button className="btn-plain-primary" icon={<PlusOutlined />} onClick={() => handleAdd()}>
+                新增
+              </Button>
+            )}
+            {auth.hasPermiOr(['system:menu:remove']) && (
+              <Button danger icon={<DeleteOutlined />} onClick={() => setDeleteOpen(true)} style={{ borderColor: '#ffccc7' }}>
+                级联删除
+              </Button>
+            )}
           </Space>
           <div className="right-toolbar-wrap">
             <RightToolbar showSearch={showSearch} onShowSearchChange={setShowSearch} onQueryTable={() => loadList()} />
@@ -255,7 +265,7 @@ export default function MenuPage() {
         />
       </Card>
 
-      <Modal
+      <CrudModal
         width={860}
         open={dialogOpen}
         title={menuId ? '修改菜单' : '新增菜单'}
@@ -349,9 +359,9 @@ export default function MenuPage() {
             </Col>
           </Row>
         </Form>
-      </Modal>
+      </CrudModal>
 
-      <Modal
+      <CrudModal
         open={deleteOpen}
         title="级联删除菜单"
         onCancel={() => setDeleteOpen(false)}
@@ -377,7 +387,7 @@ export default function MenuPage() {
             setCheckedMenuIds(nextKeys as Array<string | number>);
           }}
         />
-      </Modal>
+      </CrudModal>
     </Space>
   );
 }

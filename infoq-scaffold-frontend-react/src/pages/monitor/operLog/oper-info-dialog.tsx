@@ -1,6 +1,7 @@
-import { Card, Descriptions, Modal, Tag, Typography } from 'antd';
+import { Card, Descriptions, Tag, Typography } from 'antd';
 import useDictOptions from '@/hooks/useDictOptions';
 import type { OperLogVO } from '@/api/monitor/operLog/types';
+import CrudModal from '@/components/CrudModal';
 
 type OperInfoDialogProps = {
   open?: boolean;
@@ -22,11 +23,7 @@ const formatJsonBlock = (value?: string) => {
 
 const contentNode = (record?: OperLogVO | null, businessTypeLabel?: string) => {
   if (!record) {
-    return (
-      <Typography.Paragraph type="secondary">
-        请从操作日志列表中选择一条记录查看详情。
-      </Typography.Paragraph>
-    );
+    return <Typography.Paragraph type="secondary">请从操作日志列表中选择一条记录查看详情。</Typography.Paragraph>;
   }
 
   return (
@@ -46,12 +43,8 @@ const contentNode = (record?: OperLogVO | null, businessTypeLabel?: string) => {
         <Descriptions.Item label="登录信息">
           {[record.operName, record.deptName, record.operIp, record.operLocation].filter(Boolean).join(' / ') || '-'}
         </Descriptions.Item>
-        <Descriptions.Item label="请求信息">
-          {[record.requestMethod, record.operUrl].filter(Boolean).join(' ') || '-'}
-        </Descriptions.Item>
-        <Descriptions.Item label="操作模块">
-          {[record.title, businessTypeLabel].filter(Boolean).join(' / ') || '-'}
-        </Descriptions.Item>
+        <Descriptions.Item label="请求信息">{[record.requestMethod, record.operUrl].filter(Boolean).join(' ') || '-'}</Descriptions.Item>
+        <Descriptions.Item label="操作模块">{[record.title, businessTypeLabel].filter(Boolean).join(' / ') || '-'}</Descriptions.Item>
         <Descriptions.Item label="操作方法">{record.method || '-'}</Descriptions.Item>
         <Descriptions.Item label="请求参数">
           <div style={{ maxHeight: 300, overflowY: 'auto' }}>
@@ -84,8 +77,8 @@ export default function OperInfoDialog({ open, record, onClose }: OperInfoDialog
   }
 
   return (
-    <Modal width={700} footer={null} open={open} title="操作日志详细" onCancel={onClose}>
+    <CrudModal width={700} footer={null} open={open} title="操作日志详细" onCancel={onClose}>
       {contentNode(record, businessTypeLabel)}
-    </Modal>
+    </CrudModal>
   );
 }

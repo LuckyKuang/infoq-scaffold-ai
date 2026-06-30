@@ -11,6 +11,7 @@ import RightToolbar from '@/components/RightToolbar';
 import useDictOptions from '@/hooks/useDictOptions';
 import SelectUser from '@/pages/system/role/selectUser';
 import modal from '@/utils/modal';
+import auth from '@/utils/permission';
 
 const baseQuery: UserQuery = {
   pageNum: 1,
@@ -92,26 +93,27 @@ export default function AuthUserPage() {
       key: 'action',
       width: 120,
       align: 'center',
-      render: (_, record) => (
-        <Tooltip title="取消授权">
-          <Button
-            danger
-            type="link"
-            icon={<StopOutlined />}
-            onClick={async () => {
-              const confirmed = await modal.confirm(
-                `确认要取消该用户 "${record.userName}" 角色吗？`,
-              );
-              if (!confirmed) {
-                return;
-              }
-              await authUserCancel({ userId: record.userId, roleId });
-              modal.msgSuccess('取消授权成功');
-              loadList(query);
-            }}
-          />
-        </Tooltip>
-      ),
+      render: (_, record) =>
+        auth.hasPermiOr(['system:role:remove']) ? (
+          <Tooltip title="取消授权">
+            <Button
+              danger
+              type="link"
+              icon={<StopOutlined />}
+              onClick={async () => {
+                const confirmed = await modal.confirm(
+                  `确认要取消该用户 "${record.userName}" 角色吗？`,
+                );
+                if (!confirmed) {
+                  return;
+                }
+                await authUserCancel({ userId: record.userId, roleId });
+                modal.msgSuccess('取消授权成功');
+                loadList(query);
+              }}
+            />
+          </Tooltip>
+        ) : null,
     },
   ];
 
@@ -210,36 +212,40 @@ export default function AuthUserPage() {
           }}
         >
           <Space wrap>
-            <Button
-              className="btn-plain-primary"
-              icon={<PlusOutlined />}
-              onClick={() => setSelectOpen(true)}
-            >
-              添加用户
-            </Button>
-            <Button
-              danger
-              icon={<StopOutlined />}
-              style={{ borderColor: '#ffccc7' }}
-              disabled={selectedIds.length === 0}
-              onClick={async () => {
-                const confirmed = await modal.confirm(
-                  '是否取消选中用户授权数据项？',
-                );
-                if (!confirmed) {
-                  return;
-                }
-                await authUserCancelAll({
-                  roleId,
-                  userIds: selectedIds.join(','),
-                });
-                modal.msgSuccess('取消授权成功');
-                setSelectedIds([]);
-                loadList(query);
-              }}
-            >
-              批量取消授权
-            </Button>
+            {auth.hasPermiOr(['system:role:add']) && (
+              <Button
+                className="btn-plain-primary"
+                icon={<PlusOutlined />}
+                onClick={() => setSelectOpen(true)}
+              >
+                添加用户
+              </Button>
+            )}
+            {auth.hasPermiOr(['system:role:remove']) && (
+              <Button
+                danger
+                icon={<StopOutlined />}
+                style={{ borderColor: '#ffccc7' }}
+                disabled={selectedIds.length === 0}
+                onClick={async () => {
+                  const confirmed = await modal.confirm(
+                    '是否取消选中用户授权数据项？',
+                  );
+                  if (!confirmed) {
+                    return;
+                  }
+                  await authUserCancelAll({
+                    roleId,
+                    userIds: selectedIds.join(','),
+                  });
+                  modal.msgSuccess('取消授权成功');
+                  setSelectedIds([]);
+                  loadList(query);
+                }}
+              >
+                批量取消授权
+              </Button>
+            )}
             <Button
               icon={<CloseOutlined />}
               style={{ color: '#e6a23c', borderColor: '#ffd591' }}

@@ -13,7 +13,6 @@ import {
   Form,
   Input,
   InputNumber,
-  Modal,
   Radio,
   Row,
   Select,
@@ -28,11 +27,13 @@ import {addDept, delDept, getDept, listDept, listDeptExcludeChild, updateDept,} 
 import type {DeptForm, DeptQuery, DeptVO} from '@/api/system/dept/types';
 import {listUserByDeptId} from '@/api/system/user';
 import type {UserVO} from '@/api/system/user/types';
+import CrudModal from '@/components/CrudModal';
 import DictTag from '@/components/DictTag';
 import RightToolbar from '@/components/RightToolbar';
-import useInitialLoadEffect from '@/hooks/useInitialLoadEffect';
 import useDictOptions from '@/hooks/useDictOptions';
+import useInitialLoadEffect from '@/hooks/useInitialLoadEffect';
 import modal from '@/utils/modal';
+import auth from '@/utils/permission';
 import {handleTree} from '@/utils/scaffold';
 
 const initialQuery: DeptQuery = {
@@ -45,7 +46,7 @@ const initialQuery: DeptQuery = {
 
 const initialForm: DeptForm = {
   deptId: undefined,
-  parentId: 0,
+  parentId: undefined,
   deptName: '',
   deptCategory: '',
   orderNum: 0,
@@ -77,6 +78,13 @@ const collectDeptIds = (nodes: DeptVO[]): Array<string | number> =>
       : [],
   );
 
+const isRootParentId = (value?: string | number | null) =>
+  value === undefined ||
+  value === null ||
+  value === '' ||
+  value === 0 ||
+  value === '0';
+
 export default function DeptPage() {
   const [query, setQuery] = useState<DeptQuery>(initialQuery);
   const [loading, setLoading] = useState(false);
@@ -91,8 +99,9 @@ export default function DeptPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [form] = Form.useForm<DeptForm>();
-  const deptId = Form.useWatch('deptId', form);
-  const parentId = Form.useWatch('parentId', form);
+  const deptId = Form.useWatch('deptId', { form, preserve: true });
+  const parentId = Form.useWatch('parentId', { form, preserve: true });
+  const showParentDept = !deptId || !isRootParentId(parentId);
   const dict = useDictOptions('sys_normal_disable');
 
   const loadList = useCallback(
@@ -124,19 +133,23 @@ export default function DeptPage() {
     setDeptUsers(response.data);
   }, []);
 
-  useInitialLoadEffect(() => {
-    setLoading(true);
-    listDept(initialQuery)
-      .then((response) => {
-        const treeData = handleTree<DeptVO>(response.data, 'deptId');
-        setList(treeData);
-        setDeptOptions(treeData);
-        setExpandedRowKeys(expandAll ? collectDeptIds(treeData) : []);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, [expandAll], {dedupeKey: 'system-dept-initial-list'});
+  useInitialLoadEffect(
+    () => {
+      setLoading(true);
+      listDept(initialQuery)
+        .then((response) => {
+          const treeData = handleTree<DeptVO>(response.data, 'deptId');
+          setList(treeData);
+          setDeptOptions(treeData);
+          setExpandedRowKeys(expandAll ? collectDeptIds(treeData) : []);
+        })
+        .finally(() => {
+          setLoading(false);
+        });
+    },
+    [expandAll],
+    { dedupeKey: 'system-dept-initial-list' },
+  );
 
   const columns: ColumnsType<DeptVO> = [
     {
@@ -178,28 +191,34 @@ export default function DeptPage() {
       align: 'center',
       render: (_, record) => (
         <Space size={4}>
-          <Tooltip title="修改">
-            <Button
-              type="link"
-              icon={<EditOutlined />}
-              onClick={() => handleEdit(record.deptId)}
-            />
-          </Tooltip>
-          <Tooltip title="新增">
-            <Button
-              type="link"
-              icon={<PlusOutlined />}
-              onClick={() => handleAdd(record.deptId)}
-            />
-          </Tooltip>
-          <Tooltip title="删除">
-            <Button
-              danger
-              type="link"
-              icon={<DeleteOutlined />}
-              onClick={() => handleDelete(record.deptId, record.deptName)}
-            />
-          </Tooltip>
+          {auth.hasPermiOr(['system:dept:edit']) && (
+            <Tooltip title="修改">
+              <Button
+                type="link"
+                icon={<EditOutlined />}
+                onClick={() => handleEdit(record.deptId)}
+              />
+            </Tooltip>
+          )}
+          {auth.hasPermiOr(['system:dept:add']) && (
+            <Tooltip title="新增">
+              <Button
+                type="link"
+                icon={<PlusOutlined />}
+                onClick={() => handleAdd(record.deptId)}
+              />
+            </Tooltip>
+          )}
+          {auth.hasPermiOr(['system:dept:remove']) && (
+            <Tooltip title="删除">
+              <Button
+                danger
+                type="link"
+                icon={<DeleteOutlined />}
+                onClick={() => handleDelete(record.deptId, record.deptName)}
+              />
+            </Tooltip>
+          )}
         </Space>
       ),
     },
@@ -208,7 +227,7 @@ export default function DeptPage() {
   const handleAdd = async (parentId?: string | number) => {
     form.setFieldsValue({
       ...initialForm,
-      parentId: parentId ?? 0,
+      parentId,
     });
     await loadDeptOptions();
     await loadDeptUsers(parentId);
@@ -358,13 +377,15 @@ export default function DeptPage() {
       <Card>
         <div className="table-toolbar">
           <Space wrap className="toolbar-buttons">
-            <Button
-              className="btn-plain-primary"
-              icon={<PlusOutlined />}
-              onClick={() => handleAdd()}
-            >
-              新增
-            </Button>
+            {auth.hasPermiOr(['system:dept:add']) && (
+              <Button
+                className="btn-plain-primary"
+                icon={<PlusOutlined />}
+                onClick={() => handleAdd()}
+              >
+                新增
+              </Button>
+            )}
             <Button
               icon={<SortAscendingOutlined />}
               onClick={() => {
@@ -401,9 +422,10 @@ export default function DeptPage() {
         />
       </Card>
 
-      <Modal
+      <CrudModal
         width={600}
         open={dialogOpen}
+        transitionName=""
         title={deptId ? '修改部门' : '新增部门'}
         confirmLoading={submitting}
         onCancel={() => setDialogOpen(false)}
@@ -411,9 +433,13 @@ export default function DeptPage() {
       >
         <Form form={form} layout="vertical" initialValues={initialForm}>
           <Row gutter={16}>
-            {parentId !== 0 && (
+            {showParentDept && (
               <Col span={24}>
-                <Form.Item label="上级部门" name="parentId">
+                <Form.Item
+                  label="上级部门"
+                  name="parentId"
+                  rules={[{ required: true, message: '上级部门不能为空' }]}
+                >
                   <TreeSelect
                     treeData={toTreeSelectData(deptOptions)}
                     placeholder="选择上级部门"
@@ -454,9 +480,11 @@ export default function DeptPage() {
                     label: item.userName,
                     value: item.userId,
                   }))}
-                  onDropdownVisibleChange={(open) => {
+                  onOpenChange={(open) => {
                     if (open) {
-                      loadDeptUsers(parentId || deptId);
+                      loadDeptUsers(
+                        isRootParentId(parentId) ? deptId : parentId,
+                      );
                     }
                   }}
                 />
@@ -497,7 +525,7 @@ export default function DeptPage() {
             </Col>
           </Row>
         </Form>
-      </Modal>
+      </CrudModal>
     </Space>
   );
 }

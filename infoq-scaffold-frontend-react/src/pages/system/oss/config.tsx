@@ -1,13 +1,15 @@
 import { useCallback, useEffect, useState } from 'react';
 import { DeleteOutlined, EditOutlined, PlusOutlined, ReloadOutlined, SearchOutlined } from '@ant-design/icons';
-import { Button, Card, Col, Form, Input, Modal, Radio, Row, Select, Space, Switch, Table, Tag, Tooltip } from 'antd';
+import { Button, Card, Col, Form, Input, Radio, Row, Select, Space, Switch, Table, Tag, Tooltip } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import useDictOptions from '@/hooks/useDictOptions';
 import { addOssConfig, changeOssConfigStatus, delOssConfig, getOssConfig, listOssConfig, updateOssConfig } from '@/api/system/ossConfig';
 import type { OssConfigForm, OssConfigQuery, OssConfigVO } from '@/api/system/ossConfig/types';
 import Pagination from '@/components/Pagination';
 import RightToolbar from '@/components/RightToolbar';
+import CrudModal from '@/components/CrudModal';
 import modal from '@/utils/modal';
+import auth from '@/utils/permission';
 
 const initialQuery: OssConfigQuery = {
   pageNum: 1,
@@ -134,12 +136,16 @@ export default function OssConfigPage() {
       align: 'center',
       render: (_, record) => (
         <Space size={4}>
-          <Tooltip title="修改">
-            <Button type="link" icon={<EditOutlined />} onClick={() => handleEdit(record.ossConfigId)} />
-          </Tooltip>
-          <Tooltip title="删除">
-            <Button danger type="link" icon={<DeleteOutlined />} onClick={() => handleDelete(record.ossConfigId)} />
-          </Tooltip>
+          {auth.hasPermiOr(['system:ossConfig:edit']) && (
+            <Tooltip title="修改">
+              <Button type="link" icon={<EditOutlined />} onClick={() => handleEdit(record.ossConfigId)} />
+            </Tooltip>
+          )}
+          {auth.hasPermiOr(['system:ossConfig:remove']) && (
+            <Tooltip title="删除">
+              <Button danger type="link" icon={<DeleteOutlined />} onClick={() => handleDelete(record.ossConfigId)} />
+            </Tooltip>
+          )}
         </Space>
       )
     }
@@ -272,33 +278,39 @@ export default function OssConfigPage() {
       <Card>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, marginBottom: 12, flexWrap: 'wrap' }}>
           <Space wrap>
-            <Button
-              className="btn-plain-primary"
-              icon={<PlusOutlined />}
-              onClick={() => {
-                form.setFieldsValue(initialForm);
-                setDialogOpen(true);
-              }}
-            >
-              新增
-            </Button>
-            <Button
-              icon={<EditOutlined />}
-              style={{ color: '#67c23a', borderColor: '#b7eb8f' }}
-              onClick={() => handleEdit(selectedIds[0])}
-              disabled={selectedIds.length !== 1}
-            >
-              修改
-            </Button>
-            <Button
-              danger
-              icon={<DeleteOutlined />}
-              onClick={() => handleDelete()}
-              disabled={selectedIds.length === 0}
-              style={{ borderColor: '#ffccc7' }}
-            >
-              删除
-            </Button>
+            {auth.hasPermiOr(['system:ossConfig:add']) && (
+              <Button
+                className="btn-plain-primary"
+                icon={<PlusOutlined />}
+                onClick={() => {
+                  form.setFieldsValue(initialForm);
+                  setDialogOpen(true);
+                }}
+              >
+                新增
+              </Button>
+            )}
+            {auth.hasPermiOr(['system:ossConfig:edit']) && (
+              <Button
+                icon={<EditOutlined />}
+                style={{ color: '#67c23a', borderColor: '#b7eb8f' }}
+                onClick={() => handleEdit(selectedIds[0])}
+                disabled={selectedIds.length !== 1}
+              >
+                修改
+              </Button>
+            )}
+            {auth.hasPermiOr(['system:ossConfig:remove']) && (
+              <Button
+                danger
+                icon={<DeleteOutlined />}
+                onClick={() => handleDelete()}
+                disabled={selectedIds.length === 0}
+                style={{ borderColor: '#ffccc7' }}
+              >
+                删除
+              </Button>
+            )}
           </Space>
           <RightToolbar showSearch={showSearch} onShowSearchChange={setShowSearch} onQueryTable={() => loadList(query)} />
         </div>
@@ -328,7 +340,7 @@ export default function OssConfigPage() {
         />
       </Card>
 
-      <Modal
+      <CrudModal
         width={860}
         open={dialogOpen}
         title={editingConfigId ? '修改对象存储配置' : '新增对象存储配置'}
@@ -391,7 +403,7 @@ export default function OssConfigPage() {
             <Input.TextArea rows={4} />
           </Form.Item>
         </Form>
-      </Modal>
+      </CrudModal>
     </Space>
   );
 }

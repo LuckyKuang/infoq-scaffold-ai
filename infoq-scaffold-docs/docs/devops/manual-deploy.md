@@ -156,7 +156,7 @@ SQL 文件：
 cd /infoq/server/app
 SPRING_PROFILES_ACTIVE=prod \
 SPRING_CONFIG_ADDITIONAL_LOCATION=file:/infoq/server/config/ \
-DEPLOY_ID=2.1.6-20260602120000 \
+DEPLOY_ID=2.1.7-20260602120000 \
 SECURITY_TOKEN_SECRET=replace-with-at-least-32-chars-secret \
 INFOQ_IP2REGION_V6_PATH=/infoq/server/ip2region/ip2region_v6.xdb \
 nohup java \

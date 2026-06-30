@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
-import { Avatar, Button, Col, Modal, Row, Space, Upload } from 'antd';
 import type { UploadProps } from 'antd';
+import { Avatar, Button, Col, Row, Space, Upload } from 'antd';
 import { MinusOutlined, PlusOutlined, RedoOutlined, UndoOutlined, UploadOutlined, UserOutlined } from '@ant-design/icons';
 import Cropper, { type Area } from 'react-easy-crop';
 import 'react-easy-crop/react-easy-crop.css';
 import { uploadAvatar } from '@/api/system/user';
 import { assertAvatarUploadData } from '@/api/system/user/guards';
+import CrudModal from '@/components/CrudModal';
 import { useUserStore } from '@/store/modules/user';
 import modal from '@/utils/modal';
 import '@/pages/system/user/profile/user-avatar.css';
@@ -209,7 +210,14 @@ export default function UserAvatar({ avatar, onUploaded }: UserAvatarProps) {
 
   return (
     <>
-      <div className="user-avatar-head" onClick={handleOpen} onKeyDown={(event) => event.key === 'Enter' && handleOpen()} role="button" tabIndex={0}>
+      <div
+        className="user-avatar-head"
+        title="点击上传头像"
+        onClick={handleOpen}
+        onKeyDown={(event) => event.key === 'Enter' && handleOpen()}
+        role="button"
+        tabIndex={0}
+      >
         <Avatar size={120} src={currentAvatar || undefined} icon={<UserOutlined />} />
       </div>
 
@@ -217,14 +225,7 @@ export default function UserAvatar({ avatar, onUploaded }: UserAvatarProps) {
         <Button style={{ marginTop: 12 }}>上传头像</Button>
       </Upload>
 
-      <Modal
-        open={open}
-        title="修改头像"
-        width={800}
-        destroyOnHidden
-        onCancel={handleClose}
-        footer={null}
-      >
+      <CrudModal open={open} title="修改头像" width={800} destroyOnHidden onCancel={handleClose} footer={null}>
         <Row gutter={[24, 24]}>
           <Col xs={24} md={12}>
             <div className="user-avatar-cropper">
@@ -246,9 +247,7 @@ export default function UserAvatar({ avatar, onUploaded }: UserAvatarProps) {
             </div>
           </Col>
           <Col xs={24} md={12}>
-            <div className="user-avatar-preview">
-              {previewUrl || imageSrc ? <img src={previewUrl || imageSrc} alt="avatar preview" /> : null}
-            </div>
+            <div className="user-avatar-preview">{previewUrl || imageSrc ? <img src={previewUrl || imageSrc} alt="avatar preview" /> : null}</div>
           </Col>
         </Row>
 
@@ -266,7 +265,7 @@ export default function UserAvatar({ avatar, onUploaded }: UserAvatarProps) {
             提 交
           </Button>
         </Space>
-      </Modal>
+      </CrudModal>
     </>
   );
 }
