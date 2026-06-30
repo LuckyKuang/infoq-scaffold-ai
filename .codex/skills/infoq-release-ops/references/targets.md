@@ -23,22 +23,43 @@
   - 顶层 `"version"`
 - `README.md`
   - `![Version](https://img.shields.io/badge/Version-x.y.z-...)`
+  - `DEPLOY_ID=x.y.z-YYYYMMDDHHMMSS` 示例中的版本前缀
 - `doc/devops/docker-compose-deploy.md`
   - `当前文档对应项目基线版本为 \`x.y.z\`。`
+  - `DEPLOY_ID=x.y.z-YYYYMMDDHHMMSS` 示例中的版本前缀
+- `doc/devops/manual-deploy.md`
+  - `DEPLOY_ID=x.y.z-YYYYMMDDHHMMSS` 示例中的版本前缀
+- `doc/examples/systemd/infoq-admin.service`
+  - `Environment="DEPLOY_ID=x.y.z-YYYYMMDDHHMMSS"`
 - `infoq-scaffold-docs/docs/devops/docker-compose-deploy.md`
   - 由 `infoq-scaffold-docs/scripts/sync-from-root-doc.mjs` 从根 `doc/devops/docker-compose-deploy.md` 自动同步
   - `当前文档对应项目基线版本为 \`x.y.z\`。`
+  - `DEPLOY_ID=x.y.z-YYYYMMDDHHMMSS` 示例中的版本前缀
+- `infoq-scaffold-docs/docs/devops/manual-deploy.md`
+  - 由 `infoq-scaffold-docs/scripts/sync-from-root-doc.mjs` 从根 `doc/devops/manual-deploy.md` 自动同步
+  - `DEPLOY_ID=x.y.z-YYYYMMDDHHMMSS` 示例中的版本前缀
+- `infoq-scaffold-docs/docs/public/examples/systemd/infoq-admin.service`
+  - 由 `infoq-scaffold-docs/scripts/sync-from-root-doc.mjs` 从根 `doc/examples/` 自动复制
+  - `Environment="DEPLOY_ID=x.y.z-YYYYMMDDHHMMSS"`
 - `script/docker/docker-compose.yml`
   - `infoq/infoq-admin:x.y.z`
   - `infoq/infoq-frontend-vue:x.y.z`
   - `infoq/infoq-frontend-react:x.y.z`
   - `infoq/infoq-frontend-react-pro:x.y.z`
+- `infoq-scaffold-backend/infoq-admin/src/main/resources/application.yml`
+  - `DEPLOY_ID` 注释示例中的 `x.y.z-YYYYMMDDHHMMSS` 版本前缀
+- `infoq-scaffold-backend/infoq-admin/src/main/resources/application-prod.yml`
+  - `DEPLOY_ID` 注释示例中的 `x.y.z-YYYYMMDDHHMMSS` 版本前缀
 - `infoq-scaffold-backend/infoq-plugin/infoq-plugin-doc/src/test/java/cc/infoq/common/doc/config/SpringDocConfigTest.java`
   - `info.setVersion("x.y.z")`
   - `assertEquals("x.y.z", openAPI.getInfo().getVersion())`
 - `infoq-scaffold-backend/infoq-plugin/infoq-plugin-doc/src/test/java/cc/infoq/common/doc/config/properties/SpringDocPropertiesTest.java`
   - `info.setVersion("x.y.z")`
   - `assertEquals("x.y.z", properties.getInfo().getVersion())`
+- `infoq-scaffold-backend/infoq-plugin/infoq-plugin-quartz/src/main/java/cc/infoq/common/quartz/properties/QuartzManagedProperties.java`
+  - `DEPLOY_ID` JavaDoc 示例中的 `x.y.z-YYYYMMDDHHMMSS` 版本前缀
+- `infoq-scaffold-backend/infoq-modules/infoq-system/src/test/java/cc/infoq/system/runner/QuartzBootstrapCoordinatorTest.java`
+  - deployId 测试值、marker key 断言中的 `x.y.z-YYYYMMDDHHMMSS` 版本前缀
 
 ## SQL 文件名护栏
 

@@ -11,7 +11,7 @@ outline: [2, 3]
 # Docker Compose 部署说明
 
 本文档以当前仓库的 `script/docker/docker-compose.yml` 为准，只保留现有工程真正可执行的部署入口。
-当前文档对应项目基线版本为 `2.1.6`。
+当前文档对应项目基线版本为 `2.1.7`。
 
 如果你需要的是完整部署前检查或非 Docker 的手动部署流程，请先阅读：
 
@@ -61,7 +61,7 @@ export INFOQ_DEPLOY_ROOT="$(pwd)/doc/tmp/infoq-deploy"
 export INFOQ_DEPLOY_ROOT="$(pwd)/doc/tmp/infoq-deploy"
 export SECURITY_TOKEN_SECRET=replace-with-at-least-32-chars-secret
 # 可选：不设置时 deploy 会生成并持久化当前批次号
-# export DEPLOY_ID=2.1.6-20260602120000
+# export DEPLOY_ID=2.1.7-20260602120000
 bash script/bin/infoq.sh prepare
 bash script/bin/infoq.sh deploy
 ```
@@ -207,7 +207,7 @@ docker compose -f script/docker/docker-compose.yml logs -f infoq-admin
 
 ```bash
 export SECURITY_TOKEN_SECRET=replace-with-at-least-32-chars-secret
-export DEPLOY_ID=2.1.6-20260602120000
+export DEPLOY_ID=2.1.7-20260602120000
 docker compose -f script/docker/docker-compose.yml up -d --build
 ```
 

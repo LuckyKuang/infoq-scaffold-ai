@@ -30,6 +30,13 @@ export const generatedPages = [
     title: 'Docker Compose 部署',
     description: 'Fixture docs page',
     route: '/devops/docker-compose-deploy'
+  },
+  {
+    source: 'devops/manual-deploy.md',
+    target: 'devops/manual-deploy.md',
+    title: '手动部署',
+    description: 'Fixture manual deploy docs page',
+    route: '/devops/manual-deploy'
   }
 ];
 export const generatedPageBySource = new Map(generatedPages.map((page) => [page.source, page]));
@@ -45,16 +52,36 @@ function assertContainsFixed(filePath, text) {
   }
 }
 
+function assertDeployIdVersionExamples(filePath, expectedVersion) {
+  const content = fs.readFileSync(filePath, 'utf8');
+  const matches = content.match(/\b\d+\.\d+\.\d+(?=-\d{14}\b)/g) ?? [];
+  if (matches.length === 0) {
+    throw new Error(`[version-bump-test] no deploy-id version examples found in ${filePath}`);
+  }
+  const staleVersions = [...new Set(matches.filter((version) => version !== expectedVersion))];
+  if (staleVersions.length > 0) {
+    throw new Error(
+      `[version-bump-test] unexpected deploy-id versions in ${filePath}; expected ${expectedVersion}, got ${staleVersions.join(', ')}`
+    );
+  }
+}
+
 const files = [
   'README.md',
   'doc/devops/docker-compose-deploy.md',
+  'doc/devops/manual-deploy.md',
+  'doc/examples/systemd/infoq-admin.service',
   'script/bin/infoq.sh',
   'script/docker/docker-compose.yml',
   '.codex/skills/infoq-project-reference/references/project-reference.md',
+  'infoq-scaffold-backend/infoq-admin/src/main/resources/application.yml',
+  'infoq-scaffold-backend/infoq-admin/src/main/resources/application-prod.yml',
   'infoq-scaffold-backend/pom.xml',
   'infoq-scaffold-backend/infoq-core/infoq-core-bom/pom.xml',
   'infoq-scaffold-backend/infoq-plugin/infoq-plugin-doc/src/test/java/cc/infoq/common/doc/config/SpringDocConfigTest.java',
   'infoq-scaffold-backend/infoq-plugin/infoq-plugin-doc/src/test/java/cc/infoq/common/doc/config/properties/SpringDocPropertiesTest.java',
+  'infoq-scaffold-backend/infoq-plugin/infoq-plugin-quartz/src/main/java/cc/infoq/common/quartz/properties/QuartzManagedProperties.java',
+  'infoq-scaffold-backend/infoq-modules/infoq-system/src/test/java/cc/infoq/system/runner/QuartzBootstrapCoordinatorTest.java',
   'infoq-scaffold-docs/package.json',
   'infoq-scaffold-docs/scripts/sync-from-root-doc.mjs',
   'infoq-scaffold-frontend-react/package.json',
@@ -94,6 +121,21 @@ assertContainsFixed(path.join(fixtureRoot, 'infoq-scaffold-docs', 'package.json'
 assertContainsFixed(path.join(fixtureRoot, 'README.md'), '![Version](https://img.shields.io/badge/Version-9.9.9-');
 assertContainsFixed(path.join(fixtureRoot, 'doc', 'devops', 'docker-compose-deploy.md'), '当前文档对应项目基线版本为 `9.9.9`。');
 assertContainsFixed(path.join(fixtureRoot, 'infoq-scaffold-docs', 'docs', 'devops', 'docker-compose-deploy.md'), '当前文档对应项目基线版本为 `9.9.9`。');
+for (const relPath of [
+  'README.md',
+  'doc/devops/docker-compose-deploy.md',
+  'doc/devops/manual-deploy.md',
+  'doc/examples/systemd/infoq-admin.service',
+  'infoq-scaffold-backend/infoq-admin/src/main/resources/application.yml',
+  'infoq-scaffold-backend/infoq-admin/src/main/resources/application-prod.yml',
+  'infoq-scaffold-backend/infoq-plugin/infoq-plugin-quartz/src/main/java/cc/infoq/common/quartz/properties/QuartzManagedProperties.java',
+  'infoq-scaffold-backend/infoq-modules/infoq-system/src/test/java/cc/infoq/system/runner/QuartzBootstrapCoordinatorTest.java',
+  'infoq-scaffold-docs/docs/devops/docker-compose-deploy.md',
+  'infoq-scaffold-docs/docs/devops/manual-deploy.md',
+  'infoq-scaffold-docs/docs/public/examples/systemd/infoq-admin.service'
+]) {
+  assertDeployIdVersionExamples(path.join(fixtureRoot, relPath), '9.9.9');
+}
 assertContainsFixed(path.join(fixtureRoot, 'script', 'docker', 'docker-compose.yml'), 'image: infoq/infoq-admin:9.9.9');
 assertContainsFixed(path.join(fixtureRoot, 'script', 'docker', 'docker-compose.yml'), 'image: infoq/infoq-frontend-vue:9.9.9');
 assertContainsFixed(path.join(fixtureRoot, 'script', 'docker', 'docker-compose.yml'), 'image: infoq/infoq-frontend-react:9.9.9');

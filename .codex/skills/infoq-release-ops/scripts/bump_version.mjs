@@ -75,11 +75,33 @@ const weappVueManifest = path.join(repoRoot, 'infoq-scaffold-frontend-weapp-vue'
 const docsPackage = path.join(repoRoot, 'infoq-scaffold-docs', 'package.json');
 const readmeFile = path.join(repoRoot, 'README.md');
 const deployDoc = path.join(repoRoot, 'doc', 'devops', 'docker-compose-deploy.md');
+const manualDeployDoc = path.join(repoRoot, 'doc', 'devops', 'manual-deploy.md');
+const systemdExample = path.join(repoRoot, 'doc', 'examples', 'systemd', 'infoq-admin.service');
 const docsSyncScript = path.join(repoRoot, 'infoq-scaffold-docs', 'scripts', 'sync-from-root-doc.mjs');
 const docsSiteMap = path.join(repoRoot, 'infoq-scaffold-docs', 'site-map.mjs');
 const docsSyncedDeployDoc = path.join(repoRoot, 'infoq-scaffold-docs', 'docs', 'devops', 'docker-compose-deploy.md');
+const docsSyncedManualDeployDoc = path.join(repoRoot, 'infoq-scaffold-docs', 'docs', 'devops', 'manual-deploy.md');
+const docsSyncedSystemdExample = path.join(
+  repoRoot,
+  'infoq-scaffold-docs',
+  'docs',
+  'public',
+  'examples',
+  'systemd',
+  'infoq-admin.service'
+);
 const composeFile = path.join(repoRoot, 'script', 'docker', 'docker-compose.yml');
 const backendDeployScript = path.join(repoRoot, 'script', 'bin', 'infoq.sh');
+const appYaml = path.join(repoRoot, 'infoq-scaffold-backend', 'infoq-admin', 'src', 'main', 'resources', 'application.yml');
+const appProdYaml = path.join(
+  repoRoot,
+  'infoq-scaffold-backend',
+  'infoq-admin',
+  'src',
+  'main',
+  'resources',
+  'application-prod.yml'
+);
 const projectReferenceFile = path.join(
   repoRoot,
   '.codex',
@@ -119,6 +141,35 @@ const springDocPropertiesTest = path.join(
   'properties',
   'SpringDocPropertiesTest.java'
 );
+const quartzManagedProperties = path.join(
+  repoRoot,
+  'infoq-scaffold-backend',
+  'infoq-plugin',
+  'infoq-plugin-quartz',
+  'src',
+  'main',
+  'java',
+  'cc',
+  'infoq',
+  'common',
+  'quartz',
+  'properties',
+  'QuartzManagedProperties.java'
+);
+const quartzBootstrapCoordinatorTest = path.join(
+  repoRoot,
+  'infoq-scaffold-backend',
+  'infoq-modules',
+  'infoq-system',
+  'src',
+  'test',
+  'java',
+  'cc',
+  'infoq',
+  'system',
+  'runner',
+  'QuartzBootstrapCoordinatorTest.java'
+);
 
 const filesToCheck = [
   rootPom,
@@ -132,13 +183,36 @@ const filesToCheck = [
   docsPackage,
   readmeFile,
   deployDoc,
+  manualDeployDoc,
+  systemdExample,
   docsSyncScript,
   docsSiteMap,
   composeFile,
   backendDeployScript,
+  appYaml,
+  appProdYaml,
   projectReferenceFile,
   springDocConfigTest,
-  springDocPropertiesTest
+  springDocPropertiesTest,
+  quartzManagedProperties,
+  quartzBootstrapCoordinatorTest
+];
+
+const deployIdExampleFiles = [
+  [readmeFile, 'README deploy-id example'],
+  [deployDoc, 'docker compose deploy doc deploy-id examples'],
+  [manualDeployDoc, 'manual deploy doc deploy-id example'],
+  [systemdExample, 'systemd deploy-id example'],
+  [appYaml, 'application.yml deploy-id comment'],
+  [appProdYaml, 'application-prod.yml deploy-id comment'],
+  [quartzManagedProperties, 'QuartzManagedProperties deploy-id comment'],
+  [quartzBootstrapCoordinatorTest, 'Quartz bootstrap coordinator deploy-id assertions']
+];
+
+const syncedDeployIdExampleFiles = [
+  [docsSyncedDeployDoc, 'docs site docker compose deploy doc deploy-id examples'],
+  [docsSyncedManualDeployDoc, 'docs site manual deploy doc deploy-id example'],
+  [docsSyncedSystemdExample, 'docs site systemd deploy-id example']
 ];
 
 function assertFileExists(filePath) {
@@ -167,6 +241,10 @@ function replaceOrThrow(filePath, pattern, replacement, description) {
   }
 }
 
+function replaceDeployIdVersionExamples(filePath, description) {
+  replaceOrThrow(filePath, /\b\d+\.\d+\.\d+(?=-\d{14}\b)/g, targetVersion, description);
+}
+
 function updateJsonTopLevel(filePath, updates) {
   const parsed = JSON.parse(fs.readFileSync(filePath, 'utf8'));
   for (const [key, value] of Object.entries(updates)) {
@@ -179,6 +257,20 @@ function assertJsonTopLevel(filePath, key, expected, description) {
   const parsed = JSON.parse(fs.readFileSync(filePath, 'utf8'));
   if (parsed[key] !== expected) {
     fail(`verification failed for ${description} in ${filePath}; expected ${expected}, got ${parsed[key]}`);
+  }
+}
+
+function assertDeployIdVersionExamples(filePath, description) {
+  const content = fs.readFileSync(filePath, 'utf8');
+  const matches = content.match(/\b\d+\.\d+\.\d+(?=-\d{14}\b)/g) ?? [];
+  if (matches.length === 0) {
+    fail(`verification failed for ${description} in ${filePath}; no deploy-id version examples found`);
+  }
+  const staleVersions = [...new Set(matches.filter((version) => version !== targetVersion))];
+  if (staleVersions.length > 0) {
+    fail(
+      `verification failed for ${description} in ${filePath}; expected deploy-id version ${targetVersion}, got ${staleVersions.join(', ')}`
+    );
   }
 }
 
@@ -226,9 +318,18 @@ for (const filePath of [
   docsPackage,
   readmeFile,
   deployDoc,
+  manualDeployDoc,
+  systemdExample,
   composeFile,
+  appYaml,
+  appProdYaml,
+  quartzManagedProperties,
+  quartzBootstrapCoordinatorTest,
   springDocConfigTest,
-  springDocPropertiesTest
+  springDocPropertiesTest,
+  docsSyncedDeployDoc,
+  docsSyncedManualDeployDoc,
+  docsSyncedSystemdExample
 ]) {
   console.log(`  - ${path.relative(repoRoot, filePath).replace(/\\/g, '/')}`);
 }
@@ -253,6 +354,9 @@ updateJsonTopLevel(weappVueManifest, {
 replaceOrThrow(docsPackage, /("version"\s*:\s*")[^"]+(")/, `$1${targetVersion}$2`, 'docs package version');
 replaceOrThrow(readmeFile, /(!\[Version\]\(https:\/\/img\.shields\.io\/badge\/Version-)\d+\.\d+\.\d+(-[^)]*\))/, `$1${targetVersion}$2`, 'README version badge');
 replaceOrThrow(deployDoc, /(当前文档对应项目基线版本为 `)[^`]+(`。)/, `$1${targetVersion}$2`, 'deploy doc baseline version');
+for (const [filePath, description] of deployIdExampleFiles) {
+  replaceDeployIdVersionExamples(filePath, description);
+}
 replaceOrThrow(composeFile, /(image:\s+infoq\/infoq-admin:)\d+\.\d+\.\d+/, `$1${targetVersion}`, 'admin image tag');
 replaceOrThrow(composeFile, /(image:\s+infoq\/infoq-frontend-vue:)\d+\.\d+\.\d+/, `$1${targetVersion}`, 'vue image tag');
 replaceOrThrow(composeFile, /(image:\s+infoq\/infoq-frontend-react:)\d+\.\d+\.\d+/, `$1${targetVersion}`, 'react image tag');
@@ -278,7 +382,13 @@ assertJsonTopLevel(weappVueManifest, 'versionCode', targetVersion.replace(/\./g,
 assertContainsFixed(docsPackage, `"version": "${targetVersion}"`, 'docs package version');
 assertContainsFixed(readmeFile, `![Version](https://img.shields.io/badge/Version-${targetVersion}-`, 'README version badge');
 assertContainsFixed(deployDoc, `当前文档对应项目基线版本为 \`${targetVersion}\`。`, 'deploy doc baseline version');
-assertFileExists(docsSyncedDeployDoc);
+for (const [filePath, description] of deployIdExampleFiles) {
+  assertDeployIdVersionExamples(filePath, description);
+}
+for (const [filePath, description] of syncedDeployIdExampleFiles) {
+  assertFileExists(filePath);
+  assertDeployIdVersionExamples(filePath, description);
+}
 assertContainsFixed(docsSyncedDeployDoc, `当前文档对应项目基线版本为 \`${targetVersion}\`。`, 'docs site deploy doc baseline version');
 assertContainsFixed(composeFile, `image: infoq/infoq-admin:${targetVersion}`, 'admin image tag');
 assertContainsFixed(composeFile, `image: infoq/infoq-frontend-vue:${targetVersion}`, 'vue image tag');
@@ -293,3 +403,4 @@ console.log('[version-bump] version bump completed successfully.');
 console.log('[version-bump] suggested follow-up:');
 console.log(`  rg -n "${targetVersion.replace(/\./g, '\\.')}" README.md doc script infoq-scaffold-backend infoq-scaffold-frontend-react infoq-scaffold-frontend-react-pro infoq-scaffold-frontend-vue infoq-scaffold-frontend-weapp-react infoq-scaffold-frontend-weapp-vue infoq-scaffold-docs`);
 console.log('  node .codex/scripts/backend_mvn.mjs -- -pl infoq-plugin/infoq-plugin-doc -am -DskipTests=false -Dsurefire.failIfNoSpecifiedTests=false -Dtest=SpringDocConfigTest,SpringDocPropertiesTest test');
+console.log('  node .codex/scripts/backend_mvn.mjs -- -pl infoq-modules/infoq-system -am -DskipTests=false -Dsurefire.failIfNoSpecifiedTests=false -Dtest=QuartzBootstrapCoordinatorTest test');

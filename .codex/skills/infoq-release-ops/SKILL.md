@@ -1,6 +1,6 @@
 ---
 name: infoq-release-ops
-description: 执行本仓库发布操作，覆盖版本升级、后端 Maven revision、前端 package 与小程序 manifest 版本、Docker 镜像标签、发布文档、docs 同步、版本断言和发布前验证。适用于升级版本号、发布到指定 x.y.z、同步 README/docker/pom/package/manifest/doc 与 docs 站点版本。
+description: 执行本仓库发布操作，覆盖版本升级、后端 Maven revision、前端 package 与小程序 manifest 版本、Docker 镜像标签、发布文档、DEPLOY_ID 部署批次示例、docs 同步、版本断言和发布前验证。适用于升级版本号、发布到指定 x.y.z、同步 README/docker/pom/package/manifest/doc/backend config/test 与 docs 站点版本。
 ---
 
 # InfoQ 发布操作
@@ -10,7 +10,7 @@ description: 执行本仓库发布操作，覆盖版本升级、后端 Maven rev
 ## 执行顺序
 
 1. 判定范围：确认目标是版本升级、发布前检查、Docker tag、package/manifest 同步、docs 同步，还是发布文档更新。
-2. 目标枚举：列出目标版本、受管文件、工作区、SQL 策略、依赖/lockfile 影响、docs 影响和回滚条件。
+2. 目标枚举：列出目标版本、受管文件、工作区、`DEPLOY_ID` 示例、SQL 策略、依赖/lockfile 影响、docs 影响和回滚条件。
 3. 预览优先：先运行 `bump_version.mjs --dry-run <version>`，核对输出后再执行写入。
 4. 写入执行：实际运行版本升级脚本后，检查变更文件和脚本输出，不手工散改版本字段。
 5. 发布前验证：执行脚本回归、版本断言、依赖一致性、config/SQL/dependency/rollback/observability 检查。

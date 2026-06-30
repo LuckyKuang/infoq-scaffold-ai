@@ -10,7 +10,7 @@ Group=infoq
 WorkingDirectory=/infoq/server/app
 Environment="SPRING_PROFILES_ACTIVE=prod"
 Environment="SPRING_CONFIG_ADDITIONAL_LOCATION=file:/infoq/server/config/"
-Environment="DEPLOY_ID=2.1.6-20260602120000"
+Environment="DEPLOY_ID=2.1.7-20260602120000"
 Environment="SECURITY_TOKEN_SECRET=replace-with-at-least-32-chars-secret"
 Environment="INFOQ_IP2REGION_V6_PATH=/infoq/server/ip2region/ip2region_v6.xdb"
 ExecStart=/usr/bin/java -Djava.security.egd=file:/dev/./urandom -Dserver.port=9090 -XX:+HeapDumpOnOutOfMemoryError -Xms512m -Xmx1024m -jar /infoq/server/app/infoq-admin.jar
