@@ -8,6 +8,7 @@ import {
   SearchOutlined,
   UserOutlined,
 } from '@ant-design/icons';
+import {useNavigate} from '@umijs/max';
 import {
   Button,
   Card,
@@ -17,7 +18,6 @@ import {
   Form,
   Input,
   InputNumber,
-  Modal,
   Radio,
   Row,
   Select,
@@ -31,7 +31,6 @@ import type {ColumnsType} from 'antd/es/table';
 import type {DataNode} from 'antd/es/tree';
 import type {Dayjs} from 'dayjs';
 import {useCallback, useState} from 'react';
-import {useNavigate} from '@umijs/max';
 import {roleMenuTreeselect, treeselect as menuTreeselect,} from '@/api/system/menu';
 import type {MenuTreeOption} from '@/api/system/menu/types';
 import {
@@ -45,10 +44,11 @@ import {
   updateRole,
 } from '@/api/system/role';
 import type {RoleDeptTree, RoleForm, RoleQuery, RoleVO,} from '@/api/system/role/types';
+import CrudModal from '@/components/CrudModal';
 import Pagination from '@/components/Pagination';
 import RightToolbar from '@/components/RightToolbar';
-import useInitialLoadEffect from '@/hooks/useInitialLoadEffect';
 import useDictOptions from '@/hooks/useDictOptions';
+import useInitialLoadEffect from '@/hooks/useInitialLoadEffect';
 import modal from '@/utils/modal';
 import auth from '@/utils/permission';
 import {download} from '@/utils/request';
@@ -168,9 +168,13 @@ export default function RolePage() {
     setCheckedDeptKeys(response.data.checkedKeys.map(String));
   };
 
-  useInitialLoadEffect(() => {
-    loadList(initialQuery, null);
-  }, [loadList], {dedupeKey: 'system-role-initial-list'});
+  useInitialLoadEffect(
+    () => {
+      loadList(initialQuery, null);
+    },
+    [loadList],
+    { dedupeKey: 'system-role-initial-list' },
+  );
 
   const columns: ColumnsType<RoleVO> = [
     {
@@ -537,7 +541,7 @@ export default function RolePage() {
         />
       </Card>
 
-      <Modal
+      <CrudModal
         width={760}
         open={dialogOpen}
         title={editingRoleId ? '修改角色' : '新增角色'}
@@ -600,9 +604,9 @@ export default function RolePage() {
             <Input.TextArea rows={4} />
           </Form.Item>
         </Form>
-      </Modal>
+      </CrudModal>
 
-      <Modal
+      <CrudModal
         width={760}
         open={scopeOpen}
         title="分配数据权限"
@@ -652,7 +656,7 @@ export default function RolePage() {
             </>
           )}
         </Form>
-      </Modal>
+      </CrudModal>
     </Space>
   );
 }

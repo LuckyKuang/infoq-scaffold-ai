@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ReloadOutlined, SearchOutlined } from '@ant-design/icons';
-import { Button, Form, Input, Modal, Space, Table } from 'antd';
+import { Button, Form, Input, Space, Table } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import useDictOptions from '@/hooks/useDictOptions';
 import { authUserSelectAll, unallocatedUserList } from '@/api/system/role';
 import type { UserQuery, UserVO } from '@/api/system/user/types';
 import DictTag from '@/components/DictTag';
 import Pagination from '@/components/Pagination';
+import CrudModal from '@/components/CrudModal';
 import modal from '@/utils/modal';
 
 type SelectUserProps = {
@@ -109,11 +110,11 @@ export default function SelectUser({ roleId, open, onClose, onOk }: SelectUserPr
   };
 
   if (typeof open === 'undefined') {
-    return <Modal open title="选择用户" footer={null} onCancel={onClose} />;
+    return <CrudModal open title="选择用户" footer={null} onCancel={onClose} />;
   }
 
   return (
-    <Modal width={800} open={visible} title="选择用户" onCancel={onClose} onOk={handleConfirm}>
+    <CrudModal width={800} open={visible} title="选择用户" onCancel={onClose} onOk={handleConfirm}>
       <Form layout="inline" className="query-form" style={{ marginBottom: 12 }}>
         <Form.Item label="用户名称">
           <Input
@@ -199,6 +200,6 @@ export default function SelectUser({ roleId, open, onClose, onOk }: SelectUserPr
           loadList(next);
         }}
       />
-    </Modal>
+    </CrudModal>
   );
 }

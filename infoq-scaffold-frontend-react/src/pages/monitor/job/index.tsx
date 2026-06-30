@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { DeleteOutlined, DownloadOutlined, EditOutlined, PlayCircleOutlined, PlusOutlined, ReloadOutlined, SearchOutlined } from '@ant-design/icons';
-import { Button, Card, Col, Form, Input, Modal, Radio, Row, Select, Space, Switch, Table } from 'antd';
+import { Button, Card, Col, Form, Input, Radio, Row, Select, Space, Switch, Table } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import useDictOptions from '@/hooks/useDictOptions';
 import { addJob, changeJobStatus, delJob, getJob, listJob, listJobHandlerKeys, runJob, updateJob } from '@/api/monitor/job';
@@ -8,6 +8,7 @@ import type { JobForm, JobQuery, JobVO } from '@/api/monitor/job/types';
 import DictTag from '@/components/DictTag';
 import Pagination from '@/components/Pagination';
 import RightToolbar from '@/components/RightToolbar';
+import CrudModal from '@/components/CrudModal';
 import auth from '@/utils/permission';
 import modal from '@/utils/modal';
 import { download } from '@/utils/request';
@@ -339,7 +340,7 @@ export default function JobPage() {
         />
       </Card>
 
-      <Modal
+      <CrudModal
         open={dialogOpen}
         title={editingJobId ? '修改定时任务' : '新增定时任务'}
         confirmLoading={submitting}
@@ -375,7 +376,7 @@ export default function JobPage() {
             <Input.TextArea rows={2} />
           </Form.Item>
         </Form>
-      </Modal>
+      </CrudModal>
     </Space>
   );
 }

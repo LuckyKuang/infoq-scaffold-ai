@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { CloseOutlined, DeleteOutlined, DownloadOutlined, EditOutlined, PlusOutlined, ReloadOutlined, SearchOutlined } from '@ant-design/icons';
-import { Button, Card, Col, Form, Input, InputNumber, Modal, Row, Select, Space, Table, Tooltip } from 'antd';
+import { Button, Card, Col, Form, Input, InputNumber, Row, Select, Space, Table, Tooltip } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { getType, optionselect as getDictTypeOptions } from '@/api/system/dict/type';
@@ -10,6 +10,7 @@ import type { DictDataForm, DictDataQuery, DictDataVO } from '@/api/system/dict/
 import Pagination from '@/components/Pagination';
 import RightToolbar from '@/components/RightToolbar';
 import DictTag from '@/components/DictTag';
+import CrudModal from '@/components/CrudModal';
 import modal from '@/utils/modal';
 import auth from '@/utils/permission';
 import { download } from '@/utils/request';
@@ -346,7 +347,7 @@ export default function DictDataPage() {
         />
       </Card>
 
-      <Modal
+      <CrudModal
         open={dialogOpen}
         title={dictCode ? '修改字典数据' : '新增字典数据'}
         confirmLoading={submitting}
@@ -376,7 +377,7 @@ export default function DictDataPage() {
             <Input.TextArea rows={4} />
           </Form.Item>
         </Form>
-      </Modal>
+      </CrudModal>
     </Space>
   );
 }

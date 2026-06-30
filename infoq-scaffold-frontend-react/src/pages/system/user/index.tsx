@@ -50,6 +50,7 @@ import type { DeptTreeVO } from '@/api/system/dept/types';
 import type { PostVO } from '@/api/system/post/types';
 import Pagination from '@/components/Pagination';
 import RightToolbar, { type ToolbarColumn } from '@/components/RightToolbar';
+import CrudModal from '@/components/CrudModal';
 import modal from '@/utils/modal';
 import auth from '@/utils/permission';
 import { addDateRange } from '@/utils/scaffold';
@@ -327,8 +328,12 @@ export default function UserPage() {
   const handleAdd = useCallback(async () => {
     const response = await getUser();
     const data = response.data;
+    if (!data || !Array.isArray(data.roles)) {
+      modal.msgError('用户新增选项响应格式错误：roles 必须是数组');
+      return;
+    }
     setRoleOptions(data.roles);
-    setPostOptions(data.posts);
+    setPostOptions((current) => (Array.isArray(data.posts) ? data.posts : current));
     form.resetFields();
     form.setFieldsValue(initialForm);
     setDialogOpen(true);
@@ -684,7 +689,7 @@ export default function UserPage() {
         </Space>
       </Col>
 
-      <Modal
+      <CrudModal
         width={860}
         open={dialogOpen}
         title={editingUserId ? '修改用户' : '新增用户'}
@@ -777,9 +782,9 @@ export default function UserPage() {
             </Col>
           </Row>
         </Form>
-      </Modal>
+      </CrudModal>
 
-      <Modal
+      <CrudModal
         open={importOpen}
         title="用户导入"
         width={400}
@@ -822,9 +827,9 @@ export default function UserPage() {
             下载模板
           </Button>
         </div>
-      </Modal>
+      </CrudModal>
 
-      <Modal
+      <CrudModal
         open={pwdDialogOpen}
         title="重置密码"
         confirmLoading={pwdSubmitting}
@@ -857,7 +862,7 @@ export default function UserPage() {
             <Input.Password />
           </Form.Item>
         </Form>
-      </Modal>
+      </CrudModal>
     </Row>
   );
 }

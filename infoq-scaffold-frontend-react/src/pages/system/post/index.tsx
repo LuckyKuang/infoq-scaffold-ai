@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { DeleteOutlined, DownloadOutlined, EditOutlined, PlusOutlined, ReloadOutlined, SearchOutlined } from '@ant-design/icons';
-import { Button, Card, Col, Form, Input, InputNumber, Modal, Radio, Row, Select, Space, Table, Tooltip, Tree, TreeSelect } from 'antd';
+import { Button, Card, Col, Form, Input, InputNumber, Radio, Row, Select, Space, Table, Tooltip, Tree, TreeSelect } from 'antd';
 import type { DataNode } from 'antd/es/tree';
 import type { ColumnsType } from 'antd/es/table';
 import useDictOptions from '@/hooks/useDictOptions';
@@ -10,6 +10,7 @@ import type { DeptTreeVO } from '@/api/system/dept/types';
 import Pagination from '@/components/Pagination';
 import RightToolbar from '@/components/RightToolbar';
 import DictTag from '@/components/DictTag';
+import CrudModal from '@/components/CrudModal';
 import modal from '@/utils/modal';
 import auth from '@/utils/permission';
 import { download } from '@/utils/request';
@@ -414,7 +415,7 @@ export default function PostPage() {
         </Space>
       </Col>
 
-      <Modal
+      <CrudModal
         open={dialogOpen}
         title={postId ? '修改岗位' : '新增岗位'}
         confirmLoading={submitting}
@@ -444,7 +445,7 @@ export default function PostPage() {
             <Input.TextArea rows={4} />
           </Form.Item>
         </Form>
-      </Modal>
+      </CrudModal>
     </Row>
   );
 }

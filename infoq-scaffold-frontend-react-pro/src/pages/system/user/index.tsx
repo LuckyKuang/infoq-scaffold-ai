@@ -11,6 +11,7 @@ import {
   SearchOutlined,
   UploadOutlined,
 } from '@ant-design/icons';
+import {useNavigate} from '@umijs/max';
 import type {MenuProps} from 'antd';
 import {
   Button,
@@ -38,7 +39,6 @@ import type {DataNode} from 'antd/es/tree';
 import type {UploadFile} from 'antd/es/upload/interface';
 import type {Dayjs} from 'dayjs';
 import {useCallback, useEffect, useMemo, useState} from 'react';
-import {useNavigate} from '@umijs/max';
 import type {DeptTreeVO} from '@/api/system/dept/types';
 import {optionselect as getPostOptions} from '@/api/system/post';
 import type {PostVO} from '@/api/system/post/types';
@@ -56,10 +56,11 @@ import {
 } from '@/api/system/user';
 import {assertUserDetailData} from '@/api/system/user/guards';
 import type {UserForm, UserQuery, UserVO} from '@/api/system/user/types';
+import CrudModal from '@/components/CrudModal';
 import Pagination from '@/components/Pagination';
 import RightToolbar, {type ToolbarColumn} from '@/components/RightToolbar';
-import useInitialLoadEffect from '@/hooks/useInitialLoadEffect';
 import useDictOptions from '@/hooks/useDictOptions';
+import useInitialLoadEffect from '@/hooks/useInitialLoadEffect';
 import modal from '@/utils/modal';
 import auth from '@/utils/permission';
 import request, {download} from '@/utils/request';
@@ -254,10 +255,7 @@ export default function UserPage() {
   }, []);
 
   const loadList = useCallback(
-    async (
-      nextQuery: UserQuery,
-      nextRange: [Dayjs, Dayjs] | null,
-    ) => {
+    async (nextQuery: UserQuery, nextRange: [Dayjs, Dayjs] | null) => {
       setLoading(true);
       try {
         const response = await listUser(
@@ -287,13 +285,17 @@ export default function UserPage() {
     setPostOptions(postResponse.data);
   }, []);
 
-  useInitialLoadEffect(() => {
-    loadDeptTree();
-    loadList(initialQuery, null);
-    loadBaseOptions();
-  }, [loadBaseOptions, loadDeptTree, loadList], {
-    dedupeKey: 'system-user-initial-list',
-  });
+  useInitialLoadEffect(
+    () => {
+      loadDeptTree();
+      loadList(initialQuery, null);
+      loadBaseOptions();
+    },
+    [loadBaseOptions, loadDeptTree, loadList],
+    {
+      dedupeKey: 'system-user-initial-list',
+    },
+  );
 
   useEffect(() => {
     setExpandedDeptKeys(collectDeptKeys(deptTree));
@@ -405,8 +407,14 @@ export default function UserPage() {
   const handleAdd = useCallback(async () => {
     const response = await getUser();
     const data = response.data;
+    if (!data || !Array.isArray(data.roles)) {
+      modal.msgError('用户新增选项响应格式错误：roles 必须是数组');
+      return;
+    }
     setRoleOptions(data.roles);
-    setPostOptions(data.posts);
+    setPostOptions((current) =>
+      Array.isArray(data.posts) ? data.posts : current,
+    );
     form.resetFields();
     form.setFieldsValue(initialForm);
     setDialogOpen(true);
@@ -569,17 +577,16 @@ export default function UserPage() {
                 />
               </Tooltip>
             )}
-            {record.userId !== 1 &&
-              auth.hasPermiOr(['system:user:remove']) && (
-                <Tooltip title="删除">
-                  <Button
-                    className="table-action-link"
-                    type="link"
-                    icon={<DeleteOutlined />}
-                    onClick={() => handleDelete(record.userId)}
-                  />
-                </Tooltip>
-              )}
+            {record.userId !== 1 && auth.hasPermiOr(['system:user:remove']) && (
+              <Tooltip title="删除">
+                <Button
+                  className="table-action-link"
+                  type="link"
+                  icon={<DeleteOutlined />}
+                  onClick={() => handleDelete(record.userId)}
+                />
+              </Tooltip>
+            )}
             {record.userId !== 1 &&
               auth.hasPermiOr(['system:user:resetPwd']) && (
                 <Tooltip title="重置密码">
@@ -885,7 +892,7 @@ export default function UserPage() {
         </Space>
       </Col>
 
-      <Modal
+      <CrudModal
         width={860}
         open={dialogOpen}
         title={editingUserId ? '修改用户' : '新增用户'}
@@ -1029,9 +1036,9 @@ export default function UserPage() {
             </Col>
           </Row>
         </Form>
-      </Modal>
+      </CrudModal>
 
-      <Modal
+      <CrudModal
         open={importOpen}
         title="用户导入"
         width={400}
@@ -1085,9 +1092,9 @@ export default function UserPage() {
             下载模板
           </Button>
         </div>
-      </Modal>
+      </CrudModal>
 
-      <Modal
+      <CrudModal
         open={pwdDialogOpen}
         title="重置密码"
         confirmLoading={pwdSubmitting}
@@ -1123,7 +1130,7 @@ export default function UserPage() {
             <Input.Password />
           </Form.Item>
         </Form>
-      </Modal>
+      </CrudModal>
     </Row>
   );
 }

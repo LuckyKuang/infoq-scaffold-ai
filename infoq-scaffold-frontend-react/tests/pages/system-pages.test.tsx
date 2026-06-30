@@ -204,6 +204,46 @@ beforeEach(() => {
       data: [{ userId: 1, userName: 'admin' }]
     })
   );
+  vi.mocked(userApi.getUser).mockResolvedValue(
+    asResolvedValue<Awaited<ReturnType<typeof userApi.getUser>>>({
+      data: {
+        user: {
+          userId: 2,
+          deptId: 100,
+          userName: 'demo',
+          nickName: '演示用户',
+          userType: 'sys_user',
+          email: '',
+          phonenumber: '',
+          sex: '0',
+          avatar: '',
+          status: '0',
+          delFlag: '0',
+          loginIp: '',
+          loginDate: '',
+          remark: '',
+          deptName: '研发部',
+          roles: [],
+          admin: false
+        },
+        roles: [
+          {
+            roleId: 1,
+            roleName: '管理员',
+            roleKey: 'admin',
+            roleSort: 1,
+            status: '0',
+            createTime: '2026-03-10 10:00:00'
+          }
+        ],
+        roleIds: [],
+        posts: [{ postId: 10, postName: '研发岗' }],
+        postIds: [],
+        roleGroup: '',
+        postGroup: ''
+      }
+    })
+  );
 
   vi.mocked(roleApi.listRole).mockResolvedValue(
     asResolvedValue<Awaited<ReturnType<typeof roleApi.listRole>>>({
@@ -279,6 +319,40 @@ describe('pages/system', () => {
       expect(roleApi.listRole).toHaveBeenCalled();
       expect(postApi.optionselect).toHaveBeenCalled();
     });
+  });
+
+  it('opens the user add dialog when create options omit posts', async () => {
+    vi.mocked(userApi.getUser).mockResolvedValueOnce(
+      asResolvedValue<Awaited<ReturnType<typeof userApi.getUser>>>({
+        data: {
+          roles: [
+            {
+              roleId: 1,
+              roleName: '管理员',
+              roleKey: 'admin',
+              roleSort: 1,
+              status: '0',
+              createTime: '2026-03-10 10:00:00'
+            }
+          ],
+          roleIds: [],
+          postIds: [],
+          roleGroup: '',
+          postGroup: ''
+        }
+      })
+    );
+
+    renderWithRouter(<UserPage />, '/system/user');
+
+    expect(await screen.findByPlaceholderText('请输入用户名称')).toBeInTheDocument();
+    const addButton = screen.getByText('新增').closest('button');
+    expect(addButton).not.toBeNull();
+    fireEvent.click(addButton!);
+
+    expect(await screen.findByText('新增用户')).toBeInTheDocument();
+    expect(screen.getByText('角色')).toBeInTheDocument();
+    expect(userApi.getUser).toHaveBeenCalledWith();
   });
 
   it('renders the role management page with fetched rows', async () => {

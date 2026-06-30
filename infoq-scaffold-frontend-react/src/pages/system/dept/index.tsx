@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { DeleteOutlined, EditOutlined, PlusOutlined, ReloadOutlined, SearchOutlined, SortAscendingOutlined } from '@ant-design/icons';
-import { Button, Card, Col, Form, Input, InputNumber, Modal, Radio, Row, Select, Space, Table, Tooltip, TreeSelect } from 'antd';
+import { Button, Card, Col, Form, Input, InputNumber, Radio, Row, Select, Space, Table, Tooltip, TreeSelect } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import useDictOptions from '@/hooks/useDictOptions';
 import { addDept, delDept, getDept, listDept, listDeptExcludeChild, updateDept } from '@/api/system/dept';
@@ -9,6 +9,7 @@ import { listUserByDeptId } from '@/api/system/user';
 import type { UserVO } from '@/api/system/user/types';
 import RightToolbar from '@/components/RightToolbar';
 import DictTag from '@/components/DictTag';
+import CrudModal from '@/components/CrudModal';
 import modal from '@/utils/modal';
 import auth from '@/utils/permission';
 import { handleTree } from '@/utils/scaffold';
@@ -309,7 +310,7 @@ export default function DeptPage() {
         />
       </Card>
 
-      <Modal
+      <CrudModal
         width={600}
         open={dialogOpen}
         transitionName=""
@@ -372,7 +373,7 @@ export default function DeptPage() {
             </Col>
           </Row>
         </Form>
-      </Modal>
+      </CrudModal>
     </Space>
   );
 }

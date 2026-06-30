@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { DeleteOutlined, EditOutlined, PlusOutlined, ReloadOutlined, SearchOutlined } from '@ant-design/icons';
-import { Button, Card, Col, Form, Input, Modal, Radio, Row, Select, Space, Table, Tooltip } from 'antd';
+import { Button, Card, Col, Form, Input, Radio, Row, Select, Space, Table, Tooltip } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import useDictOptions from '@/hooks/useDictOptions';
 import { addNotice, delNotice, getNotice, listNotice, updateNotice } from '@/api/system/notice';
@@ -9,6 +9,7 @@ import Pagination from '@/components/Pagination';
 import RightToolbar from '@/components/RightToolbar';
 import DictTag from '@/components/DictTag';
 import Editor from '@/components/Editor';
+import CrudModal from '@/components/CrudModal';
 import modal from '@/utils/modal';
 import auth from '@/utils/permission';
 
@@ -281,7 +282,7 @@ export default function NoticePage() {
         />
       </Card>
 
-      <Modal
+      <CrudModal
         width={880}
         open={dialogOpen}
         title={noticeId ? '修改公告' : '新增公告'}
@@ -313,7 +314,7 @@ export default function NoticePage() {
             </Col>
           </Row>
         </Form>
-      </Modal>
+      </CrudModal>
     </Space>
   );
 }

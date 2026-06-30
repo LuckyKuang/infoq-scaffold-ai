@@ -6,13 +6,14 @@ import {
   ReloadOutlined,
   SearchOutlined,
 } from '@ant-design/icons';
-import {Button, Card, Col, DatePicker, Form, Input, Modal, Row, Space, Table, Tooltip,} from 'antd';
+import {useNavigate} from '@umijs/max';
+import {Button, Card, Col, DatePicker, Form, Input, Row, Space, Table, Tooltip,} from 'antd';
 import type {ColumnsType} from 'antd/es/table';
 import type {Dayjs} from 'dayjs';
 import {useCallback, useState} from 'react';
-import {useNavigate} from '@umijs/max';
 import {addType, delType, getType, listType, refreshCache, updateType,} from '@/api/system/dict/type';
 import type {DictTypeForm, DictTypeQuery, DictTypeVO,} from '@/api/system/dict/type/types';
+import CrudModal from '@/components/CrudModal';
 import Pagination from '@/components/Pagination';
 import RightToolbar from '@/components/RightToolbar';
 import useInitialLoadEffect from '@/hooks/useInitialLoadEffect';
@@ -73,9 +74,13 @@ export default function DictTypePage() {
     [],
   );
 
-  useInitialLoadEffect(() => {
-    loadList(initialQuery, null);
-  }, [loadList], {dedupeKey: 'system-dict-initial-list'});
+  useInitialLoadEffect(
+    () => {
+      loadList(initialQuery, null);
+    },
+    [loadList],
+    { dedupeKey: 'system-dict-initial-list' },
+  );
 
   const columns: ColumnsType<DictTypeVO> = [
     {
@@ -380,7 +385,7 @@ export default function DictTypePage() {
         />
       </Card>
 
-      <Modal
+      <CrudModal
         open={dialogOpen}
         title={dictId ? '修改字典类型' : '新增字典类型'}
         confirmLoading={submitting}
@@ -406,7 +411,7 @@ export default function DictTypePage() {
             <Input.TextArea rows={4} />
           </Form.Item>
         </Form>
-      </Modal>
+      </CrudModal>
     </Space>
   );
 }

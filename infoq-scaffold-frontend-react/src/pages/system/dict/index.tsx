@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { DeleteOutlined, DownloadOutlined, EditOutlined, PlusOutlined, ReloadOutlined, SearchOutlined } from '@ant-design/icons';
-import { Button, Card, Col, DatePicker, Form, Input, Modal, Row, Space, Table, Tooltip } from 'antd';
+import { Button, Card, Col, DatePicker, Form, Input, Row, Space, Table, Tooltip } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { Dayjs } from 'dayjs';
 import { useNavigate } from 'react-router-dom';
@@ -8,6 +8,7 @@ import { addType, delType, getType, listType, refreshCache, updateType } from '@
 import type { DictTypeForm, DictTypeQuery, DictTypeVO } from '@/api/system/dict/type/types';
 import Pagination from '@/components/Pagination';
 import RightToolbar from '@/components/RightToolbar';
+import CrudModal from '@/components/CrudModal';
 import modal from '@/utils/modal';
 import auth from '@/utils/permission';
 import { addDateRange } from '@/utils/scaffold';
@@ -300,7 +301,7 @@ export default function DictTypePage() {
         />
       </Card>
 
-      <Modal
+      <CrudModal
         open={dialogOpen}
         title={dictId ? '修改字典类型' : '新增字典类型'}
         confirmLoading={submitting}
@@ -318,7 +319,7 @@ export default function DictTypePage() {
             <Input.TextArea rows={4} />
           </Form.Item>
         </Form>
-      </Modal>
+      </CrudModal>
     </Space>
   );
 }

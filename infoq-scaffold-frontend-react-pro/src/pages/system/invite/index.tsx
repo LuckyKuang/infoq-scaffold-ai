@@ -14,7 +14,6 @@ import {
   Form,
   Input,
   InputNumber,
-  Modal,
   Row,
   Select,
   Space,
@@ -28,11 +27,12 @@ import type {Dayjs} from 'dayjs';
 import {useCallback, useState} from 'react';
 import {cancelInvite, delInvite, generateInvite, listInvite,} from '@/api/system/invite';
 import type {InviteCodeGenerateForm, InviteCodeQuery, InviteCodeVO,} from '@/api/system/invite/types';
+import CrudModal from '@/components/CrudModal';
 import DictTag from '@/components/DictTag';
 import Pagination from '@/components/Pagination';
 import RightToolbar from '@/components/RightToolbar';
-import useInitialLoadEffect from '@/hooks/useInitialLoadEffect';
 import useDictOptions from '@/hooks/useDictOptions';
+import useInitialLoadEffect from '@/hooks/useInitialLoadEffect';
 import modal from '@/utils/modal';
 import auth from '@/utils/permission';
 import {download} from '@/utils/request';
@@ -110,9 +110,13 @@ export default function InvitePage() {
     [],
   );
 
-  useInitialLoadEffect(() => {
-    loadList(initialQuery, null);
-  }, [loadList], {dedupeKey: 'system-invite-initial-list'});
+  useInitialLoadEffect(
+    () => {
+      loadList(initialQuery, null);
+    },
+    [loadList],
+    { dedupeKey: 'system-invite-initial-list' },
+  );
 
   const canCancel = (record: InviteCodeVO) => record.status === '0';
   const canDelete = (record: InviteCodeVO) => record.status !== '1';
@@ -545,7 +549,7 @@ export default function InvitePage() {
         />
       </Card>
 
-      <Modal
+      <CrudModal
         open={generateDialogOpen}
         title="生成邀请码"
         confirmLoading={submitting}
@@ -594,9 +598,9 @@ export default function InvitePage() {
             />
           </Form.Item>
         </Form>
-      </Modal>
+      </CrudModal>
 
-      <Modal
+      <CrudModal
         open={cancelDialogOpen}
         title="作废邀请码"
         confirmLoading={submitting}
@@ -621,7 +625,7 @@ export default function InvitePage() {
             />
           </Form.Item>
         </Form>
-      </Modal>
+      </CrudModal>
     </Space>
   );
 }

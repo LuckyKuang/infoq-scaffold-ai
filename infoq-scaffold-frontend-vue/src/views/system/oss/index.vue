@@ -116,8 +116,8 @@
     <el-dialog v-model="dialog.visible" :title="dialog.title" width="500px" append-to-body>
       <el-form ref="ossFormRef" :model="form" :rules="rules" label-width="80px">
         <el-form-item label="文件名">
-          <fileUpload v-if="type === 0" v-model="form.file" />
-          <imageUpload v-if="type === 1" v-model="form.file" />
+          <FileUpload v-if="type === 0" v-model="form.file" />
+          <ImageUpload v-if="type === 1" v-model="form.file" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -131,8 +131,10 @@
 </template>
 
 <script setup name="Oss" lang="ts">
-import { listOss, delOss } from '@/api/system/oss';
+import { delOss, listOss } from '@/api/system/oss';
+import FileUpload from '@/components/FileUpload/index.vue';
 import ImagePreview from '@/components/ImagePreview/index.vue';
+import ImageUpload from '@/components/ImageUpload/index.vue';
 import { OssForm, OssQuery, OssVO } from '@/api/system/oss/types';
 
 const router = useRouter();

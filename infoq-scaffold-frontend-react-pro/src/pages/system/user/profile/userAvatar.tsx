@@ -7,9 +7,10 @@ import {
   UserOutlined,
 } from '@ant-design/icons';
 import type {UploadProps} from 'antd';
-import {Avatar, Button, Col, Modal, Row, Space, Upload} from 'antd';
+import {Avatar, Button, Col, Row, Space, Upload} from 'antd';
 import {useEffect, useState} from 'react';
 import Cropper, {type Area} from 'react-easy-crop';
+import CrudModal from '@/components/CrudModal';
 import 'react-easy-crop/react-easy-crop.css';
 import {uploadAvatar} from '@/api/system/user';
 import {assertAvatarUploadData} from '@/api/system/user/guards';
@@ -252,7 +253,7 @@ export default function UserAvatar({ avatar, onUploaded }: UserAvatarProps) {
         <Button style={{ marginTop: 12 }}>上传头像</Button>
       </Upload>
 
-      <Modal
+      <CrudModal
         open={open}
         title="修改头像"
         width={800}
@@ -325,7 +326,7 @@ export default function UserAvatar({ avatar, onUploaded }: UserAvatarProps) {
             提 交
           </Button>
         </Space>
-      </Modal>
+      </CrudModal>
     </>
   );
 }

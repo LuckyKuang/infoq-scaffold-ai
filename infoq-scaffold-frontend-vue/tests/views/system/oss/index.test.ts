@@ -26,6 +26,12 @@ const ossMocks = vi.hoisted(() => ({
 }));
 
 vi.mock('vue-router', () => ({
+  createRouter: vi.fn(() => ({
+    beforeEach: vi.fn(),
+    afterEach: vi.fn(),
+    push: vi.fn()
+  })),
+  createWebHistory: vi.fn(),
   useRouter: () => ({
     push: ossMocks.routerPush
   })
@@ -155,6 +161,20 @@ const passthroughStub = (name: string) =>
     }
   });
 
+const FileUploadStub = defineComponent({
+  name: 'FileUpload',
+  setup() {
+    return () => h('div', { class: 'file-upload-stub' }, [h('button', { class: 'choose-file-button', type: 'button' }, '选取文件')]);
+  }
+});
+
+const ImageUploadStub = defineComponent({
+  name: 'ImageUpload',
+  setup() {
+    return () => h('div', { class: 'image-upload-stub' }, [h('button', { class: 'choose-image-button', type: 'button' }, '选择图片')]);
+  }
+});
+
 describe('views/system/oss/index', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -225,8 +245,8 @@ describe('views/system/oss/index', () => {
           'el-dialog': ElDialogStub,
           'el-tooltip': passthroughStub('ElTooltip'),
           'el-button': ElButtonStub,
-          fileUpload: true,
-          imageUpload: true,
+          FileUpload: FileUploadStub,
+          ImageUpload: ImageUploadStub,
           ImagePreview: true
         }
       }
@@ -257,6 +277,7 @@ describe('views/system/oss/index', () => {
     await fileButton!.trigger('click');
     await flushPromises();
     expect(wrapper.find('.el-dialog-stub[data-title=\"上传文件\"]').exists()).toBe(true);
+    expect(wrapper.find('.file-upload-stub .choose-file-button').text()).toBe('选取文件');
 
     const submitButton = wrapper.findAll('button.el-button-stub').find((button) => button.text().replace(/\s/g, '') === '确定');
     expect(submitButton).toBeDefined();
@@ -266,6 +287,7 @@ describe('views/system/oss/index', () => {
     await imageButton!.trigger('click');
     await flushPromises();
     expect(wrapper.find('.el-dialog-stub[data-title=\"上传图片\"]').exists()).toBe(true);
+    expect(wrapper.find('.image-upload-stub .choose-image-button').text()).toBe('选择图片');
   });
 
   it('downloads and deletes by row action', async () => {

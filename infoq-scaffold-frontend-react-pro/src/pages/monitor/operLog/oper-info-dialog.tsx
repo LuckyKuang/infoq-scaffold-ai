@@ -1,5 +1,6 @@
-import { Card, Descriptions, Modal, Tag, Typography } from 'antd';
-import type { OperLogVO } from '@/api/monitor/operLog/types';
+import {Card, Descriptions, Tag, Typography} from 'antd';
+import type {OperLogVO} from '@/api/monitor/operLog/types';
+import CrudModal from '@/components/CrudModal';
 import useDictOptions from '@/hooks/useDictOptions';
 
 type OperInfoDialogProps = {
@@ -111,7 +112,7 @@ export default function OperInfoDialog({
   }
 
   return (
-    <Modal
+    <CrudModal
       width={700}
       footer={null}
       open={open}
@@ -119,6 +120,6 @@ export default function OperInfoDialog({
       onCancel={onClose}
     >
       {contentNode(record, businessTypeLabel)}
-    </Modal>
+    </CrudModal>
   );
 }

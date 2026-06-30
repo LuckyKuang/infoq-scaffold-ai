@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { DeleteOutlined, DownloadOutlined, EditOutlined, PlusOutlined, ReloadOutlined, SearchOutlined } from '@ant-design/icons';
-import { Button, Card, Col, Form, Input, InputNumber, Modal, Radio, Row, Select, Space, Switch, Table, Tooltip } from 'antd';
+import { Button, Card, Col, Form, Input, InputNumber, Radio, Row, Select, Space, Switch, Table, Tooltip } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import useDictOptions from '@/hooks/useDictOptions';
 import { addClient, changeStatus, delClient, getClient, listClient, updateClient } from '@/api/system/client';
@@ -8,6 +8,7 @@ import type { ClientForm, ClientQuery, ClientVO } from '@/api/system/client/type
 import Pagination from '@/components/Pagination';
 import RightToolbar from '@/components/RightToolbar';
 import DictTag from '@/components/DictTag';
+import CrudModal from '@/components/CrudModal';
 import modal from '@/utils/modal';
 import auth from '@/utils/permission';
 import { download } from '@/utils/request';
@@ -325,7 +326,7 @@ export default function ClientPage() {
         />
       </Card>
 
-      <Modal
+      <CrudModal
         open={dialogOpen}
         title={editingClientId ? '修改客户端管理' : '新增客户端管理'}
         confirmLoading={submitting}
@@ -355,7 +356,7 @@ export default function ClientPage() {
             <Radio.Group options={(dict.sys_normal_disable || []).map((item) => ({ label: item.label, value: item.value }))} />
           </Form.Item>
         </Form>
-      </Modal>
+      </CrudModal>
     </Space>
   );
 }

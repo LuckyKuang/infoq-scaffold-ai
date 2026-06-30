@@ -7,7 +7,7 @@ import {
   ReloadOutlined,
   SearchOutlined,
 } from '@ant-design/icons';
-import {Button, Card, Col, Form, Input, Modal, Radio, Row, Select, Space, Switch, Table,} from 'antd';
+import {Button, Card, Col, Form, Input, Radio, Row, Select, Space, Switch, Table,} from 'antd';
 import type {ColumnsType} from 'antd/es/table';
 import {useCallback, useState} from 'react';
 import {
@@ -21,11 +21,12 @@ import {
   updateJob,
 } from '@/api/monitor/job';
 import type {JobForm, JobQuery, JobVO} from '@/api/monitor/job/types';
+import CrudModal from '@/components/CrudModal';
 import DictTag from '@/components/DictTag';
 import Pagination from '@/components/Pagination';
 import RightToolbar from '@/components/RightToolbar';
-import useInitialLoadEffect from '@/hooks/useInitialLoadEffect';
 import useDictOptions from '@/hooks/useDictOptions';
+import useInitialLoadEffect from '@/hooks/useInitialLoadEffect';
 import modal from '@/utils/modal';
 import auth from '@/utils/permission';
 import {download} from '@/utils/request';
@@ -101,10 +102,14 @@ export default function JobPage() {
     }
   }, [form]);
 
-  useInitialLoadEffect(() => {
-    loadList(initialQuery);
-    loadHandlerOptions();
-  }, [loadList, loadHandlerOptions], {dedupeKey: 'monitor-job-initial-list'});
+  useInitialLoadEffect(
+    () => {
+      loadList(initialQuery);
+      loadHandlerOptions();
+    },
+    [loadList, loadHandlerOptions],
+    { dedupeKey: 'monitor-job-initial-list' },
+  );
 
   const handleStatusToggle = async (record: JobVO, checked: boolean) => {
     const nextStatus = checked ? '0' : '1';
@@ -443,7 +448,7 @@ export default function JobPage() {
         />
       </Card>
 
-      <Modal
+      <CrudModal
         open={dialogOpen}
         title={editingJobId ? '修改定时任务' : '新增定时任务'}
         confirmLoading={submitting}
@@ -536,7 +541,7 @@ export default function JobPage() {
             <Input.TextArea rows={2} />
           </Form.Item>
         </Form>
-      </Modal>
+      </CrudModal>
     </Space>
   );
 }

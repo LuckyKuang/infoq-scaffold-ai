@@ -1,7 +1,6 @@
-import {screen, waitFor} from '@testing-library/react';
+import {fireEvent, screen, waitFor} from '@testing-library/react';
 import {StrictMode} from 'react';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
-import {renderWithRouter} from '../helpers/renderWithRouter';
 import * as deptApi from '@/api/system/dept';
 import * as menuApi from '@/api/system/menu';
 import * as postApi from '@/api/system/post';
@@ -14,6 +13,7 @@ import PostPage from '@/pages/system/post/index';
 import RolePage from '@/pages/system/role/index';
 import UserPage from '@/pages/system/user/index';
 import {setPermissionContext} from '@/utils/permission';
+import {renderWithRouter} from '../helpers/renderWithRouter';
 
 const dictOptions = vi.hoisted(() => ({
   sys_normal_disable: [
@@ -29,6 +29,21 @@ const dictOptions = vi.hoisted(() => ({
     { label: '隐藏', value: '1' },
   ],
 }));
+
+vi.mock('@umijs/max', async () => {
+  const router =
+    await vi.importActual<typeof import('react-router-dom')>(
+      'react-router-dom',
+    );
+  return {
+    Link: router.Link,
+    Outlet: router.Outlet,
+    useLocation: router.useLocation,
+    useNavigate: router.useNavigate,
+    useParams: router.useParams,
+    useSearchParams: router.useSearchParams,
+  };
+});
 
 vi.mock('@/hooks/useDictOptions', () => ({
   default: (...types: string[]) =>
@@ -254,6 +269,46 @@ beforeEach(() => {
       data: [{ userId: 1, userName: 'admin' }],
     }),
   );
+  vi.mocked(userApi.getUser).mockResolvedValue(
+    asResolvedValue<Awaited<ReturnType<typeof userApi.getUser>>>({
+      data: {
+        user: {
+          userId: 2,
+          deptId: 100,
+          userName: 'demo',
+          nickName: '演示用户',
+          userType: 'sys_user',
+          email: '',
+          phonenumber: '',
+          sex: '0',
+          avatar: '',
+          status: '0',
+          delFlag: '0',
+          loginIp: '',
+          loginDate: '',
+          remark: '',
+          deptName: '研发部',
+          roles: [],
+          admin: false,
+        },
+        roles: [
+          {
+            roleId: 1,
+            roleName: '管理员',
+            roleKey: 'admin',
+            roleSort: 1,
+            status: '0',
+            createTime: '2026-03-10 10:00:00',
+          },
+        ],
+        roleIds: [],
+        posts: [{ postId: 10, postName: '研发岗' }],
+        postIds: [],
+        roleGroup: '',
+        postGroup: '',
+      },
+    }),
+  );
 
   vi.mocked(roleApi.listRole).mockResolvedValue(
     asResolvedValue<Awaited<ReturnType<typeof roleApi.listRole>>>({
@@ -391,6 +446,44 @@ describe('pages/system', () => {
     });
   });
 
+  it('opens the user add dialog when create options omit posts', async () => {
+    vi.mocked(userApi.getUser).mockResolvedValueOnce(
+      asResolvedValue<Awaited<ReturnType<typeof userApi.getUser>>>({
+        data: {
+          roles: [
+            {
+              roleId: 1,
+              roleName: '管理员',
+              roleKey: 'admin',
+              roleSort: 1,
+              status: '0',
+              createTime: '2026-03-10 10:00:00',
+            },
+          ],
+          roleIds: [],
+          postIds: [],
+          roleGroup: '',
+          postGroup: '',
+        },
+      }),
+    );
+
+    renderWithRouter(<UserPage />, '/system/user');
+
+    expect(
+      await screen.findByPlaceholderText('请输入用户名称'),
+    ).toBeInTheDocument();
+    const addButton = screen.getByText('新增').closest('button');
+    if (!addButton) {
+      throw new Error('未找到用户新增按钮');
+    }
+    fireEvent.click(addButton);
+
+    expect(await screen.findByText('新增用户')).toBeInTheDocument();
+    expect(screen.getByText('角色')).toBeInTheDocument();
+    expect(userApi.getUser).toHaveBeenCalledWith();
+  });
+
   it('renders the role management page with fetched rows', async () => {
     renderWithRouter(<RolePage />, '/system/role');
 
@@ -457,6 +550,43 @@ describe('pages/system', () => {
     await waitFor(() => {
       expect(deptApi.listDept).toHaveBeenCalled();
     });
+  });
+
+  it('opens the root department add dialog with a stable parent selector and without default zoom motion', async () => {
+    renderWithRouter(<DeptPage />, '/system/dept');
+
+    expect(
+      await screen.findByPlaceholderText('请输入部门名称'),
+    ).toBeInTheDocument();
+    const addButton = screen.getByText('新增').closest('button');
+    if (!addButton) {
+      throw new Error('未找到部门新增按钮');
+    }
+    fireEvent.click(addButton);
+
+    expect(await screen.findByText('新增部门')).toBeInTheDocument();
+    const dialog = document.querySelector('.ant-modal');
+    expect(dialog).toBeInTheDocument();
+    expect(dialog).not.toHaveClass('ant-zoom');
+    expect(dialog).not.toHaveClass('ant-zoom-appear');
+    expect(screen.getByText('上级部门')).toBeInTheDocument();
+  });
+
+  it('opens the child department add dialog with a stable parent selector', async () => {
+    renderWithRouter(<DeptPage />, '/system/dept');
+
+    expect(
+      await screen.findByPlaceholderText('请输入部门名称'),
+    ).toBeInTheDocument();
+    const rowButtons = await waitFor(() => {
+      const buttons = document.querySelectorAll('.ant-table-tbody button');
+      expect(buttons.length).toBeGreaterThanOrEqual(2);
+      return buttons;
+    });
+    fireEvent.click(rowButtons[1]);
+
+    expect(await screen.findByText('新增部门')).toBeInTheDocument();
+    expect(screen.getByText('上级部门')).toBeInTheDocument();
   });
 
   it('runs department management initial dept list once in strict mode', async () => {

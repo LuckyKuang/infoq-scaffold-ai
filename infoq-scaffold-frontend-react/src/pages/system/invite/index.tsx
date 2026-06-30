@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { CloseCircleOutlined, DeleteOutlined, DownloadOutlined, PlusOutlined, ReloadOutlined, SearchOutlined } from '@ant-design/icons';
-import { Button, Card, Col, DatePicker, Form, Input, InputNumber, Modal, Row, Select, Space, Switch, Table, Tooltip, Typography } from 'antd';
+import { Button, Card, Col, DatePicker, Form, Input, InputNumber, Row, Select, Space, Switch, Table, Tooltip, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { Dayjs } from 'dayjs';
 import useDictOptions from '@/hooks/useDictOptions';
@@ -9,6 +9,7 @@ import type { InviteCodeGenerateForm, InviteCodeQuery, InviteCodeVO } from '@/ap
 import Pagination from '@/components/Pagination';
 import RightToolbar from '@/components/RightToolbar';
 import DictTag from '@/components/DictTag';
+import CrudModal from '@/components/CrudModal';
 import modal from '@/utils/modal';
 import auth from '@/utils/permission';
 import { addDateRange } from '@/utils/scaffold';
@@ -445,7 +446,7 @@ export default function InvitePage() {
         />
       </Card>
 
-      <Modal open={generateDialogOpen} title="生成邀请码" confirmLoading={submitting} onCancel={closeGenerateDialog} onOk={handleGenerateSubmit}>
+      <CrudModal open={generateDialogOpen} title="生成邀请码" confirmLoading={submitting} onCancel={closeGenerateDialog} onOk={handleGenerateSubmit}>
         <Form form={generateForm} layout="vertical" initialValues={initialGenerateForm}>
           <Form.Item label="生成数量" name="generateCount" rules={[{ required: true, message: '生成数量不能为空' }]}>
             <InputNumber min={1} max={100} precision={0} style={{ width: '100%' }} />
@@ -462,15 +463,15 @@ export default function InvitePage() {
             <Input.TextArea rows={4} maxLength={255} showCount placeholder="请输入用途备注" />
           </Form.Item>
         </Form>
-      </Modal>
+      </CrudModal>
 
-      <Modal open={cancelDialogOpen} title="作废邀请码" confirmLoading={submitting} onCancel={closeCancelDialog} onOk={handleCancelSubmit}>
+      <CrudModal open={cancelDialogOpen} title="作废邀请码" confirmLoading={submitting} onCancel={closeCancelDialog} onOk={handleCancelSubmit}>
         <Form form={cancelForm} layout="vertical" initialValues={initialCancelForm}>
           <Form.Item label="作废原因" name="canceledReason" rules={[{ required: true, message: '作废原因不能为空' }]}>
             <Input.TextArea rows={4} maxLength={255} showCount placeholder="请输入作废原因" />
           </Form.Item>
         </Form>
-      </Modal>
+      </CrudModal>
     </Space>
   );
 }

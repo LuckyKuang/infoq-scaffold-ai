@@ -6,7 +6,6 @@ import {
   Form,
   Input,
   InputNumber,
-  Modal,
   Radio,
   Row,
   Select,
@@ -21,11 +20,12 @@ import type {DataNode} from 'antd/es/tree';
 import {useCallback, useState} from 'react';
 import {addMenu, cascadeDelMenu, delMenu, getMenu, listMenu, updateMenu,} from '@/api/system/menu';
 import type {MenuForm, MenuQuery, MenuVO} from '@/api/system/menu/types';
+import CrudModal from '@/components/CrudModal';
 import DictTag from '@/components/DictTag';
 import RightToolbar from '@/components/RightToolbar';
 import SvgIcon from '@/components/SvgIcon';
-import useInitialLoadEffect from '@/hooks/useInitialLoadEffect';
 import useDictOptions from '@/hooks/useDictOptions';
+import useInitialLoadEffect from '@/hooks/useInitialLoadEffect';
 import modal from '@/utils/modal';
 import auth from '@/utils/permission';
 import {handleTree} from '@/utils/scaffold';
@@ -95,9 +95,13 @@ export default function MenuPage() {
     }
   }, []);
 
-  useInitialLoadEffect(() => {
-    loadList(initialQuery);
-  }, [loadList], {dedupeKey: 'system-menu-initial-list'});
+  useInitialLoadEffect(
+    () => {
+      loadList(initialQuery);
+    },
+    [loadList],
+    { dedupeKey: 'system-menu-initial-list' },
+  );
 
   const columns: ColumnsType<MenuVO> = [
     { title: '菜单名称', dataIndex: 'menuName', width: 160, ellipsis: true },
@@ -334,7 +338,7 @@ export default function MenuPage() {
         />
       </Card>
 
-      <Modal
+      <CrudModal
         width={860}
         open={dialogOpen}
         title={menuId ? '修改菜单' : '新增菜单'}
@@ -455,9 +459,9 @@ export default function MenuPage() {
             </Col>
           </Row>
         </Form>
-      </Modal>
+      </CrudModal>
 
-      <Modal
+      <CrudModal
         open={deleteOpen}
         title="级联删除菜单"
         onCancel={() => setDeleteOpen(false)}
@@ -483,7 +487,7 @@ export default function MenuPage() {
             setCheckedMenuIds(nextKeys as Array<string | number>);
           }}
         />
-      </Modal>
+      </CrudModal>
     </Space>
   );
 }

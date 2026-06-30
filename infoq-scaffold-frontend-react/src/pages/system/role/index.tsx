@@ -1,23 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import {
-  Button,
-  Card,
-  Checkbox,
-  Col,
-  DatePicker,
-  Form,
-  Input,
-  InputNumber,
-  Modal,
-  Radio,
-  Row,
-  Select,
-  Space,
-  Switch,
-  Table,
-  Tooltip,
-  Tree
-} from 'antd';
+import { Button, Card, Checkbox, Col, DatePicker, Form, Input, InputNumber, Radio, Row, Select, Space, Switch, Table, Tooltip, Tree } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { Dayjs } from 'dayjs';
 import {
@@ -38,6 +20,7 @@ import type { RoleDeptTree, RoleForm, RoleQuery, RoleVO } from '@/api/system/rol
 import type { MenuTreeOption } from '@/api/system/menu/types';
 import Pagination from '@/components/Pagination';
 import RightToolbar from '@/components/RightToolbar';
+import CrudModal from '@/components/CrudModal';
 import modal from '@/utils/modal';
 import auth from '@/utils/permission';
 import { addDateRange } from '@/utils/scaffold';
@@ -434,7 +417,7 @@ export default function RolePage() {
         />
       </Card>
 
-      <Modal
+      <CrudModal
         width={760}
         open={dialogOpen}
         title={editingRoleId ? '修改角色' : '新增角色'}
@@ -475,9 +458,9 @@ export default function RolePage() {
             <Input.TextArea rows={4} />
           </Form.Item>
         </Form>
-      </Modal>
+      </CrudModal>
 
-      <Modal
+      <CrudModal
         width={760}
         open={scopeOpen}
         title="分配数据权限"
@@ -522,7 +505,7 @@ export default function RolePage() {
             </>
           )}
         </Form>
-      </Modal>
+      </CrudModal>
     </Space>
   );
 }

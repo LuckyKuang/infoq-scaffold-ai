@@ -8,14 +8,15 @@ import {
   SettingOutlined,
   UploadOutlined,
 } from '@ant-design/icons';
-import {Button, Card, Col, DatePicker, Form, Image, Input, Modal, Row, Space, Table, Tooltip,} from 'antd';
+import {useNavigate} from '@umijs/max';
+import {Button, Card, Col, DatePicker, Form, Image, Input, Row, Space, Table, Tooltip,} from 'antd';
 import type {ColumnsType} from 'antd/es/table';
 import type {Dayjs} from 'dayjs';
 import {useCallback, useState} from 'react';
-import {useNavigate} from '@umijs/max';
 import {getConfigKey, updateConfigByKey} from '@/api/system/config';
 import {delOss, listOss} from '@/api/system/oss';
 import type {OssForm, OssQuery, OssVO} from '@/api/system/oss/types';
+import CrudModal from '@/components/CrudModal';
 import FileUpload from '@/components/FileUpload';
 import ImageUpload from '@/components/ImageUpload';
 import Pagination from '@/components/Pagination';
@@ -93,10 +94,14 @@ export default function OssPage() {
     [],
   );
 
-  useInitialLoadEffect(() => {
-    loadPreviewSetting();
-    loadList(initialQuery, null);
-  }, [loadList, loadPreviewSetting], {dedupeKey: 'system-oss-initial-list'});
+  useInitialLoadEffect(
+    () => {
+      loadPreviewSetting();
+      loadList(initialQuery, null);
+    },
+    [loadList, loadPreviewSetting],
+    { dedupeKey: 'system-oss-initial-list' },
+  );
 
   const columns: ColumnsType<OssVO> = [
     {
@@ -413,10 +418,16 @@ export default function OssPage() {
             {auth.hasPermiOr(['system:oss:edit']) && (
               <Button
                 icon={
-                  previewListResource ? <EyeInvisibleOutlined /> : <EyeOutlined />
+                  previewListResource ? (
+                    <EyeInvisibleOutlined />
+                  ) : (
+                    <EyeOutlined />
+                  )
                 }
                 loading={previewLoading}
-                className={previewListResource ? 'btn-plain-danger' : 'btn-plain-warning'}
+                className={
+                  previewListResource ? 'btn-plain-danger' : 'btn-plain-warning'
+                }
                 onClick={handlePreviewListResource}
               >
                 预览开关 : {previewListResource ? '禁用' : '启用'}
@@ -463,7 +474,7 @@ export default function OssPage() {
         />
       </Card>
 
-      <Modal
+      <CrudModal
         open={dialogOpen}
         title={uploadType === 'file' ? '上传文件' : '上传图片'}
         onCancel={() => setDialogOpen(false)}
@@ -481,7 +492,7 @@ export default function OssPage() {
             )}
           </Form.Item>
         </Form>
-      </Modal>
+      </CrudModal>
     </Space>
   );
 }
