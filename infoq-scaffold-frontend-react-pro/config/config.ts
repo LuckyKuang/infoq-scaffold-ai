@@ -156,17 +156,6 @@ export default defineConfig({
    * @description 一个不错的热更新组件，更新时可以保留 state
    */
   fastRefresh: true,
-  /**
-   * @name 路由预加载
-   * @description 预加载路由资源，提升页面切换速度
-   * @doc https://umijs.org/docs/api/config#routePrefetch
-   */
-  routePrefetch: {},
-  /**
-   * @name manifest 配置
-   * @description 生成资源清单，配合 routePrefetch 使用
-   */
-  manifest: {},
   //============== 以下都是max的插件配置 ===============
   /**
    * @name 数据流插件
@@ -185,7 +174,7 @@ export default defineConfig({
    */
   title: APP_TITLE,
   layout: {
-    locale: true,
+    locale: false,
     ...defaultSettings,
   },
   /**
@@ -196,17 +185,6 @@ export default defineConfig({
   moment2dayjs: {
     preset: 'antd',
     plugins: ['duration', 'relativeTime'],
-  },
-  /**
-   * @name 国际化插件
-   * @doc https://umijs.org/docs/max/i18n
-   */
-  locale: {
-    // default zh-CN
-    default: 'zh-CN',
-    antd: true,
-    // Keep the admin default stable; users can still switch language manually.
-    baseNavigator: false,
   },
   /**
    * @name antd 插件
@@ -232,12 +210,6 @@ export default defineConfig({
    */
   request: {},
   /**
-   * @name React Query 插件
-   * @description 使用 react-query 管理服务端状态
-   * @doc https://umijs.org/docs/max/react-query
-   */
-  reactQuery: {},
-  /**
    * @name 权限插件
    * @description 基于 initialState 的权限插件，必须先打开 initialState
    * @doc https://umijs.org/docs/max/access
@@ -252,7 +224,6 @@ export default defineConfig({
     { src: join(PUBLIC_PATH, 'scripts/loading.js'), async: true },
   ],
 
-  exportStatic: {},
   define: {
     'process.env.CI': process.env.CI,
     'process.env.COMMIT_HASH': commitHash,

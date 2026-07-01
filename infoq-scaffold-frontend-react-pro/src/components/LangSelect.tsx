@@ -1,4 +1,3 @@
-import {getLocale, setLocale} from '@umijs/max';
 import {Dropdown, Tooltip} from 'antd';
 import {useState} from 'react';
 import {useTranslation} from 'react-i18next';
@@ -11,18 +10,12 @@ const options = [
   { label: 'English', value: 'en_US' },
 ];
 
-const toUmiLocale = (language: string) =>
-  language === 'en_US' ? 'en-US' : 'zh-CN';
-
-const toLegacyLanguage = (locale: string) =>
-  locale === 'en-US' ? 'en_US' : 'zh_CN';
-
 export default function LangSelect() {
   const { i18n, t } = useTranslation();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const language = useAppStore((state) => state.language);
   const changeLanguage = useAppStore((state) => state.changeLanguage);
-  const currentLanguage = language || toLegacyLanguage(getLocale());
+  const currentLanguage = language || 'zh_CN';
   const items = options.map((item) => ({
     key: item.value,
     label: item.label,
@@ -37,7 +30,6 @@ export default function LangSelect() {
           const nextLanguage = String(key);
           changeLanguage(nextLanguage);
           i18n.changeLanguage(nextLanguage);
-          setLocale(toUmiLocale(nextLanguage), false);
           modal.msgSuccess(
             nextLanguage === 'en_US'
               ? 'Switch Language Successful!'

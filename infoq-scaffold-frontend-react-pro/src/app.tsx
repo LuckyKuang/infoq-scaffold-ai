@@ -9,16 +9,15 @@ import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import NProgress from 'nprogress';
 import 'nprogress/nprogress.css';
-import React, {useEffect, useMemo} from 'react';
-import {AvatarDropdown, ErrorBoundary, LayoutTagsView, OfflineBanner,} from '@/components';
+import React, {lazy, Suspense, useEffect, useMemo} from 'react';
 import AntdAppBridge from '@/components/AntdAppBridge';
+import ErrorBoundary from '@/components/ErrorBoundary';
 import InfoQGit from '@/components/InfoQGit';
 import KeepAliveView from '@/components/KeepAliveView';
 import LangSelect from '@/components/LangSelect';
-import NoticeBell from '@/components/NoticeBell';
+import LayoutTagsView from '@/components/LayoutTagsView';
+import OfflineBanner from '@/components/OfflineBanner';
 import ScreenFull from '@/components/ScreenFull';
-import SearchMenu from '@/components/SearchMenu';
-import SettingsDrawer from '@/components/SettingsDrawer';
 import SizeSelect from '@/components/SizeSelect';
 import SvgIcon from '@/components/SvgIcon';
 import TopNav from '@/components/TopNav';
@@ -51,6 +50,15 @@ import {errorConfig} from './requestErrorConfig';
 // Initialize dayjs plugins globally
 dayjs.extend(relativeTime);
 NProgress.configure({ showSpinner: false });
+
+const SearchMenu = lazy(() => import('@/components/SearchMenu'));
+const NoticeBell = lazy(() => import('@/components/NoticeBell'));
+const SettingsDrawer = lazy(() => import('@/components/SettingsDrawer'));
+const AvatarDropdown = lazy(() =>
+  import('@/components/RightContent/AvatarDropdown').then((module) => ({
+    default: module.AvatarDropdown,
+  })),
+);
 
 const loginPath = '/login';
 const publicRoutePatterns = [
@@ -538,11 +546,7 @@ export const layout: RunTimeLayoutConfig = ({
   return {
     menuItemRender: (item, dom) => {
       if (item.path) {
-        return (
-          <Link to={item.path} prefetch>
-            {dom}
-          </Link>
-        );
+        return <Link to={item.path}>{dom}</Link>;
       }
       return dom;
     },
@@ -577,8 +581,12 @@ export const layout: RunTimeLayoutConfig = ({
       const localeEnabled =
         (initialState?.settings as { locale?: boolean })?.locale !== false;
       return [
-        <SearchMenu key="search" />,
-        <NoticeBell key="notice" />,
+        <Suspense key="search" fallback={null}>
+          <SearchMenu />
+        </Suspense>,
+        <Suspense key="notice" fallback={null}>
+          <NoticeBell />
+        </Suspense>,
         <InfoQGit key="git" />,
         <ScreenFull key="screenfull" />,
         localeEnabled && <LangSelect key="lang" />,
@@ -621,7 +629,9 @@ export const layout: RunTimeLayoutConfig = ({
       src: initialState?.currentUser?.avatar,
       title: initialState?.currentUser?.name || 'User',
       render: (_, avatarChildren) => (
-        <AvatarDropdown>{avatarChildren}</AvatarDropdown>
+        <Suspense fallback={avatarChildren}>
+          <AvatarDropdown>{avatarChildren}</AvatarDropdown>
+        </Suspense>
       ),
     },
     // waterMarkProps: {
@@ -661,15 +671,19 @@ export const layout: RunTimeLayoutConfig = ({
           >
             {children}
           </LayoutRuntimeShell>
-          <SettingsDrawer
-            open={Boolean(initialState?.settingDrawerOpen)}
-            onClose={() => {
-              setInitialState((s) => ({
-                ...s,
-                settingDrawerOpen: false,
-              }));
-            }}
-          />
+          {initialState?.settingDrawerOpen ? (
+            <Suspense fallback={null}>
+              <SettingsDrawer
+                open
+                onClose={() => {
+                  setInitialState((s) => ({
+                    ...s,
+                    settingDrawerOpen: false,
+                  }));
+                }}
+              />
+            </Suspense>
+          ) : null}
         </>
       );
     },

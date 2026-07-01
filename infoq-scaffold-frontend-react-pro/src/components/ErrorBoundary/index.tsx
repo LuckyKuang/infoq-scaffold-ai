@@ -1,6 +1,6 @@
-import { getIntl } from '@umijs/max';
-import { Button, Card, Result } from 'antd';
+import {Button, Card, Result} from 'antd';
 import React from 'react';
+import i18n from '@/lang';
 
 function isChunkLoadError(error: Error): boolean {
   return (
@@ -17,13 +17,15 @@ function getSubTitleId(isChunkError: boolean, isOffline: boolean): string {
     : 'app.error.chunk.description.online';
 }
 
+const formatMessage = (id: string, defaultMessage: string) =>
+  i18n.t(id, { defaultValue: defaultMessage });
+
 function renderErrorFallback(
   error: Error,
   isOnline: boolean,
   onRetry: () => void,
   onReload: () => void,
 ) {
-  const intl = getIntl();
   const isOffline = !isOnline;
   const isChunkError = isChunkLoadError(error);
 
@@ -31,28 +33,24 @@ function renderErrorFallback(
     <Card variant="borderless" style={{ margin: 24 }}>
       <Result
         status="error"
-        title={intl.formatMessage({
-          id: isChunkError ? 'app.error.chunk.title' : 'app.error.render.title',
-          defaultMessage: isChunkError
+        title={formatMessage(
+          isChunkError ? 'app.error.chunk.title' : 'app.error.render.title',
+          isChunkError
             ? 'Failed to load page'
             : 'Something went wrong',
-        })}
-        subTitle={intl.formatMessage({
-          id: getSubTitleId(isChunkError, isOffline),
-          defaultMessage:
-            isChunkError && isOffline
-              ? 'Your network connection has been lost. Please check your connection and reload.'
-              : isChunkError
-                ? 'Page resources failed to load. Please reload and try again.'
-                : 'Sorry, an error occurred on this page. Please reload or go back to the home page.',
-        })}
+        )}
+        subTitle={formatMessage(
+          getSubTitleId(isChunkError, isOffline),
+          isChunkError && isOffline
+            ? 'Your network connection has been lost. Please check your connection and reload.'
+            : isChunkError
+              ? 'Page resources failed to load. Please reload and try again.'
+              : 'Sorry, an error occurred on this page. Please reload or go back to the home page.',
+        )}
         extra={[
           isChunkError && (
             <Button type="primary" key="retry" onClick={onRetry}>
-              {intl.formatMessage({
-                id: 'app.error.retry',
-                defaultMessage: 'Retry',
-              })}
+              {formatMessage('app.error.retry', 'Retry')}
             </Button>
           ),
           <Button
@@ -60,16 +58,10 @@ function renderErrorFallback(
             key="reload"
             onClick={onReload}
           >
-            {intl.formatMessage({
-              id: 'app.error.reload',
-              defaultMessage: 'Reload Page',
-            })}
+            {formatMessage('app.error.reload', 'Reload Page')}
           </Button>,
           <Button href="/" key="home">
-            {intl.formatMessage({
-              id: 'app.error.home',
-              defaultMessage: 'Back Home',
-            })}
+            {formatMessage('app.error.home', 'Back Home')}
           </Button>,
         ].filter(Boolean)}
       />

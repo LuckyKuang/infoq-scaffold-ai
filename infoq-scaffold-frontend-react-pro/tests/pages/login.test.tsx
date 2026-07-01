@@ -20,10 +20,6 @@ vi.mock('@umijs/max', () => ({
   history: {
     replace: loginPageMocks.historyReplace,
   },
-  useIntl: () => ({
-    formatMessage: ({ defaultMessage }: { defaultMessage: string }) =>
-      defaultMessage,
-  }),
   useModel: () => ({
     initialState: {
       fetchUserInfo: loginPageMocks.fetchUserInfo,

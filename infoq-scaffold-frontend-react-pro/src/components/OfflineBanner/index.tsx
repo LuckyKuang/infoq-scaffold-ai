@@ -1,8 +1,10 @@
-import { getIntl } from '@umijs/max';
-import { Alert } from 'antd';
-import { useEffect, useRef, useState } from 'react';
+import {Alert} from 'antd';
+import {useEffect, useRef, useState} from 'react';
+import {useTranslation} from 'react-i18next';
+import '@/lang';
 
 const OfflineBanner: React.FC = () => {
+  const { t } = useTranslation();
   const isOnlineRef = useRef(true);
   const [, forceUpdate] = useState<number>(0);
 
@@ -40,9 +42,8 @@ const OfflineBanner: React.FC = () => {
         zIndex: 10,
         maxWidth: 480,
       }}
-      title={getIntl().formatMessage({
-        id: 'app.network.offline',
-        defaultMessage:
+      title={t('app.network.offline', {
+        defaultValue:
           'You are currently offline. Some features may be unavailable.',
       })}
     />

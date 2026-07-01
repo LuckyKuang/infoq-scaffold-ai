@@ -27,6 +27,18 @@ vi.mock('@/components', () => ({
   OfflineBanner: () => null,
 }));
 
+vi.mock('@/components/ErrorBoundary', () => ({
+  default: ({ children }: { children: React.ReactNode }) => children,
+}));
+
+vi.mock('@/components/LayoutTagsView', () => ({
+  default: () => <div data-testid="layout-tags-view" />,
+}));
+
+vi.mock('@/components/OfflineBanner', () => ({
+  default: () => null,
+}));
+
 vi.mock('@/components/SvgIcon', () => ({
   default: ({ iconClass }: { iconClass: string }) => (
     <span data-icon-class={iconClass} />
@@ -115,7 +127,7 @@ describe('ProLayout runtime config', () => {
     });
   });
 
-  it('renders tags-view and SettingDrawer through childrenRender', () => {
+  it('renders tags-view and keeps SettingDrawer unmounted while closed', () => {
     const layoutConfig = layout({
       initialState: {
         settings: {},
@@ -127,9 +139,23 @@ describe('ProLayout runtime config', () => {
     render(layoutConfig.childrenRender?.(<div>Page Content</div>, {} as any));
 
     expect(screen.getByTestId('layout-tags-view')).toBeInTheDocument();
-    expect(screen.getByTestId('setting-drawer')).toBeInTheDocument();
+    expect(screen.queryByTestId('setting-drawer')).not.toBeInTheDocument();
     expect(screen.getByTestId('keep-alive-view')).toBeInTheDocument();
     expect(screen.getByText('Page Content')).toBeInTheDocument();
+  });
+
+  it('loads SettingDrawer only when it is opened', async () => {
+    const layoutConfig = layout({
+      initialState: {
+        settings: {},
+        settingDrawerOpen: true,
+      },
+      setInitialState: vi.fn(),
+    } as any);
+
+    render(layoutConfig.childrenRender?.(<div>Page Content</div>, {} as any));
+
+    expect(await screen.findByTestId('setting-drawer')).toBeInTheDocument();
   });
 
   it('renders TopNav in the header title when legacy topNav is enabled', () => {

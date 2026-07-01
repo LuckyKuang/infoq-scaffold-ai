@@ -17,6 +17,11 @@ const resources = {
         oauthProvider: '使用 {{provider}} 登录',
         login: '登 录',
         logging: '登 录 中...',
+        pageTitle: '登录页',
+        registerAccount: '注册账号',
+        forgotPassword: '忘记密码',
+        success: '登录成功！',
+        failure: '登录失败，请重试！',
         rule: {
           username: {
             required: '请输入您的账号',
@@ -117,6 +122,55 @@ const resources = {
           },
         },
       },
+      pages: {
+        login: {
+          failure: '登录失败，请重试！',
+          success: '登录成功！',
+          username: {
+            placeholder: '用户名',
+            required: '用户名是必填项！',
+          },
+          password: {
+            placeholder: '密码',
+            required: '密码是必填项！',
+          },
+          captcha: {
+            placeholder: '请输入验证码',
+            required: '验证码是必填项！',
+          },
+          rememberMe: '记住我',
+          forgotPassword: '忘记密码',
+          registerAccount: '注册账号',
+        },
+      },
+      app: {
+        network: {
+          offline: '当前处于离线状态，部分功能可能不可用',
+        },
+        error: {
+          chunk: {
+            title: '页面加载失败',
+            description: {
+              offline: '网络连接已断开，请检查网络后重新加载。',
+              online: '页面资源加载失败，请重新加载重试。',
+            },
+          },
+          render: {
+            title: '页面出现错误',
+            description:
+              '抱歉，页面遇到了一些问题，请刷新页面或返回首页。',
+          },
+          retry: '重试',
+          reload: '刷新页面',
+          home: '返回首页',
+        },
+        request: {
+          offline: '网络不可用，请检查网络连接后重试。',
+        },
+      },
+      menu: {
+        login: '登录页',
+      },
       common: {
         logout: '退出登录',
       },
@@ -172,6 +226,11 @@ const resources = {
         oauthProvider: 'Continue with {{provider}}',
         login: 'Login',
         logging: 'Signing in...',
+        pageTitle: 'Login page',
+        registerAccount: 'Register account',
+        forgotPassword: 'Forgot password',
+        success: 'Login successful!',
+        failure: 'Login failed, please try again!',
         rule: {
           username: {
             required: 'Please enter your account',
@@ -278,6 +337,58 @@ const resources = {
             required: 'Please enter a verification code',
           },
         },
+      },
+      pages: {
+        login: {
+          failure: 'Login failed, please try again!',
+          success: 'Login successful!',
+          username: {
+            placeholder: 'Username',
+            required: 'Please input your username!',
+          },
+          password: {
+            placeholder: 'Password',
+            required: 'Please input your password!',
+          },
+          captcha: {
+            placeholder: 'Verification code',
+            required: 'Please input verification code!',
+          },
+          rememberMe: 'Remember me',
+          forgotPassword: 'Forgot password',
+          registerAccount: 'Register account',
+        },
+      },
+      app: {
+        network: {
+          offline:
+            'You are currently offline. Some features may be unavailable.',
+        },
+        error: {
+          chunk: {
+            title: 'Failed to load page',
+            description: {
+              offline:
+                'Your network connection has been lost. Please check your connection and reload.',
+              online: 'Page resources failed to load. Please reload and try again.',
+            },
+          },
+          render: {
+            title: 'Something went wrong',
+            description:
+              'Sorry, an error occurred on this page. Please reload or go back to the home page.',
+          },
+          retry: 'Retry',
+          reload: 'Reload Page',
+          home: 'Back Home',
+        },
+        request: {
+          offline:
+            'Network unavailable. Please check your connection and try again.',
+        },
+      },
+      menu: {
+        login: 'Login page',
       },
       common: {
         logout: 'Logout',
