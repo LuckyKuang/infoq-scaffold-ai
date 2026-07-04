@@ -50,7 +50,7 @@ function getRouteList(nodes, prefix = '') {
 
 function buildDefaultEvidencePath(route, extension) {
   const normalizedRoute = route === '/' ? 'root' : route.replace(/^\/+/, '').replace(/\//g, '_');
-  return path.join(repoRoot, 'test-results', 'browser-automation', `${normalizedRoute}.${formatTimestamp()}.${extension}`);
+  return path.join(repoRoot, 'doc', 'tmp', 'infoq-browser-automate', 'admin-route-probe', `${normalizedRoute}.${formatTimestamp()}.${extension}`);
 }
 
 function collectProcessOutput(result) {

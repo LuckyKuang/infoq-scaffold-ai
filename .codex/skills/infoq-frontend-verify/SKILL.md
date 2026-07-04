@@ -1,20 +1,21 @@
 ---
 name: infoq-frontend-verify
-description: 为本仓库 React/Vue admin 与 weapp 执行前端验证，覆盖单测、coverage、lint/build、admin 本地栈启动、登录态诊断、路由截图、console 检查、小程序 build-open 和 weapp smoke/e2e。适用于 React/Vue 前端测试、运行态验证、路由回归和本地栈启动。
+description: 为本仓库 React/React Pro/Vue admin 与 weapp 执行前端验证，覆盖单测、coverage、lint/build、admin 本地栈启动、登录态诊断、路由截图、console 检查、小程序 build-open 和 weapp smoke/e2e。适用于 React/React Pro/Vue 前端测试、运行态验证、路由回归和本地栈启动。
 ---
 
 # InfoQ 前端验证
 
-本技能只负责一件事：React/Vue admin 与 weapp 的前端测试和运行态验证。它是前端验证领域型 SOP，不负责真实验证码 E2E，也不替代产品单测。
+本技能只负责一件事：React/React Pro/Vue admin 与 weapp 的前端测试和运行态验证。它是前端验证领域型 SOP，不负责真实验证码 E2E，也不替代产品单测。
 
 ## 客户端选择
 
 - `react-admin`: `infoq-scaffold-frontend-react`
+- `react-pro-admin`: `infoq-scaffold-frontend-react-pro`
 - `vue-admin`: `infoq-scaffold-frontend-vue`
 - `react-weapp`: `infoq-scaffold-frontend-weapp-react`
 - `vue-weapp`: `infoq-scaffold-frontend-weapp-vue`
 
-统一脚本通过 `--client react|vue` 选择技术栈。
+admin 本地栈脚本通过 `--client react|react-pro|vue` 选择管理端；weapp smoke 仍通过 `--client react|vue` 选择小程序端。
 
 ## 执行顺序
 
@@ -32,6 +33,7 @@ description: 为本仓库 React/Vue admin 与 weapp 执行前端验证，覆盖�
 ```bash
 node .codex/skills/infoq-frontend-verify/scripts/start_admin_dev_stack.mjs --client vue
 node .codex/skills/infoq-frontend-verify/scripts/start_admin_dev_stack.mjs --client react
+node .codex/skills/infoq-frontend-verify/scripts/start_admin_dev_stack.mjs --client react-pro
 ```
 
 停止本技能记录的本地栈：
@@ -39,6 +41,7 @@ node .codex/skills/infoq-frontend-verify/scripts/start_admin_dev_stack.mjs --cli
 ```bash
 node .codex/skills/infoq-frontend-verify/scripts/stop_admin_dev_stack.mjs --client vue
 node .codex/skills/infoq-frontend-verify/scripts/stop_admin_dev_stack.mjs --client react
+node .codex/skills/infoq-frontend-verify/scripts/stop_admin_dev_stack.mjs --client react-pro
 ```
 
 本地栈状态文件固定写入 `doc/tmp/infoq-frontend-verify/<client>/state.json`，必须记录 backend/frontend 的 pid、port、log、`running`/`stopped`/`failed`/`interrupted` 状态。运行态验证完成或被中断后，必须执行对应 `stop_admin_dev_stack.mjs`，只关闭本 skill 启动或状态文件记录的进程。
@@ -81,6 +84,16 @@ pnpm run test:unit
 pnpm run test:unit:coverage
 pnpm run lint:eslint
 pnpm run build:prod
+```
+
+React Pro admin：
+
+```bash
+cd infoq-scaffold-frontend-react-pro
+pnpm run test
+pnpm run test:coverage
+pnpm run lint
+pnpm run build
 ```
 
 React weapp：

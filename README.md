@@ -111,7 +111,7 @@ infoq-scaffold-ai
 - 项目静态参考：`infoq-project-reference`
 - 高影响交付、OpenSpec、重大 UI/UX 门禁和插件治理：`infoq-delivery-workflow`
 - 后端单测、smoke、登录/auth 和 Redisson OSS 兼容性验证：`infoq-backend-verify`
-- React/Vue admin 与 weapp 单测、构建和运行态验证：`infoq-frontend-verify`
+- React/React Pro/Vue admin 与 weapp 单测、构建和运行态验证：`infoq-frontend-verify`
 - SQL、数据库、Redis、数据修复、迁移和一致性核对：`infoq-data-ops`
 - 管理端测试矩阵、真实验证码 E2E 和 CRUD E2E 模式：`infoq-admin-e2e`
 - 管理端真实页面运营维护、权限巡检和危险动作门禁：`infoq-admin-ops`
@@ -121,7 +121,7 @@ infoq-scaffold-ai
 
 其中浏览器自动化默认路径已经收敛为“仓库脚本 + skill 内本地 Playwright 依赖”。`admin-route-probe` 会先走快速 token 获取，遇到后端验证码开启时自动复用 `infoq-admin-e2e/scripts/captcha_login.mjs` 识别验证码并登录。`playwright` MCP 只用于临时交互探索，`chrome-devtools` MCP 只用于 Network / Console / Performance 深度诊断。
 
-React / Vue 与 admin / weapp 差异通过目标 skill 的 `references/*` 或 `--client react|vue` 参数区分，不再按技术栈碎片化拆 skill。
+React / React Pro / Vue 与 admin / weapp 差异通过目标 skill 的 `references/*` 或 `--client` 参数区分；admin 本地栈使用 `react|react-pro|vue`，weapp 使用 `react|vue`，不再按技术栈碎片化拆 skill。
 
 详见：
 
@@ -252,6 +252,7 @@ React Pro 默认使用端口 `80`，并在 Umi Max dev server ready 后自动打
 ```bash
 node .codex/skills/infoq-frontend-verify/scripts/start_admin_dev_stack.mjs --client vue
 node .codex/skills/infoq-frontend-verify/scripts/start_admin_dev_stack.mjs --client react
+node .codex/skills/infoq-frontend-verify/scripts/start_admin_dev_stack.mjs --client react-pro
 ```
 
 如果要在不关闭验证码的前提下执行真实验证码登录 + 管理端动态路由 smoke：
@@ -265,7 +266,7 @@ node .codex/skills/infoq-admin-e2e/scripts/run_admin_e2e.mjs --client react-pro 
 
 `captcha_login.mjs` 是仓库内真实验证码 token 获取入口，封装 `/auth/code`、`ddddocr`、算术验证码归一化和加密 `/auth/login`，证据写入 `doc/tmp/infoq-admin-e2e/captcha-login/<run-id>/`。`run_admin_e2e.mjs` 默认会在完成、失败或中断后停止本次 skill 启动的后端和管理端 dev server；只有成功且需要保留联调栈时才显式传 `--keep-stack-after`，失败或中断仍会关闭 owned 进程。运行态状态文件按 client 保存在 `doc/tmp/infoq-admin-e2e/stack/<vue|react|react-pro>/state.json`。
 
-如果要先生成 React/Vue 管理端 Web 自动化测试矩阵：
+如果要先生成 React/React Pro/Vue 管理端 Web 自动化测试矩阵：
 
 ```bash
 node .codex/skills/infoq-admin-e2e/scripts/generate-case-matrix.mjs
@@ -277,9 +278,10 @@ node .codex/skills/infoq-admin-e2e/scripts/validate-case-matrix.mjs doc/test/fro
 ```bash
 node .codex/skills/infoq-frontend-verify/scripts/stop_admin_dev_stack.mjs --client vue
 node .codex/skills/infoq-frontend-verify/scripts/stop_admin_dev_stack.mjs --client react
+node .codex/skills/infoq-frontend-verify/scripts/stop_admin_dev_stack.mjs --client react-pro
 ```
 
-`start_admin_dev_stack.mjs` 的状态文件保存在 `doc/tmp/infoq-frontend-verify/<vue|react>/state.json`，记录 pid、port、log 和 `running/stopped/failed/interrupted` 等状态。验证完成、失败或中断后按状态文件执行 stop，只关闭 skill 自己启动或记录为 owned 的进程。
+`start_admin_dev_stack.mjs` 的状态文件保存在 `doc/tmp/infoq-frontend-verify/<vue|react|react-pro>/state.json`，记录 pid、port、log 和 `running/stopped/failed/interrupted` 等状态。验证完成、失败或中断后按状态文件执行 stop，只关闭 skill 自己启动或记录为 owned 的进程。
 
 ### 3. 小程序端
 

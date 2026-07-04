@@ -26,6 +26,16 @@ const CLIENTS = {
     defaultBackendPort: 8080,
     defaultFrontendPort: 5174
   },
+  'react-pro': {
+    label: 'react-pro-runtime',
+    frontendDirName: 'infoq-scaffold-frontend-react-pro',
+    frontendDisplayName: 'React Pro admin',
+    frontendLogPrefix: 'frontend-react-pro',
+    frontendPortFlag: '--react-pro-port',
+    frontendPortEnv: 'REACT_PRO_PORT',
+    defaultBackendPort: 8080,
+    defaultFrontendPort: 4184
+  },
   vue: {
     label: 'vue-runtime',
     frontendDirName: 'infoq-scaffold-frontend-vue',
@@ -48,10 +58,10 @@ function readValue(argv, index, flag) {
 
 function printHelp() {
   console.log(`Usage:
-  node .codex/skills/infoq-frontend-verify/scripts/start_admin_dev_stack.mjs --client <vue|react> [options]
+  node .codex/skills/infoq-frontend-verify/scripts/start_admin_dev_stack.mjs --client <vue|react|react-pro> [options]
 
 Options:
-  --client <vue|react>  Required admin client.
+  --client <vue|react|react-pro>  Required admin client.
   --build-backend       Build backend jar before startup.
   --force-restart       Stop recorded processes before startup.
   --backend-only        Start backend only.
@@ -80,7 +90,7 @@ function splitClientArg(argv) {
     forwarded.push(arg);
   }
   if (!CLIENTS[client]) {
-    throw new Error('--client must be one of: vue, react');
+    throw new Error('--client must be one of: vue, react, react-pro');
   }
   return {client, forwarded};
 }

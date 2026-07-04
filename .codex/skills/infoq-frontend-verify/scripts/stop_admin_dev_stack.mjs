@@ -9,6 +9,7 @@ const repoRoot = resolveRepoRoot(scriptDir);
 
 const CLIENTS = {
   react: {label: 'react-runtime', frontendDisplayName: 'React admin'},
+  'react-pro': {label: 'react-pro-runtime', frontendDisplayName: 'React Pro admin'},
   vue: {label: 'vue-runtime', frontendDisplayName: 'Vue admin'}
 };
 
@@ -22,7 +23,7 @@ function readValue(argv, index, flag) {
 
 function printHelp() {
   console.log(`Usage:
-  node .codex/skills/infoq-frontend-verify/scripts/stop_admin_dev_stack.mjs --client <vue|react>`);
+  node .codex/skills/infoq-frontend-verify/scripts/stop_admin_dev_stack.mjs --client <vue|react|react-pro>`);
 }
 
 function parseClient(argv) {
@@ -41,7 +42,7 @@ function parseClient(argv) {
     throw new Error(`Unknown option: ${arg}`);
   }
   if (!CLIENTS[client]) {
-    throw new Error('--client must be one of: vue, react');
+    throw new Error('--client must be one of: vue, react, react-pro');
   }
   return client;
 }
