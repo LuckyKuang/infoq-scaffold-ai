@@ -1,4 +1,11 @@
-import {EditOutlined, PlusOutlined, ReloadOutlined, SaveOutlined, SettingOutlined,} from '@ant-design/icons';
+import {
+  DeleteOutlined,
+  EditOutlined,
+  PlusOutlined,
+  ReloadOutlined,
+  SaveOutlined,
+  SettingOutlined,
+} from '@ant-design/icons';
 import {
   Button,
   Card,
@@ -22,6 +29,7 @@ import type {ChangeEvent} from 'react';
 import {useCallback, useEffect, useMemo, useState} from 'react';
 import {
   addConfig,
+  delConfig,
   getConfigPanel,
   refreshCache,
   reorderConfig,
@@ -321,6 +329,22 @@ export default function ConfigPage() {
     }
   };
 
+  const deleteDefinition = async (item: ConfigPanelItem) => {
+    if (item.configType === 'Y') {
+      modal.msgWarning('内置参数不能删除');
+      return;
+    }
+    const confirmed = await modal.confirm(
+      `是否确认删除参数键名为 "${item.configKey}" 的配置定义？`,
+    );
+    if (!confirmed) {
+      return;
+    }
+    await delConfig(item.configId);
+    modal.msgSuccess('删除成功');
+    await loadPanel();
+  };
+
   const saveOrder = async () => {
     setSubmitting(true);
     try {
@@ -461,14 +485,26 @@ export default function ConfigPage() {
         </Text>
         <Space className="config-card-actions" wrap>
           {isSuperAdmin && (
-            <Button
-              type="link"
-              size="small"
-              icon={<SettingOutlined />}
-              onClick={() => openEditDrawer(item)}
-            >
-              定义
-            </Button>
+            <>
+              <Button
+                type="link"
+                size="small"
+                icon={<SettingOutlined />}
+                onClick={() => openEditDrawer(item)}
+              >
+                定义
+              </Button>
+              <Button
+                danger
+                type="link"
+                size="small"
+                icon={<DeleteOutlined />}
+                disabled={item.configType === 'Y'}
+                onClick={() => deleteDefinition(item)}
+              >
+                删除
+              </Button>
+            </>
           )}
           <Tooltip
             title={

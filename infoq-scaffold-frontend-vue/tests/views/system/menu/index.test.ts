@@ -254,7 +254,10 @@ describe('views/system/menu/index', () => {
         isCache: '0',
         path: 'demo',
         status: '0',
-        visible: '0'
+        visible: '0',
+        children: [],
+        createTime: '2026-03-07 10:00:00',
+        createBy: 'admin'
       }
     });
     menuMocks.addMenu.mockResolvedValue(undefined);
@@ -375,6 +378,13 @@ describe('views/system/menu/index', () => {
     await flushPromises();
 
     expect(menuMocks.updateMenu).toHaveBeenCalledTimes(1);
+    expect(menuMocks.updateMenu).toHaveBeenCalledWith(
+      expect.not.objectContaining({
+        children: expect.anything(),
+        createTime: expect.anything(),
+        createBy: expect.anything()
+      })
+    );
     expect(menuMocks.msgSuccess).toHaveBeenCalledWith('操作成功');
   });
 

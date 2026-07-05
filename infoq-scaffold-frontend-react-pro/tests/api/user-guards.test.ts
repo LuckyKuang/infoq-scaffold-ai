@@ -1,9 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import {
-  assertAvatarUploadData,
-  assertUserDetailData,
-  assertUserProfileData,
-} from '@/api/system/user/guards';
+import {describe, expect, it} from 'vitest';
+import {assertAvatarUploadData, assertUserDetailData, assertUserProfileData,} from '@/api/system/user/guards';
 
 const user = {
   userId: 1,
@@ -35,7 +31,7 @@ describe('system user guards', () => {
     ).toThrow('用户资料响应 data.user 必须是对象');
   });
 
-  it('requires role and post id arrays for user detail forms', () => {
+  it('requires role id arrays and normalizes optional post fields for user detail forms', () => {
     const data = {
       user,
       roles: [],
@@ -46,12 +42,15 @@ describe('system user guards', () => {
       postGroup: '',
     };
 
-    expect(assertUserDetailData(data)).toBe(data);
+    expect(assertUserDetailData(data)).toEqual(data);
+    expect(
+      assertUserDetailData({ ...data, posts: undefined, postIds: undefined }),
+    ).toMatchObject({
+      posts: [],
+      postIds: [],
+    });
     expect(() => assertUserDetailData({ ...data, roleIds: undefined })).toThrow(
       '用户详情响应 data.roleIds 必须是数组',
-    );
-    expect(() => assertUserDetailData({ ...data, postIds: undefined })).toThrow(
-      '用户详情响应 data.postIds 必须是数组',
     );
   });
 

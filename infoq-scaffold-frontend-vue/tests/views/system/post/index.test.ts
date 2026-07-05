@@ -217,7 +217,9 @@ describe('views/system/post/index', () => {
         postName: '开发工程师',
         postSort: 1,
         status: '0',
-        remark: ''
+        remark: '',
+        deptName: '研发部',
+        createTime: '2026-03-07 10:00:00'
       }
     });
     postMocks.addPost.mockResolvedValue(undefined);
@@ -347,6 +349,12 @@ describe('views/system/post/index', () => {
     await flushPromises();
 
     expect(postMocks.updatePost).toHaveBeenCalledTimes(1);
+    expect(postMocks.updatePost).toHaveBeenCalledWith(
+      expect.not.objectContaining({
+        deptName: expect.anything(),
+        createTime: expect.anything()
+      })
+    );
     expect(postMocks.msgSuccess).toHaveBeenCalledWith('操作成功');
   });
 

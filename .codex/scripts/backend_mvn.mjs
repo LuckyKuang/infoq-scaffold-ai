@@ -440,14 +440,60 @@ function resolveLocalRepository(idea) {
   return null;
 }
 
+function resolveDefaultLocalRepository() {
+  const home = os.homedir();
+  if (!home) {
+    return null;
+  }
+  return {path: path.join(home, '.m2', 'repository'), source: 'default user home localRepository'};
+}
+
 function hasLocalRepoArg(args) {
   return args.some((arg) => arg === '-Dmaven.repo.local' || arg.startsWith('-Dmaven.repo.local='));
+}
+
+function hasSystemPropertyArg(args, name) {
+  const propertyPrefix = `-D${name}`;
+  return args.some((arg) => arg === propertyPrefix || arg.startsWith(`${propertyPrefix}=`));
+}
+
+function canWriteMapstructPlusIncrementMark() {
+  const home = os.homedir();
+  if (!home) {
+    return false;
+  }
+  const markerDir = path.join(home, '.msp');
+  const markerFile = path.join(markerDir, 'incrementMark');
+  const probePath = fs.existsSync(markerFile)
+    ? markerFile
+    : fs.existsSync(markerDir)
+      ? markerDir
+      : home;
+  try {
+    fs.accessSync(probePath, fs.constants.W_OK);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function resolveManagedUserHome(args) {
+  if (hasSystemPropertyArg(args, 'user.home') || canWriteMapstructPlusIncrementMark()) {
+    return null;
+  }
+  return {
+    path: path.join(repoRoot, 'doc', 'tmp', 'backend-mvn-home'),
+    source: 'mapstruct-plus incrementMark write guard'
+  };
 }
 
 function printSelection(selection) {
   console.log(`[backend-mvn] cwd: ${backendDir}`);
   console.log(`[backend-mvn] JDK: ${selection.jdk.home || selection.jdk.command} (version=${selection.jdk.version}, source=${selection.jdk.source})`);
   console.log(`[backend-mvn] Maven: ${selection.maven.command} (version=${selection.maven.version}, source=${selection.maven.source})`);
+  if (selection.managedUserHome) {
+    console.log(`[backend-mvn] Maven user.home: ${selection.managedUserHome.path} (source=${selection.managedUserHome.source})`);
+  }
   if (selection.localRepository) {
     console.log(`[backend-mvn] Maven local repo: ${selection.localRepository.path} (source=${selection.localRepository.source})`);
   } else {
@@ -465,14 +511,23 @@ function main() {
   const jdk = resolveJdk(idea);
   const env = makeMavenEnv(jdk);
   const maven = resolveMaven(idea, env);
-  const localRepository = resolveLocalRepository(idea);
+  const managedUserHome = resolveManagedUserHome(options.mavenArgs);
+  let localRepository = resolveLocalRepository(idea);
   const mavenArgs = [...options.mavenArgs];
+
+  if (managedUserHome) {
+    fs.mkdirSync(managedUserHome.path, {recursive: true});
+    mavenArgs.unshift(`-Duser.home=${managedUserHome.path}`);
+    if (!localRepository && !hasLocalRepoArg(mavenArgs)) {
+      localRepository = resolveDefaultLocalRepository();
+    }
+  }
 
   if (localRepository && !hasLocalRepoArg(mavenArgs)) {
     mavenArgs.unshift(`-Dmaven.repo.local=${localRepository.path}`);
   }
 
-  const selection = {jdk, maven, localRepository};
+  const selection = {jdk, maven, managedUserHome, localRepository};
   printSelection(selection);
 
   if (options.dryRun) {

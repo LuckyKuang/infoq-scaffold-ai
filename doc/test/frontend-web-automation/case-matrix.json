@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-07-04T03:47:59.038Z",
-  "repoRoot": "C:\\DevTools\\code\\github\\infoq-scaffold-ai",
+  "generatedAt": "2026-07-05T18:42:05.020Z",
+  "repoRoot": ".",
   "sources": {
     "sqlFiles": [
       "sql/infoq_scaffold_2.0.0.sql",
@@ -17,8 +17,8 @@
       "infoq-scaffold-frontend-react/src/pages/login.tsx",
       "infoq-scaffold-frontend-react/src/pages/monitor/cache/index.tsx",
       "infoq-scaffold-frontend-react/src/pages/monitor/dataSource/index.tsx",
-      "infoq-scaffold-frontend-react/src/pages/monitor/jobLog/index.tsx",
       "infoq-scaffold-frontend-react/src/pages/monitor/job/index.tsx",
+      "infoq-scaffold-frontend-react/src/pages/monitor/jobLog/index.tsx",
       "infoq-scaffold-frontend-react/src/pages/monitor/loginInfo/index.tsx",
       "infoq-scaffold-frontend-react/src/pages/monitor/online/index.tsx",
       "infoq-scaffold-frontend-react/src/pages/monitor/operLog/index.tsx",
@@ -57,8 +57,8 @@
       "infoq-scaffold-frontend-react-pro/src/pages/index.tsx",
       "infoq-scaffold-frontend-react-pro/src/pages/monitor/cache/index.tsx",
       "infoq-scaffold-frontend-react-pro/src/pages/monitor/dataSource/index.tsx",
-      "infoq-scaffold-frontend-react-pro/src/pages/monitor/jobLog/index.tsx",
       "infoq-scaffold-frontend-react-pro/src/pages/monitor/job/index.tsx",
+      "infoq-scaffold-frontend-react-pro/src/pages/monitor/jobLog/index.tsx",
       "infoq-scaffold-frontend-react-pro/src/pages/monitor/loginInfo/index.tsx",
       "infoq-scaffold-frontend-react-pro/src/pages/monitor/online/index.tsx",
       "infoq-scaffold-frontend-react-pro/src/pages/monitor/operLog/index.tsx",
@@ -98,8 +98,8 @@
       "infoq-scaffold-frontend-vue/src/views/login.vue",
       "infoq-scaffold-frontend-vue/src/views/monitor/cache/index.vue",
       "infoq-scaffold-frontend-vue/src/views/monitor/dataSource/index.vue",
-      "infoq-scaffold-frontend-vue/src/views/monitor/jobLog/index.vue",
       "infoq-scaffold-frontend-vue/src/views/monitor/job/index.vue",
+      "infoq-scaffold-frontend-vue/src/views/monitor/jobLog/index.vue",
       "infoq-scaffold-frontend-vue/src/views/monitor/loginInfo/index.vue",
       "infoq-scaffold-frontend-vue/src/views/monitor/online/index.vue",
       "infoq-scaffold-frontend-vue/src/views/monitor/operLog/index.vue",
@@ -135,9 +135,9 @@
       "infoq-scaffold-frontend-react/tests/api/system/invite.test.ts",
       "infoq-scaffold-frontend-react/tests/api/type-contract.test.ts",
       "infoq-scaffold-frontend-react/tests/api/user-guards.test.ts",
-      "infoq-scaffold-frontend-react/tests/components/CrudModal.test.tsx",
       "infoq-scaffold-frontend-react/tests/components/bridge-components.test.tsx",
       "infoq-scaffold-frontend-react/tests/components/common-components.test.tsx",
+      "infoq-scaffold-frontend-react/tests/components/CrudModal.test.tsx",
       "infoq-scaffold-frontend-react/tests/components/svg-icon.test.tsx",
       "infoq-scaffold-frontend-react/tests/components/upload-editor.test.tsx",
       "infoq-scaffold-frontend-react/tests/layout/keep-alive.test.tsx",
@@ -234,20 +234,20 @@
       "infoq-scaffold-frontend-vue/tests/components/LangSelect.test.ts",
       "infoq-scaffold-frontend-vue/tests/components/OssUpload.test.ts",
       "infoq-scaffold-frontend-vue/tests/components/Pagination.test.ts",
+      "infoq-scaffold-frontend-vue/tests/components/requireIcons.test.ts",
       "infoq-scaffold-frontend-vue/tests/components/RightToolbar.test.ts",
       "infoq-scaffold-frontend-vue/tests/components/ScreenFull.test.ts",
       "infoq-scaffold-frontend-vue/tests/components/SizeSelect.test.ts",
       "infoq-scaffold-frontend-vue/tests/components/TopNav.test.ts",
-      "infoq-scaffold-frontend-vue/tests/components/requireIcons.test.ts",
       "infoq-scaffold-frontend-vue/tests/directive/copyText.test.ts",
       "infoq-scaffold-frontend-vue/tests/directive/permission.test.ts",
       "infoq-scaffold-frontend-vue/tests/layout/components/AppMain.test.ts",
       "infoq-scaffold-frontend-vue/tests/layout/components/Navbar.test.ts",
+      "infoq-scaffold-frontend-vue/tests/layout/components/notice.test.ts",
       "infoq-scaffold-frontend-vue/tests/layout/components/ScrollPane.test.ts",
       "infoq-scaffold-frontend-vue/tests/layout/components/Settings.test.ts",
       "infoq-scaffold-frontend-vue/tests/layout/components/TagsViewIndex.test.ts",
       "infoq-scaffold-frontend-vue/tests/layout/components/TopBarSearch.test.ts",
-      "infoq-scaffold-frontend-vue/tests/layout/components/notice.test.ts",
       "infoq-scaffold-frontend-vue/tests/permission.guard.test.ts",
       "infoq-scaffold-frontend-vue/tests/plugins/auth.test.ts",
       "infoq-scaffold-frontend-vue/tests/plugins/cache.test.ts",
@@ -287,8 +287,8 @@
       "infoq-scaffold-frontend-vue/tests/views/login.test.ts",
       "infoq-scaffold-frontend-vue/tests/views/monitor/cache/index.test.ts",
       "infoq-scaffold-frontend-vue/tests/views/monitor/dataSource/index.test.ts",
-      "infoq-scaffold-frontend-vue/tests/views/monitor/jobLog/index.test.ts",
       "infoq-scaffold-frontend-vue/tests/views/monitor/job/index.test.ts",
+      "infoq-scaffold-frontend-vue/tests/views/monitor/jobLog/index.test.ts",
       "infoq-scaffold-frontend-vue/tests/views/monitor/loginInfo/index.test.ts",
       "infoq-scaffold-frontend-vue/tests/views/monitor/online/index.test.ts",
       "infoq-scaffold-frontend-vue/tests/views/monitor/operLog/index.test.ts",
@@ -328,7 +328,8 @@
     "reactProCases": 114,
     "vueCases": 114,
     "sideEffectCases": 51,
-    "gaps": 0
+    "gaps": 0,
+    "safetyGates": 6
   },
   "cases": [
     {
@@ -645,8 +646,8 @@
         "infoq-scaffold-frontend-vue/tests/views/index.test.ts",
         "infoq-scaffold-frontend-vue/tests/views/monitor/cache/index.test.ts",
         "infoq-scaffold-frontend-vue/tests/views/monitor/dataSource/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/monitor/jobLog/index.test.ts",
         "infoq-scaffold-frontend-vue/tests/views/monitor/job/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/monitor/jobLog/index.test.ts",
         "infoq-scaffold-frontend-vue/tests/views/monitor/loginInfo/index.test.ts",
         "infoq-scaffold-frontend-vue/tests/views/monitor/online/index.test.ts",
         "infoq-scaffold-frontend-vue/tests/views/monitor/operLog/index.test.ts",
@@ -716,8 +717,8 @@
         "infoq-scaffold-frontend-react-pro/tests/pages/monitor-scheduler.test.tsx",
         "infoq-scaffold-frontend-vue/tests/views/monitor/cache/index.test.ts",
         "infoq-scaffold-frontend-vue/tests/views/monitor/dataSource/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/monitor/jobLog/index.test.ts",
         "infoq-scaffold-frontend-vue/tests/views/monitor/job/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/monitor/jobLog/index.test.ts",
         "infoq-scaffold-frontend-vue/tests/views/monitor/loginInfo/index.test.ts",
         "infoq-scaffold-frontend-vue/tests/views/monitor/online/index.test.ts",
         "infoq-scaffold-frontend-vue/tests/views/monitor/operLog/index.test.ts",
@@ -919,8 +920,8 @@
       "testData": "只读或固定入口数据。",
       "cleanup": "无需业务数据清理。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/monitor/jobLog/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/monitor/job/index.test.ts"
+        "infoq-scaffold-frontend-vue/tests/views/monitor/job/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/monitor/jobLog/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_update_20260425.sql"
@@ -969,8 +970,8 @@
       "testData": "只读或固定入口数据。",
       "cleanup": "无需业务数据清理。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/monitor/jobLog/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/monitor/job/index.test.ts"
+        "infoq-scaffold-frontend-vue/tests/views/monitor/job/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/monitor/jobLog/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_update_20260425.sql"
@@ -1022,8 +1023,8 @@
       "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
       "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/monitor/jobLog/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/monitor/job/index.test.ts"
+        "infoq-scaffold-frontend-vue/tests/views/monitor/job/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/monitor/jobLog/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_update_20260425.sql"
@@ -1075,8 +1076,8 @@
       "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
       "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/monitor/jobLog/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/monitor/job/index.test.ts"
+        "infoq-scaffold-frontend-vue/tests/views/monitor/job/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/monitor/jobLog/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_update_20260425.sql"
@@ -1128,8 +1129,8 @@
       "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
       "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/monitor/jobLog/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/monitor/job/index.test.ts"
+        "infoq-scaffold-frontend-vue/tests/views/monitor/job/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/monitor/jobLog/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_update_20260425.sql"
@@ -1181,8 +1182,8 @@
       "testData": "只读或固定入口数据。",
       "cleanup": "无需业务数据清理。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/monitor/jobLog/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/monitor/job/index.test.ts"
+        "infoq-scaffold-frontend-vue/tests/views/monitor/job/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/monitor/jobLog/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_update_20260425.sql"
@@ -1234,8 +1235,8 @@
       "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
       "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/monitor/jobLog/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/monitor/job/index.test.ts"
+        "infoq-scaffold-frontend-vue/tests/views/monitor/job/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/monitor/jobLog/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_update_20260425.sql"
@@ -1287,8 +1288,8 @@
       "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
       "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/monitor/jobLog/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/monitor/job/index.test.ts"
+        "infoq-scaffold-frontend-vue/tests/views/monitor/job/index.test.ts",
+        "infoq-scaffold-frontend-vue/tests/views/monitor/jobLog/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_update_20260425.sql"
@@ -6220,5 +6221,13 @@
       "sourceFile": ""
     }
   ],
-  "gaps": []
+  "gaps": [],
+  "safetyGates": [
+    "不自动删除非 e2e_ 数据。",
+    "不清空日志。",
+    "不强退非当前 run 创建的 e2e_ 在线会话。",
+    "不触发定时任务“立即执行”。",
+    "不触碰真实 OSS 对象上传/删除。",
+    "对 OSS 对象、日志、在线用户这类场景，缺少隔离 fixture 时记录 blocker，不伪造通过。"
+  ]
 }

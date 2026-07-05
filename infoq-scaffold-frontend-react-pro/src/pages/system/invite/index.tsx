@@ -612,6 +612,9 @@ export default function InvitePage() {
           layout="vertical"
           initialValues={initialCancelForm}
         >
+          <Form.Item name="inviteId" hidden>
+            <Input />
+          </Form.Item>
           <Form.Item
             label="作废原因"
             name="canceledReason"

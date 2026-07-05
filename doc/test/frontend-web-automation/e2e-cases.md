@@ -14,6 +14,22 @@ node .codex/skills/infoq-admin-e2e/scripts/run_admin_e2e.mjs --client react-pro 
 node .codex/skills/infoq-admin-e2e/scripts/run_admin_e2e.mjs --client vue --route-limit 1
 ```
 
+已授权测试数据库上的公告 CRUD 使用写入型 runner：
+
+```bash
+node .codex/skills/infoq-admin-e2e/scripts/run_notice_crud_e2e.mjs --client react
+node .codex/skills/infoq-admin-e2e/scripts/run_notice_crud_e2e.mjs --client react-pro
+node .codex/skills/infoq-admin-e2e/scripts/run_notice_crud_e2e.mjs --client vue
+```
+
+已授权测试数据库上的全模块 CRUD 使用写入型 runner；其中 `job` 和 `ossConfig` 覆盖可隔离的任务/OSS 配置新增、编辑、删除和选择型删除入口，`online` 只强退当前 run 创建的 `e2e_` 用户会话：
+
+```bash
+node .codex/skills/infoq-admin-e2e/scripts/run_admin_crud_e2e.mjs --client react
+node .codex/skills/infoq-admin-e2e/scripts/run_admin_crud_e2e.mjs --client react-pro
+node .codex/skills/infoq-admin-e2e/scripts/run_admin_crud_e2e.mjs --client vue
+```
+
 完整矩阵来自后端菜单、三端页面组件和已有测试文件：
 
 ```bash
@@ -33,6 +49,15 @@ node .codex/skills/infoq-admin-e2e/scripts/validate-case-matrix.mjs doc/test/fro
 | WEB-SYSTEM-DICT-READONLY | react, react-pro, vue | P1 readonly | /system/dict | 账号具备字典查询权限 | 打开字典管理；查询字典名称或类型；重置；进入字典数据入口 | 查询/重置行为一致；字典数据入口可达；不误跳 401/404 | 只读；不新增、不修改字典 | screenshot、console、route report |
 | WEB-PERMISSION-BUTTONS | react, react-pro, vue | P1 permission | 用户、角色、菜单、部门、字典、参数、公告、OSS、定时任务 | 使用具备标准权限的账号和可选低权限账号 | 在目标模块读取权限码；检查查询、新增、编辑、删除、导出等按钮显示隐藏；低权限账号不得出现越权入口 | 按钮可见性符合后端权限；无越权按钮；隐藏按钮不可通过 UI 触发 | 只读；不点击写入或危险动作 | screenshot、console、permission summary |
 | WEB-CRUD-GATED | react, react-pro, vue | P2 CRUD gated | 写入型矩阵用例 | 仅隔离环境或明确授权；测试数据使用 e2e_ 前缀；cleanup 已定义 | 创建 e2e_ 数据；修改该数据；删除或恢复；失败时执行 cleanup | 成功路径数据状态正确；失败提示明确；cleanup 成功；cleanup 失败时本用例失败 | 必须记录创建数据、唯一键、清理结果和人工回滚建议 | screenshot、console、created-data、cleanup report |
+
+## 安全门禁
+
+1. 不自动删除非 `e2e_` 数据。
+2. 不清空日志。
+3. 不强退非当前 run 创建的 `e2e_` 在线会话。
+4. 不触发定时任务“立即执行”。
+5. 不触碰真实 OSS 对象上传/删除。
+6. 对 OSS 对象、日志、在线用户这类场景，缺少隔离 fixture 时记录 blocker，不伪造通过。
 
 ## 矩阵映射
 

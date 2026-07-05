@@ -1,4 +1,4 @@
-import {screen, waitFor} from '@testing-library/react';
+import {fireEvent, screen, waitFor} from '@testing-library/react';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {renderWithRouter} from '../helpers/renderWithRouter';
 import {setPermissionContext} from '@/utils/permission';
@@ -242,6 +242,14 @@ vi.mock('@/api/system/oss', () => ({
     total: 1,
   }),
   delOss: vi.fn(),
+  uploadOss: vi.fn().mockResolvedValue({
+    code: 200,
+    data: {
+      ossId: 2,
+      fileName: 'local.png',
+      url: 'https://cdn.example.com/local.png',
+    },
+  }),
 }));
 
 vi.mock('@/api/system/ossConfig', () => ({
@@ -420,6 +428,16 @@ beforeEach(() => {
       total: 1,
     }),
   );
+  vi.mocked(ossApi.uploadOss).mockResolvedValue(
+    asResolvedValue<Awaited<ReturnType<typeof ossApi.uploadOss>>>({
+      code: 200,
+      data: {
+        ossId: 2,
+        fileName: 'local.png',
+        url: 'https://cdn.example.com/local.png',
+      },
+    }),
+  );
   vi.mocked(ossConfigApi.listOssConfig).mockResolvedValue(
     asResolvedValue<Awaited<ReturnType<typeof ossConfigApi.listOssConfig>>>({
       rows: [
@@ -505,6 +523,30 @@ describe('pages/ops', () => {
     expect((await screen.findAllByText('avatar.png')).length).toBe(2);
     await waitFor(() => {
       expect(ossApi.listOss).toHaveBeenCalled();
+    });
+  });
+
+  it('uploads oss image only after dialog confirmation', async () => {
+    renderWithRouter(<OssPage />, '/system/oss');
+
+    expect(
+      await screen.findByPlaceholderText('请输入文件名'),
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', {name: /上传图片/}));
+
+    const uploadInput = document.querySelector(
+      '.oss-pending-upload input[type="file"]',
+    ) as HTMLInputElement;
+    const file = new File(['image'], 'local.png', {type: 'image/png'});
+    fireEvent.change(uploadInput, {target: {files: [file]}});
+
+    expect(ossApi.uploadOss).not.toHaveBeenCalled();
+    expect(await screen.findByText('local.png')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', {name: '确 定'}));
+
+    await waitFor(() => {
+      expect(ossApi.uploadOss).toHaveBeenCalledWith(file, 'file');
     });
   });
 

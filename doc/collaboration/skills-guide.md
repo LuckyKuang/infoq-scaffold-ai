@@ -131,6 +131,12 @@ node .codex/skills/infoq-admin-e2e/scripts/captcha_login.mjs --backend-url http:
 node .codex/skills/infoq-admin-e2e/scripts/run_admin_e2e.mjs --client vue
 node .codex/skills/infoq-admin-e2e/scripts/run_admin_e2e.mjs --client react
 node .codex/skills/infoq-admin-e2e/scripts/run_admin_e2e.mjs --client react-pro
+node .codex/skills/infoq-admin-e2e/scripts/run_notice_crud_e2e.mjs --client vue
+node .codex/skills/infoq-admin-e2e/scripts/run_notice_crud_e2e.mjs --client react
+node .codex/skills/infoq-admin-e2e/scripts/run_notice_crud_e2e.mjs --client react-pro
+node .codex/skills/infoq-admin-e2e/scripts/run_admin_crud_e2e.mjs --client vue
+node .codex/skills/infoq-admin-e2e/scripts/run_admin_crud_e2e.mjs --client react
+node .codex/skills/infoq-admin-e2e/scripts/run_admin_crud_e2e.mjs --client react-pro
 ```
 
 说明：
@@ -140,6 +146,8 @@ node .codex/skills/infoq-admin-e2e/scripts/run_admin_e2e.mjs --client react-pro
 - 首次运行 OCR 场景需要本机 Python 环境可 import `ddddocr`，浏览器依赖仍复用 `infoq-browser-automate`。
 - 证据默认写入 `doc/tmp/infoq-admin-e2e/<run-id>/`。
 - `run_admin_e2e.mjs` 默认在完成、失败或中断后停止本次 skill 启动的栈；只有成功且需要保留联调进程时显式传 `--keep-stack-after`，失败或中断仍会关闭 owned 进程。
+- `run_notice_crud_e2e.mjs` 仅用于已授权的 `application-local.yml` 测试数据库，执行公告 UI 新增/查询/编辑/删除，并用 API 与 MySQL 直连只读查询做分步一致性核对；cleanup 只处理当前精确 `e2e_` 标题。
+- `run_admin_crud_e2e.mjs` 仅用于已授权的 `application-local.yml` 测试数据库，默认覆盖 `role,user,menu,dept,post,dict,config,notice,client,invite,ossConfig,job,online`，执行 UI 新增/查询/编辑/删除或模块可用的选择删除/行删除入口，并用 API 与 MySQL 直连只读查询做分步一致性核对；`online` 会创建当前 run 专属 `e2e_` 用户会话并只强退该会话；cleanup 只处理当前 run 的精确 `e2e_` 数据。
 - 管理端 E2E 栈状态按 client 稳定写入 `doc/tmp/infoq-admin-e2e/stack/<vue|react|react-pro>/state.json`，断开后下一次运行会先清理未标记 `keepAlive` 的旧状态。
 - 写入型 CRUD、导出、批量操作和权限矩阵必须先定义测试数据、cleanup 和危险动作门禁。
 

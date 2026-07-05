@@ -191,9 +191,9 @@
 </template>
 
 <script setup name="Role" lang="ts">
-import { addRole, changeRoleStatus, dataScope, delRole, getRole, listRole, updateRole, deptTreeSelect } from '@/api/system/role';
+import { addRole, changeRoleStatus, dataScope, delRole, deptTreeSelect, getRole, listRole, updateRole } from '@/api/system/role';
 import { roleMenuTreeselect, treeselect as menuTreeselect } from '@/api/system/menu/index';
-import { RoleVO, RoleForm, RoleQuery, DeptTreeOption } from '@/api/system/role/types';
+import { DeptTreeOption, RoleForm, RoleQuery, RoleVO } from '@/api/system/role/types';
 import { MenuTreeOption, RoleMenuTree } from '@/api/system/menu/types';
 import { toDictRefs } from '@/utils/dict';
 
@@ -441,8 +441,20 @@ const getMenuAllCheckedKeys = (): Array<string | number> => {
 const submitForm = () => {
   roleFormRef.value?.validate(async (valid: boolean) => {
     if (valid) {
-      form.value.menuIds = getMenuAllCheckedKeys();
-      form.value.roleId ? await updateRole(form.value) : await addRole(form.value);
+      const payload: RoleForm = {
+        roleId: form.value.roleId,
+        roleName: form.value.roleName,
+        roleKey: form.value.roleKey,
+        roleSort: form.value.roleSort,
+        status: form.value.status,
+        menuCheckStrictly: form.value.menuCheckStrictly,
+        deptCheckStrictly: form.value.deptCheckStrictly,
+        remark: form.value.remark,
+        dataScope: form.value.dataScope,
+        menuIds: getMenuAllCheckedKeys(),
+        deptIds: form.value.deptIds
+      };
+      payload.roleId ? await updateRole(payload) : await addRole(payload);
       proxy?.$modal.msgSuccess('操作成功');
       dialog.visible = false;
       getList();

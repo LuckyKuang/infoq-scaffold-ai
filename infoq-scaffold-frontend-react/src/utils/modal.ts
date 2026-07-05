@@ -1,6 +1,7 @@
 import { message, Modal, notification } from 'antd';
 import type { ArgsProps } from 'antd/es/notification/interface';
 
+const LOADING_MESSAGE_KEY = 'global-loading';
 let loadingCloser: (() => void) | null = null;
 
 type MessageApi = {
@@ -9,6 +10,8 @@ type MessageApi = {
   success: typeof message.success;
   warning: typeof message.warning;
   loading: typeof message.loading;
+  open: typeof message.open;
+  destroy: typeof message.destroy;
 };
 
 type ModalApi = Pick<typeof Modal, 'info' | 'error' | 'success' | 'warning' | 'confirm'>;
@@ -35,11 +38,7 @@ const asText = (content: unknown) => {
   return String(content ?? '');
 };
 
-export const registerModalRuntime = (runtime: {
-  message: MessageApi;
-  modal: ModalApi;
-  notification: NotificationApi;
-}) => {
+export const registerModalRuntime = (runtime: { message: MessageApi; modal: ModalApi; notification: NotificationApi }) => {
   runtimeMessage = runtime.message;
   runtimeModal = runtime.modal;
   runtimeNotification = runtime.notification;
@@ -74,14 +73,10 @@ const modal = {
       title: '系统提示',
       content: asText(content)
     }),
-  notify: (content: NotificationArgs | string) =>
-    getNotificationApi().info(typeof content === 'string' ? { title: content } : content),
-  notifyError: (content: NotificationArgs | string) =>
-    getNotificationApi().error(typeof content === 'string' ? { title: content } : content),
-  notifySuccess: (content: NotificationArgs | string) =>
-    getNotificationApi().success(typeof content === 'string' ? { title: content } : content),
-  notifyWarning: (content: NotificationArgs | string) =>
-    getNotificationApi().warning(typeof content === 'string' ? { title: content } : content),
+  notify: (content: NotificationArgs | string) => getNotificationApi().info(typeof content === 'string' ? { title: content } : content),
+  notifyError: (content: NotificationArgs | string) => getNotificationApi().error(typeof content === 'string' ? { title: content } : content),
+  notifySuccess: (content: NotificationArgs | string) => getNotificationApi().success(typeof content === 'string' ? { title: content } : content),
+  notifyWarning: (content: NotificationArgs | string) => getNotificationApi().warning(typeof content === 'string' ? { title: content } : content),
   confirm: (content: unknown) =>
     new Promise<boolean>((resolve) => {
       getModalApi().confirm({
@@ -98,13 +93,19 @@ const modal = {
       loadingCloser();
       loadingCloser = null;
     }
-    loadingCloser = getMessageApi().loading({ content, duration: 0 });
+    loadingCloser = getMessageApi().open({
+      key: LOADING_MESSAGE_KEY,
+      type: 'loading',
+      content,
+      duration: 0
+    });
   },
   closeLoading: () => {
     if (loadingCloser) {
       loadingCloser();
       loadingCloser = null;
     }
+    getMessageApi().destroy(LOADING_MESSAGE_KEY);
   }
 };
 

@@ -5,7 +5,7 @@
 ```json
 {
   "generatedAt": "2026-06-05T00:00:00.000Z",
-  "repoRoot": "/path/to/repo",
+  "repoRoot": ".",
   "sources": {
     "sqlFiles": [],
     "reactPages": [],
@@ -19,9 +19,12 @@
     "totalCases": 0,
     "p0": 0,
     "p1": 0,
-    "p2": 0
+    "p2": 0,
+    "safetyGates": 0
   },
-  "cases": []
+  "cases": [],
+  "gaps": [],
+  "safetyGates": []
 }
 ```
 

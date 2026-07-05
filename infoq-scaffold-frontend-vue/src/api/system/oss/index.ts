@@ -19,6 +19,25 @@ export function listByIds(ossId: string | number): Promise<ApiResponse<OssVO[]>>
   });
 }
 
+export type OssUploadResult = {
+  url: string;
+  fileName: string;
+  ossId: string | number;
+};
+
+export function uploadOss(file: Blob, filename = 'file'): Promise<ApiResponse<OssUploadResult>> {
+  const data = new FormData();
+  data.append(filename, file);
+  return request({
+    url: '/resource/oss/upload',
+    method: 'post',
+    headers: {
+      repeatSubmit: false
+    },
+    data
+  });
+}
+
 // 删除OSS对象存储
 export function delOss(ossId: string | number | Array<string | number>) {
   return request({

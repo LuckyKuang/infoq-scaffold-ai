@@ -189,7 +189,11 @@ describe('views/system/dept/index', () => {
         deptCategory: 'head',
         orderNum: 1,
         leader: 10,
-        status: '0'
+        status: '0',
+        children: [],
+        delFlag: '0',
+        ancestors: '0',
+        createTime: '2026-03-07 10:00:00'
       }
     });
     deptMocks.listDeptExcludeChild.mockResolvedValue({
@@ -317,6 +321,14 @@ describe('views/system/dept/index', () => {
     await flushPromises();
 
     expect(deptMocks.updateDept).toHaveBeenCalledTimes(1);
+    expect(deptMocks.updateDept).toHaveBeenCalledWith(
+      expect.not.objectContaining({
+        children: expect.anything(),
+        delFlag: expect.anything(),
+        ancestors: expect.anything(),
+        createTime: expect.anything()
+      })
+    );
     expect(deptMocks.msgSuccess).toHaveBeenCalledWith('操作成功');
   });
 

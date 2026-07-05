@@ -15,6 +15,8 @@ const assertArray = (value: unknown, label: string) => {
   }
 };
 
+const optionalArray = <T>(value: unknown): T[] => (Array.isArray(value) ? (value as T[]) : []);
+
 const assertString = (value: unknown, label: string) => {
   if (typeof value !== 'string') {
     throw new Error(`${label} 必须是字符串`);
@@ -33,10 +35,12 @@ export const assertUserDetailData = (value: unknown, label = '用户详情响应
   const data = assertRecord(value, label);
   assertRecord(data.user, `${label}.user`);
   assertArray(data.roles, `${label}.roles`);
-  assertArray(data.posts, `${label}.posts`);
   assertArray(data.roleIds, `${label}.roleIds`);
-  assertArray(data.postIds, `${label}.postIds`);
-  return value as UserInfoVO;
+  return {
+    ...data,
+    posts: optionalArray(data.posts),
+    postIds: optionalArray(data.postIds)
+  } as UserInfoVO;
 };
 
 export const assertAvatarUploadData = (value: unknown, label = '头像上传响应 data'): { imgUrl: string } => {

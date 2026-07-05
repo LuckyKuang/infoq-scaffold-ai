@@ -126,8 +126,8 @@
 
 <script setup name="Data" lang="ts">
 import { useDictStore } from '@/store/modules/dict';
-import { optionselect as getDictOptionselect, getType } from '@/api/system/dict/type';
-import { listData, getData, delData, addData, updateData } from '@/api/system/dict/data';
+import { getType, optionselect as getDictOptionselect } from '@/api/system/dict/type';
+import { addData, delData, getData, listData, updateData } from '@/api/system/dict/data';
 import { DictTypeVO } from '@/api/system/dict/type/types';
 import { DictDataForm, DictDataQuery, DictDataVO } from '@/api/system/dict/data/types';
 import { RouteLocationNormalized } from 'vue-router';
@@ -273,7 +273,17 @@ const handleUpdate = async (row?: DictDataVO) => {
 const submitForm = () => {
   dataFormRef.value?.validate(async (valid: boolean) => {
     if (valid) {
-      form.value.dictCode ? await updateData(form.value) : await addData(form.value);
+      const payload: DictDataForm = {
+        dictCode: form.value.dictCode,
+        dictType: form.value.dictType,
+        dictLabel: form.value.dictLabel,
+        dictValue: form.value.dictValue,
+        cssClass: form.value.cssClass,
+        listClass: form.value.listClass,
+        dictSort: form.value.dictSort,
+        remark: form.value.remark
+      };
+      payload.dictCode ? await updateData(payload) : await addData(payload);
       useDictStore().removeDict(queryParams.value.dictType);
       proxy?.$modal.msgSuccess('操作成功');
       dialog.visible = false;

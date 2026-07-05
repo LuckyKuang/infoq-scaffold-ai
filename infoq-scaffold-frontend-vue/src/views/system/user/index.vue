@@ -630,16 +630,30 @@ const handleUpdate = async (row?: UserForm) => {
 const submitForm = () => {
   userFormRef.value?.validate(async (valid: boolean) => {
     if (valid) {
+      const payload: UserForm = {
+        userId: form.value.userId,
+        deptId: form.value.deptId,
+        userName: form.value.userName,
+        nickName: form.value.nickName,
+        password: form.value.password,
+        phonenumber: form.value.phonenumber,
+        email: form.value.email,
+        sex: form.value.sex,
+        status: form.value.status,
+        remark: form.value.remark,
+        postIds: form.value.postIds,
+        roleIds: form.value.roleIds
+      };
       if (form.value.userId) {
         // 自己编辑自己的情况下 不允许编辑角色部门岗位
         if (form.value.userId == useUserStore().userId) {
-          form.value.roleIds = null;
-          form.value.deptId = null;
-          form.value.postIds = null;
+          payload.roleIds = null as unknown as string[];
+          payload.deptId = null as unknown as number;
+          payload.postIds = null as unknown as string[];
         }
-        await api.updateUser(form.value);
+        await api.updateUser(payload);
       } else {
-        await api.addUser(form.value);
+        await api.addUser(payload);
       }
       proxy?.$modal.msgSuccess('操作成功');
       dialog.visible = false;

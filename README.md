@@ -174,7 +174,7 @@ node .codex/skills/infoq-delivery-workflow/scripts/openspec_check.mjs <change-id
 
 当前默认启用：
 
-- `playwright`
+- `playwright`（通过 `node .codex/scripts/start_playwright_mcp.mjs` 启动，优先复用本机 npm / npx cache，避免 MCP 初始化阶段等待 registry 解析）
 - `chrome-devtools`
 
 可选但默认禁用：
@@ -265,6 +265,22 @@ node .codex/skills/infoq-admin-e2e/scripts/run_admin_e2e.mjs --client react-pro 
 ```
 
 `captcha_login.mjs` 是仓库内真实验证码 token 获取入口，封装 `/auth/code`、`ddddocr`、算术验证码归一化和加密 `/auth/login`，证据写入 `doc/tmp/infoq-admin-e2e/captcha-login/<run-id>/`。`run_admin_e2e.mjs` 默认会在完成、失败或中断后停止本次 skill 启动的后端和管理端 dev server；只有成功且需要保留联调栈时才显式传 `--keep-stack-after`，失败或中断仍会关闭 owned 进程。运行态状态文件按 client 保存在 `doc/tmp/infoq-admin-e2e/stack/<vue|react|react-pro>/state.json`。
+
+如果明确授权 `application-local.yml` 指向的测试 MySQL 可写，可执行公告模块真实 CRUD E2E；runner 会通过真实验证码登录，在 `/system/notice` 使用 `e2e_` 标题完成 UI 新增/查询/编辑/删除，并用 API 与 DB 查询逐步核对，最后自动 cleanup：
+
+```bash
+node .codex/skills/infoq-admin-e2e/scripts/run_notice_crud_e2e.mjs --client vue
+node .codex/skills/infoq-admin-e2e/scripts/run_notice_crud_e2e.mjs --client react
+node .codex/skills/infoq-admin-e2e/scripts/run_notice_crud_e2e.mjs --client react-pro
+```
+
+如果要覆盖管理端安全可自动化模块的新增、编辑、删除和选择型删除/行删除入口，可执行全模块 CRUD E2E。默认模块为 `role,user,menu,dept,post,dict,config,notice,client,invite,ossConfig,job,online`；`ossConfig` 和 `job` 覆盖配置/任务的新增、编辑、删除与选择型删除入口，`online` 只强退当前 run 创建的 `e2e_` 用户会话。安全门禁只保留：不自动删除非 `e2e_` 数据、不清空日志、不强退非本轮会话、不触发定时任务“立即执行”、不触碰真实 OSS 对象上传/删除；缺少隔离 fixture 的场景记录 blocker，不伪造通过：
+
+```bash
+node .codex/skills/infoq-admin-e2e/scripts/run_admin_crud_e2e.mjs --client vue
+node .codex/skills/infoq-admin-e2e/scripts/run_admin_crud_e2e.mjs --client react
+node .codex/skills/infoq-admin-e2e/scripts/run_admin_crud_e2e.mjs --client react-pro
+```
 
 如果要先生成 React/React Pro/Vue 管理端 Web 自动化测试矩阵：
 

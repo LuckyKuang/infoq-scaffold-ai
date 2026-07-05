@@ -1,18 +1,12 @@
 package cc.infoq.common.oss.factory;
 
 import cc.infoq.common.constant.CacheNames;
-import cc.infoq.common.oss.constant.OssConstant;
 import cc.infoq.common.oss.core.OssClient;
 import cc.infoq.common.oss.exception.OssException;
 import cc.infoq.common.oss.properties.OssProperties;
 import cc.infoq.common.utils.SpringUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.mockito.MockedConstruction;
 import org.redisson.api.RBucket;
 import org.redisson.api.RedissonClient;
@@ -24,16 +18,10 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.mockConstruction;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @Tag("dev")
 class OssFactoryTest {
@@ -95,6 +83,29 @@ class OssFactoryTest {
     void instanceByConfigShouldThrowWhenPayloadMissing() {
         when(cache.get("aliyun")).thenReturn(null);
         assertThrows(OssException.class, () -> OssFactory.instance("aliyun"));
+    }
+
+    @Test
+    @DisplayName("instance(configKey): should parse legacy entity cache fields")
+    void instanceByConfigShouldParseLegacyEntityCacheFields() throws Exception {
+        stubConfigJson("aliyun", buildLegacyEntityJson("0"));
+
+        try (MockedConstruction<OssClient> construction = mockConstruction(OssClient.class,
+            (mock, context) -> when(mock.checkPropertiesSame(any())).thenReturn(true))) {
+
+            OssClient client = OssFactory.instance("aliyun");
+
+            assertTrue(client != null);
+            assertEqualsInt(1, construction.constructed().size());
+        }
+    }
+
+    @Test
+    @DisplayName("instance(configKey): should reject unexpected unknown config fields")
+    void instanceByConfigShouldRejectUnexpectedUnknownFields() throws Exception {
+        stubConfigJson("aliyun", buildJsonWithUnexpectedField());
+
+        assertThrows(RuntimeException.class, () -> OssFactory.instance("aliyun"));
     }
 
     @Test
@@ -178,6 +189,35 @@ class OssFactoryTest {
         properties.setIsHttps("N");
         properties.setAccessPolicy(accessPolicy);
         return objectMapper.writeValueAsString(properties);
+    }
+
+    private static String buildLegacyEntityJson(String accessPolicy) {
+        return "{"
+            + "\"createDept\":100,"
+            + "\"createBy\":1,"
+            + "\"ossConfigId\":10,"
+            + "\"configKey\":\"aliyun\","
+            + "\"status\":\"0\","
+            + "\"remark\":\"legacy entity payload\","
+            + "\"endpoint\":\"127.0.0.1:9000\","
+            + "\"bucketName\":\"bucket\","
+            + "\"accessKey\":\"ak\","
+            + "\"secretKey\":\"sk\","
+            + "\"isHttps\":\"N\","
+            + "\"accessPolicy\":\"" + accessPolicy + "\""
+            + "}";
+    }
+
+    private static String buildJsonWithUnexpectedField() {
+        return "{"
+            + "\"endpoint\":\"127.0.0.1:9000\","
+            + "\"bucketName\":\"bucket\","
+            + "\"accessKey\":\"ak\","
+            + "\"secretKey\":\"sk\","
+            + "\"isHttps\":\"N\","
+            + "\"accessPolicy\":\"0\","
+            + "\"unexpectedField\":true"
+            + "}";
     }
 
     private static void assertEqualsInt(int expected, int actual) {

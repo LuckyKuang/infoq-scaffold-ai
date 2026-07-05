@@ -349,6 +349,9 @@ export default function OssConfigPage() {
         onOk={handleSubmit}
       >
         <Form form={form} layout="vertical" initialValues={initialForm}>
+          <Form.Item name="ossConfigId" hidden>
+            <Input />
+          </Form.Item>
           <Form.Item label="配置Key" name="configKey" rules={[{ required: true, message: '配置Key不能为空' }]}>
             <Input />
           </Form.Item>

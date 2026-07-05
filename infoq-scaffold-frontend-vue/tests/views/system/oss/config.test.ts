@@ -207,7 +207,9 @@ describe('views/system/oss/config', () => {
         isHttps: 'N',
         accessPolicy: '1',
         region: 'cn',
-        status: '0'
+        status: '0',
+        createTime: '2026-03-07 10:00:00',
+        createByName: 'admin'
       }
     });
     ossConfigMocks.addOssConfig.mockResolvedValue(undefined);
@@ -318,6 +320,12 @@ describe('views/system/oss/config', () => {
     await flushPromises();
 
     expect(ossConfigMocks.updateOssConfig).toHaveBeenCalledTimes(1);
+    expect(ossConfigMocks.updateOssConfig).toHaveBeenCalledWith(
+      expect.not.objectContaining({
+        createTime: expect.anything(),
+        createByName: expect.anything()
+      })
+    );
     expect(ossConfigMocks.msgSuccess).toHaveBeenCalledWith('新增成功');
   });
 

@@ -5,9 +5,14 @@ import OssView from '@/views/system/oss/index.vue';
 const ossMocks = vi.hoisted(() => ({
   listOss: vi.fn(),
   delOss: vi.fn(),
+  uploadOss: vi.fn(),
   routerPush: vi.fn(),
   modalConfirm: vi.fn(() => Promise.resolve()),
   msgSuccess: vi.fn(),
+  msgWarning: vi.fn(),
+  msgError: vi.fn(),
+  loading: vi.fn(),
+  closeLoading: vi.fn(),
   getConfigKey: vi.fn(),
   updateConfigByKey: vi.fn(),
   downloadOss: vi.fn(),
@@ -39,7 +44,8 @@ vi.mock('vue-router', () => ({
 
 vi.mock('@/api/system/oss', () => ({
   listOss: ossMocks.listOss,
-  delOss: ossMocks.delOss
+  delOss: ossMocks.delOss,
+  uploadOss: ossMocks.uploadOss
 }));
 
 const TABLE_DATA_SYMBOL = Symbol('oss-table-data');
@@ -153,6 +159,48 @@ const ElButtonStub = defineComponent({
   }
 });
 
+const ElUploadStub = defineComponent({
+  name: 'ElUpload',
+  props: {
+    fileList: {
+      type: Array,
+      default: () => []
+    },
+    listType: {
+      type: String,
+      default: 'text'
+    },
+    onChange: {
+      type: Function,
+      default: undefined
+    }
+  },
+  emits: ['update:fileList'],
+  setup(props, { slots, emit }) {
+    const chooseFile = () => {
+      const isImage = props.listType === 'picture-card';
+      const raw = new File(['content'], isImage ? 'local.png' : 'local.pdf', { type: isImage ? 'image/png' : 'application/pdf' });
+      const uploadFile = {
+        uid: Date.now(),
+        name: raw.name,
+        status: 'ready',
+        raw
+      };
+      const next = [uploadFile];
+      emit('update:fileList', next);
+      props.onChange?.(uploadFile, next);
+    };
+    return () => {
+      const files = props.fileList as Array<{ name?: string }>;
+      return h('div', { class: 'el-upload-stub' }, [
+        h('button', { class: 'choose-pending-upload', type: 'button', onClick: chooseFile }, '选择本地文件'),
+        slots.default?.(),
+        ...files.map((file) => h('span', { class: 'pending-upload-name' }, file.name))
+      ]);
+    };
+  }
+});
+
 const passthroughStub = (name: string) =>
   defineComponent({
     name,
@@ -160,20 +208,6 @@ const passthroughStub = (name: string) =>
       return () => h('div', slots.default?.());
     }
   });
-
-const FileUploadStub = defineComponent({
-  name: 'FileUpload',
-  setup() {
-    return () => h('div', { class: 'file-upload-stub' }, [h('button', { class: 'choose-file-button', type: 'button' }, '选取文件')]);
-  }
-});
-
-const ImageUploadStub = defineComponent({
-  name: 'ImageUpload',
-  setup() {
-    return () => h('div', { class: 'image-upload-stub' }, [h('button', { class: 'choose-image-button', type: 'button' }, '选择图片')]);
-  }
-});
 
 describe('views/system/oss/index', () => {
   beforeEach(() => {
@@ -198,6 +232,14 @@ describe('views/system/oss/index', () => {
       })
     );
     ossMocks.delOss.mockResolvedValue(undefined);
+    ossMocks.uploadOss.mockResolvedValue({
+      code: 200,
+      data: {
+        ossId: 2,
+        fileName: 'local.png',
+        url: 'https://example.com/local.png'
+      }
+    });
     ossMocks.updateConfigByKey.mockResolvedValue(undefined);
   });
 
@@ -218,7 +260,11 @@ describe('views/system/oss/index', () => {
             updateConfigByKey: ossMocks.updateConfigByKey,
             $modal: {
               confirm: ossMocks.modalConfirm,
-              msgSuccess: ossMocks.msgSuccess
+              msgSuccess: ossMocks.msgSuccess,
+              msgWarning: ossMocks.msgWarning,
+              msgError: ossMocks.msgError,
+              loading: ossMocks.loading,
+              closeLoading: ossMocks.closeLoading
             },
             $download: {
               oss: ossMocks.downloadOss
@@ -243,10 +289,9 @@ describe('views/system/oss/index', () => {
           'el-table-column': ElTableColumnStub,
           pagination: true,
           'el-dialog': ElDialogStub,
+          'el-upload': ElUploadStub,
           'el-tooltip': passthroughStub('ElTooltip'),
           'el-button': ElButtonStub,
-          FileUpload: FileUploadStub,
-          ImageUpload: ImageUploadStub,
           ImagePreview: true
         }
       }
@@ -277,7 +322,7 @@ describe('views/system/oss/index', () => {
     await fileButton!.trigger('click');
     await flushPromises();
     expect(wrapper.find('.el-dialog-stub[data-title=\"上传文件\"]').exists()).toBe(true);
-    expect(wrapper.find('.file-upload-stub .choose-file-button').text()).toBe('选取文件');
+    expect(wrapper.find('.el-upload-stub').exists()).toBe(true);
 
     const submitButton = wrapper.findAll('button.el-button-stub').find((button) => button.text().replace(/\s/g, '') === '确定');
     expect(submitButton).toBeDefined();
@@ -287,7 +332,31 @@ describe('views/system/oss/index', () => {
     await imageButton!.trigger('click');
     await flushPromises();
     expect(wrapper.find('.el-dialog-stub[data-title=\"上传图片\"]').exists()).toBe(true);
-    expect(wrapper.find('.image-upload-stub .choose-image-button').text()).toBe('选择图片');
+    expect(wrapper.find('.el-upload-stub').exists()).toBe(true);
+  });
+
+  it('uploads oss image only after dialog confirmation', async () => {
+    const wrapper = mountView();
+    await flushPromises();
+
+    const imageButton = wrapper.findAll('button.el-button-stub').find((button) => button.text().trim() === '上传图片');
+    expect(imageButton).toBeDefined();
+    await imageButton!.trigger('click');
+    await flushPromises();
+
+    await wrapper.find('.choose-pending-upload').trigger('click');
+    await flushPromises();
+
+    expect(ossMocks.uploadOss).not.toHaveBeenCalled();
+    expect(wrapper.find('.pending-upload-name').text()).toBe('local.png');
+
+    const submitButton = wrapper.findAll('button.el-button-stub').find((button) => button.text().replace(/\s/g, '') === '确定');
+    expect(submitButton).toBeDefined();
+    await submitButton!.trigger('click');
+    await flushPromises();
+
+    expect(ossMocks.uploadOss).toHaveBeenCalledWith(expect.objectContaining({ name: 'local.png' }), 'file');
+    expect(ossMocks.msgSuccess).toHaveBeenCalledWith('上传成功');
   });
 
   it('downloads and deletes by row action', async () => {

@@ -901,6 +901,14 @@ export default function UserPage() {
         onOk={handleSubmit}
       >
         <Form form={form} layout="vertical" initialValues={initialForm}>
+          <Form.Item name="userId" hidden>
+            <Input />
+          </Form.Item>
+          {editingUserId && (
+            <Form.Item name="userName" hidden>
+              <Input />
+            </Form.Item>
+          )}
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item

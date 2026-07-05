@@ -426,6 +426,9 @@ export default function RolePage() {
         onOk={handleSubmit}
       >
         <Form form={form} layout="vertical" initialValues={initialForm}>
+          <Form.Item name="roleId" hidden>
+            <Input />
+          </Form.Item>
           <Form.Item label="角色名称" name="roleName" rules={[{ required: true, message: '角色名称不能为空' }]}>
             <Input />
           </Form.Item>

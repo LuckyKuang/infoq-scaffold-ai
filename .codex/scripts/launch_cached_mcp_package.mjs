@@ -49,7 +49,26 @@ function getNpmCacheDirs(repoRoot) {
 
 function findPackageEntry(packageRoot) {
   const candidate = path.join(packageRoot, 'dist', 'index.js');
-  return fs.existsSync(candidate) ? candidate : null;
+  if (fs.existsSync(candidate)) {
+    return candidate;
+  }
+
+  const packageJsonPath = path.join(packageRoot, 'package.json');
+  if (fs.existsSync(packageJsonPath)) {
+    const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+    const bin = packageJson.bin;
+    const binEntry = typeof bin === 'string' ? bin : Object.values(bin || {})[0];
+
+    if (typeof binEntry === 'string') {
+      const binCandidate = path.join(packageRoot, binEntry);
+      if (fs.existsSync(binCandidate)) {
+        return binCandidate;
+      }
+    }
+  }
+
+  const indexCandidate = path.join(packageRoot, 'index.js');
+  return fs.existsSync(indexCandidate) ? indexCandidate : null;
 }
 
 function findEntryFromNodeModulesRoot(nodeModulesRoot, packageName) {

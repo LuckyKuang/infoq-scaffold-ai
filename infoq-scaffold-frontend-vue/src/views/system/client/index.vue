@@ -142,8 +142,8 @@
 </template>
 
 <script setup name="Client" lang="ts">
-import { listClient, getClient, delClient, addClient, updateClient, changeStatus } from '@/api/system/client';
-import { ClientVO, ClientQuery, ClientForm } from '@/api/system/client/types';
+import { addClient, changeStatus, delClient, getClient, listClient, updateClient } from '@/api/system/client';
+import { ClientForm, ClientQuery, ClientVO } from '@/api/system/client/types';
 import { toDictRefs } from '@/utils/dict';
 
 const { proxy } = getCurrentInstance() as ComponentInternalInstance;
@@ -266,11 +266,22 @@ const handleUpdate = async (row?: ClientVO) => {
 const submitForm = () => {
   clientFormRef.value?.validate(async (valid: boolean) => {
     if (valid) {
+      const payload: ClientForm = {
+        id: form.value.id,
+        clientId: form.value.clientId,
+        clientKey: form.value.clientKey,
+        clientSecret: form.value.clientSecret,
+        grantTypeList: form.value.grantTypeList,
+        deviceType: form.value.deviceType,
+        activeTimeout: form.value.activeTimeout,
+        timeout: form.value.timeout,
+        status: form.value.status
+      };
       buttonLoading.value = true;
-      if (form.value.id) {
-        await updateClient(form.value).finally(() => (buttonLoading.value = false));
+      if (payload.id) {
+        await updateClient(payload).finally(() => (buttonLoading.value = false));
       } else {
-        await addClient(form.value).finally(() => (buttonLoading.value = false));
+        await addClient(payload).finally(() => (buttonLoading.value = false));
       }
       proxy?.$modal.msgSuccess('修改成功');
       dialog.visible = false;

@@ -167,7 +167,9 @@ describe('views/system/notice/index', () => {
         noticeTitle: '系统维护通知',
         noticeType: '1',
         noticeContent: 'content',
-        status: '0'
+        status: '0',
+        createByName: 'admin',
+        createTime: '2026-03-07 10:00:00'
       }
     });
     noticeMocks.addNotice.mockResolvedValue(undefined);
@@ -282,6 +284,12 @@ describe('views/system/notice/index', () => {
     await flushPromises();
 
     expect(noticeMocks.updateNotice).toHaveBeenCalledTimes(1);
+    expect(noticeMocks.updateNotice).toHaveBeenCalledWith(
+      expect.not.objectContaining({
+        createByName: expect.anything(),
+        createTime: expect.anything()
+      })
+    );
     expect(noticeMocks.msgSuccess).toHaveBeenCalledWith('操作成功');
   });
 

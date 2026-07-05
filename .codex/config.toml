@@ -6,8 +6,8 @@ max_depth = 1
 # Keep secrets out of version control. Configure optional tokens via environment variables.
 
 [mcp_servers.playwright]
-command = "npx"
-args = ["@playwright/mcp@latest"]
+command = "node"
+args = [".codex/scripts/start_playwright_mcp.mjs"]
 enabled = true
 startup_timeout_sec = 20
 tool_timeout_sec = 120

@@ -118,7 +118,7 @@
 </template>
 
 <script setup name="Notice" lang="ts">
-import { listNotice, getNotice, delNotice, addNotice, updateNotice } from '@/api/system/notice';
+import { addNotice, delNotice, getNotice, listNotice, updateNotice } from '@/api/system/notice';
 import { NoticeForm, NoticeQuery, NoticeVO } from '@/api/system/notice/types';
 import { toDictRefs } from '@/utils/dict';
 
@@ -223,7 +223,15 @@ const handleUpdate = async (row?: NoticeVO) => {
 const submitForm = () => {
   noticeFormRef.value?.validate(async (valid: boolean) => {
     if (valid) {
-      form.value.noticeId ? await updateNotice(form.value) : await addNotice(form.value);
+      const payload: NoticeForm = {
+        noticeId: form.value.noticeId,
+        noticeTitle: form.value.noticeTitle,
+        noticeType: form.value.noticeType,
+        noticeContent: form.value.noticeContent,
+        status: form.value.status,
+        remark: form.value.remark
+      };
+      payload.noticeId ? await updateNotice(payload) : await addNotice(payload);
       proxy?.$modal.msgSuccess('操作成功');
       dialog.visible = false;
       await getList();

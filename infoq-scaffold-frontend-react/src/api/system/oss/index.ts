@@ -1,6 +1,7 @@
 import request from '@/utils/request';
 import type { ApiResponse, TableResponse } from '@/api/types';
 import { OssQuery, OssVO } from './types';
+import type { AxiosProgressEvent } from 'axios';
 
 // 查询OSS对象存储列表
 export function listOss(query: OssQuery) {
@@ -16,6 +17,27 @@ export function listByIds(ossId: string | number) {
   return request<ApiResponse<OssVO[]>>({
     url: '/resource/oss/listByIds/' + ossId,
     method: 'get'
+  });
+}
+
+export type OssUploadResult = {
+  url: string;
+  fileName: string;
+  ossId: string | number;
+};
+
+export function uploadOss(file: Blob, filename = 'file', onUploadProgress?: (progressEvent: AxiosProgressEvent) => void, signal?: AbortSignal) {
+  const data = new FormData();
+  data.append(filename, file);
+  return request<ApiResponse<OssUploadResult>>({
+    url: '/resource/oss/upload',
+    method: 'post',
+    headers: {
+      repeatSubmit: false
+    },
+    data,
+    onUploadProgress,
+    signal
   });
 }
 

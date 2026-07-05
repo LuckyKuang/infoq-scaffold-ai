@@ -142,7 +142,7 @@
 </template>
 
 <script setup name="OssConfig" lang="ts">
-import { listOssConfig, getOssConfig, delOssConfig, addOssConfig, updateOssConfig, changeOssConfigStatus } from '@/api/system/ossConfig';
+import { addOssConfig, changeOssConfigStatus, delOssConfig, getOssConfig, listOssConfig, updateOssConfig } from '@/api/system/ossConfig';
 import { OssConfigForm, OssConfigQuery, OssConfigVO } from '@/api/system/ossConfig/types';
 import { toDictRefs } from '@/utils/dict';
 
@@ -303,11 +303,26 @@ const handleUpdate = async (row?: OssConfigVO) => {
 const submitForm = () => {
   ossConfigFormRef.value?.validate(async (valid: boolean) => {
     if (valid) {
+      const payload: OssConfigForm = {
+        ossConfigId: form.value.ossConfigId,
+        configKey: form.value.configKey,
+        accessKey: form.value.accessKey,
+        secretKey: form.value.secretKey,
+        bucketName: form.value.bucketName,
+        prefix: form.value.prefix,
+        endpoint: form.value.endpoint,
+        domain: form.value.domain,
+        isHttps: form.value.isHttps,
+        accessPolicy: form.value.accessPolicy,
+        region: form.value.region,
+        status: form.value.status,
+        remark: form.value.remark
+      };
       buttonLoading.value = true;
-      if (form.value.ossConfigId) {
-        await updateOssConfig(form.value).finally(() => (buttonLoading.value = false));
+      if (payload.ossConfigId) {
+        await updateOssConfig(payload).finally(() => (buttonLoading.value = false));
       } else {
-        await addOssConfig(form.value).finally(() => (buttonLoading.value = false));
+        await addOssConfig(payload).finally(() => (buttonLoading.value = false));
       }
       proxy?.$modal.msgSuccess('新增成功');
       dialog.visible = false;

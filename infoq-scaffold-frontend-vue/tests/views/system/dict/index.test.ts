@@ -173,7 +173,9 @@ describe('views/system/dict/index', () => {
         dictId: 1,
         dictName: '状态',
         dictType: 'sys_status',
-        remark: '状态字典'
+        remark: '状态字典',
+        createTime: '2026-03-07 10:00:00',
+        createByName: 'admin'
       }
     });
     dictTypeMocks.addType.mockResolvedValue(undefined);
@@ -276,6 +278,12 @@ describe('views/system/dict/index', () => {
     await flushPromises();
 
     expect(dictTypeMocks.updateType).toHaveBeenCalledTimes(1);
+    expect(dictTypeMocks.updateType).toHaveBeenCalledWith(
+      expect.not.objectContaining({
+        createTime: expect.anything(),
+        createByName: expect.anything()
+      })
+    );
     expect(dictTypeMocks.msgSuccess).toHaveBeenCalledWith('操作成功');
   });
 

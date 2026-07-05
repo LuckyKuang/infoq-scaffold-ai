@@ -14,8 +14,8 @@ import cn.hutool.core.util.IdUtil;
 import lombok.extern.slf4j.Slf4j;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.core.async.AsyncRequestBody;
 import software.amazon.awssdk.core.async.AsyncResponseTransformer;
-import software.amazon.awssdk.core.async.BlockingInputStreamAsyncRequestBody;
 import software.amazon.awssdk.core.async.ResponsePublisher;
 import software.amazon.awssdk.http.nio.netty.NettyNioAsyncHttpClient;
 import software.amazon.awssdk.regions.Region;
@@ -183,16 +183,9 @@ public class OssClient {
      * @throws OssException 如果上传失败，抛出自定义异常
      */
     public UploadResult upload(InputStream inputStream, String key, Long length, String contentType) {
-        // 如果输入流不是 ByteArrayInputStream，则将其读取为字节数组再创建 ByteArrayInputStream
-        if (!(inputStream instanceof ByteArrayInputStream)) {
-            inputStream = new ByteArrayInputStream(IoUtil.readBytes(inputStream));
-        }
         try {
-            // 创建异步请求体（length如果为空会报错）
-            BlockingInputStreamAsyncRequestBody body = BlockingInputStreamAsyncRequestBody.builder()
-                .contentLength(length)
-                .subscribeTimeout(Duration.ofSeconds(120))
-                .build();
+            byte[] data = IoUtil.readBytes(inputStream);
+            AsyncRequestBody body = AsyncRequestBody.fromBytes(data);
 
             // 使用 transferManager 进行上传
             Upload upload = transferManager.upload(
@@ -206,9 +199,6 @@ public class OssClient {
                             //.acl(getAccessPolicy().getObjectCannedACL())
                             .build())
                     .build());
-
-            // 将输入流写入请求体
-            body.writeInputStream(inputStream);
 
             // 等待文件上传操作完成
             CompletedUpload uploadResult = upload.completionFuture().join();

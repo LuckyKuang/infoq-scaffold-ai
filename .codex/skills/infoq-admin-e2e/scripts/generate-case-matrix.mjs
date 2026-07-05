@@ -10,6 +10,14 @@ const args = normalizeForwardedArgs(process.argv.slice(2));
 
 const DEFAULT_OUTPUT_DIR = path.join(repoRoot, 'doc', 'test', 'frontend-web-automation');
 const VALID_PRIORITIES = new Set(['P0', 'P1', 'P2']);
+const SAFETY_GATES = [
+  '不自动删除非 e2e_ 数据。',
+  '不清空日志。',
+  '不强退非当前 run 创建的 e2e_ 在线会话。',
+  '不触发定时任务“立即执行”。',
+  '不触碰真实 OSS 对象上传/删除。',
+  '对 OSS 对象、日志、在线用户这类场景，缺少隔离 fixture 时记录 blocker，不伪造通过。'
+];
 
 function printHelp() {
   console.log(`Usage:
@@ -94,7 +102,7 @@ function listFiles(dirPath, predicate = () => true) {
       result.push(fullPath);
     }
   }
-  return result.sort();
+  return result.sort((left, right) => rel(left).localeCompare(rel(right)));
 }
 
 function rel(filePath) {
@@ -764,7 +772,8 @@ function summarize(cases, gaps) {
     reactProCases: cases.filter((item) => item.clients.includes('react-pro')).length,
     vueCases: cases.filter((item) => item.clients.includes('vue')).length,
     sideEffectCases: cases.filter((item) => item.sideEffect).length,
-    gaps: gaps.length
+    gaps: gaps.length,
+    safetyGates: SAFETY_GATES.length
   };
   for (const priority of Object.keys(summary).filter((key) => key.startsWith('p'))) {
     if (!VALID_PRIORITIES.has(priority.toUpperCase())) {
@@ -795,6 +804,7 @@ function renderMarkdown(matrix) {
     `- Vue 适用用例：${matrix.summary.vueCases}`,
     `- 副作用用例：${matrix.summary.sideEffectCases}`,
     `- 缺口数：${matrix.summary.gaps}`,
+    `- 安全门禁：${matrix.summary.safetyGates}`,
     '',
     '## 用例清单',
     '',
@@ -832,13 +842,18 @@ function renderGaps(matrix) {
   ];
 
   if (matrix.gaps.length === 0) {
-    lines.push('未发现缺口。', '');
-    return `${lines.join('\n')}\n`;
+    lines.push('未发现结构性缺口。', '');
+  } else {
+    for (const gap of matrix.gaps) {
+      const target = gap.id || gap.component || gap.moduleKey || 'unknown';
+      lines.push(`- [${gap.type}] ${target}: ${gap.message}`);
+    }
+    lines.push('');
   }
 
-  for (const gap of matrix.gaps) {
-    const target = gap.id || gap.component || gap.moduleKey || 'unknown';
-    lines.push(`- [${gap.type}] ${target}: ${gap.message}`);
+  lines.push('## 安全门禁', '');
+  for (const gate of matrix.safetyGates) {
+    lines.push(`- ${gate}`);
   }
   lines.push('');
   return `${lines.join('\n')}\n`;
@@ -873,7 +888,7 @@ function main() {
 
   const matrix = {
     generatedAt: new Date().toISOString(),
-    repoRoot,
+    repoRoot: '.',
     sources: {
       sqlFiles: sqlFiles.map(rel),
       reactPages: reactPages.map(rel),
@@ -885,7 +900,8 @@ function main() {
     },
     summary: summarize(cases, gaps),
     cases,
-    gaps
+    gaps,
+    safetyGates: SAFETY_GATES
   };
 
   ensureDir(path.dirname(options.jsonPath));

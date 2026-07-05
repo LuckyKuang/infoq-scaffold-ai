@@ -169,7 +169,7 @@
 </template>
 
 <script setup name="Post" lang="ts">
-import { listPost, addPost, delPost, getPost, updatePost, deptTreeSelect } from '@/api/system/post';
+import { addPost, delPost, deptTreeSelect, getPost, listPost, updatePost } from '@/api/system/post';
 import { PostForm, PostQuery, PostVO } from '@/api/system/post/types';
 import { DeptTreeVO, DeptVO } from '@/api/system/dept/types';
 import { toDictRefs } from '@/utils/dict';
@@ -328,7 +328,17 @@ const handleUpdate = async (row?: PostVO) => {
 const submitForm = () => {
   postFormRef.value?.validate(async (valid: boolean) => {
     if (valid) {
-      form.value.postId ? await updatePost(form.value) : await addPost(form.value);
+      const payload: PostForm = {
+        postId: form.value.postId,
+        deptId: form.value.deptId,
+        postCode: form.value.postCode,
+        postName: form.value.postName,
+        postCategory: form.value.postCategory,
+        postSort: form.value.postSort,
+        status: form.value.status,
+        remark: form.value.remark
+      };
+      payload.postId ? await updatePost(payload) : await addPost(payload);
       proxy?.$modal.msgSuccess('操作成功');
       dialog.visible = false;
       await getList();

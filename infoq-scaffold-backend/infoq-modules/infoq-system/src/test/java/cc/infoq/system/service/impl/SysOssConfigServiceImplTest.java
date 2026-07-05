@@ -3,6 +3,7 @@ package cc.infoq.system.service.impl;
 import cc.infoq.common.exception.ServiceException;
 import cc.infoq.common.json.utils.JsonUtils;
 import cc.infoq.common.oss.constant.OssConstant;
+import cc.infoq.common.oss.properties.OssProperties;
 import cc.infoq.common.redis.utils.CacheUtils;
 import cc.infoq.common.redis.utils.RedisUtils;
 import cc.infoq.common.utils.MapstructUtils;
@@ -34,8 +35,7 @@ import org.springframework.context.support.GenericApplicationContext;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -145,35 +145,47 @@ class SysOssConfigServiceImplTest {
     }
 
     @Test
-    @DisplayName("init: should load all configs and write cache payloads")
+    @DisplayName("init: should load all configs and cache oss properties payloads")
     void initShouldLoadAllConfigsAndWriteCachePayloads() {
         SysOssConfig defaultConfig = new SysOssConfig();
         defaultConfig.setOssConfigId(8L);
         defaultConfig.setConfigKey("obs-default");
         defaultConfig.setStatus("0");
+        defaultConfig.setEndpoint("default-endpoint");
+        defaultConfig.setBucketName("default-bucket");
+        defaultConfig.setCreateDept(100L);
         SysOssConfig nonDefaultConfig = new SysOssConfig();
         nonDefaultConfig.setOssConfigId(9L);
         nonDefaultConfig.setConfigKey("obs-alt");
         nonDefaultConfig.setStatus("1");
+        nonDefaultConfig.setEndpoint("alt-endpoint");
+        nonDefaultConfig.setBucketName("alt-bucket");
         when(sysOssConfigMapper.selectList()).thenReturn(List.of(defaultConfig, nonDefaultConfig));
 
         try (MockedStatic<JsonUtils> jsonUtils = org.mockito.Mockito.mockStatic(JsonUtils.class);
              MockedStatic<CacheUtils> cacheUtils = org.mockito.Mockito.mockStatic(CacheUtils.class);
              MockedStatic<RedisUtils> redisUtils = org.mockito.Mockito.mockStatic(RedisUtils.class)) {
-            jsonUtils.when(() -> JsonUtils.toJsonString(defaultConfig)).thenReturn("{\"configKey\":\"obs-default\"}");
-            jsonUtils.when(() -> JsonUtils.toJsonString(nonDefaultConfig)).thenReturn("{\"configKey\":\"obs-alt\"}");
+            jsonUtils.when(() -> JsonUtils.toJsonString(any(OssProperties.class)))
+                .thenAnswer(invocation -> {
+                    OssProperties properties = invocation.getArgument(0);
+                    return "{\"endpoint\":\"" + properties.getEndpoint() + "\"}";
+                });
 
             service.init();
 
             verify(sysOssConfigMapper).selectList();
             redisUtils.verify(() -> RedisUtils.setCacheObject(OssConstant.DEFAULT_CONFIG_KEY, "obs-default"));
-            cacheUtils.verify(() -> CacheUtils.put(anyString(), eq("obs-default"), eq("{\"configKey\":\"obs-default\"}")));
-            cacheUtils.verify(() -> CacheUtils.put(anyString(), eq("obs-alt"), eq("{\"configKey\":\"obs-alt\"}")));
+            cacheUtils.verify(() -> CacheUtils.put(anyString(), eq("obs-default"), eq("{\"endpoint\":\"default-endpoint\"}")));
+            cacheUtils.verify(() -> CacheUtils.put(anyString(), eq("obs-alt"), eq("{\"endpoint\":\"alt-endpoint\"}")));
+            jsonUtils.verify(() -> JsonUtils.toJsonString(argThat(payload ->
+                payload instanceof OssProperties properties
+                    && "default-endpoint".equals(properties.getEndpoint())
+                    && "default-bucket".equals(properties.getBucketName()))));
         }
     }
 
     @Test
-    @DisplayName("insertByBo: should validate uniqueness, insert and cache db payload")
+    @DisplayName("insertByBo: should validate uniqueness, insert and cache oss properties payload")
     void insertByBoShouldInsertAndCachePayload() {
         SysOssConfigBo bo = new SysOssConfigBo();
         bo.setConfigKey("local");
@@ -183,6 +195,9 @@ class SysOssConfigServiceImplTest {
         SysOssConfig persisted = new SysOssConfig();
         persisted.setOssConfigId(12L);
         persisted.setConfigKey("local");
+        persisted.setEndpoint("local-endpoint");
+        persisted.setBucketName("local-bucket");
+        persisted.setCreateDept(200L);
 
         when(sysOssConfigMapper.selectOne(any())).thenReturn(null);
         when(sysOssConfigMapper.insert(converted)).thenReturn(1);
@@ -192,12 +207,16 @@ class SysOssConfigServiceImplTest {
              MockedStatic<JsonUtils> jsonUtils = org.mockito.Mockito.mockStatic(JsonUtils.class);
              MockedStatic<CacheUtils> cacheUtils = org.mockito.Mockito.mockStatic(CacheUtils.class)) {
             mapstructUtils.when(() -> MapstructUtils.convert(bo, SysOssConfig.class)).thenReturn(converted);
-            jsonUtils.when(() -> JsonUtils.toJsonString(persisted)).thenReturn("{\"configKey\":\"local\"}");
+            jsonUtils.when(() -> JsonUtils.toJsonString(any(OssProperties.class))).thenReturn("{\"endpoint\":\"local-endpoint\"}");
 
             Boolean result = service.insertByBo(bo);
 
             assertTrue(result);
-            cacheUtils.verify(() -> CacheUtils.put(anyString(), eq("local"), eq("{\"configKey\":\"local\"}")));
+            cacheUtils.verify(() -> CacheUtils.put(anyString(), eq("local"), eq("{\"endpoint\":\"local-endpoint\"}")));
+            jsonUtils.verify(() -> JsonUtils.toJsonString(argThat(payload ->
+                payload instanceof OssProperties properties
+                    && "local-endpoint".equals(properties.getEndpoint())
+                    && "local-bucket".equals(properties.getBucketName()))));
         }
     }
 
@@ -223,7 +242,7 @@ class SysOssConfigServiceImplTest {
     }
 
     @Test
-    @DisplayName("updateByBo: should update and refresh cache payload")
+    @DisplayName("updateByBo: should update and refresh oss properties cache payload")
     void updateByBoShouldUpdateAndRefreshCache() {
         SysOssConfigBo bo = new SysOssConfigBo();
         bo.setOssConfigId(21L);
@@ -238,6 +257,9 @@ class SysOssConfigServiceImplTest {
         SysOssConfig refreshed = new SysOssConfig();
         refreshed.setOssConfigId(21L);
         refreshed.setConfigKey("obs");
+        refreshed.setEndpoint("obs-endpoint");
+        refreshed.setBucketName("obs-bucket");
+        refreshed.setCreateDept(300L);
 
         when(sysOssConfigMapper.selectOne(any())).thenReturn(null);
         when(sysOssConfigMapper.update(eq(converted), any())).thenReturn(1);
@@ -247,12 +269,16 @@ class SysOssConfigServiceImplTest {
              MockedStatic<JsonUtils> jsonUtils = org.mockito.Mockito.mockStatic(JsonUtils.class);
              MockedStatic<CacheUtils> cacheUtils = org.mockito.Mockito.mockStatic(CacheUtils.class)) {
             mapstructUtils.when(() -> MapstructUtils.convert(bo, SysOssConfig.class)).thenReturn(converted);
-            jsonUtils.when(() -> JsonUtils.toJsonString(refreshed)).thenReturn("{\"configKey\":\"obs\"}");
+            jsonUtils.when(() -> JsonUtils.toJsonString(any(OssProperties.class))).thenReturn("{\"endpoint\":\"obs-endpoint\"}");
 
             Boolean result = service.updateByBo(bo);
 
             assertTrue(result);
-            cacheUtils.verify(() -> CacheUtils.put(anyString(), eq("obs"), eq("{\"configKey\":\"obs\"}")));
+            cacheUtils.verify(() -> CacheUtils.put(anyString(), eq("obs"), eq("{\"endpoint\":\"obs-endpoint\"}")));
+            jsonUtils.verify(() -> JsonUtils.toJsonString(argThat(payload ->
+                payload instanceof OssProperties properties
+                    && "obs-endpoint".equals(properties.getEndpoint())
+                    && "obs-bucket".equals(properties.getBucketName()))));
         }
     }
 

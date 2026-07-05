@@ -110,7 +110,12 @@
                   <div class="config-card-footer">
                     <span>默认值：{{ formatDefaultValue(item) }}</span>
                     <div class="config-card-actions">
-                      <el-button v-if="isSuperAdmin" link type="primary" icon="Setting" @click="openEditDrawer(item)">定义</el-button>
+                      <template v-if="isSuperAdmin">
+                        <el-button link type="primary" icon="Setting" @click="openEditDrawer(item)">定义</el-button>
+                        <el-button link type="danger" icon="Delete" :disabled="item.configType === 'Y'" @click="deleteDefinition(item)">
+                          删除
+                        </el-button>
+                      </template>
                       <el-button
                         icon="Refresh"
                         :disabled="!item.editable || !hasDefaultValue(item)"
@@ -229,7 +234,16 @@
 
 <script setup name="Config" lang="ts">
 import { useUserStore } from '@/store/modules/user';
-import { addConfig, getConfigPanel, refreshCache, reorderConfig, resetConfigByKey, updateConfig, updateConfigByKey } from '@/api/system/config';
+import {
+  addConfig,
+  delConfig,
+  getConfigPanel,
+  refreshCache,
+  reorderConfig,
+  resetConfigByKey,
+  updateConfig,
+  updateConfigByKey
+} from '@/api/system/config';
 import type { ConfigForm, ConfigPanel, ConfigPanelGroup, ConfigPanelItem, ConfigReorderForm } from '@/api/system/config/types';
 
 const { proxy } = getCurrentInstance() as ComponentInternalInstance;
@@ -459,6 +473,17 @@ const submitDefinition = () => {
       submitting.value = false;
     }
   });
+};
+
+const deleteDefinition = async (item: ConfigPanelItem) => {
+  if (item.configType === 'Y') {
+    proxy?.$modal.msgWarning('内置参数不能删除');
+    return;
+  }
+  await proxy?.$modal.confirm('是否确认删除参数键名为"' + item.configKey + '"的配置定义？');
+  await delConfig(item.configId);
+  proxy?.$modal.msgSuccess('删除成功');
+  await loadPanel();
 };
 
 const saveOrder = async () => {

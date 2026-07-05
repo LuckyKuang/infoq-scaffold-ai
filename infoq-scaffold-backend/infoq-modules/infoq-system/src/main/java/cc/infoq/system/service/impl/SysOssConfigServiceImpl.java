@@ -6,6 +6,7 @@ import cc.infoq.common.json.utils.JsonUtils;
 import cc.infoq.common.mybatis.core.page.PageQuery;
 import cc.infoq.common.mybatis.core.page.TableDataInfo;
 import cc.infoq.common.oss.constant.OssConstant;
+import cc.infoq.common.oss.properties.OssProperties;
 import cc.infoq.common.redis.utils.CacheUtils;
 import cc.infoq.common.redis.utils.RedisUtils;
 import cc.infoq.common.utils.MapstructUtils;
@@ -54,7 +55,7 @@ public class SysOssConfigServiceImpl implements SysOssConfigService {
             if ("0".equals(config.getStatus())) {
                 RedisUtils.setCacheObject(OssConstant.DEFAULT_CONFIG_KEY, configKey);
             }
-            CacheUtils.put(CacheNames.SYS_OSS_CONFIG, config.getConfigKey(), JsonUtils.toJsonString(config));
+            putConfigCache(config);
         }
     }
 
@@ -88,7 +89,7 @@ public class SysOssConfigServiceImpl implements SysOssConfigService {
         if (flag) {
             // 从数据库查询完整的数据做缓存
             config = sysOssConfigMapper.selectById(config.getOssConfigId());
-            CacheUtils.put(CacheNames.SYS_OSS_CONFIG, config.getConfigKey(), JsonUtils.toJsonString(config));
+            putConfigCache(config);
         }
         return flag;
     }
@@ -107,7 +108,7 @@ public class SysOssConfigServiceImpl implements SysOssConfigService {
         if (flag) {
             // 从数据库查询完整的数据做缓存
             config = sysOssConfigMapper.selectById(config.getOssConfigId());
-            CacheUtils.put(CacheNames.SYS_OSS_CONFIG, config.getConfigKey(), JsonUtils.toJsonString(config));
+            putConfigCache(config);
         }
         return flag;
     }
@@ -166,6 +167,24 @@ public class SysOssConfigServiceImpl implements SysOssConfigService {
             RedisUtils.setCacheObject(OssConstant.DEFAULT_CONFIG_KEY, sysOssConfig.getConfigKey());
         }
         return row;
+    }
+
+    private static void putConfigCache(SysOssConfig config) {
+        CacheUtils.put(CacheNames.SYS_OSS_CONFIG, config.getConfigKey(), JsonUtils.toJsonString(toOssProperties(config)));
+    }
+
+    private static OssProperties toOssProperties(SysOssConfig config) {
+        OssProperties properties = new OssProperties();
+        properties.setEndpoint(config.getEndpoint());
+        properties.setDomain(config.getDomain());
+        properties.setPrefix(config.getPrefix());
+        properties.setAccessKey(config.getAccessKey());
+        properties.setSecretKey(config.getSecretKey());
+        properties.setBucketName(config.getBucketName());
+        properties.setRegion(config.getRegion());
+        properties.setIsHttps(config.getIsHttps());
+        properties.setAccessPolicy(config.getAccessPolicy());
+        return properties;
     }
 
 }

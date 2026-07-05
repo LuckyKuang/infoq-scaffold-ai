@@ -108,7 +108,7 @@
 
 <script setup name="Dict" lang="ts">
 import { useDictStore } from '@/store/modules/dict';
-import { listType, getType, delType, addType, updateType, refreshCache } from '@/api/system/dict/type';
+import { addType, delType, getType, listType, refreshCache, updateType } from '@/api/system/dict/type';
 import { DictTypeForm, DictTypeQuery, DictTypeVO } from '@/api/system/dict/type/types';
 
 const { proxy } = getCurrentInstance() as ComponentInternalInstance;
@@ -207,7 +207,13 @@ const handleUpdate = async (row?: DictTypeVO) => {
 const submitForm = () => {
   dictFormRef.value?.validate(async (valid: boolean) => {
     if (valid) {
-      form.value.dictId ? await updateType(form.value) : await addType(form.value);
+      const payload: DictTypeForm = {
+        dictId: form.value.dictId,
+        dictName: form.value.dictName,
+        dictType: form.value.dictType,
+        remark: form.value.remark
+      };
+      payload.dictId ? await updateType(payload) : await addType(payload);
       proxy?.$modal.msgSuccess('操作成功');
       dialog.visible = false;
       getList();

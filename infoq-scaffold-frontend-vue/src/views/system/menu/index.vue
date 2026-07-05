@@ -489,7 +489,24 @@ const handleUpdate = async (row: MenuVO) => {
 const submitForm = () => {
   menuFormRef.value?.validate(async (valid: boolean) => {
     if (valid) {
-      form.value.menuId ? await updateMenu(form.value) : await addMenu(form.value);
+      const payload: MenuForm = {
+        menuId: form.value.menuId,
+        parentId: form.value.parentId,
+        menuName: form.value.menuName,
+        orderNum: form.value.orderNum,
+        path: form.value.path,
+        component: form.value.component,
+        queryParam: form.value.queryParam,
+        isFrame: form.value.isFrame,
+        isCache: form.value.isCache,
+        menuType: form.value.menuType,
+        visible: form.value.visible,
+        status: form.value.status,
+        icon: form.value.icon,
+        remark: form.value.remark,
+        perms: form.value.perms
+      };
+      payload.menuId ? await updateMenu(payload) : await addMenu(payload);
       proxy?.$modal.msgSuccess('操作成功');
       dialog.visible = false;
       await getList();
