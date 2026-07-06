@@ -118,6 +118,7 @@ infoq-scaffold-ai
 - 通用浏览器自动化执行器：`infoq-browser-automate`
 - Ant Design 与 Element Plus 组件 API 参考：`infoq-component-reference`
 - 版本升级、发布前检查、package / 小程序 manifest 版本字段同步：`infoq-release-ops`
+- 本地 / WSL2 / macOS Colima / Linux Docker Compose 部署验证：`infoq-deploy-verify`
 
 其中浏览器自动化默认路径已经收敛为“仓库脚本 + skill 内本地 Playwright 依赖”。`admin-route-probe` 会先走快速 token 获取，遇到后端验证码开启时自动复用 `infoq-admin-e2e/scripts/captcha_login.mjs` 识别验证码并登录。`playwright` MCP 只用于临时交互探索，`chrome-devtools` MCP 只用于 Network / Console / Performance 深度诊断。
 
@@ -383,6 +384,10 @@ pnpm run verify:local
 
 ## 部署入口
 
+如果要让 Codex 直接按本仓库脚本执行本地或 WSL2/macOS Colima/Linux Docker Compose 部署验证，使用 `infoq-deploy-verify`。它会覆盖 WSL2 Docker CE、macOS Colima、Linux Docker CE 三种免费商用运行时，以及后端、MySQL、Redis、MinIO、Vue/React/React Pro 前端、nginx 网关、localhost smoke、证据留存和常见部署阻断，并会在执行 deploy 前提醒并确认 `/tmp/infoq-deploy` 与 `${INFOQ_DEPLOY_ROOT}/server/temp` 已存在。
+
+如果是第一次完整部署，建议先按 [`doc/devops/docker-compose-tutorial.md`](./doc/devops/docker-compose-tutorial.md) 操作；需要脚本参数和日常运维命令时，再看 [`doc/devops/docker-compose-deploy.md`](./doc/devops/docker-compose-deploy.md)。
+
 ### 后端与依赖服务
 
 ```bash
@@ -420,6 +425,7 @@ bash script/bin/deploy-frontend.sh deploy
 
 - [`sql/infoq_scaffold_2.0.0.sql`](./sql/infoq_scaffold_2.0.0.sql)
 - [`doc/devops/deploy-prerequisites.md`](./doc/devops/deploy-prerequisites.md)
+- [`doc/devops/docker-compose-tutorial.md`](./doc/devops/docker-compose-tutorial.md)
 - [`doc/devops/manual-deploy.md`](./doc/devops/manual-deploy.md)
 - [`doc/devops/docker-compose-deploy.md`](./doc/devops/docker-compose-deploy.md)
 
@@ -467,6 +473,7 @@ pnpm --dir .codex/skills/infoq-browser-automate/scripts run playwright-cli flow 
   - [`doc/collaboration/mcp-servers.md`](./doc/collaboration/mcp-servers.md)
 - 部署交付：
   - [`doc/devops/deploy-prerequisites.md`](./doc/devops/deploy-prerequisites.md)
+  - [`doc/devops/docker-compose-tutorial.md`](./doc/devops/docker-compose-tutorial.md)
   - [`doc/devops/manual-deploy.md`](./doc/devops/manual-deploy.md)
   - [`doc/devops/docker-compose-deploy.md`](./doc/devops/docker-compose-deploy.md)
 - 扩展治理：

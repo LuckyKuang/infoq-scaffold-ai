@@ -5,7 +5,7 @@ LABEL maintainer="Pontus"
 
 WORKDIR /infoq/react-pro
 
-RUN corepack enable pnpm
+RUN npm install -g pnpm@10.34.1
 
 COPY package.json pnpm-lock.yaml ./
 COPY scripts/max.mjs ./scripts/max.mjs
@@ -26,7 +26,7 @@ COPY . ./
 
 RUN pnpm run build
 
-FROM nginx:1.28.2
+FROM nginx:1.30.3
 
 ENV TZ=Asia/Shanghai \
     NGINX_PORT=80

@@ -1,4 +1,15 @@
-import type { ProLayoutProps } from '@ant-design/pro-components';
+import type {ProLayoutProps} from '@ant-design/pro-components';
+
+const resolvePublicAssetPath = (assetPath: string) => {
+  const contextPath = process.env.VITE_APP_CONTEXT_PATH || '/';
+  const normalizedContextPath = contextPath.endsWith('/')
+    ? contextPath
+    : `${contextPath}/`;
+  const normalizedAssetPath = assetPath.startsWith('/')
+    ? assetPath.slice(1)
+    : assetPath;
+  return `${normalizedContextPath}${normalizedAssetPath}`;
+};
 
 /**
  * @name
@@ -14,7 +25,7 @@ const Settings: ProLayoutProps & {
   fixSiderbar: true,
   colorWeak: false,
   title: process.env.VITE_APP_LOGO_TITLE || 'infoq-scaffold-backend',
-  logo: '/logo.svg',
+  logo: resolvePublicAssetPath('logo.svg'),
   iconfontUrl: '',
   token: {
     // 参见ts声明，demo 见文档，通过token 修改样式

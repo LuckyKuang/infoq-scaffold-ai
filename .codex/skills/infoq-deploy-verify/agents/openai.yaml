@@ -1,0 +1,4 @@
+interface:
+  display_name: "InfoQ 部署验证"
+  short_description: "用 Docker CE/Colima 免费商用运行时部署并验证全栈容器"
+  default_prompt: "使用 $infoq-deploy-verify 在 WSL2 Docker CE、macOS Colima 或 Linux Docker CE 免费商用运行时中部署本仓库后端、MySQL、Redis、MinIO、Vue/React/React Pro 前端与 nginx，并执行 smoke 验证和问题收口。"

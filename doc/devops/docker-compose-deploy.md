@@ -3,12 +3,15 @@
 本文档以当前仓库的 `script/docker/docker-compose.yml` 为准，只保留现有工程真正可执行的部署入口。
 当前文档对应项目基线版本为 `2.1.7`。
 
-如果你需要的是完整部署前检查或非 Docker 的手动部署流程，请先阅读：
+如果你是第一次用 Docker Compose 部署本项目，建议先阅读教程，再回到本文查看脚本细节：
 
+- [Docker Compose 部署教程](./docker-compose-tutorial.md)
 - [项目部署前准备](./deploy-prerequisites.md)
 - [手动部署说明](./manual-deploy.md)
 
-默认宿主机根目录是 `/infoq`。如果是在 macOS 本机配合 Docker Desktop 验证，建议先设置为绝对路径：
+默认宿主机根目录按运行时选择：WSL2 / 原生 Linux 使用 `/infoq`，macOS Colima 使用 `$HOME/infoq`。始终显式设置 `INFOQ_DEPLOY_ROOT`，不要依赖脚本自动判断。
+
+如果只是一次性本地验证，并且确认该路径能被当前 Docker runtime 稳定挂载，也可以显式设置为独立临时目录；WSL2 不要把 MySQL 数据目录放在 `/mnt/c`、`/mnt/d` 等 DrvFS 路径下。
 
 ```bash
 export INFOQ_DEPLOY_ROOT="$(pwd)/doc/tmp/infoq-deploy"
@@ -181,6 +184,17 @@ bash script/bin/deploy-frontend.sh logs all
 export INFOQ_DEPLOY_ROOT=doc/tmp/infoq-deploy
 bash script/bin/infoq.sh restart
 bash script/bin/deploy-frontend.sh restart
+```
+
+镜像 tag 收口：
+
+如果为处理镜像源 EOF/short read 临时直拉 `registry-1.docker.io/...`，只能把它作为辅助 tag。仓库 Dockerfile 和 Compose 使用 `bellsoft/...`、`node:*`、`nginx:*` 等短名；执行 `docker tag` 回短名后，确认两者 `IMAGE ID` 一致且没有容器引用长名，再删除辅助 tag：
+
+```bash
+docker image ls --format '{{.Repository}}:{{.Tag}} {{.ID}}' | grep 'registry-1.docker.io'
+docker ps -a --format '{{.Names}} {{.Image}}'
+# 按 docker image ls 输出中的实际长名执行，例如：
+docker rmi registry-1.docker.io/library/node:22.13.1
 ```
 
 ## 7. 如需直接使用 Docker Compose CLI

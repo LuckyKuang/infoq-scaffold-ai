@@ -219,7 +219,7 @@ const Login: React.FC = () => {
       <div className={`${styles.main} login-form-shell`}>
         <LoginForm
           contentStyle={{ minWidth: 280, maxWidth: '75vw' }}
-          logo={<img alt="logo" src="/logo.svg" />}
+          logo={<img alt="logo" src={Settings.logo} />}
           title={process.env.VITE_APP_LOGO_TITLE || 'infoq-scaffold-backend'}
           subTitle={process.env.VITE_APP_TITLE || '后台管理系统'}
           initialValues={rememberedLoginValues}

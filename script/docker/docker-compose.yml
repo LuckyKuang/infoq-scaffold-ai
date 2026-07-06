@@ -48,7 +48,7 @@ services:
       start_period: 10s
 
   minio:
-    image: pgsty/minio:RELEASE.2026-02-14T12-00-00Z
+    image: pgsty/minio:RELEASE.2026-06-18T00-00-00Z
     container_name: minio
     restart: unless-stopped
     environment:
@@ -157,7 +157,7 @@ services:
       - ${INFOQ_DEPLOY_ROOT:-/infoq}/react-pro/logs/:/var/log/nginx/
 
   nginx-web:
-    image: nginx:1.28.2
+    image: nginx:1.30.3
     container_name: nginx-web
     restart: unless-stopped
     environment:

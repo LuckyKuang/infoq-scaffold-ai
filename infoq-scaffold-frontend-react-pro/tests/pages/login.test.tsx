@@ -1,6 +1,6 @@
 import {fireEvent, render, screen, waitFor} from '@testing-library/react';
 import {App} from 'antd';
-import {beforeEach, describe, expect, it, vi} from 'vitest';
+import {afterAll, beforeEach, describe, expect, it, vi} from 'vitest';
 
 const loginPageMocks = vi.hoisted(() => ({
   fetchUserInfo: vi.fn(),
@@ -79,10 +79,12 @@ vi.mock('@ant-design/pro-components', () => {
     LoginForm: ({
       children,
       initialValues,
+      logo,
       onFinish,
     }: {
       children: React.ReactNode;
       initialValues?: Record<string, unknown>;
+      logo?: React.ReactNode;
       onFinish: (values: Record<string, unknown>) => Promise<void>;
     }) => {
       latestInitialValues = initialValues || {};
@@ -100,6 +102,7 @@ vi.mock('@ant-design/pro-components', () => {
             onFinish(values);
           }}
         >
+          {logo}
           {children}
           <button type="submit">登 录</button>
         </form>
@@ -143,6 +146,9 @@ vi.mock('@/store/modules/user', () => ({
   },
 }));
 
+const originalContextPath = process.env.VITE_APP_CONTEXT_PATH;
+process.env.VITE_APP_CONTEXT_PATH = '/react-pro/';
+
 const { default: LoginPage } = await import('@/pages/user/login');
 
 const renderLogin = () =>
@@ -153,6 +159,13 @@ const renderLogin = () =>
   );
 
 describe('pages/user/login', () => {
+  afterAll(() => {
+    if (originalContextPath === undefined) {
+      delete process.env.VITE_APP_CONTEXT_PATH;
+      return;
+    }
+    process.env.VITE_APP_CONTEXT_PATH = originalContextPath;
+  });
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
@@ -222,6 +235,15 @@ describe('pages/user/login', () => {
       expect(loginPageMocks.setInitialState).toHaveBeenCalledTimes(1);
       expect(loginPageMocks.historyReplace).toHaveBeenCalledWith('/dashboard');
     });
+  });
+
+  it('resolves login logo from deployment context path', async () => {
+    renderLogin();
+
+    expect(await screen.findByAltText('logo')).toHaveAttribute(
+      'src',
+      '/react-pro/logo.svg',
+    );
   });
 
   it('restores remembered username and password into login form', async () => {

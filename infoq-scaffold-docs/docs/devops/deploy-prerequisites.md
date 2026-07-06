@@ -26,6 +26,7 @@ outline: [2, 3]
 
 在开始准备环境前，先确定本次采用哪条路径：
 
+- Docker Compose 教程式部署：参考 [docker-compose-tutorial.md](/devops/docker-compose-tutorial)
 - Docker Compose / 脚本化部署：参考 [docker-compose-deploy.md](/devops/docker-compose-deploy)
 - 手动部署：参考 [manual-deploy.md](/devops/manual-deploy)
 
@@ -43,14 +44,14 @@ outline: [2, 3]
 | pnpm | >= 10.0.0 |
 | MySQL | 8.x |
 | Redis | 7.x |
-| Nginx | 1.28.x |
+| Nginx | 1.30.x |
 | Docker Compose | 仅在脚本化部署时需要 |
 
 说明：
 
 - 后端运行镜像基于 JDK 17：[infoq-scaffold-backend/infoq-admin/Dockerfile](https://github.com/luckykuang/infoq-scaffold-ai/blob/main/infoq-scaffold-backend/infoq-admin/Dockerfile)
 - 前端构建镜像基于 Node 20.20.1：[infoq-scaffold-frontend-vue/Dockerfile](https://github.com/luckykuang/infoq-scaffold-ai/blob/main/infoq-scaffold-frontend-vue/Dockerfile) [infoq-scaffold-frontend-react/Dockerfile](https://github.com/luckykuang/infoq-scaffold-ai/blob/main/infoq-scaffold-frontend-react/Dockerfile)
-- Docker Compose 默认依赖 MySQL 8.0、Redis 7.2、Nginx 1.28：[script/docker/docker-compose.yml](https://github.com/luckykuang/infoq-scaffold-ai/blob/main/script/docker/docker-compose.yml)
+- Docker Compose 默认依赖 MySQL 8.0、Redis 7.2、MinIO `RELEASE.2026-06-18T00-00-00Z`、Nginx 1.30：[script/docker/docker-compose.yml](https://github.com/luckykuang/infoq-scaffold-ai/blob/main/script/docker/docker-compose.yml)
 
 ## 3. 端口与网络准备
 
@@ -76,7 +77,16 @@ outline: [2, 3]
 
 ## 4. 目录与权限准备
 
-如果沿用仓库现有约定，部署根目录建议统一为 `/infoq`。
+如果沿用仓库现有约定，WSL2 / 原生 Linux 部署根目录建议统一为 `/infoq`；macOS Colima 建议使用 `$HOME/infoq`，除非已经确认 `/infoq` 可被 Colima VM 稳定挂载。
+
+执行 Docker Compose / 脚本化部署前，必须先确认以下目录存在：
+
+```text
+/tmp/infoq-deploy
+${INFOQ_DEPLOY_ROOT}/server/temp
+```
+
+WSL2 / 原生 Linux 默认就是 `/infoq/server/temp`；macOS Colima 默认就是 `$HOME/infoq/server/temp`。
 
 ### 4.1 脚本化 / Compose 部署目录
 
