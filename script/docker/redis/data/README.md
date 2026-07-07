@@ -1,9 +1,13 @@
-默认部署根目录是 `/infoq`。
-
-如果是在 macOS 本机配合 Docker Desktop 做验证，建议改用可写目录，例如：
+默认部署根目录是 `/infoq`。执行下面的目录初始化命令前，先显式设置部署根目录：
 
 ```bash
-export INFOQ_DEPLOY_ROOT=doc/tmp/infoq-deploy
+export INFOQ_DEPLOY_ROOT=/infoq
+```
+
+如果是在 macOS 本机配合 Colima 做验证，建议显式使用可被 Colima 挂载的目录，例如：
+
+```bash
+export INFOQ_DEPLOY_ROOT="${HOME}/infoq"
 ```
 
 后端脚本 `script/bin/infoq.sh` 与前端脚本 `script/bin/deploy-frontend.sh` 都支持这个环境变量。
@@ -13,55 +17,55 @@ export INFOQ_DEPLOY_ROOT=doc/tmp/infoq-deploy
 mysql 目录
 
 ```bash
-mkdir /infoq/mysql/data/
-mkdir /infoq/mysql/conf/
+mkdir -p "${INFOQ_DEPLOY_ROOT}/mysql/data/"
+mkdir -p "${INFOQ_DEPLOY_ROOT}/mysql/conf/"
 ```
 
 redis 目录
 
 ```bash
-mkdir /infoq/redis/conf/
-mkdir /infoq/redis/data/
+mkdir -p "${INFOQ_DEPLOY_ROOT}/redis/conf/"
+mkdir -p "${INFOQ_DEPLOY_ROOT}/redis/data/"
 ```
 
 minio 目录
 
 ```bash
-mkdir /infoq/minio/data/
+mkdir -p "${INFOQ_DEPLOY_ROOT}/minio/data/"
 ```
 
 Nginx 目录
 
 ```bash
-mkdir /infoq/nginx/cert/
-mkdir /infoq/nginx/conf/
-mkdir /infoq/nginx/log/
+mkdir -p "${INFOQ_DEPLOY_ROOT}/nginx/cert/"
+mkdir -p "${INFOQ_DEPLOY_ROOT}/nginx/conf/"
+mkdir -p "${INFOQ_DEPLOY_ROOT}/nginx/log/"
 ```
 
 后端目录
 
 ```bash
-mkdir /infoq/server/config/
-mkdir /infoq/server/logs/
-mkdir /infoq/server/temp/
-mkdir /infoq/server/ip2region/
+mkdir -p "${INFOQ_DEPLOY_ROOT}/server/config/"
+mkdir -p "${INFOQ_DEPLOY_ROOT}/server/logs/"
+mkdir -p "${INFOQ_DEPLOY_ROOT}/server/temp/"
+mkdir -p "${INFOQ_DEPLOY_ROOT}/server/ip2region/"
 ```
 
 前端目录
 
 ```bash
-mkdir /infoq/vue/
-mkdir /infoq/react/
-mkdir /infoq/react-pro/
+mkdir -p "${INFOQ_DEPLOY_ROOT}/vue/"
+mkdir -p "${INFOQ_DEPLOY_ROOT}/react/"
+mkdir -p "${INFOQ_DEPLOY_ROOT}/react-pro/"
 
 # 前端日志存放目录
-mkdir /infoq/vue/logs/
-mkdir /infoq/react/logs/
-mkdir /infoq/react-pro/logs/
+mkdir -p "${INFOQ_DEPLOY_ROOT}/vue/logs/"
+mkdir -p "${INFOQ_DEPLOY_ROOT}/react/logs/"
+mkdir -p "${INFOQ_DEPLOY_ROOT}/react-pro/logs/"
 ```
 
 赋予权限
 
 ```bash
-chmod 777 -R /infoq/
+chmod 777 -R "${INFOQ_DEPLOY_ROOT}/"
 ```

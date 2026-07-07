@@ -3,7 +3,7 @@
 |Scope:本文件适用于 `infoq-scaffold-frontend-vue` 及其子目录，用于把根规则收窄到 Vue admin 语境。
 |Stack:Vue 3.5.35|TypeScript 6.0.3|Vite 8.0.16|Element Plus 2.14.1|Pinia|Vue Router 5.1.0|Vitest 4.1.8
 |Workspace Layout:src/views|src/components|src/api|src/store|src/router|src/utils|src/plugins|tests
-|Environment Baseline:Node ^20.19.0 || ^22.13.0 || >=24.0.0|pnpm >= 10.0.0|packageManager pnpm@10.34.1
+|Environment Baseline:Node 24.18.0|Docker builder 固定 node:24.18.0|pnpm >= 10.0.0|packageManager pnpm@10.34.1
 |Build Secrets:当 `VITE_APP_ENCRYPT=true` 时，Vue admin dev/build 环境必须提供 `VITE_APP_RSA_PUBLIC_KEY` 与 `VITE_APP_RSA_PRIVATE_KEY`。
 |Runtime Baseline:Vue admin 联调默认以后端 `http://127.0.0.1:8080` 为共享真值。|若开发者本地为避开冲突临时把 backend 改到 `8081` 或其他端口，必须显式设置 `VITE_APP_PROXY_TARGET` 或使用 runtime skill `--backend-port <port>` 对齐。|不得把一次性本地端口固化进共享默认配置。
 |Package And Formatting:默认使用 pnpm。|遵循本地 eslint 与 prettier 配置，前端使用 2-space formatting。|source、env、test files 保持 UTF-8。

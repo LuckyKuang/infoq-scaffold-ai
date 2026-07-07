@@ -195,12 +195,14 @@ OpenAI / Codex 官方文档查询使用本机或系统级 `openai-docs` skill，
 | --- | --- |
 | JDK | 17 |
 | Maven | 3.9+ |
-| Node.js | `^20.19.0 || ^22.13.0 || >=24.0.0` |
+| Node.js | `24.18.0` |
 | pnpm | `>= 10.0.0` |
 | MySQL | 8.x |
 | Redis | 7.x |
 | Docker Compose | 仅在脚本化部署时需要 |
 | WeChat DevTools | 小程序本地联调或 e2e 时需要 |
+
+前端本机开发、CI、docs 站点和 Docker Compose 管理端前端镜像构建阶段统一固定为 Node.js `24.18.0`；根目录 `.node-version` 与 `.nvmrc` 保持同一版本。npm 版本不作为仓库构建基线单独固定，前端包管理器遵循各工作区 `packageManager` 与 lockfile。
 
 ## 快速开始
 
@@ -388,18 +390,52 @@ pnpm run verify:local
 
 如果是第一次完整部署，建议先按 [`doc/devops/docker-compose-tutorial.md`](./doc/devops/docker-compose-tutorial.md) 操作；需要脚本参数和日常运维命令时，再看 [`doc/devops/docker-compose-deploy.md`](./doc/devops/docker-compose-deploy.md)。
 
+macOS Colima 环境如果出现 `error getting credentials` 且缺少 `docker-credential-desktop`，通常是 Docker config 残留 Docker Desktop credential helper。按教程中的 Colima credential helper 排查处理，不要因此切换到 Docker Desktop。
+
+### 一键安装
+
+快速体验入口：
+
+```bash
+curl -sSL https://raw.githubusercontent.com/LuckyKuang/infoq-scaffold-ai/main/deploy/install.sh | sudo bash
+```
+
+生产或准生产环境建议固定 tag：
+
+```bash
+curl -fsSLO https://raw.githubusercontent.com/LuckyKuang/infoq-scaffold-ai/<tag>/deploy/install.sh
+chmod +x install.sh
+sudo env INFOQ_VERSION=<tag> INFOQ_PUBLIC_BASE_URL=http://SERVER_IP ./install.sh
+```
+
+安装脚本会生成随机 MySQL、Redis、MinIO、后端安全密钥和默认管理员账号密码，保存到 `/etc/infoq-scaffold-ai/deploy.env` 与 `/etc/infoq-scaffold-ai/credentials.txt`，文件权限为 `600`。部署完成后控制台会打印访问地址和凭据；设置 `INFOQ_PRINT_SECRETS=0` 时只打印凭据文件路径。
+
+默认入口：
+
+- Vue 管理端：`http://SERVER_IP/vue/`
+- React 管理端：`http://SERVER_IP/react/`
+- React Pro 管理端：`http://SERVER_IP/react-pro/`
+- 后端健康检查：`http://SERVER_IP/prod-api/monitor/health/readiness`
+- MinIO Console：`http://SERVER_IP/console-oss/`
+- MinIO OSS：`http://SERVER_IP/oss/`
+
+重复执行安装脚本会复用已有 `deploy.env`，不会静默轮换生产密钥。若 `${INFOQ_DEPLOY_ROOT}/mysql/data` 已存在但环境文件缺失，脚本会停止，避免随机生成的新密码与旧数据错配。
+
 ### 后端与依赖服务
 
 ```bash
-export SECURITY_TOKEN_SECRET=replace-with-at-least-32-chars-secret
-# 可选：不设置时 deploy 会生成并持久化当前批次号
-# export DEPLOY_ID=2.1.7-20260602120000
+export INFOQ_ENV_FILE=/etc/infoq-scaffold-ai/deploy.env
+set -a
+. "${INFOQ_ENV_FILE}"
+set +a
 bash script/bin/infoq.sh deploy
 ```
 
 说明：
 
 - `bash script/bin/infoq.sh deploy` 会生成或校验本次 `DEPLOY_ID`，并通过生产配置注入 `infoq.quartz.bootstrap.deploy-id`。
+- `deploy` 会创建 MySQL 业务账号，同步随机管理员账号密码，同步 MinIO 凭据到 `sys_oss_config`，并确认 MinIO bucket。
+- 默认不会覆盖用户已修改的管理员账号或非默认 OSS 配置；需要重置时显式设置 `INFOQ_RESET_ADMIN=1` 或 `INFOQ_RESET_OSS=1`。
 - 同一批多节点滚动发布必须共享同一个 `DEPLOY_ID`；如果同一版本需要再次发布，应换新 `DEPLOY_ID` 并重新执行 `deploy`。
 - `bash script/bin/infoq.sh start` / `restart` 会复用 `${INFOQ_DEPLOY_ROOT:-/infoq}/server/config/deploy-id`，不会生成新的部署批次。
 - `infoq-admin` readiness 路径为 `/monitor/health/readiness`，用于 Compose healthcheck 或负载均衡接流量门禁。
@@ -417,9 +453,9 @@ bash script/bin/deploy-frontend.sh deploy
 - `infoq-frontend-react-pro`
 - `nginx-web`
 
-`deploy-frontend.sh deploy` 会先同步前端网关目录与 `nginx.conf`，再顺序构建 Vue / React / React Pro 镜像，最后启动三个前端容器与 `nginx-web`，避免本机 Docker 并行构建时的内存峰值。
+`deploy-frontend.sh deploy` 会先同步前端网关目录与 `nginx.conf`，再使用 `node:24.18.0` builder 顺序构建 Vue / React / React Pro 镜像，最后启动三个前端容器与 `nginx-web`，避免本机 Docker 并行构建时的内存峰值。
 
-部署后的网关入口为 `/vue/`、`/react/`、`/react-pro/`；容器直连端口分别为 `9091`、`9092`、`9093`。
+部署后的网关入口为 `/vue/`、`/react/`、`/react-pro/`、`/console-oss/` 和 `/oss/`；容器直连端口分别为 `9091`、`9092`、`9093`。
 
 详见：
 

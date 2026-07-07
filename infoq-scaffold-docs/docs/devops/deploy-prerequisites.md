@@ -40,7 +40,7 @@ outline: [2, 3]
 | --- | --- |
 | JDK | 17 |
 | Maven | 3.9+ |
-| Node.js | ^20.19.0 || ^22.13.0 || >=24.0.0 |
+| Node.js | 24.18.0 |
 | pnpm | >= 10.0.0 |
 | MySQL | 8.x |
 | Redis | 7.x |
@@ -50,7 +50,7 @@ outline: [2, 3]
 说明：
 
 - 后端运行镜像基于 JDK 17：[infoq-scaffold-backend/infoq-admin/Dockerfile](https://github.com/luckykuang/infoq-scaffold-ai/blob/main/infoq-scaffold-backend/infoq-admin/Dockerfile)
-- 前端构建镜像基于 Node 20.20.1：[infoq-scaffold-frontend-vue/Dockerfile](https://github.com/luckykuang/infoq-scaffold-ai/blob/main/infoq-scaffold-frontend-vue/Dockerfile) [infoq-scaffold-frontend-react/Dockerfile](https://github.com/luckykuang/infoq-scaffold-ai/blob/main/infoq-scaffold-frontend-react/Dockerfile)
+- 前端本机开发、CI、docs 站点和 Docker 构建镜像统一固定基于 Node 24.18.0：[infoq-scaffold-frontend-vue/Dockerfile](https://github.com/luckykuang/infoq-scaffold-ai/blob/main/infoq-scaffold-frontend-vue/Dockerfile) [infoq-scaffold-frontend-react/Dockerfile](https://github.com/luckykuang/infoq-scaffold-ai/blob/main/infoq-scaffold-frontend-react/Dockerfile) [infoq-scaffold-frontend-react-pro/Dockerfile](https://github.com/luckykuang/infoq-scaffold-ai/blob/main/infoq-scaffold-frontend-react-pro/Dockerfile)。npm 版本不作为仓库构建基线单独固定，包管理器遵循各工作区 `packageManager` 与 lockfile。
 - Docker Compose 默认依赖 MySQL 8.0、Redis 7.2、MinIO `RELEASE.2026-06-18T00-00-00Z`、Nginx 1.30：[script/docker/docker-compose.yml](https://github.com/luckykuang/infoq-scaffold-ai/blob/main/script/docker/docker-compose.yml)
 
 ## 3. 端口与网络准备
@@ -69,11 +69,17 @@ outline: [2, 3]
 | MinIO API | 9000 |
 | MinIO Console | 9001 |
 
+默认对外用户入口优先走 Nginx：
+
+- MinIO Console：`http://SERVER_IP/console-oss/`
+- MinIO OSS：`http://SERVER_IP/oss/`
+
 部署前至少确认：
 
 - 这些端口未被其他进程占用
 - 服务器安全组、防火墙、反向代理策略允许目标端口访问
 - 如需公网 HTTPS，证书和域名已准备完成
+- 首次安装会生成 `/etc/infoq-scaffold-ai/deploy.env` 和 `/etc/infoq-scaffold-ai/credentials.txt`，两个文件必须保留且权限为 `600`
 
 ## 4. 目录与权限准备
 

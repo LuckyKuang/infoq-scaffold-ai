@@ -5,6 +5,7 @@
 |PowerShell Encoding Guardrail:Windows PowerShell 5.1 禁止用 `>`、`>>`、`Out-File`、`Set-Content`、`Add-Content` 写入仓库文本文件；写入必须使用 `apply_patch`、Node.js `utf8`、或 `.NET UTF8Encoding(false)` 等明确 UTF-8 without BOM 的方式；PowerShell 7 可使用 `utf8NoBOM`，但不得作为默认假设。
 |Encoding Gate:提交或构建前执行 `node .codex/scripts/validate_utf8.mjs`；可追加路径参数做定向校验；不得引用不存在的校验脚本路径。
 |Package Manager:前端默认使用 pnpm 执行 install/dev/lint/test/build；仅在 pnpm 不可用时退回 npm。
+|Frontend Node Baseline:前端本机开发、CI、docs 站点和 Docker builder 的 Node.js 统一固定为 `24.18.0`；根目录 `.node-version` 与 `.nvmrc` 必须保持 `24.18.0`。|Dockerfile 不使用旧 Node 20/22 builder 或 `node:24`、`node:lts`、`latest` 等浮动 tag。|npm 版本不作为仓库构建基线单独固定；前端包管理器遵循各工作区 `packageManager` 与 lockfile。
 |Backend Maven Runner:后端 Maven 命令优先使用 `node .codex/scripts/backend_mvn.mjs -- ...`；入口优先读取 `.idea`，要求 JDK 17 与 Maven 3.9.x，配置不可用时再搜索本机候选。
 |Temporary Artifacts:仓库内工具、skill、脚本、验证过程新增的临时文件、临时目录、调试输出与一次性运行产物统一放在 `doc/tmp/` 下；除非外部工具强制要求其他位置。|禁止把临时产物散落到仓库其他路径，便于后续统一清理。
 |Failure Policy:产品代码优先显式失败，不接受静默 fallback、吞错或假成功；确需 fallback 时必须显式、可说明、易关闭，并经过用户批准。

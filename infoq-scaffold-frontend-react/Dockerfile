@@ -1,5 +1,5 @@
-# 前端构建阶段：使用 Node 20.20.1 构建
-FROM node:20.20.1 AS builder
+# 前端构建阶段：使用 Node 24.18.0 LTS 构建
+FROM node:24.18.0 AS builder
 
 LABEL maintainer="Pontus"
 

@@ -1,11 +1,11 @@
-# 前端构建阶段：React Pro 需要 Node 22+
-FROM node:22.13.1 AS builder
+# 前端构建阶段：使用 Node 24.18.0 LTS 构建
+FROM node:24.18.0 AS builder
 
 LABEL maintainer="Pontus"
 
 WORKDIR /infoq/react-pro
 
-RUN npm install -g pnpm@10.34.1
+RUN corepack enable pnpm
 
 COPY package.json pnpm-lock.yaml ./
 COPY scripts/max.mjs ./scripts/max.mjs

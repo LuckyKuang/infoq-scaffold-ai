@@ -31,6 +31,8 @@ http://localhost/vue/
 http://localhost/react/
 http://localhost/react-pro/
 http://localhost/prod-api/monitor/health/readiness
+http://localhost/console-oss/
+http://localhost/oss/
 ```
 
 同时，直连端口应可用：
@@ -41,13 +43,33 @@ Vue:       9091
 React:     9092
 React Pro: 9093
 MinIO API: 9000
-MinIO UI:  9001
+MinIO Console: 9001
 MySQL:     3306
 Redis:     6379
 Nginx:     80 / 443
 ```
 
-本教程优先使用仓库脚本：
+首次安装优先使用一键安装脚本。脚本会生成 MySQL、Redis、MinIO、后端安全密钥和默认管理员账号密码，保存到 `/etc/infoq-scaffold-ai/deploy.env` 与 `/etc/infoq-scaffold-ai/credentials.txt`，并在部署完成后打印访问地址和凭据：
+
+```bash
+curl -sSL https://raw.githubusercontent.com/LuckyKuang/infoq-scaffold-ai/main/deploy/install.sh | sudo bash
+```
+
+生产或准生产环境建议固定 tag 后执行：
+
+```bash
+curl -fsSLO https://raw.githubusercontent.com/LuckyKuang/infoq-scaffold-ai/<tag>/deploy/install.sh
+chmod +x install.sh
+sudo env INFOQ_VERSION=<tag> INFOQ_PUBLIC_BASE_URL=http://SERVER_IP ./install.sh
+```
+
+如果你已经有本地源码，并且只是本机验证脚本，可使用本地源码入口：
+
+```bash
+sudo env INFOQ_SOURCE_DIR="$(pwd)" INFOQ_PUBLIC_BASE_URL=http://127.0.0.1 INFOQ_DEPLOY_ROOT=/infoq bash deploy/install.sh
+```
+
+安装脚本内部会调用仓库部署脚本：
 
 ```bash
 bash script/bin/infoq.sh deploy
@@ -111,6 +133,24 @@ docker context use colima
 docker ps
 docker compose version || docker-compose version
 ```
+
+如果这台机器曾安装或卸载 Docker Desktop，先检查 Docker credential helper：
+
+```bash
+grep -nE '"credsStore"|"credHelpers"' "${DOCKER_CONFIG:-$HOME/.docker}/config.json" 2>/dev/null || true
+```
+
+当后续 Docker/Compose 拉取 public image 时出现 `error getting credentials`，并提示 `docker-credential-desktop` 不存在，说明当前 Docker config 仍引用 Docker Desktop helper。一次性本地验证可使用临时 Docker config 继续走 Colima：
+
+```bash
+export INFOQ_TEMP_DOCKER_CONFIG="$(pwd)/doc/tmp/infoq-deploy-verify/docker-config"
+mkdir -p "${INFOQ_TEMP_DOCKER_CONFIG}"
+printf '{"auths":{}}\n' > "${INFOQ_TEMP_DOCKER_CONFIG}/config.json"
+export DOCKER_CONFIG="${INFOQ_TEMP_DOCKER_CONFIG}"
+export DOCKER_HOST="unix://${HOME}/.colima/default/docker.sock"
+```
+
+长期做法是清理 `~/.docker/config.json` 中失效的 `credsStore` / `credHelpers`，或安装当前配置声明的 credential helper；不要因为该错误切换到 Docker Desktop。
 
 macOS 默认使用：
 
@@ -180,16 +220,14 @@ $HOME/infoq/server/temp
 
 脚本后续还会补齐其他目录，例如 MySQL、Redis、MinIO、Nginx、前端日志和后端配置目录。完整目录清单见 [Docker Compose 部署说明](/devops/docker-compose-deploy)。
 
-## 4. 设置环境变量
-
-每次执行部署、启动、停止、升级前，都建议显式设置部署根目录和安全密钥。
+## 4. 部署环境文件
 
 WSL2 / 原生 Linux：
 
 ```bash
 cd /path/to/infoq-scaffold-ai
 export INFOQ_DEPLOY_ROOT=/infoq
-export SECURITY_TOKEN_SECRET=replace-with-at-least-32-chars-secret
+sudo env INFOQ_SOURCE_DIR="$(pwd)" INFOQ_PUBLIC_BASE_URL=http://SERVER_IP INFOQ_DEPLOY_ROOT="${INFOQ_DEPLOY_ROOT}" bash deploy/install.sh
 ```
 
 macOS Colima：
@@ -197,26 +235,36 @@ macOS Colima：
 ```bash
 cd /path/to/infoq-scaffold-ai
 export INFOQ_DEPLOY_ROOT="${HOME}/infoq"
-export SECURITY_TOKEN_SECRET=replace-with-at-least-32-chars-secret
+export DOCKER_HOST="unix://${HOME}/.colima/default/docker.sock"
+sudo env DOCKER_CONFIG="${DOCKER_CONFIG:-$HOME/.docker}" DOCKER_HOST="${DOCKER_HOST}" INFOQ_SOURCE_DIR="$(pwd)" INFOQ_PUBLIC_BASE_URL=http://127.0.0.1 INFOQ_DEPLOY_ROOT="${INFOQ_DEPLOY_ROOT}" bash deploy/install.sh
 ```
 
-`SECURITY_TOKEN_SECRET` 至少 32 个字符。教程里的示例值只能用于本地验证，生产环境必须替换为受控密钥。
+安装脚本会创建或复用：
 
-如果是生产或准生产发布，可以显式指定部署批次：
+```text
+/etc/infoq-scaffold-ai/deploy.env
+/etc/infoq-scaffold-ai/credentials.txt
+```
+
+两个文件权限必须是 `600`。重复执行安装脚本会复用已有 `deploy.env`，不会静默轮换 MySQL、Redis、MinIO 或管理员凭据。如果 `${INFOQ_DEPLOY_ROOT}/mysql/data` 已有数据但 `deploy.env` 缺失，脚本会停止，避免生成新密码后无法连接旧数据。
+
+如果需要直接调用底层脚本，先加载同一个环境文件：
 
 ```bash
-export DEPLOY_ID=2.1.7-20260706120000
+export INFOQ_ENV_FILE=/etc/infoq-scaffold-ai/deploy.env
+set -a
+. "${INFOQ_ENV_FILE}"
+set +a
 ```
 
-不设置 `DEPLOY_ID` 时，脚本化 `deploy` 会生成并持久化当前批次号。同一批滚动发布的所有后端节点必须使用同一个 `DEPLOY_ID`；同一版本再次发布时应换新值。
+生产或准生产发布可以在首次安装前显式指定 `INFOQ_PUBLIC_BASE_URL`、`INFOQ_DEPLOY_ROOT`、`INFOQ_VERSION` 和 `INFOQ_OSS_BUCKET`。不设置 `DEPLOY_ID` 时，安装脚本会生成并持久化当前批次号。同一批滚动发布的所有后端节点必须使用同一个 `DEPLOY_ID`；同一版本再次发布时应换新值。
 
 ## 5. WSL2 一键部署示例
 
 如果从 Windows PowerShell 调用 WSL2 Debian：
 
 ```powershell
-wsl.exe -d Debian -- bash -lc 'cd /mnt/c/DevTools/code/github/infoq-scaffold-ai && export INFOQ_DEPLOY_ROOT=/infoq && mkdir -p /tmp/infoq-deploy "${INFOQ_DEPLOY_ROOT}/server/temp" && export SECURITY_TOKEN_SECRET=local-wsl2-deploy-secret-20260706-abcdef123456 && bash script/bin/infoq.sh deploy'
-wsl.exe -d Debian -- bash -lc 'cd /mnt/c/DevTools/code/github/infoq-scaffold-ai && export INFOQ_DEPLOY_ROOT=/infoq && mkdir -p /tmp/infoq-deploy "${INFOQ_DEPLOY_ROOT}/server/temp" && export SECURITY_TOKEN_SECRET=local-wsl2-deploy-secret-20260706-abcdef123456 && bash script/bin/deploy-frontend.sh deploy'
+wsl.exe -d Debian -- bash -lc 'cd /mnt/c/DevTools/code/github/infoq-scaffold-ai && export INFOQ_DEPLOY_ROOT=/infoq && mkdir -p /tmp/infoq-deploy "${INFOQ_DEPLOY_ROOT}/server/temp" && sudo env INFOQ_SOURCE_DIR="$(pwd)" INFOQ_PUBLIC_BASE_URL=http://127.0.0.1 INFOQ_DEPLOY_ROOT="${INFOQ_DEPLOY_ROOT}" bash deploy/install.sh'
 ```
 
 如果已经在 WSL shell 内：
@@ -225,9 +273,7 @@ wsl.exe -d Debian -- bash -lc 'cd /mnt/c/DevTools/code/github/infoq-scaffold-ai 
 cd /mnt/c/DevTools/code/github/infoq-scaffold-ai
 export INFOQ_DEPLOY_ROOT=/infoq
 mkdir -p /tmp/infoq-deploy "${INFOQ_DEPLOY_ROOT}/server/temp"
-export SECURITY_TOKEN_SECRET=local-wsl2-deploy-secret-20260706-abcdef123456
-bash script/bin/infoq.sh deploy
-bash script/bin/deploy-frontend.sh deploy
+sudo env INFOQ_SOURCE_DIR="$(pwd)" INFOQ_PUBLIC_BASE_URL=http://127.0.0.1 INFOQ_DEPLOY_ROOT="${INFOQ_DEPLOY_ROOT}" bash deploy/install.sh
 ```
 
 如果 WSL distro 容易自动退出，可以先临时保持一个 WSL 会话：
@@ -243,10 +289,9 @@ cd /path/to/infoq-scaffold-ai
 colima status || colima start --runtime docker --cpu 4 --memory 8 --disk 80
 docker context use colima
 export INFOQ_DEPLOY_ROOT="${HOME}/infoq"
+export DOCKER_HOST="unix://${HOME}/.colima/default/docker.sock"
 mkdir -p /tmp/infoq-deploy "${INFOQ_DEPLOY_ROOT}/server/temp"
-export SECURITY_TOKEN_SECRET=local-colima-deploy-secret-20260706-abcdef123456
-bash script/bin/infoq.sh deploy
-bash script/bin/deploy-frontend.sh deploy
+sudo env DOCKER_CONFIG="${DOCKER_CONFIG:-$HOME/.docker}" DOCKER_HOST="${DOCKER_HOST}" INFOQ_SOURCE_DIR="$(pwd)" INFOQ_PUBLIC_BASE_URL=http://127.0.0.1 INFOQ_DEPLOY_ROOT="${INFOQ_DEPLOY_ROOT}" bash deploy/install.sh
 ```
 
 Colima 的 CPU、内存和磁盘参数按机器资源调整。首次构建三个前端镜像和后端镜像会占用较多 CPU、内存和磁盘空间，资源太小容易出现构建中断。
@@ -257,9 +302,7 @@ Colima 的 CPU、内存和磁盘参数按机器资源调整。首次构建三个
 cd /path/to/infoq-scaffold-ai
 export INFOQ_DEPLOY_ROOT=/infoq
 mkdir -p /tmp/infoq-deploy "${INFOQ_DEPLOY_ROOT}/server/temp"
-export SECURITY_TOKEN_SECRET=replace-with-at-least-32-chars-secret
-bash script/bin/infoq.sh deploy
-bash script/bin/deploy-frontend.sh deploy
+sudo env INFOQ_SOURCE_DIR="$(pwd)" INFOQ_PUBLIC_BASE_URL=http://SERVER_IP INFOQ_DEPLOY_ROOT="${INFOQ_DEPLOY_ROOT}" bash deploy/install.sh
 ```
 
 如果是远程服务器，部署前还要确认安全组、防火墙、反向代理和域名证书策略。默认教程只证明本机 `localhost` 和容器内服务链路，不代替生产发布评审。
@@ -271,12 +314,19 @@ bash script/bin/deploy-frontend.sh deploy
 ```bash
 docker ps -a --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}'
 
+export INFOQ_ENV_FILE=/etc/infoq-scaffold-ai/deploy.env
+set -a
+. "${INFOQ_ENV_FILE}"
+set +a
+
 curl --noproxy '*' -i --max-time 15 http://127.0.0.1:9090/monitor/health/readiness
 curl --noproxy '*' -i --max-time 15 http://127.0.0.1/prod-api/monitor/health/readiness
 
 curl --noproxy '*' -I --max-time 15 http://127.0.0.1/vue/
 curl --noproxy '*' -I --max-time 15 http://127.0.0.1/react/
 curl --noproxy '*' -I --max-time 15 http://127.0.0.1/react-pro/
+curl --noproxy '*' -I --max-time 15 http://127.0.0.1/console-oss/
+curl --noproxy '*' -i --max-time 15 http://127.0.0.1/oss/minio/health/live
 
 curl --noproxy '*' -I --max-time 15 http://127.0.0.1:9091/
 curl --noproxy '*' -I --max-time 15 http://127.0.0.1:9092/
@@ -284,8 +334,10 @@ curl --noproxy '*' -I --max-time 15 http://127.0.0.1:9093/
 
 curl --noproxy '*' -i --max-time 15 http://127.0.0.1:9000/minio/health/live
 
-docker exec mysql mysql -uroot -proot -Nse 'SELECT COUNT(*) FROM infoq.sys_menu;'
-docker exec redis redis-cli -a 123456 ping
+docker exec mysql mysql -uroot -p"${MYSQL_ROOT_PASSWORD}" -Nse 'SELECT COUNT(*) FROM infoq.sys_menu;'
+docker exec mysql mysql -uroot -p"${MYSQL_ROOT_PASSWORD}" -Nse "SELECT COUNT(*) FROM infoq.sys_oss_config WHERE config_key IN ('minio','image') AND access_key='${MINIO_ROOT_USER}' AND secret_key='${MINIO_ROOT_PASSWORD}' AND bucket_name='${INFOQ_OSS_BUCKET}' AND endpoint='minio:9000' AND domain='${INFOQ_PUBLIC_BASE_URL}/oss' AND is_https=IF(LEFT('${INFOQ_PUBLIC_BASE_URL}', 6)='https:', 'Y', 'N');"
+docker exec mysql mysql -uroot -p"${MYSQL_ROOT_PASSWORD}" -Nse "SELECT COUNT(*) FROM infoq.sys_user WHERE user_id=1 AND user_name='${INFOQ_ADMIN_USERNAME}' AND status='0' AND del_flag='0';"
+docker exec redis redis-cli -a "${REDIS_PASSWORD}" ping
 ```
 
 期望结果：
@@ -293,9 +345,12 @@ docker exec redis redis-cli -a 123456 ping
 - `infoq-admin` 容器为 `healthy`，readiness 返回 `200`。
 - `/prod-api/monitor/health/readiness` 通过 Nginx 也返回 `200`。
 - `/vue/`、`/react/`、`/react-pro/` 通过网关返回 `200` 或 `304`。
+- `/console-oss/` 可访问 MinIO Console，`/oss/minio/health/live` 返回 `200`。
 - `9091`、`9092`、`9093` 三个直连端口有响应。
 - MinIO live health 返回 `200`。
 - MySQL 能查到初始化菜单数据。
+- `sys_oss_config` 同步计数返回 `2`，表示 `minio` 和 `image` 的 MinIO 凭据与 `deploy.env` 一致。
+- 管理员同步计数返回 `1`，表示 `sys_user.user_id=1` 的用户名是安装脚本生成的管理员账号。
 - Redis 返回 `PONG`。
 
 如果从 Windows 浏览器访问 WSL2 部署，还可以在 Windows PowerShell 验证：
@@ -305,6 +360,7 @@ curl.exe --noproxy * -I --max-time 15 http://localhost/vue/
 curl.exe --noproxy * -I --max-time 15 http://localhost/react/
 curl.exe --noproxy * -I --max-time 15 http://localhost/react-pro/
 curl.exe --noproxy * -i --max-time 15 http://localhost/prod-api/monitor/health/readiness
+curl.exe --noproxy * -I --max-time 15 http://localhost/console-oss/
 ```
 
 ## 9. 日志与状态查看
@@ -313,6 +369,7 @@ curl.exe --noproxy * -i --max-time 15 http://localhost/prod-api/monitor/health/r
 
 ```bash
 export INFOQ_DEPLOY_ROOT=/infoq
+export INFOQ_ENV_FILE=/etc/infoq-scaffold-ai/deploy.env
 bash script/bin/infoq.sh status
 bash script/bin/infoq.sh logs infoq-admin
 ```
@@ -321,6 +378,7 @@ bash script/bin/infoq.sh logs infoq-admin
 
 ```bash
 export INFOQ_DEPLOY_ROOT=/infoq
+export INFOQ_ENV_FILE=/etc/infoq-scaffold-ai/deploy.env
 bash script/bin/deploy-frontend.sh status
 bash script/bin/deploy-frontend.sh logs all
 ```
@@ -345,7 +403,7 @@ docker ps -a --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}' > 
 ```bash
 cd /path/to/infoq-scaffold-ai
 export INFOQ_DEPLOY_ROOT=/infoq
-export SECURITY_TOKEN_SECRET=replace-with-at-least-32-chars-secret
+export INFOQ_ENV_FILE=/etc/infoq-scaffold-ai/deploy.env
 bash script/bin/deploy-frontend.sh stop
 bash script/bin/infoq.sh stop
 ```
@@ -365,7 +423,10 @@ export INFOQ_DEPLOY_ROOT="${HOME}/infoq"
 ```bash
 cd /path/to/infoq-scaffold-ai
 export INFOQ_DEPLOY_ROOT=/infoq
-export SECURITY_TOKEN_SECRET=replace-with-at-least-32-chars-secret
+export INFOQ_ENV_FILE=/etc/infoq-scaffold-ai/deploy.env
+set -a
+. "${INFOQ_ENV_FILE}"
+set +a
 
 docker compose -f script/docker/docker-compose.yml build infoq-frontend-vue infoq-frontend-react infoq-frontend-react-pro
 docker compose -f script/docker/docker-compose.yml up -d --no-deps --force-recreate --remove-orphans minio infoq-frontend-vue infoq-frontend-react infoq-frontend-react-pro nginx-web
@@ -409,8 +470,7 @@ docker rmi registry-1.docker.io/library/nginx:1.30.3
 
 ```text
 bellsoft/liberica-openjdk-rocky:17.0.16-cds
-node:20.20.1
-node:22.13.1
+node:24.18.0
 nginx:1.30.3
 ```
 
@@ -430,8 +490,9 @@ nginx:1.30.3
 | shell 报 `pipefail\r` 或类似错误 | `.sh` 文件是 CRLF | 脚本保持 LF，并用 `.gitattributes` 固化 `*.sh text eol=lf` |
 | MySQL 初始化或私钥权限异常 | 数据目录放在 `/mnt/c` 等 DrvFS 路径 | 数据目录使用 `/infoq` 等 Linux 文件系统路径 |
 | `curl 127.0.0.1` 得到代理 502 | localhost 请求被 HTTP proxy 拦截 | 使用 `curl --noproxy '*'` |
+| `error getting credentials` 且缺少 `docker-credential-desktop` | Docker config 残留 Docker Desktop credential helper | Colima 验证时临时设置独立 `DOCKER_CONFIG` 和 `DOCKER_HOST`；长期清理失效的 `credsStore`/`credHelpers` 或安装匹配 helper |
 | 镜像列表出现短名和 `registry-1.docker.io/...` 双 tag | 直拉完整 tag 后又 tag 回短名 | 确认 `IMAGE ID` 一致且无容器引用长名后删除辅助 tag |
-| React Pro 构建出现 Corepack pnpm key mismatch | Node 镜像内 Corepack keyring 与 pnpm 签名漂移 | Dockerfile 显式安装与 `packageManager` 一致的 pnpm 版本 |
+| 前端构建出现 Corepack/packageManager 激活失败 | Node 镜像内 Corepack 或包管理器激活异常 | 先确认 Dockerfile 使用固定 `node:24.18.0`，再按工作区 `packageManager` 与 lockfile 定位；不要降回 Node 20/22 标记通过 |
 | React Pro 在 `/react-pro/` 下请求 `/logo.svg` 404 | 静态资源使用了根路径 | 使用 `VITE_APP_CONTEXT_PATH` 生成 `/react-pro/logo.svg` |
 | WSL 容器反复重启 | WSL distro 退出导致 Docker daemon 生命周期不稳定 | 部署验证期保持一个 WSL 会话或 keepalive |
 | Debian 源找不到 `openjdk-17-jdk` | 发行版 apt 源未提供 JDK 17 | 先按当前发行版支持方式安装 JDK 17；不要切换项目 Java 基线 |

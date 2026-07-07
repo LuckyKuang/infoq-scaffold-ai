@@ -19,6 +19,10 @@
       "esbuild"
     ]
   },
+  "engines": {
+    "node": "24.18.0",
+    "pnpm": ">=10.0.0"
+  },
   "devDependencies": {
     "vitepress": "^1.6.3",
     "vue": "^3.5.30"

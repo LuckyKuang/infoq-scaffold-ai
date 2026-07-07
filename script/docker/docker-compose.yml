@@ -7,7 +7,7 @@ services:
     restart: unless-stopped
     environment:
       TZ: Asia/Shanghai
-      MYSQL_ROOT_PASSWORD: root
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD before starting mysql}
       MYSQL_DATABASE: infoq
     ports:
       - "3306:3306"
@@ -34,14 +34,17 @@ services:
     restart: unless-stopped
     environment:
       TZ: Asia/Shanghai
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD before starting redis}
     ports:
       - "6379:6379"
     volumes:
       - ${INFOQ_DEPLOY_ROOT:-/infoq}/redis/conf:/redis/config:rw
       - ${INFOQ_DEPLOY_ROOT:-/infoq}/redis/data:/redis/data:rw
+      # redis image declares VOLUME /data; bind it to avoid anonymous volumes.
+      - ${INFOQ_DEPLOY_ROOT:-/infoq}/redis/data:/data:rw
     command: redis-server /redis/config/redis.conf
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "123456", "ping"]
+      test: ["CMD-SHELL", "redis-cli -a \"$${REDIS_PASSWORD}\" ping | grep -q '^PONG$'"]
       interval: 10s
       timeout: 5s
       retries: 12
@@ -53,8 +56,10 @@ services:
     restart: unless-stopped
     environment:
       TZ: Asia/Shanghai
-      MINIO_ROOT_USER: infoq
-      MINIO_ROOT_PASSWORD: infoq123
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?Set MINIO_ROOT_USER before starting minio}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?Set MINIO_ROOT_PASSWORD before starting minio}
+      MINIO_BROWSER_REDIRECT_URL: ${INFOQ_PUBLIC_BASE_URL:?Set INFOQ_PUBLIC_BASE_URL before starting minio}/console-oss/
+      MINIO_SERVER_URL: ${INFOQ_PUBLIC_BASE_URL:?Set INFOQ_PUBLIC_BASE_URL before starting minio}/oss/
     ports:
       - "9000:9000"
       - "9001:9001"
@@ -77,6 +82,9 @@ services:
       SPRING_CONFIG_ADDITIONAL_LOCATION: file:/infoq/server/config/
       DEPLOY_ID: ${DEPLOY_ID:-}
       SECURITY_TOKEN_SECRET: ${SECURITY_TOKEN_SECRET:?Set SECURITY_TOKEN_SECRET before starting infoq-admin}
+      INFOQ_DB_USERNAME: ${INFOQ_DB_USERNAME:?Set INFOQ_DB_USERNAME before starting infoq-admin}
+      INFOQ_DB_PASSWORD: ${INFOQ_DB_PASSWORD:?Set INFOQ_DB_PASSWORD before starting infoq-admin}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD before starting infoq-admin}
       INFOQ_IP2REGION_V6_PATH: /infoq/server/ip2region/ip2region_v6.xdb
       JAVA_OPTS: -Xms512m -Xmx1024m
     ports:
@@ -171,6 +179,7 @@ services:
       - ${INFOQ_DEPLOY_ROOT:-/infoq}/nginx/log:/var/log/nginx
     depends_on:
       - infoq-admin
+      - minio
       - infoq-frontend-vue
       - infoq-frontend-react
       - infoq-frontend-react-pro

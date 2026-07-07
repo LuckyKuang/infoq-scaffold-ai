@@ -48,6 +48,14 @@ docker compose version
 
 要求当前 Docker context 是 `colima`，且 Compose 可用。macOS 默认 `INFOQ_DEPLOY_ROOT=$HOME/infoq`，因为 Colima 默认更容易挂载用户 home；只有用户明确配置并验证 `/infoq` 可被 Colima VM 挂载时才使用 `/infoq`。
 
+如果曾安装或卸载 Docker Desktop，先检查 Docker credential helper 配置：
+
+```bash
+grep -nE '"credsStore"|"credHelpers"' "${DOCKER_CONFIG:-$HOME/.docker}/config.json" 2>/dev/null || true
+```
+
+若后续拉取镜像时报 `error getting credentials` 和 `docker-credential-desktop` 缺失，说明 Docker config 仍引用 Docker Desktop helper。验证任务可临时使用独立 `DOCKER_CONFIG` 和 Colima socket 继续，长期应清理失效的 `credsStore`/`credHelpers` 或安装匹配 helper，不要因此切换到 Docker Desktop。
+
 4. 如果是原生 Linux：
 
 ```bash
@@ -101,9 +109,14 @@ docker run --rm -v /infoq:/infoq alpine:3.20 sh -lc 'test -d /infoq/server/temp 
 cd /path/to/infoq-scaffold-ai
 export INFOQ_DEPLOY_ROOT=<runtime-specific-root>
 mkdir -p /tmp/infoq-deploy "${INFOQ_DEPLOY_ROOT}/server/temp"
-export SECURITY_TOKEN_SECRET=<at-least-32-chars>
-bash script/bin/infoq.sh deploy
-bash script/bin/deploy-frontend.sh deploy
+sudo env INFOQ_SOURCE_DIR="$(pwd)" INFOQ_PUBLIC_BASE_URL=http://127.0.0.1 INFOQ_DEPLOY_ROOT="${INFOQ_DEPLOY_ROOT}" bash deploy/install.sh
 ```
 
-后续 smoke 命令与 `wsl2-docker-compose.md` 相同。
+安装脚本会生成或复用 `/etc/infoq-scaffold-ai/deploy.env` 和 `/etc/infoq-scaffold-ai/credentials.txt`。后续 smoke 命令与 `wsl2-docker-compose.md` 相同，必须从 `INFOQ_ENV_FILE` 读取随机 MySQL/Redis/MinIO/Admin 凭据。
+
+macOS Colima 使用 `sudo` 执行安装脚本时，应把用户态 Colima socket 显式传给 root 进程：
+
+```bash
+export DOCKER_HOST="unix://${HOME}/.colima/default/docker.sock"
+sudo env DOCKER_CONFIG="${DOCKER_CONFIG:-$HOME/.docker}" DOCKER_HOST="${DOCKER_HOST}" INFOQ_SOURCE_DIR="$(pwd)" INFOQ_PUBLIC_BASE_URL=http://127.0.0.1 INFOQ_DEPLOY_ROOT="${INFOQ_DEPLOY_ROOT}" bash deploy/install.sh
+```

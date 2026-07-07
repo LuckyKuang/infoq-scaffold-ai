@@ -7,6 +7,7 @@ COMPOSE_FILE="${REPO_ROOT}/script/docker/docker-compose.yml"
 NGINX_CONF_SOURCE="${REPO_ROOT}/script/docker/nginx/conf/nginx.conf"
 FRONTEND_SERVICES=(infoq-frontend-vue infoq-frontend-react infoq-frontend-react-pro nginx-web)
 DEFAULT_DEPLOY_ROOT="/infoq"
+DEFAULT_ENV_FILE="/etc/infoq-scaffold-ai/deploy.env"
 DEPLOY_ROOT=""
 COMPOSE_CMD=()
 
@@ -34,6 +35,70 @@ require_command() {
   fi
 }
 
+load_deploy_env() {
+  local env_file="${INFOQ_ENV_FILE:-}"
+
+  if [[ -z "${env_file}" && -f "${DEFAULT_ENV_FILE}" ]]; then
+    env_file="${DEFAULT_ENV_FILE}"
+  fi
+
+  if [[ -n "${env_file}" ]]; then
+    if [[ ! -f "${env_file}" ]]; then
+      echo "[frontend] 指定的环境文件不存在: ${env_file}" >&2
+      exit 1
+    fi
+    set -a
+    # shellcheck disable=SC1090
+    . "${env_file}"
+    set +a
+    INFOQ_ENV_FILE="${env_file}"
+  fi
+}
+
+validate_docker_credential_helper() {
+  local helper="$1"
+  local docker_config_file="$2"
+  local helper_command
+
+  if [[ -z "${helper}" ]]; then
+    return
+  fi
+
+  helper_command="docker-credential-${helper}"
+  if ! command -v "${helper_command}" >/dev/null 2>&1; then
+    echo "[frontend] Docker 配置 ${docker_config_file} 引用了 ${helper_command}，但当前 PATH 中找不到该 helper" >&2
+    echo "[frontend] 使用 Colima 且不依赖 Docker Desktop 时，请清理 Docker config 中失效的 credsStore/credHelpers；一次性验证可临时设置 DOCKER_CONFIG 指向不包含该 helper 的配置目录，并设置 DOCKER_HOST 指向 Colima socket 后重试" >&2
+    exit 1
+  fi
+}
+
+validate_docker_credential_helpers() {
+  local docker_config_file="${DOCKER_CONFIG:-${HOME}/.docker}/config.json"
+  local docker_config_content
+  local creds_store
+  local cred_helpers
+  local helper
+
+  if [[ ! -f "${docker_config_file}" ]]; then
+    return
+  fi
+
+  docker_config_content="$(tr -d '\n\r' < "${docker_config_file}")"
+  creds_store="$(printf '%s' "${docker_config_content}" | sed -nE 's/.*"credsStore"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/p' | head -n 1)"
+  validate_docker_credential_helper "${creds_store}" "${docker_config_file}"
+
+  cred_helpers="$(
+    printf '%s' "${docker_config_content}" |
+      sed -nE 's/.*"credHelpers"[[:space:]]*:[[:space:]]*\{([^}]*)\}.*/\1/p' |
+      grep -oE ':[[:space:]]*"[^"]+"' |
+      sed -E 's/.*"([^"]+)".*/\1/' |
+      sort -u || true
+  )"
+  while IFS= read -r helper; do
+    validate_docker_credential_helper "${helper}" "${docker_config_file}"
+  done <<< "${cred_helpers}"
+}
+
 resolve_compose_command() {
   if (( ${#COMPOSE_CMD[@]} > 0 )); then
     return
@@ -58,7 +123,17 @@ compose() {
   # Compose interpolates every service before applying the requested service list.
   # Frontend commands never start infoq-admin, so this placeholder only satisfies parsing.
   local compose_security_token_secret="${SECURITY_TOKEN_SECRET:-frontend-compose-placeholder-token-secret-20260601}"
-  INFOQ_DEPLOY_ROOT="${DEPLOY_ROOT}" SECURITY_TOKEN_SECRET="${compose_security_token_secret}" "${COMPOSE_CMD[@]}" -f "${COMPOSE_FILE}" "$@"
+  INFOQ_DEPLOY_ROOT="${DEPLOY_ROOT}" \
+    DEPLOY_ID="${DEPLOY_ID:-frontend-compose-placeholder-deploy-id}" \
+    MYSQL_ROOT_PASSWORD="${MYSQL_ROOT_PASSWORD:-frontend-compose-placeholder-mysql-root}" \
+    INFOQ_DB_USERNAME="${INFOQ_DB_USERNAME:-frontend_placeholder_app}" \
+    INFOQ_DB_PASSWORD="${INFOQ_DB_PASSWORD:-frontend-compose-placeholder-db-password}" \
+    REDIS_PASSWORD="${REDIS_PASSWORD:-frontend-compose-placeholder-redis-password}" \
+    MINIO_ROOT_USER="${MINIO_ROOT_USER:-frontend_placeholder_minio}" \
+    MINIO_ROOT_PASSWORD="${MINIO_ROOT_PASSWORD:-frontend-compose-placeholder-minio-password}" \
+    INFOQ_PUBLIC_BASE_URL="${INFOQ_PUBLIC_BASE_URL:-http://localhost}" \
+    SECURITY_TOKEN_SECRET="${compose_security_token_secret}" \
+    "${COMPOSE_CMD[@]}" -f "${COMPOSE_FILE}" "$@"
 }
 
 resolve_deploy_root() {
@@ -95,6 +170,7 @@ prepare_dirs() {
 }
 
 build_frontends() {
+  validate_docker_credential_helpers
   resolve_compose_command
   echo "[frontend] 构建 Vue 前端镜像"
   compose build infoq-frontend-vue
@@ -105,12 +181,15 @@ build_frontends() {
 }
 
 deploy_frontends() {
+  local public_base_url="${INFOQ_PUBLIC_BASE_URL:-http://localhost}"
+  public_base_url="${public_base_url%/}"
+
   resolve_compose_command
   prepare_dirs
   build_frontends
   compose up -d --no-deps "${FRONTEND_SERVICES[@]}"
   echo "[frontend] 部署完成"
-  echo "[frontend] 网关入口: http://localhost/vue/、http://localhost/react/ 和 http://localhost/react-pro/"
+  echo "[frontend] 网关入口: ${public_base_url}/vue/、${public_base_url}/react/、${public_base_url}/react-pro/、${public_base_url}/console-oss/ 和 ${public_base_url}/oss/"
   echo "[frontend] 直连端口: Vue=9091 React=9092 ReactPro=9093"
 }
 
@@ -158,6 +237,8 @@ show_logs() {
       ;;
   esac
 }
+
+load_deploy_env
 
 case "${1:-}" in
   prepare)
