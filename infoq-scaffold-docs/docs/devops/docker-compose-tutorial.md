@@ -10,7 +10,7 @@ outline: [2, 3]
 
 # Docker Compose 部署教程
 
-本文是一份面向框架使用者的完整教程，用于在全新环境中用仓库脚本拉起后端、MySQL、Redis、MinIO、Vue 管理端、React 管理端、React Pro 管理端和 Nginx 网关。
+本文是一份面向框架使用者的完整教程，用于在全新环境中用仓库脚本拉起后端、MySQL、Redis、MinIO、选定的管理端前端和 Nginx 网关。
 
 默认只覆盖三类免费商用容器运行时：
 
@@ -27,15 +27,20 @@ outline: [2, 3]
 完成后，你应该能访问：
 
 ```text
-http://localhost/vue/
-http://localhost/react/
-http://localhost/react-pro/
+INFOQ_FRONTEND_TARGET=all:
+  http://localhost/vue/
+  http://localhost/react/
+  http://localhost/react-pro/
+
+INFOQ_FRONTEND_TARGET=react|react-pro|vue:
+  http://localhost/
+
 http://localhost/prod-api/monitor/health/readiness
 http://localhost/console-oss/
 http://localhost/oss/
 ```
 
-同时，直连端口应可用：
+同时，基础服务直连端口应可用；前端直连端口按 `INFOQ_FRONTEND_TARGET` 决定，单前端目标只需要对应端口可用，`all` 才需要三个前端端口都可用：
 
 ```text
 Backend:   9090
@@ -52,7 +57,7 @@ Nginx:     80 / 443
 首次安装优先使用一键安装脚本。脚本会生成 MySQL、Redis、MinIO、后端安全密钥和默认管理员账号密码，保存到 `/etc/infoq-scaffold-ai/deploy.env` 与 `/etc/infoq-scaffold-ai/credentials.txt`，并在部署完成后打印访问地址和凭据：
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/LuckyKuang/infoq-scaffold-ai/main/deploy/install.sh | sudo bash
+curl -sSL https://raw.githubusercontent.com/LuckyKuang/infoq-scaffold-ai/main/deploy/install.sh | sudo env INFOQ_FRONTEND_TARGET=all bash
 ```
 
 生产或准生产环境建议固定 tag 后执行：
@@ -60,23 +65,27 @@ curl -sSL https://raw.githubusercontent.com/LuckyKuang/infoq-scaffold-ai/main/de
 ```bash
 curl -fsSLO https://raw.githubusercontent.com/LuckyKuang/infoq-scaffold-ai/<tag>/deploy/install.sh
 chmod +x install.sh
-sudo env INFOQ_VERSION=<tag> INFOQ_PUBLIC_BASE_URL=http://SERVER_IP ./install.sh
+sudo env INFOQ_VERSION=<tag> INFOQ_FRONTEND_TARGET=all INFOQ_PUBLIC_BASE_URL=http://SERVER_IP ./install.sh
 ```
+
+`INFOQ_FRONTEND_TARGET` 是必填项，取值为 `react`、`react-pro`、`vue` 或 `all`。选择单个前端时只构建并启动目标前端，网关根路径 `/` 直接进入该管理端。
 
 如果你已经有本地源码，并且只是本机验证脚本，可使用本地源码入口：
 
 ```bash
-sudo env INFOQ_SOURCE_DIR="$(pwd)" INFOQ_PUBLIC_BASE_URL=http://127.0.0.1 INFOQ_DEPLOY_ROOT=/infoq bash deploy/install.sh
+sudo env INFOQ_SOURCE_DIR="$(pwd)" INFOQ_FRONTEND_TARGET=all INFOQ_PUBLIC_BASE_URL=http://127.0.0.1 INFOQ_DEPLOY_ROOT=/infoq bash deploy/install.sh
 ```
 
 安装脚本内部会调用仓库部署脚本：
 
 ```bash
 bash script/bin/infoq.sh deploy
-bash script/bin/deploy-frontend.sh deploy
+bash script/bin/deploy-frontend.sh deploy "${INFOQ_FRONTEND_TARGET}"
 ```
 
-除非正在排查脚本问题，否则不要用手写 `docker compose up --build` 替代脚本主流程。脚本会处理目录准备、配置模板、SQL 初始化校验、后端构建、前端顺序构建、Nginx 配置同步和容器启动。
+除非正在排查脚本问题，否则不要用手写 `docker compose up --build` 替代脚本主流程。脚本会处理目录准备、配置模板、SQL 初始化校验、后端构建、前端顺序构建、Nginx 配置同步、前端容器启动后强制重建网关，以及容器启动。
+
+Docker Compose 教程路径不要求宿主机安装 JDK 或 Maven。后端 Maven prod 打包在 Docker builder 镜像 `maven:3.9.12-eclipse-temurin-17` 中完成，最终运行镜像保持 `bellsoft/liberica-openjdk-rocky:17.0.16-cds`；宿主机需要 Docker/Compose、`docker buildx` 以及安装脚本用到的基础命令。
 
 ## 2. 先确认运行时
 
@@ -86,6 +95,7 @@ bash script/bin/deploy-frontend.sh deploy
 uname -s
 uname -r
 docker version
+docker buildx version
 docker compose version || docker-compose version
 docker context show || true
 docker context ls || true
@@ -227,7 +237,7 @@ WSL2 / 原生 Linux：
 ```bash
 cd /path/to/infoq-scaffold-ai
 export INFOQ_DEPLOY_ROOT=/infoq
-sudo env INFOQ_SOURCE_DIR="$(pwd)" INFOQ_PUBLIC_BASE_URL=http://SERVER_IP INFOQ_DEPLOY_ROOT="${INFOQ_DEPLOY_ROOT}" bash deploy/install.sh
+sudo env INFOQ_SOURCE_DIR="$(pwd)" INFOQ_FRONTEND_TARGET=all INFOQ_PUBLIC_BASE_URL=http://SERVER_IP INFOQ_DEPLOY_ROOT="${INFOQ_DEPLOY_ROOT}" bash deploy/install.sh
 ```
 
 macOS Colima：
@@ -236,7 +246,7 @@ macOS Colima：
 cd /path/to/infoq-scaffold-ai
 export INFOQ_DEPLOY_ROOT="${HOME}/infoq"
 export DOCKER_HOST="unix://${HOME}/.colima/default/docker.sock"
-sudo env DOCKER_CONFIG="${DOCKER_CONFIG:-$HOME/.docker}" DOCKER_HOST="${DOCKER_HOST}" INFOQ_SOURCE_DIR="$(pwd)" INFOQ_PUBLIC_BASE_URL=http://127.0.0.1 INFOQ_DEPLOY_ROOT="${INFOQ_DEPLOY_ROOT}" bash deploy/install.sh
+sudo env DOCKER_CONFIG="${DOCKER_CONFIG:-$HOME/.docker}" DOCKER_HOST="${DOCKER_HOST}" INFOQ_SOURCE_DIR="$(pwd)" INFOQ_FRONTEND_TARGET=all INFOQ_PUBLIC_BASE_URL=http://127.0.0.1 INFOQ_DEPLOY_ROOT="${INFOQ_DEPLOY_ROOT}" bash deploy/install.sh
 ```
 
 安装脚本会创建或复用：
@@ -264,7 +274,7 @@ set +a
 如果从 Windows PowerShell 调用 WSL2 Debian：
 
 ```powershell
-wsl.exe -d Debian -- bash -lc 'cd /mnt/c/DevTools/code/github/infoq-scaffold-ai && export INFOQ_DEPLOY_ROOT=/infoq && mkdir -p /tmp/infoq-deploy "${INFOQ_DEPLOY_ROOT}/server/temp" && sudo env INFOQ_SOURCE_DIR="$(pwd)" INFOQ_PUBLIC_BASE_URL=http://127.0.0.1 INFOQ_DEPLOY_ROOT="${INFOQ_DEPLOY_ROOT}" bash deploy/install.sh'
+wsl.exe -d Debian -- bash -lc 'cd /mnt/c/DevTools/code/github/infoq-scaffold-ai && export INFOQ_DEPLOY_ROOT=/infoq && mkdir -p /tmp/infoq-deploy "${INFOQ_DEPLOY_ROOT}/server/temp" && sudo env INFOQ_SOURCE_DIR="$(pwd)" INFOQ_FRONTEND_TARGET=all INFOQ_PUBLIC_BASE_URL=http://127.0.0.1 INFOQ_DEPLOY_ROOT="${INFOQ_DEPLOY_ROOT}" bash deploy/install.sh'
 ```
 
 如果已经在 WSL shell 内：
@@ -273,7 +283,7 @@ wsl.exe -d Debian -- bash -lc 'cd /mnt/c/DevTools/code/github/infoq-scaffold-ai 
 cd /mnt/c/DevTools/code/github/infoq-scaffold-ai
 export INFOQ_DEPLOY_ROOT=/infoq
 mkdir -p /tmp/infoq-deploy "${INFOQ_DEPLOY_ROOT}/server/temp"
-sudo env INFOQ_SOURCE_DIR="$(pwd)" INFOQ_PUBLIC_BASE_URL=http://127.0.0.1 INFOQ_DEPLOY_ROOT="${INFOQ_DEPLOY_ROOT}" bash deploy/install.sh
+sudo env INFOQ_SOURCE_DIR="$(pwd)" INFOQ_FRONTEND_TARGET=all INFOQ_PUBLIC_BASE_URL=http://127.0.0.1 INFOQ_DEPLOY_ROOT="${INFOQ_DEPLOY_ROOT}" bash deploy/install.sh
 ```
 
 如果 WSL distro 容易自动退出，可以先临时保持一个 WSL 会话：
@@ -291,10 +301,10 @@ docker context use colima
 export INFOQ_DEPLOY_ROOT="${HOME}/infoq"
 export DOCKER_HOST="unix://${HOME}/.colima/default/docker.sock"
 mkdir -p /tmp/infoq-deploy "${INFOQ_DEPLOY_ROOT}/server/temp"
-sudo env DOCKER_CONFIG="${DOCKER_CONFIG:-$HOME/.docker}" DOCKER_HOST="${DOCKER_HOST}" INFOQ_SOURCE_DIR="$(pwd)" INFOQ_PUBLIC_BASE_URL=http://127.0.0.1 INFOQ_DEPLOY_ROOT="${INFOQ_DEPLOY_ROOT}" bash deploy/install.sh
+sudo env DOCKER_CONFIG="${DOCKER_CONFIG:-$HOME/.docker}" DOCKER_HOST="${DOCKER_HOST}" INFOQ_SOURCE_DIR="$(pwd)" INFOQ_FRONTEND_TARGET=all INFOQ_PUBLIC_BASE_URL=http://127.0.0.1 INFOQ_DEPLOY_ROOT="${INFOQ_DEPLOY_ROOT}" bash deploy/install.sh
 ```
 
-Colima 的 CPU、内存和磁盘参数按机器资源调整。首次构建三个前端镜像和后端镜像会占用较多 CPU、内存和磁盘空间，资源太小容易出现构建中断。
+Colima 的 CPU、内存和磁盘参数按机器资源调整。首次构建选定前端镜像和后端镜像会占用较多 CPU、内存和磁盘空间；`INFOQ_FRONTEND_TARGET=all` 时会构建三个前端镜像，资源太小容易出现构建中断。
 
 ## 7. 原生 Linux 部署示例
 
@@ -302,7 +312,7 @@ Colima 的 CPU、内存和磁盘参数按机器资源调整。首次构建三个
 cd /path/to/infoq-scaffold-ai
 export INFOQ_DEPLOY_ROOT=/infoq
 mkdir -p /tmp/infoq-deploy "${INFOQ_DEPLOY_ROOT}/server/temp"
-sudo env INFOQ_SOURCE_DIR="$(pwd)" INFOQ_PUBLIC_BASE_URL=http://SERVER_IP INFOQ_DEPLOY_ROOT="${INFOQ_DEPLOY_ROOT}" bash deploy/install.sh
+sudo env INFOQ_SOURCE_DIR="$(pwd)" INFOQ_FRONTEND_TARGET=all INFOQ_PUBLIC_BASE_URL=http://SERVER_IP INFOQ_DEPLOY_ROOT="${INFOQ_DEPLOY_ROOT}" bash deploy/install.sh
 ```
 
 如果是远程服务器，部署前还要确认安全组、防火墙、反向代理和域名证书策略。默认教程只证明本机 `localhost` 和容器内服务链路，不代替生产发布评审。
@@ -322,15 +332,32 @@ set +a
 curl --noproxy '*' -i --max-time 15 http://127.0.0.1:9090/monitor/health/readiness
 curl --noproxy '*' -i --max-time 15 http://127.0.0.1/prod-api/monitor/health/readiness
 
-curl --noproxy '*' -I --max-time 15 http://127.0.0.1/vue/
-curl --noproxy '*' -I --max-time 15 http://127.0.0.1/react/
-curl --noproxy '*' -I --max-time 15 http://127.0.0.1/react-pro/
-curl --noproxy '*' -I --max-time 15 http://127.0.0.1/console-oss/
+if [[ "${INFOQ_FRONTEND_TARGET}" == "all" ]]; then
+  curl --noproxy '*' -sS -o /dev/null -w '%{http_code}\n' --max-time 15 http://127.0.0.1/vue/
+  curl --noproxy '*' -sS -o /dev/null -w '%{http_code}\n' --max-time 15 http://127.0.0.1/react/
+  curl --noproxy '*' -sS -o /dev/null -w '%{http_code}\n' --max-time 15 http://127.0.0.1/react-pro/
+else
+  curl --noproxy '*' -sS -o /dev/null -w '%{http_code}\n' --max-time 15 http://127.0.0.1/
+fi
+curl --noproxy '*' -sS -o /dev/null -w '%{http_code}\n' --max-time 15 http://127.0.0.1/console-oss/
 curl --noproxy '*' -i --max-time 15 http://127.0.0.1/oss/minio/health/live
 
-curl --noproxy '*' -I --max-time 15 http://127.0.0.1:9091/
-curl --noproxy '*' -I --max-time 15 http://127.0.0.1:9092/
-curl --noproxy '*' -I --max-time 15 http://127.0.0.1:9093/
+case "${INFOQ_FRONTEND_TARGET}" in
+  all)
+    curl --noproxy '*' -sS -o /dev/null -w '%{http_code}\n' --max-time 15 http://127.0.0.1:9091/
+    curl --noproxy '*' -sS -o /dev/null -w '%{http_code}\n' --max-time 15 http://127.0.0.1:9092/
+    curl --noproxy '*' -sS -o /dev/null -w '%{http_code}\n' --max-time 15 http://127.0.0.1:9093/
+    ;;
+  vue)
+    curl --noproxy '*' -sS -o /dev/null -w '%{http_code}\n' --max-time 15 http://127.0.0.1:9091/
+    ;;
+  react)
+    curl --noproxy '*' -sS -o /dev/null -w '%{http_code}\n' --max-time 15 http://127.0.0.1:9092/
+    ;;
+  react-pro)
+    curl --noproxy '*' -sS -o /dev/null -w '%{http_code}\n' --max-time 15 http://127.0.0.1:9093/
+    ;;
+esac
 
 curl --noproxy '*' -i --max-time 15 http://127.0.0.1:9000/minio/health/live
 
@@ -344,9 +371,9 @@ docker exec redis redis-cli -a "${REDIS_PASSWORD}" ping
 
 - `infoq-admin` 容器为 `healthy`，readiness 返回 `200`。
 - `/prod-api/monitor/health/readiness` 通过 Nginx 也返回 `200`。
-- `/vue/`、`/react/`、`/react-pro/` 通过网关返回 `200` 或 `304`。
+- `INFOQ_FRONTEND_TARGET=all` 时 `/vue/`、`/react/`、`/react-pro/` 通过网关返回 `200` 或 `304`；单前端目标时 `/` 返回 `200` 或 `304`。
 - `/console-oss/` 可访问 MinIO Console，`/oss/minio/health/live` 返回 `200`。
-- `9091`、`9092`、`9093` 三个直连端口有响应。
+- `all` 目标时 `9091`、`9092`、`9093` 三个直连端口有响应；单前端目标时仅对应直连端口有响应。
 - MinIO live health 返回 `200`。
 - MySQL 能查到初始化菜单数据。
 - `sys_oss_config` 同步计数返回 `2`，表示 `minio` 和 `image` 的 MinIO 凭据与 `deploy.env` 一致。
@@ -355,12 +382,22 @@ docker exec redis redis-cli -a "${REDIS_PASSWORD}" ping
 
 如果从 Windows 浏览器访问 WSL2 部署，还可以在 Windows PowerShell 验证：
 
+`INFOQ_FRONTEND_TARGET=all` 时验证三个前端路径：
+
 ```powershell
-curl.exe --noproxy * -I --max-time 15 http://localhost/vue/
-curl.exe --noproxy * -I --max-time 15 http://localhost/react/
-curl.exe --noproxy * -I --max-time 15 http://localhost/react-pro/
+curl.exe --noproxy * -sS -o NUL -w "%{http_code}\n" --max-time 15 http://localhost/vue/
+curl.exe --noproxy * -sS -o NUL -w "%{http_code}\n" --max-time 15 http://localhost/react/
+curl.exe --noproxy * -sS -o NUL -w "%{http_code}\n" --max-time 15 http://localhost/react-pro/
 curl.exe --noproxy * -i --max-time 15 http://localhost/prod-api/monitor/health/readiness
-curl.exe --noproxy * -I --max-time 15 http://localhost/console-oss/
+curl.exe --noproxy * -sS -o NUL -w "%{http_code}\n" --max-time 15 http://localhost/console-oss/
+```
+
+`INFOQ_FRONTEND_TARGET=react|react-pro|vue` 时验证根路径：
+
+```powershell
+curl.exe --noproxy * -sS -o NUL -w "%{http_code}\n" --max-time 15 http://localhost/
+curl.exe --noproxy * -i --max-time 15 http://localhost/prod-api/monitor/health/readiness
+curl.exe --noproxy * -sS -o NUL -w "%{http_code}\n" --max-time 15 http://localhost/console-oss/
 ```
 
 ## 9. 日志与状态查看
@@ -379,7 +416,7 @@ bash script/bin/infoq.sh logs infoq-admin
 ```bash
 export INFOQ_DEPLOY_ROOT=/infoq
 export INFOQ_ENV_FILE=/etc/infoq-scaffold-ai/deploy.env
-bash script/bin/deploy-frontend.sh status
+bash script/bin/deploy-frontend.sh status "${INFOQ_FRONTEND_TARGET}"
 bash script/bin/deploy-frontend.sh logs all
 ```
 
@@ -404,7 +441,7 @@ docker ps -a --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}' > 
 cd /path/to/infoq-scaffold-ai
 export INFOQ_DEPLOY_ROOT=/infoq
 export INFOQ_ENV_FILE=/etc/infoq-scaffold-ai/deploy.env
-bash script/bin/deploy-frontend.sh stop
+bash script/bin/deploy-frontend.sh stop "${INFOQ_FRONTEND_TARGET}"
 bash script/bin/infoq.sh stop
 ```
 
@@ -416,9 +453,29 @@ export INFOQ_DEPLOY_ROOT="${HOME}/infoq"
 
 停止命令不会主动删除 `${INFOQ_DEPLOY_ROOT}` 下的数据目录。不要为了“重新部署”直接删除 `/infoq`、`$HOME/infoq`、Docker volume 或 MySQL 数据，除非已经确认备份和回滚策略。
 
-## 11. 升级镜像或配置后的重建
+## 11. 卸载本地部署栈
 
-例如升级 MinIO、Nginx 或前端运行时镜像后，建议用 Compose 的受控重建替换旧容器：
+如果需要清理本地或自管测试环境，使用仓库卸载脚本，不要直接执行 `docker compose down -v`：
+
+```bash
+cd /path/to/infoq-scaffold-ai
+export INFOQ_ENV_FILE=/etc/infoq-scaffold-ai/deploy.env
+bash deploy/uninstall.sh --dry-run
+sudo env INFOQ_ENV_FILE="${INFOQ_ENV_FILE}" bash deploy/uninstall.sh
+```
+
+脚本会读取 `deploy.env` 中的 `INFOQ_FRONTEND_TARGET`，只把本次安装的前端容器和目录纳入应用删除范围。MySQL、Redis、MinIO 的选择是独立的：选择删除某项时，会同时删除对应容器和 `${INFOQ_DEPLOY_ROOT}` 下的数据目录；选择保留时，容器和目录都不会被删除。安装脚本默认固定 `COMPOSE_PROJECT_NAME=infoq-scaffold-ai`，卸载时如果容器都已删除，会清理空的 `${INFOQ_COMPOSE_PROJECT_NAME:-infoq-scaffold-ai}_default` 项目网络；若保留任一中间件，网络仍会保留。实际删除前还需要输入固定确认短语 `DELETE INFOQ DEPLOYMENT`。脚本不会删除 Docker 镜像。
+
+macOS Colima 使用 `sudo` 执行时，继续传入用户态 Docker socket：
+
+```bash
+export DOCKER_HOST="unix://${HOME}/.colima/default/docker.sock"
+sudo env DOCKER_CONFIG="${DOCKER_CONFIG:-$HOME/.docker}" DOCKER_HOST="${DOCKER_HOST}" INFOQ_ENV_FILE=/etc/infoq-scaffold-ai/deploy.env bash deploy/uninstall.sh
+```
+
+## 12. 升级镜像或配置后的重建
+
+例如升级 MinIO、Nginx 或前端运行时镜像后，优先继续使用仓库脚本重建。脚本会读取 `INFOQ_FRONTEND_TARGET`，只重建并启动当前目标前端；`all` 才会处理 Vue、React 和 React Pro 三个前端：
 
 ```bash
 cd /path/to/infoq-scaffold-ai
@@ -428,20 +485,19 @@ set -a
 . "${INFOQ_ENV_FILE}"
 set +a
 
-docker compose -f script/docker/docker-compose.yml build infoq-frontend-vue infoq-frontend-react infoq-frontend-react-pro
-docker compose -f script/docker/docker-compose.yml up -d --no-deps --force-recreate --remove-orphans minio infoq-frontend-vue infoq-frontend-react infoq-frontend-react-pro nginx-web
+bash script/bin/deploy-frontend.sh deploy "${INFOQ_FRONTEND_TARGET}"
 ```
 
-如果当前环境只有 standalone Compose：
+如果同时升级 MinIO 镜像，可单独受控重建 MinIO，再重新执行前端脚本刷新 nginx upstream：
 
 ```bash
-docker-compose -f script/docker/docker-compose.yml build infoq-frontend-vue infoq-frontend-react infoq-frontend-react-pro
-docker-compose -f script/docker/docker-compose.yml up -d --no-deps --force-recreate --remove-orphans minio infoq-frontend-vue infoq-frontend-react infoq-frontend-react-pro nginx-web
+docker compose -f script/docker/docker-compose.yml up -d --no-deps --force-recreate minio
+bash script/bin/deploy-frontend.sh deploy "${INFOQ_FRONTEND_TARGET}"
 ```
 
 重建后重新执行第 8 节 smoke。对 MySQL、Redis、MinIO 数据目录的删除或迁移都属于高风险操作，必须先备份并确认。
 
-## 12. 镜像 tag 收口
+## 13. 镜像 tag 收口
 
 有时网络不稳定，短名镜像拉取失败，需要临时直拉完整 registry tag，例如：
 
@@ -481,7 +537,7 @@ nginx:1.30.3
 - 删除辅助 tag 前必须确认 `IMAGE ID` 一致。
 - 删除辅助 tag 前必须确认没有容器正在引用它。
 
-## 13. 本次 WSL2 验证沉淀的经验
+## 14. 本次 WSL2 验证沉淀的经验
 
 本仓库的 Compose 部署在 WSL2 Debian 中已经验证过完整链路。以下经验应作为后续部署排障优先检查项：
 
@@ -495,11 +551,10 @@ nginx:1.30.3
 | 前端构建出现 Corepack/packageManager 激活失败 | Node 镜像内 Corepack 或包管理器激活异常 | 先确认 Dockerfile 使用固定 `node:24.18.0`，再按工作区 `packageManager` 与 lockfile 定位；不要降回 Node 20/22 标记通过 |
 | React Pro 在 `/react-pro/` 下请求 `/logo.svg` 404 | 静态资源使用了根路径 | 使用 `VITE_APP_CONTEXT_PATH` 生成 `/react-pro/logo.svg` |
 | WSL 容器反复重启 | WSL distro 退出导致 Docker daemon 生命周期不稳定 | 部署验证期保持一个 WSL 会话或 keepalive |
-| Debian 源找不到 `openjdk-17-jdk` | 发行版 apt 源未提供 JDK 17 | 先按当前发行版支持方式安装 JDK 17；不要切换项目 Java 基线 |
 
-当前项目基线只有 JDK 17；部署文档、Dockerfile 和构建环境都应以 JDK 17 为准。
+当前 Compose 部署不依赖宿主机 JDK/Maven；Java 17 基线由后端 builder 和 runtime 镜像固定。只有手动部署或本机直接 Maven 构建时，才需要在宿主机准备 JDK 17 与 Maven 3.9+。
 
-## 14. 生产化前的最小检查
+## 15. 生产化前的最小检查
 
 本教程主要验证脚本和本地 Compose 栈。进入生产或准生产环境前，至少再确认：
 
