@@ -74,7 +74,7 @@ docker compose version || docker-compose version
 - macOS Colima 未安装，且用户没有授权安装依赖。
 - Docker Compose 不可用。
 - `/tmp/infoq-deploy` 或 `${INFOQ_DEPLOY_ROOT}/server/temp` 无法创建。
-- 端口 `80/443/3306/6379/9000/9001/9090/9091/9092/9093` 被占用且用户未授权调整。
+- 基础端口 `80/443/3306/6379/9000/9001/9090` 或 `INFOQ_FRONTEND_TARGET` 对应前端直连端口被占用且用户未授权调整；`all` 目标才要求 `9091/9092/9093` 都空闲。
 
 ## 部署根目录规则
 
@@ -109,7 +109,7 @@ docker run --rm -v /infoq:/infoq alpine:3.20 sh -lc 'test -d /infoq/server/temp 
 cd /path/to/infoq-scaffold-ai
 export INFOQ_DEPLOY_ROOT=<runtime-specific-root>
 mkdir -p /tmp/infoq-deploy "${INFOQ_DEPLOY_ROOT}/server/temp"
-sudo env INFOQ_SOURCE_DIR="$(pwd)" INFOQ_PUBLIC_BASE_URL=http://127.0.0.1 INFOQ_DEPLOY_ROOT="${INFOQ_DEPLOY_ROOT}" bash deploy/install.sh
+sudo env INFOQ_SOURCE_DIR="$(pwd)" INFOQ_FRONTEND_TARGET=all INFOQ_PUBLIC_BASE_URL=http://127.0.0.1 INFOQ_DEPLOY_ROOT="${INFOQ_DEPLOY_ROOT}" bash deploy/install.sh
 ```
 
 安装脚本会生成或复用 `/etc/infoq-scaffold-ai/deploy.env` 和 `/etc/infoq-scaffold-ai/credentials.txt`。后续 smoke 命令与 `wsl2-docker-compose.md` 相同，必须从 `INFOQ_ENV_FILE` 读取随机 MySQL/Redis/MinIO/Admin 凭据。
@@ -118,5 +118,5 @@ macOS Colima 使用 `sudo` 执行安装脚本时，应把用户态 Colima socket
 
 ```bash
 export DOCKER_HOST="unix://${HOME}/.colima/default/docker.sock"
-sudo env DOCKER_CONFIG="${DOCKER_CONFIG:-$HOME/.docker}" DOCKER_HOST="${DOCKER_HOST}" INFOQ_SOURCE_DIR="$(pwd)" INFOQ_PUBLIC_BASE_URL=http://127.0.0.1 INFOQ_DEPLOY_ROOT="${INFOQ_DEPLOY_ROOT}" bash deploy/install.sh
+sudo env DOCKER_CONFIG="${DOCKER_CONFIG:-$HOME/.docker}" DOCKER_HOST="${DOCKER_HOST}" INFOQ_SOURCE_DIR="$(pwd)" INFOQ_FRONTEND_TARGET=all INFOQ_PUBLIC_BASE_URL=http://127.0.0.1 INFOQ_DEPLOY_ROOT="${INFOQ_DEPLOY_ROOT}" bash deploy/install.sh
 ```

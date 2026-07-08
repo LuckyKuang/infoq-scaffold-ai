@@ -28,7 +28,7 @@
 
 | 组件 | 基线 |
 | --- | --- |
-| Docker / Compose | Docker CE / Moby / Colima + `docker compose` 或 `docker-compose` |
+| Docker / Compose | Docker CE / Moby / Colima + `docker compose` 或 `docker-compose`，并启用 `docker buildx` |
 | 后端构建镜像 | `maven:3.9.12-eclipse-temurin-17` |
 | 后端运行镜像 | `bellsoft/liberica-openjdk-rocky:17.0.16-cds` |
 | 手动部署 JDK | 17 |
@@ -42,14 +42,14 @@
 
 说明：
 
-- Docker Compose / 脚本化部署不要求宿主机安装 JDK 或 Maven；后端 Maven 打包在 Docker builder 镜像 `maven:3.9.12-eclipse-temurin-17` 内完成，最终运行镜像仍是 `bellsoft/liberica-openjdk-rocky:17.0.16-cds`：[infoq-scaffold-backend/infoq-admin/Dockerfile](../../infoq-scaffold-backend/infoq-admin/Dockerfile)
+- Docker Compose / 脚本化部署不要求宿主机安装 JDK 或 Maven；后端 Maven 打包在 Docker builder 镜像 `maven:3.9.12-eclipse-temurin-17` 内完成，最终运行镜像仍是 `bellsoft/liberica-openjdk-rocky:17.0.16-cds`。后端 Dockerfile 使用 BuildKit `RUN --mount`，因此 Docker CLI 必须支持 `docker buildx`：[infoq-scaffold-backend/infoq-admin/Dockerfile](../../infoq-scaffold-backend/infoq-admin/Dockerfile)
 - 手动部署或本机直接执行 Maven 构建时，仍需要宿主机 JDK 17 与 Maven 3.9+。
 - 前端本机开发、CI、docs 站点和 Docker 构建镜像统一固定基于 Node 24.18.0：[infoq-scaffold-frontend-vue/Dockerfile](../../infoq-scaffold-frontend-vue/Dockerfile) [infoq-scaffold-frontend-react/Dockerfile](../../infoq-scaffold-frontend-react/Dockerfile) [infoq-scaffold-frontend-react-pro/Dockerfile](../../infoq-scaffold-frontend-react-pro/Dockerfile)。npm 版本不作为仓库构建基线单独固定，包管理器遵循各工作区 `packageManager` 与 lockfile。
 - Docker Compose 默认依赖 MySQL 8.0、Redis 7.2、MinIO `RELEASE.2026-06-18T00-00-00Z`、Nginx 1.30：[script/docker/docker-compose.yml](../../script/docker/docker-compose.yml)
 
 ## 3. 端口与网络准备
 
-默认会占用以下端口：
+默认会占用以下端口。基础服务端口始终需要空闲；前端直连端口按 `INFOQ_FRONTEND_TARGET` 决定，`all` 才需要三个前端端口都空闲。
 
 | 服务 | 默认端口 |
 | --- | --- |
@@ -63,6 +63,13 @@
 | MinIO API | 9000 |
 | MinIO Console | 9001 |
 
+前端目标与直连端口关系：
+
+- `INFOQ_FRONTEND_TARGET=vue`：只需要 `9091`
+- `INFOQ_FRONTEND_TARGET=react`：只需要 `9092`
+- `INFOQ_FRONTEND_TARGET=react-pro`：只需要 `9093`
+- `INFOQ_FRONTEND_TARGET=all`：需要 `9091`、`9092`、`9093`
+
 默认对外用户入口优先走 Nginx：
 
 - MinIO Console：`http://SERVER_IP/console-oss/`
@@ -70,7 +77,7 @@
 
 部署前至少确认：
 
-- 这些端口未被其他进程占用
+- 基础服务端口和目标前端直连端口未被其他进程占用
 - 服务器安全组、防火墙、反向代理策略允许目标端口访问
 - 如需公网 HTTPS，证书和域名已准备完成
 - 首次安装会生成 `/etc/infoq-scaffold-ai/deploy.env` 和 `/etc/infoq-scaffold-ai/credentials.txt`，两个文件必须保留且权限为 `600`
@@ -105,9 +112,9 @@ WSL2 / 原生 Linux 默认就是 `/infoq/server/temp`；macOS Colima 默认就�
 /infoq/nginx/cert
 /infoq/nginx/conf
 /infoq/nginx/log
-/infoq/vue/logs
-/infoq/react/logs
-/infoq/react-pro/logs
+/infoq/vue/logs        # INFOQ_FRONTEND_TARGET=vue 或 all
+/infoq/react/logs      # INFOQ_FRONTEND_TARGET=react 或 all
+/infoq/react-pro/logs  # INFOQ_FRONTEND_TARGET=react-pro 或 all
 ```
 
 ### 4.2 手动部署推荐目录
@@ -188,9 +195,8 @@ WSL2 / 原生 Linux 默认就是 `/infoq/server/temp`；macOS Colima 默认就�
 
 如果采用统一 Nginx 网关，需要确认：
 
-- `/vue/` 指向 Vue 静态资源
-- `/react/` 指向 React 静态资源
-- `/react-pro/` 指向 React Pro 静态资源
+- `INFOQ_FRONTEND_TARGET=all` 时 `/vue/`、`/react/`、`/react-pro/` 分别指向 Vue、React、React Pro 静态资源
+- `INFOQ_FRONTEND_TARGET=react|react-pro|vue` 时 `/` 指向被选中的单个前端
 - `/prod-api/` 反代到后端 `9090`
 - HTTPS 证书路径和域名配置正确
 

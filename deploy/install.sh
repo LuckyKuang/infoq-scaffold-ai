@@ -14,6 +14,8 @@ INFOQ_INSTALL_DOCKER="${INFOQ_INSTALL_DOCKER:-0}"
 INFOQ_ALLOW_NON_ROOT="${INFOQ_ALLOW_NON_ROOT:-0}"
 INFOQ_ENV_FILE="${INFOQ_ENV_FILE:-${INFOQ_CONFIG_DIR}/deploy.env}"
 INFOQ_CREDENTIALS_FILE="${INFOQ_CREDENTIALS_FILE:-${INFOQ_CONFIG_DIR}/credentials.txt}"
+INFOQ_FRONTEND_TARGET="${INFOQ_FRONTEND_TARGET:-}"
+REQUESTED_FRONTEND_TARGET=""
 SOURCE_DIR=""
 
 log() {
@@ -55,6 +57,10 @@ require_runtime() {
 
   if ! docker compose version >/dev/null 2>&1 && ! command -v docker-compose >/dev/null 2>&1; then
     fail "缺少 Docker Compose CLI: 需要 docker compose 或 docker-compose"
+  fi
+
+  if ! docker buildx version >/dev/null 2>&1; then
+    fail "缺少 Docker Buildx: 后端 Dockerfile 使用 BuildKit RUN --mount，请先安装 docker buildx 插件后再执行安装"
   fi
 
   if [[ "${INFOQ_INSTALL_DOCKER}" == "1" ]]; then
@@ -100,6 +106,65 @@ detect_public_base_url() {
   log "未显式设置 INFOQ_PUBLIC_BASE_URL，使用探测值: ${INFOQ_PUBLIC_BASE_URL}"
 }
 
+normalize_frontend_target() {
+  case "$1" in
+    1|react)
+      printf 'react'
+      ;;
+    2|react-pro|react_pro)
+      printf 'react-pro'
+      ;;
+    3|vue)
+      printf 'vue'
+      ;;
+    4|all)
+      printf 'all'
+      ;;
+    *)
+      fail "无效前端安装目标: $1，请使用 1|2|3|4 或 react|react-pro|vue|all"
+      ;;
+  esac
+}
+
+prompt_frontend_target() {
+  local choice
+
+  if [[ ! -r /dev/tty || ! -w /dev/tty ]]; then
+    fail "非交互环境必须显式设置 INFOQ_FRONTEND_TARGET=react|react-pro|vue|all"
+  fi
+
+  while true; do
+    {
+      printf '\n请选择前端安装模式：\n'
+      printf '  1. 只安装 React 前端\n'
+      printf '  2. 只安装 React Pro 前端\n'
+      printf '  3. 只安装 Vue 前端\n'
+      printf '  4. 安装全部前端\n'
+      printf '请输入 1-4: '
+    } >/dev/tty
+    IFS= read -r choice </dev/tty || fail "读取前端安装模式失败"
+    case "${choice}" in
+      1|2|3|4)
+        normalize_frontend_target "${choice}"
+        return
+        ;;
+      *)
+        printf '无效选择，请输入 1、2、3 或 4。\n' >/dev/tty
+        ;;
+    esac
+  done
+}
+
+select_frontend_target() {
+  if [[ -n "${INFOQ_FRONTEND_TARGET}" ]]; then
+    INFOQ_FRONTEND_TARGET="$(normalize_frontend_target "${INFOQ_FRONTEND_TARGET}")"
+  else
+    INFOQ_FRONTEND_TARGET="$(prompt_frontend_target)"
+  fi
+  REQUESTED_FRONTEND_TARGET="${INFOQ_FRONTEND_TARGET}"
+  log "前端安装目标: ${INFOQ_FRONTEND_TARGET}"
+}
+
 write_env_line() {
   local name="$1"
   local value="$2"
@@ -116,15 +181,35 @@ secure_private_file() {
   chmod 600 "${file}"
 }
 
+print_frontend_urls() {
+  case "${INFOQ_FRONTEND_TARGET}" in
+    all)
+      printf '  Vue Admin:       %s/vue/\n' "${INFOQ_PUBLIC_BASE_URL}"
+      printf '  React Admin:     %s/react/\n' "${INFOQ_PUBLIC_BASE_URL}"
+      printf '  React Pro Admin: %s/react-pro/\n' "${INFOQ_PUBLIC_BASE_URL}"
+      ;;
+    react)
+      printf '  React Admin:     %s/\n' "${INFOQ_PUBLIC_BASE_URL}"
+      ;;
+    react-pro)
+      printf '  React Pro Admin: %s/\n' "${INFOQ_PUBLIC_BASE_URL}"
+      ;;
+    vue)
+      printf '  Vue Admin:       %s/\n' "${INFOQ_PUBLIC_BASE_URL}"
+      ;;
+    *)
+      fail "无效前端安装目标: ${INFOQ_FRONTEND_TARGET}"
+      ;;
+  esac
+}
+
 write_credentials() {
   (
     umask 077
     {
       printf 'InfoQ Scaffold credentials\n\n'
       printf 'URLs:\n'
-      printf '  Vue Admin:       %s/vue/\n' "${INFOQ_PUBLIC_BASE_URL}"
-      printf '  React Admin:     %s/react/\n' "${INFOQ_PUBLIC_BASE_URL}"
-      printf '  React Pro Admin: %s/react-pro/\n' "${INFOQ_PUBLIC_BASE_URL}"
+      print_frontend_urls
       printf '  Backend Health:  %s/prod-api/monitor/health/readiness\n' "${INFOQ_PUBLIC_BASE_URL}"
       printf '  MinIO Console:   %s/console-oss/\n' "${INFOQ_PUBLIC_BASE_URL}"
       printf '  MinIO OSS:       %s/oss/\n\n' "${INFOQ_PUBLIC_BASE_URL}"
@@ -150,6 +235,7 @@ write_env_file() {
       write_env_line INFOQ_VERSION "${INFOQ_VERSION}"
       write_env_line INFOQ_PUBLIC_BASE_URL "${INFOQ_PUBLIC_BASE_URL}"
       write_env_line INFOQ_DEPLOY_ROOT "${INFOQ_DEPLOY_ROOT}"
+      write_env_line INFOQ_FRONTEND_TARGET "${INFOQ_FRONTEND_TARGET}"
       write_env_line MYSQL_ROOT_PASSWORD "${MYSQL_ROOT_PASSWORD}"
       write_env_line INFOQ_DB_USERNAME "${INFOQ_DB_USERNAME}"
       write_env_line INFOQ_DB_PASSWORD "${INFOQ_DB_PASSWORD}"
@@ -277,7 +363,11 @@ prepare_credentials() {
     log "复用已有环境文件: ${INFOQ_ENV_FILE}"
     secure_private_file "${INFOQ_ENV_FILE}"
     load_env_file
-    require_env_values INFOQ_VERSION INFOQ_PUBLIC_BASE_URL INFOQ_DEPLOY_ROOT MYSQL_ROOT_PASSWORD INFOQ_DB_USERNAME INFOQ_DB_PASSWORD REDIS_PASSWORD MINIO_ROOT_USER MINIO_ROOT_PASSWORD INFOQ_OSS_BUCKET SECURITY_TOKEN_SECRET DEPLOY_ID
+    require_env_values INFOQ_VERSION INFOQ_PUBLIC_BASE_URL INFOQ_DEPLOY_ROOT INFOQ_FRONTEND_TARGET MYSQL_ROOT_PASSWORD INFOQ_DB_USERNAME INFOQ_DB_PASSWORD REDIS_PASSWORD MINIO_ROOT_USER MINIO_ROOT_PASSWORD INFOQ_OSS_BUCKET SECURITY_TOKEN_SECRET DEPLOY_ID
+    INFOQ_FRONTEND_TARGET="$(normalize_frontend_target "${INFOQ_FRONTEND_TARGET}")"
+    if [[ "${INFOQ_FRONTEND_TARGET}" != "${REQUESTED_FRONTEND_TARGET}" ]]; then
+      fail "已有环境文件中的 INFOQ_FRONTEND_TARGET=${INFOQ_FRONTEND_TARGET} 与本次请求 ${REQUESTED_FRONTEND_TARGET} 不一致，请清理旧部署或使用相同目标"
+    fi
     if [[ "${INFOQ_RESET_ADMIN}" == "1" ]]; then
       log "INFOQ_RESET_ADMIN=1，重新生成默认管理员凭据"
       reset_admin_credentials
@@ -307,9 +397,7 @@ print_summary() {
   printf '\n============================================================\n'
   printf 'InfoQ Scaffold deployed successfully\n\n'
   printf 'URLs:\n'
-  printf '  Vue Admin:       %s/vue/\n' "${INFOQ_PUBLIC_BASE_URL}"
-  printf '  React Admin:     %s/react/\n' "${INFOQ_PUBLIC_BASE_URL}"
-  printf '  React Pro Admin: %s/react-pro/\n' "${INFOQ_PUBLIC_BASE_URL}"
+  print_frontend_urls
   printf '  Backend Health:  %s/prod-api/monitor/health/readiness\n' "${INFOQ_PUBLIC_BASE_URL}"
   printf '  MinIO Console:   %s/console-oss/\n' "${INFOQ_PUBLIC_BASE_URL}"
   printf '  MinIO OSS:       %s/oss/\n\n' "${INFOQ_PUBLIC_BASE_URL}"
@@ -331,6 +419,7 @@ print_summary() {
 
 main() {
   require_root
+  select_frontend_target
   require_runtime
   detect_public_base_url
   prepare_directories
@@ -341,7 +430,7 @@ main() {
   log "启动后端与依赖服务"
   (cd "${SOURCE_DIR}" && INFOQ_ENV_FILE="${INFOQ_ENV_FILE}" INFOQ_RESET_ADMIN="${INFOQ_RESET_ADMIN}" INFOQ_RESET_OSS="${INFOQ_RESET_OSS}" bash script/bin/infoq.sh deploy)
   log "启动前端与 nginx"
-  (cd "${SOURCE_DIR}" && INFOQ_ENV_FILE="${INFOQ_ENV_FILE}" bash script/bin/deploy-frontend.sh deploy)
+  (cd "${SOURCE_DIR}" && INFOQ_ENV_FILE="${INFOQ_ENV_FILE}" bash script/bin/deploy-frontend.sh deploy "${INFOQ_FRONTEND_TARGET}")
   print_summary
 }
 

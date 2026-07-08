@@ -147,6 +147,13 @@ validate_docker_credential_helpers() {
   done <<< "${cred_helpers}"
 }
 
+require_docker_buildx() {
+  if ! docker buildx version >/dev/null 2>&1; then
+    echo "[backend] 缺少 Docker Buildx: 后端 Dockerfile 使用 BuildKit RUN --mount，请先安装 docker buildx 插件后再构建后端镜像" >&2
+    exit 1
+  fi
+}
+
 resolve_compose_command() {
   if (( ${#COMPOSE_CMD[@]} > 0 )); then
     return
@@ -302,6 +309,7 @@ package_backend() {
 build_image() {
   require_runtime_env
   validate_docker_credential_helpers
+  require_docker_buildx
   resolve_compose_command
   compose build infoq-admin
 }

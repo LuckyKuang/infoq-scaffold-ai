@@ -5,10 +5,9 @@ DEFAULT_CONFIG_DIR="/etc/infoq-scaffold-ai"
 DEFAULT_ENV_FILE="${DEFAULT_CONFIG_DIR}/deploy.env"
 CONFIRM_PHRASE="DELETE INFOQ DEPLOYMENT"
 DEFAULT_COMPOSE_PROJECT_NAME="infoq-scaffold-ai"
-LEGACY_COMPOSE_PROJECT_NAME="docker"
 
-APP_CONTAINERS=(infoq-admin nginx-web infoq-frontend-vue infoq-frontend-react infoq-frontend-react-pro)
-APP_DIRS=(server nginx vue react react-pro)
+APP_CONTAINERS=()
+APP_DIRS=()
 
 DRY_RUN=0
 INFOQ_CONFIG_DIR_WAS_SET="${INFOQ_CONFIG_DIR:+1}"
@@ -24,10 +23,11 @@ usage() {
 用法: bash deploy/uninstall.sh [--dry-run]
 
 卸载说明:
-  - 应用容器与应用运行目录作为一组确认项处理。
+  - 应用容器与应用运行目录作为一组确认项处理，前端范围由 deploy.env 中的 INFOQ_FRONTEND_TARGET 决定。
   - MySQL、Redis、MinIO 分别确认；选择删除时会同时删除对应容器和数据目录。
   - 选择保留 MySQL、Redis 或 MinIO 时，对应容器和数据目录都不会被删除。
   - 不删除 Docker 镜像。
+  - 缺少 deploy.env 或 INFOQ_FRONTEND_TARGET 时会停止卸载，避免误删前端目录。
   - 实际删除前必须输入固定确认短语: DELETE INFOQ DEPLOYMENT
 
 自动化验证变量:
@@ -82,20 +82,20 @@ load_env_file() {
     env_file="${DEFAULT_ENV_FILE}"
   fi
 
-  if [[ -f "${env_file}" ]]; then
-    set -a
-    # shellcheck disable=SC1090
-    . "${env_file}"
-    set +a
-    INFOQ_ENV_FILE="${env_file}"
-    if [[ -n "${INFOQ_DEPLOY_ROOT_WAS_SET}" ]]; then
-      INFOQ_DEPLOY_ROOT="${INFOQ_DEPLOY_ROOT_EXPLICIT}"
-    fi
-    log "已加载环境文件: ${INFOQ_ENV_FILE}"
-  else
-    INFOQ_ENV_FILE="${env_file}"
-    log "未找到环境文件，使用环境变量或运行时默认值: ${INFOQ_ENV_FILE}"
+  if [[ ! -f "${env_file}" ]]; then
+    fail "未找到环境文件 ${env_file}，无法确定 INFOQ_FRONTEND_TARGET，已停止卸载"
   fi
+
+  unset INFOQ_FRONTEND_TARGET
+  set -a
+  # shellcheck disable=SC1090
+  . "${env_file}"
+  set +a
+  INFOQ_ENV_FILE="${env_file}"
+  if [[ -n "${INFOQ_DEPLOY_ROOT_WAS_SET}" ]]; then
+    INFOQ_DEPLOY_ROOT="${INFOQ_DEPLOY_ROOT_EXPLICIT}"
+  fi
+  log "已加载环境文件: ${INFOQ_ENV_FILE}"
 }
 
 default_user_home() {
@@ -162,6 +162,66 @@ choice_from_env_or_prompt() {
   fi
 
   ask_yes_no "${prompt}" "${default_answer}"
+}
+
+normalize_frontend_target() {
+  case "$1" in
+    react|react-pro|vue|all)
+      printf '%s' "$1"
+      ;;
+    *)
+      fail "环境文件 ${INFOQ_ENV_FILE} 中的 INFOQ_FRONTEND_TARGET 无效: ${1:-<empty>}，必须是 react、react-pro、vue 或 all"
+      ;;
+  esac
+}
+
+configure_app_scope() {
+  INFOQ_FRONTEND_TARGET="$(normalize_frontend_target "${INFOQ_FRONTEND_TARGET:-}")"
+  APP_CONTAINERS=(infoq-admin nginx-web)
+  APP_DIRS=(server nginx)
+
+  case "${INFOQ_FRONTEND_TARGET}" in
+    react)
+      APP_CONTAINERS+=(infoq-frontend-react)
+      APP_DIRS+=(react)
+      ;;
+    react-pro)
+      APP_CONTAINERS+=(infoq-frontend-react-pro)
+      APP_DIRS+=(react-pro)
+      ;;
+    vue)
+      APP_CONTAINERS+=(infoq-frontend-vue)
+      APP_DIRS+=(vue)
+      ;;
+    all)
+      APP_CONTAINERS+=(infoq-frontend-vue infoq-frontend-react infoq-frontend-react-pro)
+      APP_DIRS+=(vue react react-pro)
+      ;;
+  esac
+}
+
+join_items() {
+  local sep="$1"
+  local output=""
+  shift
+
+  for item in "$@"; do
+    if [[ -z "${output}" ]]; then
+      output="${item}"
+    else
+      output="${output}${sep}${item}"
+    fi
+  done
+
+  printf '%s' "${output}"
+}
+
+print_items() {
+  local item
+
+  for item in "$@"; do
+    printf '  %s\n' "${item}"
+  done
 }
 
 abs_dir() {
@@ -315,10 +375,6 @@ remove_empty_project_networks() {
   local network
   local container_count
 
-  if [[ "${project_name}" != "${LEGACY_COMPOSE_PROJECT_NAME}" ]]; then
-    networks+=("${LEGACY_COMPOSE_PROJECT_NAME}_default")
-  fi
-
   if ! command -v docker >/dev/null 2>&1; then
     if [[ "${DRY_RUN}" == "1" ]]; then
       log "dry-run: 缺少 docker 命令，跳过 Compose 网络检查"
@@ -359,7 +415,13 @@ print_plan() {
   printf 'InfoQ Scaffold uninstall plan\n\n'
   printf 'Deploy root: %s\n' "${INFOQ_DEPLOY_ROOT}"
   printf 'Config dir:  %s\n' "${INFOQ_CONFIG_DIR}"
-  printf 'Env file:    %s\n\n' "${INFOQ_ENV_FILE}"
+  printf 'Env file:    %s\n' "${INFOQ_ENV_FILE}"
+  printf 'Frontend target: %s\n\n' "${INFOQ_FRONTEND_TARGET}"
+  printf 'App containers:\n'
+  print_items "${APP_CONTAINERS[@]}"
+  printf '\nApp dirs:\n'
+  print_items "${APP_DIRS[@]}"
+  printf '\n'
   printf 'Actions:\n'
   printf '  Remove app containers and dirs: %s\n' "${apps}"
   printf '  Remove MySQL container and data: %s\n' "${mysql}"
@@ -417,13 +479,17 @@ main() {
   local remove_minio_choice
   local remove_config_choice
   local remove_empty_root_choice
+  local app_dirs_label
 
   parse_args "$@"
   load_env_file
   resolve_deploy_root
   assert_safe_deploy_root "${INFOQ_DEPLOY_ROOT}"
+  configure_app_scope
+  app_dirs_label="$(join_items "/" "${APP_DIRS[@]}")"
+  log "检测到前端安装目标: ${INFOQ_FRONTEND_TARGET}"
 
-  remove_apps_choice="$(choice_from_env_or_prompt INFOQ_UNINSTALL_APPS "是否删除应用容器和应用运行目录 server/nginx/vue/react/react-pro？" "no")"
+  remove_apps_choice="$(choice_from_env_or_prompt INFOQ_UNINSTALL_APPS "是否删除应用容器和应用运行目录 ${app_dirs_label}？" "no")"
   remove_mysql_choice="$(choice_from_env_or_prompt INFOQ_UNINSTALL_MYSQL "是否删除 MySQL 容器和 ${INFOQ_DEPLOY_ROOT}/mysql 数据目录？" "no")"
   remove_redis_choice="$(choice_from_env_or_prompt INFOQ_UNINSTALL_REDIS "是否删除 Redis 容器和 ${INFOQ_DEPLOY_ROOT}/redis 数据目录？" "no")"
   remove_minio_choice="$(choice_from_env_or_prompt INFOQ_UNINSTALL_MINIO "是否删除 MinIO 容器和 ${INFOQ_DEPLOY_ROOT}/minio 数据目录？" "no")"

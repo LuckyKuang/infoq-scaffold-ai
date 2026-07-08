@@ -386,7 +386,7 @@ pnpm run verify:local
 
 ## 部署入口
 
-如果要让 Codex 直接按本仓库脚本执行本地或 WSL2/macOS Colima/Linux Docker Compose 部署验证，使用 `infoq-deploy-verify`。它会覆盖 WSL2 Docker CE、macOS Colima、Linux Docker CE 三种免费商用运行时，以及后端、MySQL、Redis、MinIO、Vue/React/React Pro 前端、nginx 网关、localhost smoke、证据留存和常见部署阻断，并会在执行 deploy 前提醒并确认 `/tmp/infoq-deploy` 与 `${INFOQ_DEPLOY_ROOT}/server/temp` 已存在。
+如果要让 Codex 直接按本仓库脚本执行本地或 WSL2/macOS Colima/Linux Docker Compose 部署验证，使用 `infoq-deploy-verify`。它会覆盖 WSL2 Docker CE、macOS Colima、Linux Docker CE 三种免费商用运行时，以及后端、MySQL、Redis、MinIO、选定或全部管理端前端、nginx 网关、localhost smoke、证据留存和常见部署阻断，并会在执行 deploy 前提醒并确认 `/tmp/infoq-deploy` 与 `${INFOQ_DEPLOY_ROOT}/server/temp` 已存在。
 
 如果是第一次完整部署，建议先按 [`doc/devops/docker-compose-tutorial.md`](./doc/devops/docker-compose-tutorial.md) 操作；需要脚本参数和日常运维命令时，再看 [`doc/devops/docker-compose-deploy.md`](./doc/devops/docker-compose-deploy.md)。
 
@@ -397,7 +397,7 @@ macOS Colima 环境如果出现 `error getting credentials` 且缺少 `docker-cr
 快速体验入口：
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/LuckyKuang/infoq-scaffold-ai/main/deploy/install.sh | sudo bash
+curl -sSL https://raw.githubusercontent.com/LuckyKuang/infoq-scaffold-ai/main/deploy/install.sh | sudo env INFOQ_FRONTEND_TARGET=all bash
 ```
 
 生产或准生产环境建议固定 tag：
@@ -405,12 +405,12 @@ curl -sSL https://raw.githubusercontent.com/LuckyKuang/infoq-scaffold-ai/main/de
 ```bash
 curl -fsSLO https://raw.githubusercontent.com/LuckyKuang/infoq-scaffold-ai/<tag>/deploy/install.sh
 chmod +x install.sh
-sudo env INFOQ_VERSION=<tag> INFOQ_PUBLIC_BASE_URL=http://SERVER_IP ./install.sh
+sudo env INFOQ_VERSION=<tag> INFOQ_FRONTEND_TARGET=all INFOQ_PUBLIC_BASE_URL=http://SERVER_IP ./install.sh
 ```
 
-安装脚本会生成随机 MySQL、Redis、MinIO、后端安全密钥和默认管理员账号密码，保存到 `/etc/infoq-scaffold-ai/deploy.env` 与 `/etc/infoq-scaffold-ai/credentials.txt`，文件权限为 `600`。部署完成后控制台会打印访问地址和凭据；设置 `INFOQ_PRINT_SECRETS=0` 时只打印凭据文件路径。
+安装脚本会强制选择前端目标，非交互环境必须设置 `INFOQ_FRONTEND_TARGET=react|react-pro|vue|all`。宿主机需要 `docker buildx`，因为后端 Dockerfile 使用 BuildKit `RUN --mount`。脚本会生成随机 MySQL、Redis、MinIO、后端安全密钥和默认管理员账号密码，保存到 `/etc/infoq-scaffold-ai/deploy.env` 与 `/etc/infoq-scaffold-ai/credentials.txt`，文件权限为 `600`。部署完成后控制台会打印访问地址和凭据；设置 `INFOQ_PRINT_SECRETS=0` 时只打印凭据文件路径。
 
-默认入口：
+`INFOQ_FRONTEND_TARGET=all` 时入口为：
 
 - Vue 管理端：`http://SERVER_IP/vue/`
 - React 管理端：`http://SERVER_IP/react/`
@@ -418,6 +418,8 @@ sudo env INFOQ_VERSION=<tag> INFOQ_PUBLIC_BASE_URL=http://SERVER_IP ./install.sh
 - 后端健康检查：`http://SERVER_IP/prod-api/monitor/health/readiness`
 - MinIO Console：`http://SERVER_IP/console-oss/`
 - MinIO OSS：`http://SERVER_IP/oss/`
+
+`INFOQ_FRONTEND_TARGET=react|react-pro|vue` 时只部署一个前端，对应管理端入口统一为 `http://SERVER_IP/`，不再追加 `/react/`、`/react-pro/` 或 `/vue/`。
 
 重复执行安装脚本会复用已有 `deploy.env`，不会静默轮换生产密钥。若 `${INFOQ_DEPLOY_ROOT}/mysql/data` 已存在但环境文件缺失，脚本会停止，避免随机生成的新密码与旧数据错配。
 
@@ -443,19 +445,19 @@ bash script/bin/infoq.sh deploy
 ### 前端与网关
 
 ```bash
-bash script/bin/deploy-frontend.sh deploy
+bash script/bin/deploy-frontend.sh deploy all
 ```
 
-该脚本会部署：
+目标可选 `vue|react|react-pro|all`。`all` 会部署：
 
 - `infoq-frontend-vue`
 - `infoq-frontend-react`
 - `infoq-frontend-react-pro`
 - `nginx-web`
 
-`deploy-frontend.sh deploy` 会先同步前端网关目录与 `nginx.conf`，再使用 `node:24.18.0` builder 顺序构建 Vue / React / React Pro 镜像，最后启动三个前端容器与 `nginx-web`，避免本机 Docker 并行构建时的内存峰值。
+`deploy-frontend.sh deploy all` 会先同步前端网关目录与 `nginx.conf`，再使用 `node:24.18.0` builder 顺序构建 Vue / React / React Pro 镜像，最后启动三个前端容器与 `nginx-web`，避免本机 Docker 并行构建时的内存峰值。单前端目标只构建并启动目标前端与 `nginx-web`，并把管理端挂到网关根路径 `/`。
 
-部署后的网关入口为 `/vue/`、`/react/`、`/react-pro/`、`/console-oss/` 和 `/oss/`；容器直连端口分别为 `9091`、`9092`、`9093`。
+`all` 部署后的网关入口为 `/vue/`、`/react/`、`/react-pro/`、`/console-oss/` 和 `/oss/`；单前端部署后的管理端入口为 `/`，同时保留 `/console-oss/` 和 `/oss/`。容器直连端口分别为 Vue `9091`、React `9092`、React Pro `9093`；单前端部署只会启动并暴露目标前端对应端口。
 
 详见：
 

@@ -13,11 +13,11 @@ description: 在本仓库执行可复现的本地、WSL2、macOS 或 Linux Docke
 2. 写清验收约定：功能范围、非目标、异常处理与 blocker、证据路径、回滚或停止条件。
 3. 只读探测：读取 `doc/devops/*`、`script/bin/infoq.sh`、`script/bin/deploy-frontend.sh`、`script/docker/docker-compose.yml`、目标工作区 `Dockerfile` 和当前容器/端口状态。
 4. 选择运行时：先读取 `references/runtime-matrix.md`，只在 WSL2 内 Docker CE、macOS Colima、原生 Linux Docker CE 三条免费商用路径中选择；如果检测到 Docker Desktop 或其他未确认许可的运行时，先停止并请用户确认是否允许。
-5. 环境预检：确认 Docker daemon、Compose、后端 Maven builder 镜像 `maven:3.9.12-eclipse-temurin-17`、后端运行镜像 `bellsoft/liberica-openjdk-rocky:17.0.16-cds`、Node/pnpm 镜像拉取能力、端口 `80/443/3306/6379/9000/9001/9090/9091/9092/9093`、`INFOQ_DEPLOY_ROOT`，以及安装后 `deploy.env` 中的随机凭据。Docker Compose 部署不要求宿主机安装 JDK 或 Maven。
+5. 环境预检：确认 Docker daemon、Compose、`docker buildx`、后端 Maven builder 镜像 `maven:3.9.12-eclipse-temurin-17`、后端运行镜像 `bellsoft/liberica-openjdk-rocky:17.0.16-cds`、Node/pnpm 镜像拉取能力、基础端口 `80/443/3306/6379/9000/9001/9090`、`INFOQ_FRONTEND_TARGET` 对应前端直连端口、`INFOQ_DEPLOY_ROOT`，以及安装后 `deploy.env` 中的随机凭据。Docker Compose 部署不要求宿主机安装 JDK 或 Maven。
 6. 目录前置提醒：在执行任何 `deploy` 前，先明确提醒并确认服务器已存在 `/tmp/infoq-deploy` 与 `${INFOQ_DEPLOY_ROOT}/server/temp`；WSL2/Linux 默认 `INFOQ_DEPLOY_ROOT=/infoq`，所以必须确认 `/infoq/server/temp`。macOS Colima 默认用 `$HOME/infoq`，除非用户明确配置 `/infoq` 为 Colima 可挂载路径。权限允许时执行 `mkdir -p /tmp/infoq-deploy "${INFOQ_DEPLOY_ROOT}/server/temp"`，权限不足时停止并请用户创建后继续。
 7. 一键部署：优先执行 `deploy/install.sh`，让脚本生成或复用 `deploy.env` 与 `credentials.txt`，并调用后端、前端和 nginx 部署脚本。
 8. 分段部署：仅在排查时直接执行 `script/bin/infoq.sh deploy` 与 `script/bin/deploy-frontend.sh deploy`；必须先加载同一个 `INFOQ_ENV_FILE`。
-9. smoke 验证：检查容器状态、backend readiness/liveness、nginx `/prod-api` 反代、`/vue/`、`/react/`、`/react-pro/`、`/console-oss/`、`/oss/minio/health/live`、三个直连端口、MySQL 初始化数据、OSS/管理员数据库同步和 Redis。
+9. smoke 验证：检查容器状态、backend readiness/liveness、nginx `/prod-api` 反代、`INFOQ_FRONTEND_TARGET=all` 的 `/vue/`、`/react/`、`/react-pro/` 或单前端目标的 `/`、`/console-oss/`、`/oss/minio/health/live`、目标直连端口、MySQL 初始化数据、OSS/管理员数据库同步和 Redis。
 10. 证据收口：日志、curl 输出、Docker 状态和 blocker 都写入 `doc/tmp/deploy-wsl2/` 或更具体的 `doc/tmp/infoq-deploy-verify/<run-id>/`。
 11. 卸载验证：如任务涉及清理本地栈，优先执行 `deploy/uninstall.sh --dry-run` 验证计划；只有用户明确确认后才执行实际卸载，且 MySQL/Redis/MinIO 每项必须独立确认删除容器和数据目录。
 12. 差异审查：若修复脚本或 Dockerfile，执行 UTF-8 校验、`git diff --check`、必要的 OpenSpec/文档同步，再汇总 residual risk。
@@ -27,7 +27,7 @@ description: 在本仓库执行可复现的本地、WSL2、macOS 或 Linux Docke
 WSL2 Debian 从 Windows 侧执行时优先用 Docker CE in WSL2，并显式使用 `/infoq`：
 
 ```powershell
-wsl.exe -d Debian -- bash -lc 'cd /mnt/c/DevTools/code/github/infoq-scaffold-ai && export INFOQ_DEPLOY_ROOT=/infoq && mkdir -p /tmp/infoq-deploy "${INFOQ_DEPLOY_ROOT}/server/temp" && sudo env INFOQ_SOURCE_DIR="$(pwd)" INFOQ_PUBLIC_BASE_URL=http://127.0.0.1 INFOQ_DEPLOY_ROOT="${INFOQ_DEPLOY_ROOT}" bash deploy/install.sh'
+wsl.exe -d Debian -- bash -lc 'cd /mnt/c/DevTools/code/github/infoq-scaffold-ai && export INFOQ_DEPLOY_ROOT=/infoq && mkdir -p /tmp/infoq-deploy "${INFOQ_DEPLOY_ROOT}/server/temp" && sudo env INFOQ_SOURCE_DIR="$(pwd)" INFOQ_FRONTEND_TARGET=all INFOQ_PUBLIC_BASE_URL=http://127.0.0.1 INFOQ_DEPLOY_ROOT="${INFOQ_DEPLOY_ROOT}" bash deploy/install.sh'
 ```
 
 Linux shell 内执行时，先按运行时选择部署根目录：WSL2/Linux Docker CE 默认 `/infoq`；macOS Colima 默认 `$HOME/infoq`，除非用户明确配置 `/infoq` 可被 Colima 挂载。
@@ -36,7 +36,7 @@ Linux shell 内执行时，先按运行时选择部署根目录：WSL2/Linux Doc
 cd /path/to/infoq-scaffold-ai
 export INFOQ_DEPLOY_ROOT=/infoq
 mkdir -p /tmp/infoq-deploy "${INFOQ_DEPLOY_ROOT}/server/temp"
-sudo env INFOQ_SOURCE_DIR="$(pwd)" INFOQ_PUBLIC_BASE_URL=http://127.0.0.1 INFOQ_DEPLOY_ROOT="${INFOQ_DEPLOY_ROOT}" bash deploy/install.sh
+sudo env INFOQ_SOURCE_DIR="$(pwd)" INFOQ_FRONTEND_TARGET=all INFOQ_PUBLIC_BASE_URL=http://127.0.0.1 INFOQ_DEPLOY_ROOT="${INFOQ_DEPLOY_ROOT}" bash deploy/install.sh
 ```
 
 macOS Colima 使用：
@@ -48,7 +48,7 @@ docker context use colima
 export INFOQ_DEPLOY_ROOT="${HOME}/infoq"
 export DOCKER_HOST="unix://${HOME}/.colima/default/docker.sock"
 mkdir -p /tmp/infoq-deploy "${INFOQ_DEPLOY_ROOT}/server/temp"
-sudo env DOCKER_CONFIG="${DOCKER_CONFIG:-$HOME/.docker}" DOCKER_HOST="${DOCKER_HOST}" INFOQ_SOURCE_DIR="$(pwd)" INFOQ_PUBLIC_BASE_URL=http://127.0.0.1 INFOQ_DEPLOY_ROOT="${INFOQ_DEPLOY_ROOT}" bash deploy/install.sh
+sudo env DOCKER_CONFIG="${DOCKER_CONFIG:-$HOME/.docker}" DOCKER_HOST="${DOCKER_HOST}" INFOQ_SOURCE_DIR="$(pwd)" INFOQ_FRONTEND_TARGET=all INFOQ_PUBLIC_BASE_URL=http://127.0.0.1 INFOQ_DEPLOY_ROOT="${INFOQ_DEPLOY_ROOT}" bash deploy/install.sh
 ```
 
 关键 smoke：
@@ -61,14 +61,31 @@ set -a
 set +a
 curl --noproxy '*' -i --max-time 15 http://127.0.0.1:9090/monitor/health/readiness
 curl --noproxy '*' -i --max-time 15 http://127.0.0.1/prod-api/monitor/health/readiness
-curl --noproxy '*' -sS -o /dev/null -w '%{http_code}\n' --max-time 15 http://127.0.0.1/vue/
-curl --noproxy '*' -sS -o /dev/null -w '%{http_code}\n' --max-time 15 http://127.0.0.1/react/
-curl --noproxy '*' -sS -o /dev/null -w '%{http_code}\n' --max-time 15 http://127.0.0.1/react-pro/
+if [[ "${INFOQ_FRONTEND_TARGET}" == "all" ]]; then
+  curl --noproxy '*' -sS -o /dev/null -w '%{http_code}\n' --max-time 15 http://127.0.0.1/vue/
+  curl --noproxy '*' -sS -o /dev/null -w '%{http_code}\n' --max-time 15 http://127.0.0.1/react/
+  curl --noproxy '*' -sS -o /dev/null -w '%{http_code}\n' --max-time 15 http://127.0.0.1/react-pro/
+else
+  curl --noproxy '*' -sS -o /dev/null -w '%{http_code}\n' --max-time 15 http://127.0.0.1/
+fi
 curl --noproxy '*' -sS -o /dev/null -w '%{http_code}\n' --max-time 15 http://127.0.0.1/console-oss/
 curl --noproxy '*' -i --max-time 15 http://127.0.0.1/oss/minio/health/live
-curl --noproxy '*' -sS -o /dev/null -w '%{http_code}\n' --max-time 15 http://127.0.0.1:9091/
-curl --noproxy '*' -sS -o /dev/null -w '%{http_code}\n' --max-time 15 http://127.0.0.1:9092/
-curl --noproxy '*' -sS -o /dev/null -w '%{http_code}\n' --max-time 15 http://127.0.0.1:9093/
+case "${INFOQ_FRONTEND_TARGET}" in
+  all)
+    curl --noproxy '*' -sS -o /dev/null -w '%{http_code}\n' --max-time 15 http://127.0.0.1:9091/
+    curl --noproxy '*' -sS -o /dev/null -w '%{http_code}\n' --max-time 15 http://127.0.0.1:9092/
+    curl --noproxy '*' -sS -o /dev/null -w '%{http_code}\n' --max-time 15 http://127.0.0.1:9093/
+    ;;
+  vue)
+    curl --noproxy '*' -sS -o /dev/null -w '%{http_code}\n' --max-time 15 http://127.0.0.1:9091/
+    ;;
+  react)
+    curl --noproxy '*' -sS -o /dev/null -w '%{http_code}\n' --max-time 15 http://127.0.0.1:9092/
+    ;;
+  react-pro)
+    curl --noproxy '*' -sS -o /dev/null -w '%{http_code}\n' --max-time 15 http://127.0.0.1:9093/
+    ;;
+esac
 docker exec mysql mysql -uroot -p"${MYSQL_ROOT_PASSWORD}" -Nse 'SELECT COUNT(*) FROM infoq.sys_menu;'
 docker exec mysql mysql -uroot -p"${MYSQL_ROOT_PASSWORD}" -Nse "SELECT COUNT(*) FROM infoq.sys_oss_config WHERE config_key IN ('minio','image') AND access_key='${MINIO_ROOT_USER}' AND secret_key='${MINIO_ROOT_PASSWORD}' AND bucket_name='${INFOQ_OSS_BUCKET}' AND endpoint='minio:9000' AND domain='${INFOQ_PUBLIC_BASE_URL}/oss' AND is_https=IF(LEFT('${INFOQ_PUBLIC_BASE_URL}', 6)='https:', 'Y', 'N');"
 docker exec mysql mysql -uroot -p"${MYSQL_ROOT_PASSWORD}" -Nse "SELECT COUNT(*) FROM infoq.sys_user WHERE user_id=1 AND user_name='${INFOQ_ADMIN_USERNAME}' AND status='0' AND del_flag='0';"
@@ -79,7 +96,7 @@ docker exec redis redis-cli -a "${REDIS_PASSWORD}" ping
 
 ```bash
 cd /path/to/infoq-scaffold-ai
-INFOQ_ENV_FILE=/etc/infoq-scaffold-ai/deploy.env bash script/bin/deploy-frontend.sh stop
+INFOQ_ENV_FILE=/etc/infoq-scaffold-ai/deploy.env bash script/bin/deploy-frontend.sh stop "${INFOQ_FRONTEND_TARGET}"
 INFOQ_ENV_FILE=/etc/infoq-scaffold-ai/deploy.env bash script/bin/infoq.sh stop
 ```
 
@@ -91,7 +108,7 @@ INFOQ_ENV_FILE=/etc/infoq-scaffold-ai/deploy.env bash deploy/uninstall.sh --dry-
 sudo env INFOQ_ENV_FILE=/etc/infoq-scaffold-ai/deploy.env bash deploy/uninstall.sh
 ```
 
-卸载脚本必须逐项确认：删除应用容器和应用目录、删除 MySQL 容器和 `${INFOQ_DEPLOY_ROOT}/mysql`、删除 Redis 容器和 `${INFOQ_DEPLOY_ROOT}/redis`、删除 MinIO 容器和 `${INFOQ_DEPLOY_ROOT}/minio`、删除配置目录、删除空部署根目录。用户对 MySQL/Redis/MinIO 选择保留时，对应容器和数据目录都必须保留。部署脚本默认使用 `COMPOSE_PROJECT_NAME=infoq-scaffold-ai`；全删后应确认空的 `infoq-scaffold-ai_default` 项目网络被清理，并兼容旧版本遗留的空 `docker_default`。若保留任一中间件，Compose 网络应因仍有容器使用而保留。
+卸载脚本必须逐项确认：删除应用容器和应用目录、删除 MySQL 容器和 `${INFOQ_DEPLOY_ROOT}/mysql`、删除 Redis 容器和 `${INFOQ_DEPLOY_ROOT}/redis`、删除 MinIO 容器和 `${INFOQ_DEPLOY_ROOT}/minio`、删除配置目录、删除空部署根目录。用户对 MySQL/Redis/MinIO 选择保留时，对应容器和数据目录都必须保留。部署脚本默认使用 `COMPOSE_PROJECT_NAME=infoq-scaffold-ai`；全删后应确认空的 `infoq-scaffold-ai_default` 项目网络被清理。若保留任一中间件，Compose 网络应因仍有容器使用而保留。
 
 ## 护栏
 
@@ -105,7 +122,7 @@ sudo env INFOQ_ENV_FILE=/etc/infoq-scaffold-ai/deploy.env bash deploy/uninstall.
 - Redis 容器若反复重启且日志出现 `Fatal error, can't open config file '/redis/config/redis.conf': Permission denied`，优先检查安装入口是否泄漏 `umask 077`，以及 `script/bin/infoq.sh` 渲染后的 `${INFOQ_DEPLOY_ROOT}/redis/conf/redis.conf` 是否对 Redis 容器用户可读；修复后复跑一键部署，不要删除 MySQL 数据目录。
 - 前端 Docker build 统一使用固定 `node:24.18.0` builder；若出现 Corepack/packageManager 激活失败，按工作区 `packageManager` 与 lockfile 定位，不要降回 Node 20/22 标记通过。npm 版本不作为本仓库 Docker 构建基线单独固定。
 - Docker 镜像源 EOF/short read 不是构建成功；可临时直拉 `registry-1.docker.io/...`，再 `docker tag` 为脚本需要的短名。确认短名与长名 `IMAGE ID` 一致且没有容器引用长名后，执行 `docker rmi registry-1.docker.io/...` 删除辅助 tag，并记录为环境风险。
-- Docker Compose 部署不依赖宿主机 JDK/Maven；Debian 13 apt 源是否提供 `openjdk-17-jdk` 不应阻断 Compose 部署。手动部署或本机 Maven 构建才需要宿主机 JDK 17 与 Maven 3.9+。
+- Docker Compose 部署不依赖宿主机 JDK/Maven；Debian 13 apt 源是否提供 `openjdk-17-jdk` 不应阻断 Compose 部署。后端 Dockerfile 使用 BuildKit `RUN --mount`，宿主机 Docker CLI 必须支持 `docker buildx`。手动部署或本机 Maven 构建才需要宿主机 JDK 17 与 Maven 3.9+。
 - 任何会删除 `/infoq`、Docker volume、容器数据、MySQL 数据或用户手工目录的操作都必须先确认。
 
 ## 参考
