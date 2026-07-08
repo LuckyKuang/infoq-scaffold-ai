@@ -1,4 +1,4 @@
 interface:
   display_name: "InfoQ 前端验证"
-  short_description: "验证 React/Vue admin 与 weapp，并记录运行态收口状态"
-  default_prompt: "使用 $infoq-frontend-verify 为本仓库 React/Vue admin 或 weapp 执行单测、coverage、lint/build、本地栈启动、路由截图、console 检查和 weapp smoke/e2e；遵循只读探测、最小闭环、证据留存、显式失败和运行态状态收口。"
+  short_description: "验证 React/React Pro/Vue admin 与 weapp，并记录运行态收口状态"
+  default_prompt: "使用 $infoq-frontend-verify 为本仓库 React/React Pro/Vue admin 或 weapp 执行单测、coverage、lint/build、本地栈启动、路由截图、console 检查和 weapp smoke/e2e；遵循只读探测、最小闭环、证据留存、显式失败和运行态状态收口。"

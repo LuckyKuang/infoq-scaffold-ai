@@ -355,6 +355,9 @@ export default function DictDataPage() {
         onOk={handleSubmit}
       >
         <Form form={form} layout="vertical" initialValues={initialForm}>
+          <Form.Item name="dictCode" hidden>
+            <Input />
+          </Form.Item>
           <Form.Item label="字典类型" name="dictType">
             <Input disabled />
           </Form.Item>

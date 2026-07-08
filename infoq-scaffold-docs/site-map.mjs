@@ -79,6 +79,12 @@ export const sections = [
       description: '软件、端口、目录、配置和产物检查项。'
     },
     {
+      source: 'devops/docker-compose-tutorial.md',
+      target: 'devops/docker-compose-tutorial.md',
+      title: 'Docker Compose 部署教程',
+      description: '覆盖 WSL2 Docker CE、macOS Colima、Linux Docker CE 的完整部署教程。'
+    },
+    {
       source: 'devops/docker-compose-deploy.md',
       target: 'devops/docker-compose-deploy.md',
       title: 'Docker Compose 部署',

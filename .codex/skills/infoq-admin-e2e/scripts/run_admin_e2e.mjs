@@ -26,6 +26,7 @@ const defaultProfile = (() => {
     return 'dev';
   }
 })();
+const DEFAULT_ROUTE_SMOKE_LOGIN_CANDIDATES = 'admin:admin123,dept:666666,admin:123456';
 
 const CLIENTS = {
   vue: {
@@ -63,7 +64,7 @@ const DEFAULTS = {
   frontendHost: '127.0.0.1',
   profile: defaultProfile,
   clientId: DEFAULT_CAPTCHA_LOGIN_OPTIONS.clientId,
-  loginCandidates: DEFAULT_CAPTCHA_LOGIN_OPTIONS.loginCandidates,
+  loginCandidates: DEFAULT_ROUTE_SMOKE_LOGIN_CANDIDATES,
   maxCaptchaAttempts: DEFAULT_CAPTCHA_LOGIN_OPTIONS.maxCaptchaAttempts,
   timeoutMs: 45000,
   rsaPublicKey: DEFAULT_CAPTCHA_LOGIN_OPTIONS.rsaPublicKey

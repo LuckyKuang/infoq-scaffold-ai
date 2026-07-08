@@ -1,6 +1,6 @@
 {
   "name": "infoq-scaffold-frontend-weapp-react",
-  "version": "2.1.7",
+  "version": "2.1.8",
   "private": true,
   "packageManager": "pnpm@10.23.0",
   "description": "InfoQ React mobile scaffold",
@@ -85,5 +85,9 @@
     "patchedDependencies": {
       "jsencrypt@3.5.4": "patches/jsencrypt@3.5.4.patch"
     }
+  },
+  "engines": {
+    "node": "24.18.0",
+    "pnpm": ">=10.0.0"
   }
 }

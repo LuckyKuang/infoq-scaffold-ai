@@ -142,7 +142,7 @@
 </template>
 
 <script setup name="Dept" lang="ts">
-import { listDept, getDept, delDept, addDept, updateDept, listDeptExcludeChild } from '@/api/system/dept';
+import { addDept, delDept, getDept, listDept, listDeptExcludeChild, updateDept } from '@/api/system/dept';
 import { DeptForm, DeptQuery, DeptVO } from '@/api/system/dept/types';
 import { UserVO } from '@/api/system/user/types';
 import { listUserByDeptId } from '@/api/system/user';
@@ -267,7 +267,7 @@ const handleAdd = async (row?: DeptVO) => {
   if (data) {
     deptOptions.value = data;
     if (row && row.deptId) {
-      form.value.parentId = row?.deptId;
+      form.value.parentId = row.deptId;
     }
     dialog.visible = true;
     dialog.title = '添加部门';
@@ -301,7 +301,18 @@ const handleUpdate = async (row: DeptVO) => {
 const submitForm = () => {
   deptFormRef.value?.validate(async (valid: boolean) => {
     if (valid) {
-      form.value.deptId ? await updateDept(form.value) : await addDept(form.value);
+      const payload: DeptForm = {
+        deptId: form.value.deptId,
+        parentId: form.value.parentId,
+        deptName: form.value.deptName,
+        deptCategory: form.value.deptCategory,
+        orderNum: form.value.orderNum,
+        leader: form.value.leader,
+        phone: form.value.phone,
+        email: form.value.email,
+        status: form.value.status
+      };
+      payload.deptId ? await updateDept(payload) : await addDept(payload);
       proxy?.$modal.msgSuccess('操作成功');
       dialog.visible = false;
       await getList();

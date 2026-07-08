@@ -204,7 +204,9 @@ describe('views/system/dict/data', () => {
         dictValue: '0',
         listClass: 'primary',
         cssClass: '',
-        dictSort: 1
+        dictSort: 1,
+        createTime: '2026-03-07 10:00:00',
+        createByName: 'admin'
       }
     });
     dictDataMocks.addData.mockResolvedValue(undefined);
@@ -313,6 +315,12 @@ describe('views/system/dict/data', () => {
     await flushPromises();
 
     expect(dictDataMocks.updateData).toHaveBeenCalledTimes(1);
+    expect(dictDataMocks.updateData).toHaveBeenCalledWith(
+      expect.not.objectContaining({
+        createTime: expect.anything(),
+        createByName: expect.anything()
+      })
+    );
     expect(dictDataMocks.msgSuccess).toHaveBeenCalledWith('操作成功');
   });
 

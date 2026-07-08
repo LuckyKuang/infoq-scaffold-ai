@@ -5,21 +5,26 @@
 ```json
 {
   "generatedAt": "2026-06-05T00:00:00.000Z",
-  "repoRoot": "/path/to/repo",
+  "repoRoot": ".",
   "sources": {
     "sqlFiles": [],
     "reactPages": [],
+    "reactProPages": [],
     "vueViews": [],
     "reactTests": [],
+    "reactProTests": [],
     "vueTests": []
   },
   "summary": {
     "totalCases": 0,
     "p0": 0,
     "p1": 0,
-    "p2": 0
+    "p2": 0,
+    "safetyGates": 0
   },
-  "cases": []
+  "cases": [],
+  "gaps": [],
+  "safetyGates": []
 }
 ```
 
@@ -32,7 +37,7 @@
 - `menuType`：`M`、`C`、`F` 或 `fixed`。
 - `routePath`：候选路由路径，必须以 `/` 开头。
 - `component`：后端菜单组件路径或固定页面路径。
-- `clients`：适用端数组，值为 `react`、`vue`。
+- `clients`：适用端数组，值为 `react`、`react-pro`、`vue`。
 - `priority`：`P0`、`P1`、`P2`。
 - `automationType`：`smoke`、`route`、`CRUD`、`permission`、`negative`、`visual`、`integration`。
 - `sideEffect`：布尔值。

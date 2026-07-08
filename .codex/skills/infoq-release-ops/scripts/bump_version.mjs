@@ -199,8 +199,6 @@ const filesToCheck = [
 ];
 
 const deployIdExampleFiles = [
-  [readmeFile, 'README deploy-id example'],
-  [deployDoc, 'docker compose deploy doc deploy-id examples'],
   [manualDeployDoc, 'manual deploy doc deploy-id example'],
   [systemdExample, 'systemd deploy-id example'],
   [appYaml, 'application.yml deploy-id comment'],
@@ -210,7 +208,6 @@ const deployIdExampleFiles = [
 ];
 
 const syncedDeployIdExampleFiles = [
-  [docsSyncedDeployDoc, 'docs site docker compose deploy doc deploy-id examples'],
   [docsSyncedManualDeployDoc, 'docs site manual deploy doc deploy-id example'],
   [docsSyncedSystemdExample, 'docs site systemd deploy-id example']
 ];

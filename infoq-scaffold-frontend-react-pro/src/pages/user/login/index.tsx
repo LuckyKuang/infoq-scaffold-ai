@@ -1,13 +1,15 @@
 import {GithubOutlined, LockOutlined, LoginOutlined, SafetyCertificateOutlined, UserOutlined,} from '@ant-design/icons';
 import {LoginForm, ProFormCheckbox, ProFormText,} from '@ant-design/pro-components';
-import {Helmet, history, Link, useIntl, useModel} from '@umijs/max';
+import {Helmet, history, Link, useModel} from '@umijs/max';
 import {App, Button, Divider} from 'antd';
 import {createStyles} from 'antd-style';
 import {useCallback, useEffect, useState} from 'react';
+import {useTranslation} from 'react-i18next';
 import LangSelect from '@/components/LangSelect';
 import {getCodeImg, getOAuthProviders, login,} from '@/services/ant-design-pro/api';
 import {useUserStore} from '@/store/modules/user';
 import {setToken} from '@/utils/auth';
+import '@/lang';
 import Settings from '../../../../config/defaultSettings';
 
 const useStyles = createStyles(({ token }) => ({
@@ -110,8 +112,10 @@ const Login: React.FC = () => {
   const { initialState, setInitialState } = useModel('@@initialState');
   const { styles } = useStyles();
   const { message } = App.useApp();
-  const intl = useIntl();
+  const { t } = useTranslation();
   const [rememberedLoginValues] = useState(() => getRememberedLoginValues());
+  const formatMessage = (id: string, defaultMessage: string) =>
+    t(id, { defaultValue: defaultMessage });
 
   const loadCode = useCallback(async () => {
     try {
@@ -176,10 +180,7 @@ const Login: React.FC = () => {
         ...authState,
       }));
       message.success(
-        intl.formatMessage({
-          id: 'pages.login.success',
-          defaultMessage: '登录成功！',
-        }),
+        formatMessage('pages.login.success', '登录成功！'),
       );
       const urlParams = new URL(window.location.href).searchParams;
       history.replace(getSafeRedirectUrl(urlParams.get('redirect')));
@@ -188,10 +189,7 @@ const Login: React.FC = () => {
         await loadCode();
       }
       message.error(
-        intl.formatMessage({
-          id: 'pages.login.failure',
-          defaultMessage: '登录失败，请重试！',
-        }),
+        formatMessage('pages.login.failure', '登录失败，请重试！'),
       );
     }
   };
@@ -213,10 +211,7 @@ const Login: React.FC = () => {
     <div className={styles.container}>
       <Helmet>
         <title>
-          {intl.formatMessage({
-            id: 'menu.login',
-            defaultMessage: '登录页',
-          })}
+          {formatMessage('menu.login', '登录页')}
           {Settings.title && ` - ${Settings.title}`}
         </title>
       </Helmet>
@@ -224,7 +219,7 @@ const Login: React.FC = () => {
       <div className={`${styles.main} login-form-shell`}>
         <LoginForm
           contentStyle={{ minWidth: 280, maxWidth: '75vw' }}
-          logo={<img alt="logo" src="/logo.svg" />}
+          logo={<img alt="logo" src={Settings.logo} />}
           title={process.env.VITE_APP_LOGO_TITLE || 'infoq-scaffold-backend'}
           subTitle={process.env.VITE_APP_TITLE || '后台管理系统'}
           initialValues={rememberedLoginValues}
@@ -239,17 +234,17 @@ const Login: React.FC = () => {
               prefix: <UserOutlined />,
               autoComplete: 'username',
             }}
-            placeholder={intl.formatMessage({
-              id: 'pages.login.username.placeholder',
-              defaultMessage: '用户名',
-            })}
+            placeholder={formatMessage(
+              'pages.login.username.placeholder',
+              '用户名',
+            )}
             rules={[
               {
                 required: true,
-                message: intl.formatMessage({
-                  id: 'pages.login.username.required',
-                  defaultMessage: '请输入用户名!',
-                }),
+                message: formatMessage(
+                  'pages.login.username.required',
+                  '请输入用户名!',
+                ),
               },
             ]}
           />
@@ -260,17 +255,17 @@ const Login: React.FC = () => {
               prefix: <LockOutlined />,
               autoComplete: 'current-password',
             }}
-            placeholder={intl.formatMessage({
-              id: 'pages.login.password.placeholder',
-              defaultMessage: '密码',
-            })}
+            placeholder={formatMessage(
+              'pages.login.password.placeholder',
+              '密码',
+            )}
             rules={[
               {
                 required: true,
-                message: intl.formatMessage({
-                  id: 'pages.login.password.required',
-                  defaultMessage: '请输入密码！',
-                }),
+                message: formatMessage(
+                  'pages.login.password.required',
+                  '请输入密码！',
+                ),
               },
             ]}
           />
@@ -290,44 +285,35 @@ const Login: React.FC = () => {
                   />
                 ) : null,
               }}
-              placeholder={intl.formatMessage({
-                id: 'pages.login.captcha.placeholder',
-                defaultMessage: '请输入验证码',
-              })}
+              placeholder={formatMessage(
+                'pages.login.captcha.placeholder',
+                '请输入验证码',
+              )}
               rules={[
                 {
                   required: true,
-                  message: intl.formatMessage({
-                    id: 'pages.login.captcha.required',
-                    defaultMessage: '请输入验证码！',
-                  }),
+                  message: formatMessage(
+                    'pages.login.captcha.required',
+                    '请输入验证码！',
+                  ),
                 },
               ]}
             />
           )}
           <div style={{ marginBottom: 24 }}>
             <ProFormCheckbox noStyle name="rememberMe">
-              {intl.formatMessage({
-                id: 'pages.login.rememberMe',
-                defaultMessage: '记住我',
-              })}
+              {formatMessage('pages.login.rememberMe', '记住我')}
             </ProFormCheckbox>
             <span style={{ float: 'right' }}>
               {forgotPasswordEnabled && (
                 <Link to="/forgot-password">
-                  {intl.formatMessage({
-                    id: 'pages.login.forgotPassword',
-                    defaultMessage: '忘记密码',
-                  })}
+                  {formatMessage('pages.login.forgotPassword', '忘记密码')}
                 </Link>
               )}
               {forgotPasswordEnabled && registerEnabled && <span> | </span>}
               {registerEnabled && (
                 <Link to="/register">
-                  {intl.formatMessage({
-                    id: 'pages.login.registerAccount',
-                    defaultMessage: '注册账号',
-                  })}
+                  {formatMessage('pages.login.registerAccount', '注册账号')}
                 </Link>
               )}
             </span>

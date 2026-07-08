@@ -420,6 +420,12 @@ export default function ClientPage() {
         onOk={handleSubmit}
       >
         <Form form={form} layout="vertical" initialValues={initialForm}>
+          <Form.Item name="id" hidden>
+            <Input />
+          </Form.Item>
+          <Form.Item name="clientId" hidden>
+            <Input />
+          </Form.Item>
           <Form.Item
             label="客户端Key"
             name="clientKey"

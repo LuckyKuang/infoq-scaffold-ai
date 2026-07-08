@@ -17,9 +17,6 @@ importers:
       '@rc-component/util':
         specifier: ^1.11.0
         version: 1.11.1(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      '@tanstack/react-query':
-        specifier: ^5.101.0
-        version: 5.101.0(react@19.2.7)
       antd:
         specifier: ^6.4.3
         version: 6.4.3(date-fns@2.30.0)(moment@2.30.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
@@ -2095,9 +2092,6 @@ packages:
   '@tanstack/query-core@4.44.0':
     resolution: {integrity: sha512-swSgb7OiPRR3UuIL7NuDrZNSMGmQD+wdtHxPD7j60SvBEnxbXurl5XOirtGEX2gm2hbK6mC8kMV1I+uO3l0UOw==}
 
-  '@tanstack/query-core@5.101.0':
-    resolution: {integrity: sha512-cQetA74EB+seWySv1TTKr828TnP0u39m6LykwDXIo84SNortpDkp30TMEjkqtYCNP9c40uT/iwl6MLiufEt0Ow==}
-
   '@tanstack/react-query-devtools@4.44.0':
     resolution: {integrity: sha512-ld07jweiS0/5iy8tITRbBsrj4jRcnU2/6tLPt9uHc9x3pvXWonTujmSPEoJ8pkDO4xtzHQl+N6dLiyZjvRKxJw==}
     peerDependencies:
@@ -2116,11 +2110,6 @@ packages:
         optional: true
       react-native:
         optional: true
-
-  '@tanstack/react-query@5.101.0':
-    resolution: {integrity: sha512-rLlJXSpkqfizLWgkR5+eLeIk0MvTx/meEIR7LRjxic+qxiQP8zVjq7BqQkiCMNLQBlLfuOLqqr6KO5GtrDlmSg==}
-    peerDependencies:
-      react: ^18 || ^19
 
   '@testing-library/dom@10.4.1':
     resolution: {integrity: sha512-o4PXJQidqJl82ckFaXUeoAW+XysPLauYI43Abki5hABd853iMhitooc6znOnczgbTYmEP6U6/y1ZyKAIsvMKGg==}
@@ -9742,8 +9731,6 @@ snapshots:
 
   '@tanstack/query-core@4.44.0': {}
 
-  '@tanstack/query-core@5.101.0': {}
-
   '@tanstack/react-query-devtools@4.44.0(@tanstack/react-query@4.44.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)':
     dependencies:
       '@tanstack/match-sorter-utils': 8.19.4
@@ -9760,11 +9747,6 @@ snapshots:
       use-sync-external-store: 1.6.0(react@19.2.7)
     optionalDependencies:
       react-dom: 19.2.7(react@19.2.7)
-
-  '@tanstack/react-query@5.101.0(react@19.2.7)':
-    dependencies:
-      '@tanstack/query-core': 5.101.0
-      react: 19.2.7
 
   '@testing-library/dom@10.4.1':
     dependencies:

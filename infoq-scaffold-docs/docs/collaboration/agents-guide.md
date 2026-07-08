@@ -156,8 +156,9 @@ repo 级 custom agents 的真值不写在 `AGENTS.md` 之外的任意散落文�
 - 通用浏览器执行器：`infoq-browser-automate`
 - Ant Design / Element Plus 组件参考：`infoq-component-reference`
 - 版本升级、package / 小程序 manifest 同步和发布操作：`infoq-release-ops`
+- 本地 / WSL2 / macOS Colima / Linux Docker Compose 部署验证：`infoq-deploy-verify`
 
-React / Vue 与 admin / weapp 的差异留在 `references/*` 或 `--client react|vue` 参数里。真实验证码、OCR、登录态和动态路由 smoke 由 `infoq-admin-e2e` 负责；真实后台页面运营维护和权限巡检由 `infoq-admin-ops` 负责；SQL、数据库、Redis、数据修复、迁移和一致性核对由 `infoq-data-ops` 负责；普通页面交互、截图和 console/pageerror 证据由 `infoq-browser-automate` 负责；前端单测、构建和本地栈由 `infoq-frontend-verify` 负责。
+React / Vue 与 admin / weapp 的差异留在 `references/*` 或 `--client react|vue` 参数里。真实验证码、OCR、登录态和动态路由 smoke 由 `infoq-admin-e2e` 负责；真实后台页面运营维护和权限巡检由 `infoq-admin-ops` 负责；SQL、数据库、Redis、数据修复、迁移和一致性核对由 `infoq-data-ops` 负责；普通页面交互、截图和 console/pageerror 证据由 `infoq-browser-automate` 负责；前端单测、构建和本地栈由 `infoq-frontend-verify` 负责；部署文档和 WSL2 Docker CE / macOS Colima / Linux Docker CE 全栈拉起验证由 `infoq-deploy-verify` 负责。
 
 维护这些 skill 时优先破坏性重构现有领域 skill，不用新增泛化 skill 绕开边界。每个可执行 skill 默认遵循：判定范围、只读探测或 dry-run、目标与影响枚举、写入或危险动作门禁、执行后验证、`doc/tmp/` 证据留存和显式失败。
 

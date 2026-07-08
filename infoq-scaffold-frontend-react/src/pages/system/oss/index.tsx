@@ -1,23 +1,23 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   DeleteOutlined,
   DownloadOutlined,
   EyeInvisibleOutlined,
   EyeOutlined,
+  PlusOutlined,
   ReloadOutlined,
   SearchOutlined,
   SettingOutlined,
   UploadOutlined
 } from '@ant-design/icons';
-import { Button, Card, Col, DatePicker, Form, Image, Input, Row, Space, Table, Tooltip } from 'antd';
+import { Button, Card, Col, DatePicker, Form, Image, Input, Row, Space, Table, Tooltip, Upload } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
+import type { UploadFile, UploadProps } from 'antd/es/upload/interface';
 import type { Dayjs } from 'dayjs';
 import { useNavigate } from 'react-router-dom';
-import { delOss, listOss } from '@/api/system/oss';
+import { delOss, listOss, uploadOss } from '@/api/system/oss';
 import { getConfigKey, updateConfigByKey } from '@/api/system/config';
 import type { OssForm, OssQuery, OssVO } from '@/api/system/oss/types';
-import FileUpload from '@/components/FileUpload';
-import ImageUpload from '@/components/ImageUpload';
 import Pagination from '@/components/Pagination';
 import RightToolbar from '@/components/RightToolbar';
 import CrudModal from '@/components/CrudModal';
@@ -41,6 +41,41 @@ const formatRange = (range: [Dayjs, Dayjs] | null) => (range ? [range[0].format(
 
 const isImage = (suffix?: string) => ['.png', '.jpg', '.jpeg', '.gif', '.webp'].includes((suffix || '').toLowerCase());
 
+const fileUploadTypes = ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'pdf'];
+const imageUploadTypes = ['png', 'jpg', 'jpeg'];
+const maxUploadSizeMb = 5;
+
+const getFileExtension = (fileName: string) => (fileName.includes('.') ? fileName.slice(fileName.lastIndexOf('.') + 1).toLowerCase() : '');
+
+const getLocalThumbUrl = (file: UploadFile, type: 'file' | 'image') => {
+  if (type !== 'image' || file.thumbUrl || !(file.originFileObj instanceof Blob) || typeof URL.createObjectURL !== 'function') {
+    return file.thumbUrl;
+  }
+  return URL.createObjectURL(file.originFileObj);
+};
+
+const validatePendingUploadFile = (file: File, type: 'file' | 'image') => {
+  const fileName = file.name || '';
+  const fileExt = getFileExtension(fileName);
+  const allowedTypes = type === 'image' ? imageUploadTypes : fileUploadTypes;
+  const allowed = type === 'image' ? allowedTypes.includes(fileExt) || file.type.startsWith('image/') : allowedTypes.includes(fileExt);
+  if (!allowed) {
+    modal.msgError(
+      type === 'image' ? `文件格式不正确，请上传 ${allowedTypes.join('/')} 图片格式文件` : `文件格式不正确，请上传 ${allowedTypes.join('/')} 格式文件`
+    );
+    return false;
+  }
+  if (fileName.includes(',')) {
+    modal.msgError('文件名不能包含英文逗号');
+    return false;
+  }
+  if (file.size / 1024 / 1024 > maxUploadSizeMb) {
+    modal.msgError(type === 'image' ? `上传图片大小不能超过 ${maxUploadSizeMb}MB` : `上传文件大小不能超过 ${maxUploadSizeMb}MB`);
+    return false;
+  }
+  return true;
+};
+
 export default function OssPage() {
   const navigate = useNavigate();
   const [query, setQuery] = useState<OssQuery>(initialQuery);
@@ -54,6 +89,9 @@ export default function OssPage() {
   const [selectedIds, setSelectedIds] = useState<Array<string | number>>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [uploadType, setUploadType] = useState<'file' | 'image'>('file');
+  const [uploadSubmitting, setUploadSubmitting] = useState(false);
+  const [pendingUploadFiles, setPendingUploadFiles] = useState<UploadFile[]>([]);
+  const localThumbUrlsRef = useRef<string[]>([]);
   const [form] = Form.useForm<OssForm>();
 
   const loadPreviewSetting = useCallback(async () => {
@@ -181,6 +219,98 @@ export default function OssPage() {
     }
   };
 
+  const revokeLocalThumbUrls = useCallback(() => {
+    if (typeof URL.revokeObjectURL !== 'function') {
+      localThumbUrlsRef.current = [];
+      return;
+    }
+    localThumbUrlsRef.current.forEach((url) => {
+      URL.revokeObjectURL(url);
+    });
+    localThumbUrlsRef.current = [];
+  }, []);
+
+  useEffect(() => revokeLocalThumbUrls, [revokeLocalThumbUrls]);
+
+  const resetPendingUpload = () => {
+    revokeLocalThumbUrls();
+    form.setFieldsValue({ file: undefined });
+    setPendingUploadFiles([]);
+  };
+
+  const openUploadDialog = (type: 'file' | 'image') => {
+    setUploadType(type);
+    resetPendingUpload();
+    setDialogOpen(true);
+  };
+
+  const closeUploadDialog = () => {
+    setDialogOpen(false);
+    resetPendingUpload();
+  };
+
+  const uploadAccept =
+    uploadType === 'image' ? imageUploadTypes.map((type) => `.${type}`).join(',') : fileUploadTypes.map((type) => `.${type}`).join(',');
+
+  const uploadTip =
+    uploadType === 'image'
+      ? `请上传大小不超过 ${maxUploadSizeMb}MB，格式为 ${imageUploadTypes.join('/')} 的图片`
+      : `请上传大小不超过 ${maxUploadSizeMb}MB，格式为 ${fileUploadTypes.join('/')} 的文件`;
+
+  const pendingUploadProps: UploadProps = {
+    name: 'file',
+    maxCount: 1,
+    accept: uploadAccept,
+    listType: uploadType === 'image' ? 'picture-card' : 'text',
+    fileList: pendingUploadFiles,
+    beforeUpload(file) {
+      if (!validatePendingUploadFile(file, uploadType)) {
+        return Upload.LIST_IGNORE;
+      }
+      return false;
+    },
+    onChange(info) {
+      const next = info.fileList.slice(-1).map((item) => ({
+        ...item,
+        thumbUrl: getLocalThumbUrl(item, uploadType),
+        status: 'done' as const
+      }));
+      next.forEach((item) => {
+        if (item.thumbUrl?.startsWith('blob:')) {
+          localThumbUrlsRef.current.push(item.thumbUrl);
+        }
+      });
+      setPendingUploadFiles(next);
+      form.setFieldsValue({ file: next[0]?.name });
+    },
+    onRemove() {
+      resetPendingUpload();
+      return true;
+    }
+  };
+
+  const handleUploadSubmit = async () => {
+    const file = pendingUploadFiles[0]?.originFileObj;
+    if (!(file instanceof Blob)) {
+      modal.msgWarning('请选择要上传的文件');
+      return;
+    }
+
+    setUploadSubmitting(true);
+    modal.loading(uploadType === 'image' ? '正在上传图片，请稍候...' : '正在上传文件，请稍候...');
+    try {
+      await uploadOss(file, 'file');
+      modal.msgSuccess('上传成功');
+      closeUploadDialog();
+      loadList(query, dateRange);
+    } catch {
+      modal.msgError(uploadType === 'image' ? '上传图片失败' : '上传文件失败');
+    } finally {
+      modal.closeLoading();
+      setUploadSubmitting(false);
+    }
+  };
+
   return (
     <Space orientation="vertical" size={12} style={{ width: '100%' }}>
       {showSearch && (
@@ -294,28 +424,12 @@ export default function OssPage() {
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, marginBottom: 12, flexWrap: 'wrap' }}>
           <Space wrap>
             {auth.hasPermiOr(['system:oss:upload']) && (
-              <Button
-                className="btn-plain-primary"
-                icon={<UploadOutlined />}
-                onClick={() => {
-                  setUploadType('file');
-                  form.setFieldsValue({ file: undefined });
-                  setDialogOpen(true);
-                }}
-              >
+              <Button className="btn-plain-primary" icon={<UploadOutlined />} onClick={() => openUploadDialog('file')}>
                 上传文件
               </Button>
             )}
             {auth.hasPermiOr(['system:oss:upload']) && (
-              <Button
-                className="btn-plain-primary"
-                icon={<UploadOutlined />}
-                onClick={() => {
-                  setUploadType('image');
-                  form.setFieldsValue({ file: undefined });
-                  setDialogOpen(true);
-                }}
-              >
+              <Button className="btn-plain-primary" icon={<UploadOutlined />} onClick={() => openUploadDialog('image')}>
                 上传图片
               </Button>
             )}
@@ -377,15 +491,24 @@ export default function OssPage() {
       <CrudModal
         open={dialogOpen}
         title={uploadType === 'file' ? '上传文件' : '上传图片'}
-        onCancel={() => setDialogOpen(false)}
-        onOk={() => {
-          setDialogOpen(false);
-          loadList(initialQuery, null);
-        }}
+        confirmLoading={uploadSubmitting}
+        okText="确 定"
+        cancelText="取 消"
+        onCancel={closeUploadDialog}
+        onOk={handleUploadSubmit}
       >
         <Form form={form} layout="vertical">
           <Form.Item label="文件" name="file">
-            {uploadType === 'file' ? <FileUpload limit={1} /> : <ImageUpload limit={1} />}
+            <div className="oss-pending-upload">
+              <Upload {...pendingUploadProps}>
+                {pendingUploadFiles.length >= 1 ? null : uploadType === 'image' ? (
+                  <PlusOutlined />
+                ) : (
+                  <Button icon={<UploadOutlined />}>选取文件</Button>
+                )}
+              </Upload>
+              <div style={{ color: 'rgba(0, 0, 0, 0.45)', marginTop: 6 }}>{uploadTip}</div>
+            </div>
           </Form.Item>
         </Form>
       </CrudModal>

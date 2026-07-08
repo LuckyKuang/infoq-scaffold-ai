@@ -210,4 +210,36 @@ describe('layout/KeepAliveView', () => {
     expect(screen.queryByText('User Page')).toBeNull();
     expect(screen.getByText('Role Page')).toBeInTheDocument();
   });
+
+  it('evicts the oldest inactive route when cached routes exceed the limit', () => {
+    useTagsViewStore.setState({
+      visitedViews: Array.from({ length: 9 }, (_, index) => ({
+        fullPath: `/system/page-${index + 1}`,
+        name: `Page${index + 1}`,
+        path: `/system/page-${index + 1}`,
+        title: `页面${index + 1}`,
+      })),
+      cachedViews: [],
+    });
+
+    const { rerender, container } = render(
+      <KeepAliveView activePath="/system/page-1">
+        <div>Page 1</div>
+      </KeepAliveView>,
+    );
+
+    for (let index = 2; index <= 9; index += 1) {
+      rerender(
+        <KeepAliveView activePath={`/system/page-${index}`}>
+          <div>{`Page ${index}`}</div>
+        </KeepAliveView>,
+      );
+    }
+
+    expect(screen.queryByText('Page 1')).toBeNull();
+    expect(screen.getByText('Page 9')).toBeInTheDocument();
+    expect(container.querySelectorAll('[data-keep-alive-path]')).toHaveLength(
+      8,
+    );
+  });
 });

@@ -4,6 +4,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 const uploadEditorMocks = vi.hoisted(() => ({
   listByIds: vi.fn(),
+  uploadOss: vi.fn(),
   delOss: vi.fn(),
   modal: {
     confirm: vi.fn(),
@@ -16,26 +17,84 @@ const uploadEditorMocks = vi.hoisted(() => ({
 }));
 
 vi.mock('antd', async () => {
-  const Upload = Object.assign(({
-    children,
-    fileList,
-    onPreview
-  }: {
-    children?: ReactNode;
-    fileList?: Array<{ uid: string; name?: string; url?: string }>;
-    onPreview?: (file: { uid: string; name?: string; url?: string }) => void;
-  }) => (
-    <div data-testid="upload-stub">
-      {fileList?.map((file) => (
-        <button key={file.uid} type="button" onClick={() => onPreview?.(file)}>
-          {file.name}
-        </button>
-      ))}
-      {children}
-    </div>
-  ), {
-    LIST_IGNORE: Symbol('LIST_IGNORE')
-  });
+  const Upload = Object.assign(
+    ({
+      children,
+      fileList,
+      listType,
+      showUploadList,
+      beforeUpload,
+      customRequest,
+      onChange,
+      onPreview
+    }: {
+      children?: ReactNode;
+      fileList?: Array<{ uid: string; name?: string; url?: string; status?: string; response?: unknown }>;
+      listType?: string;
+      showUploadList?: boolean;
+      beforeUpload?: (file: File & { uid: string }, fileList: Array<File & { uid: string }>) => boolean | symbol;
+      customRequest?: (options: {
+        file: File & { uid: string };
+        filename: string;
+        onProgress: (event: { percent: number }) => void;
+        onSuccess: (response: unknown) => void;
+        onError: (error: Error) => void;
+      }) => void;
+      onChange?: (info: {
+        file: { uid: string; name: string; status: string; response?: unknown; error?: Error };
+        fileList: Array<{ uid: string; name: string; status: string; response?: unknown; error?: Error }>;
+      }) => void;
+      onPreview?: (file: { uid: string; name?: string; url?: string }) => void;
+    }) => {
+      const runUpload = () => {
+        const imageFile = listType === 'picture-card' || showUploadList === false;
+        const file = Object.assign(
+          new File(['payload'], imageFile ? 'demo.png' : 'demo.pdf', { type: imageFile ? 'image/png' : 'application/pdf' }),
+          {
+            uid: 'upload-1'
+          }
+        );
+        const beforeResult = beforeUpload?.(file, [file]);
+        if (beforeResult === Upload.LIST_IGNORE || beforeResult === false) {
+          return;
+        }
+        const uploading = { uid: file.uid, name: file.name, status: 'uploading' };
+        onChange?.({ file: uploading, fileList: [uploading] });
+        customRequest?.({
+          file,
+          filename: 'file',
+          onProgress: () => undefined,
+          onSuccess: (response) => {
+            const done = { uid: file.uid, name: file.name, status: 'done', response };
+            onChange?.({ file: done, fileList: [done] });
+          },
+          onError: (error) => {
+            const failed = { uid: file.uid, name: file.name, status: 'error', error };
+            onChange?.({ file: failed, fileList: [failed] });
+          }
+        });
+      };
+
+      return (
+        <div data-testid="upload-stub">
+          {fileList?.map((file) => (
+            <button key={file.uid} type="button" onClick={() => onPreview?.(file)}>
+              {file.name}
+            </button>
+          ))}
+          {children}
+          {customRequest && (
+            <button type="button" data-testid="simulate-upload" onClick={runUpload}>
+              模拟上传
+            </button>
+          )}
+        </div>
+      );
+    },
+    {
+      LIST_IGNORE: Symbol('LIST_IGNORE')
+    }
+  );
 
   const Button = ({ children, onClick }: { children?: ReactNode; onClick?: () => void }) => (
     <button type="button" onClick={onClick}>
@@ -64,6 +123,7 @@ vi.mock('antd', async () => {
 
 vi.mock('@/api/system/oss', () => ({
   listByIds: uploadEditorMocks.listByIds,
+  uploadOss: uploadEditorMocks.uploadOss,
   delOss: uploadEditorMocks.delOss
 }));
 
@@ -74,7 +134,7 @@ vi.mock('@/utils/modal', () => ({
 const { default: FileUpload } = await import('@/components/FileUpload');
 const { default: ImageUpload } = await import('@/components/ImageUpload');
 const { default: Editor } = await import('@/components/Editor');
-const { listByIds } = await import('@/api/system/oss');
+const { listByIds, uploadOss } = await import('@/api/system/oss');
 
 describe('components/upload-editor', () => {
   beforeEach(() => {
@@ -90,6 +150,14 @@ describe('components/upload-editor', () => {
       ]
     });
     uploadEditorMocks.delOss.mockResolvedValue(undefined);
+    uploadEditorMocks.uploadOss.mockResolvedValue({
+      code: 200,
+      data: {
+        ossId: '9',
+        fileName: 'uploaded.png',
+        url: 'https://cdn.example.com/uploaded.png'
+      }
+    });
   });
 
   it('renders FileUpload and hydrates files', async () => {
@@ -162,6 +230,46 @@ describe('components/upload-editor', () => {
     expect(screen.getByText('png')).toBeInTheDocument();
   });
 
+  it('closes ImageUpload loading after successful upload', async () => {
+    const onChange = vi.fn();
+    render(<ImageUpload onChange={onChange} />);
+
+    fireEvent.click(screen.getByTestId('simulate-upload'));
+
+    await waitFor(() => {
+      expect(uploadOss).toHaveBeenCalled();
+    });
+    await waitFor(() => {
+      expect(onChange).toHaveBeenCalledWith('9');
+    });
+    expect(uploadEditorMocks.modal.loading).toHaveBeenCalledWith('正在上传图片，请稍候...');
+    expect(uploadEditorMocks.modal.closeLoading).toHaveBeenCalled();
+  });
+
+  it('closes FileUpload loading after successful upload', async () => {
+    const onChange = vi.fn();
+    uploadEditorMocks.uploadOss.mockResolvedValueOnce({
+      code: 200,
+      data: {
+        ossId: '10',
+        fileName: 'uploaded.pdf',
+        url: 'https://cdn.example.com/uploaded.pdf'
+      }
+    });
+    render(<FileUpload onChange={onChange} />);
+
+    fireEvent.click(screen.getByTestId('simulate-upload'));
+
+    await waitFor(() => {
+      expect(uploadOss).toHaveBeenCalled();
+    });
+    await waitFor(() => {
+      expect(onChange).toHaveBeenCalledWith('10');
+    });
+    expect(uploadEditorMocks.modal.loading).toHaveBeenCalledWith('正在上传文件，请稍候...');
+    expect(uploadEditorMocks.modal.closeLoading).toHaveBeenCalled();
+  });
+
   it('updates editor content', () => {
     const onChange = vi.fn();
     render(<Editor value="" onChange={onChange} />);
@@ -173,5 +281,20 @@ describe('components/upload-editor', () => {
     });
 
     expect(onChange).toHaveBeenCalledWith('<p>hello</p>');
+  });
+
+  it('inserts editor image after successful upload', async () => {
+    const onChange = vi.fn();
+    render(<Editor value="<p>hello</p>" onChange={onChange} />);
+
+    fireEvent.click(screen.getByTestId('simulate-upload'));
+
+    await waitFor(() => {
+      expect(uploadOss).toHaveBeenCalled();
+    });
+    await waitFor(() => {
+      expect(onChange).toHaveBeenCalledWith('<p>hello</p><p><img src="https://cdn.example.com/uploaded.png" alt="image" /></p>');
+    });
+    expect(uploadEditorMocks.modal.closeLoading).toHaveBeenCalled();
   });
 });

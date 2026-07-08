@@ -1,5 +1,5 @@
-# 前端构建阶段：React Pro 需要 Node 22+
-FROM node:22.13.1 AS builder
+# 前端构建阶段：使用 Node 24.18.0 LTS 构建
+FROM node:24.18.0 AS builder
 
 LABEL maintainer="Pontus"
 
@@ -26,7 +26,7 @@ COPY . ./
 
 RUN pnpm run build
 
-FROM nginx:1.28.2
+FROM nginx:1.30.3
 
 ENV TZ=Asia/Shanghai \
     NGINX_PORT=80

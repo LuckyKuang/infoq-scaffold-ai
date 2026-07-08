@@ -2,8 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Button, Upload } from 'antd';
 import type { UploadFile, UploadProps } from 'antd/es/upload/interface';
 import { UploadOutlined } from '@ant-design/icons';
-import { delOss, listByIds } from '@/api/system/oss';
-import { globalHeaders } from '@/utils/request';
+import { delOss, listByIds, uploadOss } from '@/api/system/oss';
 import modal from '@/utils/modal';
 
 type FileUploadValue = string | UploadFile[];
@@ -27,6 +26,8 @@ const toValueString = (list: UploadFileWithOss[]) =>
     .filter((item) => item.ossId)
     .map((item) => item.ossId)
     .join(',');
+
+const asError = (error: unknown, fallback: string) => (error instanceof Error ? error : new Error(String(error || fallback)));
 
 export default function FileUpload({
   value,
@@ -76,12 +77,45 @@ export default function FileUpload({
   const uploadProps: UploadProps = {
     name: 'file',
     multiple: true,
-    action: `${import.meta.env.VITE_APP_BASE_API}/resource/oss/upload`,
-    headers: globalHeaders(),
     maxCount: limit,
     accept,
     fileList,
     disabled,
+    customRequest({ file, filename, onProgress, onSuccess, onError }) {
+      const controller = new AbortController();
+      if (!(file instanceof Blob)) {
+        const error = new Error('上传文件格式错误');
+        modal.closeLoading();
+        onError?.(error);
+        return {
+          abort: () => controller.abort()
+        };
+      }
+
+      uploadOss(
+        file,
+        String(filename || 'file'),
+        (event) => {
+          if (event.total) {
+            onProgress?.({ percent: (event.loaded / event.total) * 100 });
+          }
+        },
+        controller.signal
+      )
+        .then((response) => {
+          onSuccess?.(response);
+        })
+        .catch((error: unknown) => {
+          onError?.(asError(error, '上传文件失败'));
+        })
+        .finally(() => {
+          modal.closeLoading();
+        });
+
+      return {
+        abort: () => controller.abort()
+      };
+    },
     beforeUpload(file) {
       const fileExt = file.name.includes('.') ? file.name.slice(file.name.lastIndexOf('.') + 1).toLowerCase() : '';
       if (!fileType.includes(fileExt)) {

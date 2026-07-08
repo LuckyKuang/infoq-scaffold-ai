@@ -116,8 +116,26 @@
     <el-dialog v-model="dialog.visible" :title="dialog.title" width="500px" append-to-body>
       <el-form ref="ossFormRef" :model="form" :rules="rules" label-width="80px">
         <el-form-item label="文件名">
-          <FileUpload v-if="type === 0" v-model="form.file" />
-          <ImageUpload v-if="type === 1" v-model="form.file" />
+          <div class="oss-pending-upload">
+            <el-upload
+              v-model:file-list="pendingUploadFiles"
+              name="file"
+              :auto-upload="false"
+              :accept="pendingUploadAccept"
+              :limit="1"
+              :list-type="type === 1 ? 'picture-card' : 'text'"
+              :on-change="handlePendingUploadChange"
+              :on-remove="handlePendingUploadRemove"
+              :on-exceed="handlePendingUploadExceed"
+            >
+              <el-button v-if="type === 0 && pendingUploadFiles.length < 1" type="primary">选取文件</el-button>
+              <div v-if="type === 1 && pendingUploadFiles.length < 1" class="oss-image-upload-trigger" aria-label="选择图片">
+                <span class="oss-image-upload-plus">+</span>
+                <span>选择图片</span>
+              </div>
+            </el-upload>
+            <div class="oss-pending-upload-tip">{{ pendingUploadTip }}</div>
+          </div>
         </el-form-item>
       </el-form>
       <template #footer>
@@ -131,11 +149,10 @@
 </template>
 
 <script setup name="Oss" lang="ts">
-import { delOss, listOss } from '@/api/system/oss';
-import FileUpload from '@/components/FileUpload/index.vue';
+import { delOss, listOss, uploadOss } from '@/api/system/oss';
 import ImagePreview from '@/components/ImagePreview/index.vue';
-import ImageUpload from '@/components/ImageUpload/index.vue';
 import { OssForm, OssQuery, OssVO } from '@/api/system/oss/types';
+import type { UploadFile, UploadFiles, UploadProps, UploadRawFile, UploadUserFile } from 'element-plus/es/components/upload';
 
 const router = useRouter();
 const { proxy } = getCurrentInstance() as ComponentInternalInstance;
@@ -152,6 +169,11 @@ const total = ref(0);
 const type = ref(0);
 const previewListResource = ref(true);
 const dateRangeCreateTime = ref<[DateModelType, DateModelType]>(['', '']);
+const pendingUploadFiles = ref<UploadUserFile[]>([]);
+
+const fileUploadTypes = ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'pdf'];
+const imageUploadTypes = ['png', 'jpg', 'jpeg'];
+const maxUploadSizeMb = 5;
 
 const dialog = reactive<DialogOption>({
   visible: false,
@@ -188,6 +210,85 @@ const data = reactive<PageData<OssForm, OssQuery>>({
 
 const { queryParams, form, rules } = toRefs(data);
 
+const pendingUploadTypes = computed(() => (type.value === 1 ? imageUploadTypes : fileUploadTypes));
+const pendingUploadAccept = computed(() => pendingUploadTypes.value.map((item) => `.${item}`).join(','));
+const pendingUploadTip = computed(() =>
+  type.value === 1
+    ? `请上传大小不超过 ${maxUploadSizeMb}MB，格式为 ${imageUploadTypes.join('/')} 的图片`
+    : `请上传大小不超过 ${maxUploadSizeMb}MB，格式为 ${fileUploadTypes.join('/')} 的文件`
+);
+
+const getFileExtension = (fileName: string) => (fileName.includes('.') ? fileName.slice(fileName.lastIndexOf('.') + 1).toLowerCase() : '');
+
+const toImageMimeTypes = (types: string[]) =>
+  types.map((item) => {
+    if (item === 'jpg') {
+      return 'image/jpeg';
+    }
+    if (item === 'svg') {
+      return 'image/svg+xml';
+    }
+    return `image/${item}`;
+  });
+
+const validatePendingUploadFile = (file: UploadRawFile) => {
+  const fileName = file.name || '';
+  const fileExt = getFileExtension(fileName);
+  const allowedTypes = pendingUploadTypes.value;
+  const isAllowed =
+    type.value === 1
+      ? allowedTypes.includes(fileExt) || toImageMimeTypes(allowedTypes).includes((file.type || '').toLowerCase())
+      : allowedTypes.includes(fileExt);
+  if (!isAllowed) {
+    proxy?.$modal.msgError(
+      type.value === 1 ? `文件格式不正确，请上传 ${allowedTypes.join('/')} 图片格式文件` : `文件格式不正确，请上传 ${allowedTypes.join('/')} 格式文件`
+    );
+    return false;
+  }
+  if (fileName.includes(',')) {
+    proxy?.$modal.msgError('文件名不能包含英文逗号');
+    return false;
+  }
+  if (file.size / 1024 / 1024 > maxUploadSizeMb) {
+    proxy?.$modal.msgError(type.value === 1 ? `上传图片大小不能超过 ${maxUploadSizeMb}MB` : `上传文件大小不能超过 ${maxUploadSizeMb}MB`);
+    return false;
+  }
+  return true;
+};
+
+const syncPendingUploadForm = () => {
+  form.value.file = pendingUploadFiles.value[0]?.name;
+};
+
+const resetPendingUpload = () => {
+  pendingUploadFiles.value = [];
+  form.value.file = undefined;
+};
+
+const handlePendingUploadChange: UploadProps['onChange'] = (uploadFile: UploadFile, uploadFiles: UploadFiles) => {
+  if (!uploadFile.raw || !validatePendingUploadFile(uploadFile.raw)) {
+    pendingUploadFiles.value = uploadFiles.filter((item) => item.uid !== uploadFile.uid) as UploadUserFile[];
+    syncPendingUploadForm();
+    return;
+  }
+  pendingUploadFiles.value = uploadFiles.slice(-1).map((item) => ({
+    ...item,
+    status: 'success'
+  })) as UploadUserFile[];
+  syncPendingUploadForm();
+};
+
+const handlePendingUploadRemove: UploadProps['onRemove'] = (_uploadFile: UploadFile, uploadFiles: UploadFiles) => {
+  pendingUploadFiles.value = uploadFiles as UploadUserFile[];
+  syncPendingUploadForm();
+};
+
+const handlePendingUploadExceed: UploadProps['onExceed'] = () => {
+  proxy?.$modal.msgWarning('最多上传 1 个文件');
+};
+
+const getPendingUploadRawFile = () => (pendingUploadFiles.value[0] as UploadFile | undefined)?.raw;
+
 /** 查询OSS对象存储列表 */
 const getList = async () => {
   loading.value = true;
@@ -212,6 +313,7 @@ function cancel() {
 /** 表单重置 */
 function reset() {
   form.value = { ...initFormData };
+  resetPendingUpload();
   ossFormRef.value?.resetFields();
 }
 /** 搜索按钮操作 */
@@ -309,9 +411,27 @@ const handleImage = () => {
   dialog.title = '上传图片';
 };
 /** 提交按钮 */
-const submitForm = () => {
-  dialog.visible = false;
-  getList();
+const submitForm = async () => {
+  const file = getPendingUploadRawFile();
+  if (!file) {
+    proxy?.$modal.msgWarning('请选择要上传的文件');
+    return;
+  }
+
+  buttonLoading.value = true;
+  proxy?.$modal.loading(type.value === 1 ? '正在上传图片，请稍候...' : '正在上传文件，请稍候...');
+  try {
+    await uploadOss(file, 'file');
+    proxy?.$modal.msgSuccess('上传成功');
+    dialog.visible = false;
+    reset();
+    await getList();
+  } catch {
+    proxy?.$modal.msgError(type.value === 1 ? '上传图片失败' : '上传文件失败');
+  } finally {
+    proxy?.$modal.closeLoading();
+    buttonLoading.value = false;
+  }
 };
 /** 下载按钮操作 */
 const handleDownload = (row: OssVO) => {
@@ -343,3 +463,33 @@ onMounted(() => {
   getList();
 });
 </script>
+
+<style scoped lang="scss">
+.oss-pending-upload {
+  width: 100%;
+}
+
+.oss-image-upload-trigger {
+  align-items: center;
+  color: var(--el-text-color-secondary);
+  display: flex;
+  flex-direction: column;
+  font-size: 13px;
+  gap: 6px;
+  height: 100%;
+  justify-content: center;
+  width: 100%;
+}
+
+.oss-image-upload-plus {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.oss-pending-upload-tip {
+  color: var(--el-text-color-secondary);
+  font-size: 13px;
+  line-height: 1.5;
+  margin-top: 6px;
+}
+</style>

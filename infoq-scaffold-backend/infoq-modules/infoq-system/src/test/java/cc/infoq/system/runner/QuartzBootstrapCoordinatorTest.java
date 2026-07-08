@@ -96,15 +96,15 @@ class QuartzBootstrapCoordinatorTest {
         LockInfo lockInfo = new LockInfo("k", "v", -1L, 3000L, 1, new Object(), mock(LockExecutor.class));
         when(environment.acceptsProfiles(Profiles.of("prod"))).thenReturn(true);
         when(lockTemplate.lock("infoq:quartz:bootstrap-reconcile:prod", -1L, 3000L)).thenReturn(lockInfo);
-        when(markerStore.hasMarker("infoq:quartz:bootstrap:applied:prod:2.1.7-20260602120000")).thenReturn(true);
+        when(markerStore.hasMarker("infoq:quartz:bootstrap:applied:prod:2.1.8-20260602120000")).thenReturn(true);
 
         boolean executed = coordinator.reconcile(runnable);
 
         assertFalse(executed);
         verify(runnable, never()).run();
         verify(lockTemplate).releaseLock(lockInfo);
-        verify(markerStore).hasMarker("infoq:quartz:bootstrap:applied:prod:2.1.7-20260602120000");
-        verify(markerStore, never()).markApplied("infoq:quartz:bootstrap:applied:prod:2.1.7-20260602120000");
+        verify(markerStore).hasMarker("infoq:quartz:bootstrap:applied:prod:2.1.8-20260602120000");
+        verify(markerStore, never()).markApplied("infoq:quartz:bootstrap:applied:prod:2.1.8-20260602120000");
     }
 
     @Test
@@ -116,35 +116,35 @@ class QuartzBootstrapCoordinatorTest {
         LockInfo lockInfo = new LockInfo("k", "v", -1L, 3000L, 1, new Object(), mock(LockExecutor.class));
         when(environment.acceptsProfiles(Profiles.of("prod"))).thenReturn(true);
         when(lockTemplate.lock("infoq:quartz:bootstrap-reconcile:prod", -1L, 3000L)).thenReturn(lockInfo);
-        when(markerStore.hasMarker("infoq:quartz:bootstrap:applied:prod:2.1.7-20260602120000")).thenReturn(false);
+        when(markerStore.hasMarker("infoq:quartz:bootstrap:applied:prod:2.1.8-20260602120000")).thenReturn(false);
 
         boolean executed = coordinator.reconcile(runnable);
 
         assertTrue(executed);
         verify(runnable).run();
         verify(lockTemplate).releaseLock(lockInfo);
-        verify(markerStore).hasMarker("infoq:quartz:bootstrap:applied:prod:2.1.7-20260602120000");
-        verify(markerStore).markApplied("infoq:quartz:bootstrap:applied:prod:2.1.7-20260602120000");
+        verify(markerStore).hasMarker("infoq:quartz:bootstrap:applied:prod:2.1.8-20260602120000");
+        verify(markerStore).markApplied("infoq:quartz:bootstrap:applied:prod:2.1.8-20260602120000");
     }
 
     @Test
     @DisplayName("reconcile: should use new deployId as a distinct prod marker")
     void reconcileShouldUseNewDeployIdAsDistinctMarker() {
         QuartzManagedProperties properties = properties(true, true, true);
-        properties.getBootstrap().setDeployId("2.1.7-20260602123000");
+        properties.getBootstrap().setDeployId("2.1.8-20260602123000");
         QuartzBootstrapCoordinator coordinator = new QuartzBootstrapCoordinator(properties, lockTemplate, environment, markerStore);
         Runnable runnable = mock(Runnable.class);
         LockInfo lockInfo = new LockInfo("k", "v", -1L, 3000L, 1, new Object(), mock(LockExecutor.class));
         when(environment.acceptsProfiles(Profiles.of("prod"))).thenReturn(true);
         when(lockTemplate.lock("infoq:quartz:bootstrap-reconcile:prod", -1L, 3000L)).thenReturn(lockInfo);
-        when(markerStore.hasMarker("infoq:quartz:bootstrap:applied:prod:2.1.7-20260602123000")).thenReturn(false);
+        when(markerStore.hasMarker("infoq:quartz:bootstrap:applied:prod:2.1.8-20260602123000")).thenReturn(false);
 
         boolean executed = coordinator.reconcile(runnable);
 
         assertTrue(executed);
         verify(runnable).run();
-        verify(markerStore).hasMarker("infoq:quartz:bootstrap:applied:prod:2.1.7-20260602123000");
-        verify(markerStore).markApplied("infoq:quartz:bootstrap:applied:prod:2.1.7-20260602123000");
+        verify(markerStore).hasMarker("infoq:quartz:bootstrap:applied:prod:2.1.8-20260602123000");
+        verify(markerStore).markApplied("infoq:quartz:bootstrap:applied:prod:2.1.8-20260602123000");
         verify(lockTemplate).releaseLock(lockInfo);
     }
 
@@ -186,7 +186,7 @@ class QuartzBootstrapCoordinatorTest {
         QuartzBootstrapCoordinator coordinator = new QuartzBootstrapCoordinator(properties, lockTemplate, environment, markerStore);
         when(environment.acceptsProfiles(Profiles.of("prod"))).thenReturn(true);
 
-        assertEquals("infoq:quartz:bootstrap:applied:prod:2.1.7-20260602120000", coordinator.markerKey());
+        assertEquals("infoq:quartz:bootstrap:applied:prod:2.1.8-20260602120000", coordinator.markerKey());
         assertEquals("infoq:quartz:bootstrap-reconcile:prod", coordinator.lockKey());
     }
 
@@ -197,7 +197,7 @@ class QuartzBootstrapCoordinatorTest {
         QuartzBootstrapCoordinator coordinator = new QuartzBootstrapCoordinator(properties, lockTemplate, environment, markerStore);
         when(environment.acceptsProfiles(Profiles.of("prod"))).thenReturn(true);
 
-        assertEquals("infoq:quartz:bootstrap:applied:prod:2.1.7-20260602120000", coordinator.markerKey());
+        assertEquals("infoq:quartz:bootstrap:applied:prod:2.1.8-20260602120000", coordinator.markerKey());
         assertEquals("infoq:quartz:bootstrap-reconcile:prod", coordinator.lockKey());
     }
 
@@ -218,7 +218,7 @@ class QuartzBootstrapCoordinatorTest {
         properties.getBootstrap().setProductionGuardEnabled(productionGuardEnabled);
         properties.getBootstrap().setMarkerEnabled(markerEnabled);
         properties.getBootstrap().setMarkerPrefix("infoq:quartz:bootstrap:applied");
-        properties.getBootstrap().setDeployId("2.1.7-20260602120000");
+        properties.getBootstrap().setDeployId("2.1.8-20260602120000");
         properties.getBootstrap().setLockKey("infoq:quartz:bootstrap-reconcile");
         properties.getBootstrap().setLockAcquireTimeout(3000L);
         properties.getBootstrap().setLockExpire(-1L);

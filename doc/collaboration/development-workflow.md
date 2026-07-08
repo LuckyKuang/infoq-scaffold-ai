@@ -84,6 +84,7 @@ backend 工作区基线是 JDK 17 与 Maven 3.9.x。
 - SQL、数据库、Redis、数据修复、迁移和一致性核对：`infoq-data-ops`
 - React/Vue admin 与 weapp 单测、构建和运行态：`infoq-frontend-verify`
 - 后端登录、smoke 和单测验证：`infoq-backend-verify`
+- 本地 / WSL2 / macOS Colima / Linux Docker Compose 部署验证：`infoq-deploy-verify`
 - OpenAI / Codex / AGENTS / MCP 问题：`openai-docs`（本机/系统 skill，不作为项目级 MCP 固定配置）
 - 前端深度调试：`chrome-devtools`
 

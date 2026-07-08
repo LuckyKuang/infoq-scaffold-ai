@@ -1,6 +1,6 @@
 {
   "name": "infoq-scaffold-frontend-weapp-vue",
-  "version": "2.1.7",
+  "version": "2.1.8",
   "private": true,
   "type": "module",
   "packageManager": "pnpm@10.23.0",
@@ -73,5 +73,9 @@
       "jsencrypt@3.5.4": "patches/jsencrypt@3.5.4.patch",
       "miniprogram-automator@0.12.1": "patches/miniprogram-automator@0.12.1.patch"
     }
+  },
+  "engines": {
+    "node": "24.18.0",
+    "pnpm": ">=10.0.0"
   }
 }

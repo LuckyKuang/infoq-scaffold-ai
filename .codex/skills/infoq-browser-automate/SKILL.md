@@ -13,6 +13,7 @@ description: 本仓库通用浏览器自动化技能。凡涉及网页交互、�
 
 这两个 CLI 在 Windows / macOS / Linux 下都应通过 `pnpm --dir .codex/skills/infoq-browser-automate/scripts run <cli-name> ...` 调用。
 为兼容不同平台和 `pnpm` 参数透传差异，也接受 `run <cli-name> -- ...` 形式，但文档默认推荐无 `--` 写法。
+未显式传入 `--screenshot-path` / `--console-log-path` 时，`playwright-cli` 的截图与 console 证据默认写入 `doc/tmp/infoq-browser-automate/<flow|admin-route-probe>/`。
 本技能不再维护 `.sh` / `.ps1` 包装器，主文档入口始终是跨平台 `pnpm --dir ... run ...`。
 
 ## 执行顺序

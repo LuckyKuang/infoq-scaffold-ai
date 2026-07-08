@@ -551,6 +551,9 @@ export default function PostPage() {
         onOk={handleSubmit}
       >
         <Form form={form} layout="vertical" initialValues={initialForm}>
+          <Form.Item name="postId" hidden>
+            <Input />
+          </Form.Item>
           <Form.Item
             label="岗位名称"
             name="postName"

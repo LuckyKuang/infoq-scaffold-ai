@@ -122,15 +122,12 @@ assertContainsFixed(path.join(fixtureRoot, 'README.md'), '![Version](https://img
 assertContainsFixed(path.join(fixtureRoot, 'doc', 'devops', 'docker-compose-deploy.md'), '当前文档对应项目基线版本为 `9.9.9`。');
 assertContainsFixed(path.join(fixtureRoot, 'infoq-scaffold-docs', 'docs', 'devops', 'docker-compose-deploy.md'), '当前文档对应项目基线版本为 `9.9.9`。');
 for (const relPath of [
-  'README.md',
-  'doc/devops/docker-compose-deploy.md',
   'doc/devops/manual-deploy.md',
   'doc/examples/systemd/infoq-admin.service',
   'infoq-scaffold-backend/infoq-admin/src/main/resources/application.yml',
   'infoq-scaffold-backend/infoq-admin/src/main/resources/application-prod.yml',
   'infoq-scaffold-backend/infoq-plugin/infoq-plugin-quartz/src/main/java/cc/infoq/common/quartz/properties/QuartzManagedProperties.java',
   'infoq-scaffold-backend/infoq-modules/infoq-system/src/test/java/cc/infoq/system/runner/QuartzBootstrapCoordinatorTest.java',
-  'infoq-scaffold-docs/docs/devops/docker-compose-deploy.md',
   'infoq-scaffold-docs/docs/devops/manual-deploy.md',
   'infoq-scaffold-docs/docs/public/examples/systemd/infoq-admin.service'
 ]) {

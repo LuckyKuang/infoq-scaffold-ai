@@ -41,6 +41,7 @@
 | `infoq-browser-automate` | 通用浏览器执行器 | `playwright-cli` 页面流转、token 注入、截图、console/pageerror 证据 |
 | `infoq-component-reference` | 组件库 API 参考 | Ant Design / Element Plus 组件选型、官方 API 核验、版本兼容性 |
 | `infoq-release-ops` | 发布与版本操作 | 版本升级、package / 小程序 manifest 字段同步、Docker tag、发布文档、发布前检查 |
+| `infoq-deploy-verify` | 部署验证闭环 | WSL2 Docker CE、macOS Colima、Linux Docker CE 全栈部署、nginx 网关、容器 smoke 和部署阻断收口 |
 
 ## 4. 浏览器 skill 的当前真值
 
@@ -131,6 +132,12 @@ node .codex/skills/infoq-admin-e2e/scripts/captcha_login.mjs --backend-url http:
 node .codex/skills/infoq-admin-e2e/scripts/run_admin_e2e.mjs --client vue
 node .codex/skills/infoq-admin-e2e/scripts/run_admin_e2e.mjs --client react
 node .codex/skills/infoq-admin-e2e/scripts/run_admin_e2e.mjs --client react-pro
+node .codex/skills/infoq-admin-e2e/scripts/run_notice_crud_e2e.mjs --client vue
+node .codex/skills/infoq-admin-e2e/scripts/run_notice_crud_e2e.mjs --client react
+node .codex/skills/infoq-admin-e2e/scripts/run_notice_crud_e2e.mjs --client react-pro
+node .codex/skills/infoq-admin-e2e/scripts/run_admin_crud_e2e.mjs --client vue
+node .codex/skills/infoq-admin-e2e/scripts/run_admin_crud_e2e.mjs --client react
+node .codex/skills/infoq-admin-e2e/scripts/run_admin_crud_e2e.mjs --client react-pro
 ```
 
 说明：
@@ -140,6 +147,8 @@ node .codex/skills/infoq-admin-e2e/scripts/run_admin_e2e.mjs --client react-pro
 - 首次运行 OCR 场景需要本机 Python 环境可 import `ddddocr`，浏览器依赖仍复用 `infoq-browser-automate`。
 - 证据默认写入 `doc/tmp/infoq-admin-e2e/<run-id>/`。
 - `run_admin_e2e.mjs` 默认在完成、失败或中断后停止本次 skill 启动的栈；只有成功且需要保留联调进程时显式传 `--keep-stack-after`，失败或中断仍会关闭 owned 进程。
+- `run_notice_crud_e2e.mjs` 仅用于已授权的 `application-local.yml` 测试数据库，执行公告 UI 新增/查询/编辑/删除，并用 API 与 MySQL 直连只读查询做分步一致性核对；cleanup 只处理当前精确 `e2e_` 标题。
+- `run_admin_crud_e2e.mjs` 仅用于已授权的 `application-local.yml` 测试数据库，默认覆盖 `role,user,menu,dept,post,dict,config,notice,client,invite,ossConfig,job,online`，执行 UI 新增/查询/编辑/删除或模块可用的选择删除/行删除入口，并用 API 与 MySQL 直连只读查询做分步一致性核对；`online` 会创建当前 run 专属 `e2e_` 用户会话并只强退该会话；cleanup 只处理当前 run 的精确 `e2e_` 数据。
 - 管理端 E2E 栈状态按 client 稳定写入 `doc/tmp/infoq-admin-e2e/stack/<vue|react|react-pro>/state.json`，断开后下一次运行会先清理未标记 `keepAlive` 的旧状态。
 - 写入型 CRUD、导出、批量操作和权限矩阵必须先定义测试数据、cleanup 和危险动作门禁。
 
@@ -184,3 +193,20 @@ node .codex/skills/infoq-backend-verify/scripts/run_cluster_smoke.mjs
 ```
 
 这些脚本启动临时后端时会在 `doc/tmp/infoq-backend-verify/` 写入 `*.state.json`。默认在成功、失败或中断后关闭自己启动的端口；显式 keep 参数只用于临时诊断，必须依赖状态文件后续清理。
+
+## 13. 部署验证
+
+当任务要求“在 WSL2 Debian 部署项目”“在 macOS Colima 部署项目”“在 Linux Docker CE 部署项目”“验证部署文档和脚本”“MySQL/Redis 用 Docker 安装”“容器部署失败排查”或“确认 nginx / Vue / React / React Pro / backend 是否可访问”时，使用 `infoq-deploy-verify`。
+
+默认职责：
+
+- 使用 `script/bin/infoq.sh deploy` 部署后端、MySQL、Redis、MinIO。
+- 使用 `script/bin/deploy-frontend.sh deploy` 部署 Vue、React、React Pro 和 `nginx-web`。
+- 默认只使用免费商用运行时基线：WSL2 内 Docker CE、macOS Colima、原生 Linux Docker CE；不默认使用 Docker Desktop。
+- 默认把 WSL2/Linux 部署根目录放在 Linux 文件系统 `/infoq`，macOS Colima 默认使用 `$HOME/infoq`，避免 WSL DrvFS 和 Colima mount 问题。
+- 执行 deploy 前提醒并确认 `/tmp/infoq-deploy` 与 `${INFOQ_DEPLOY_ROOT}/server/temp` 已存在；WSL2/Linux 默认是 `/infoq/server/temp`，权限允许时先 `mkdir -p`，权限不足时请用户在服务器创建后继续。
+- 使用 `curl --noproxy '*'` 验证 backend readiness、`/prod-api`、`/vue/`、`/react/`、`/react-pro/` 和 `9091/9092/9093`。
+- 证据写入 `doc/tmp/deploy-wsl2/` 或 `doc/tmp/infoq-deploy-verify/<run-id>/`。
+- 遇到 CRLF、Docker mirror、Corepack pnpm 签名、Debian 13 JDK17、WSL keepalive 等问题时显式记录 blocker 或修复建议。
+
+`infoq-deploy-verify` 不负责版本升级；发布版本同步仍使用 `infoq-release-ops`。它也不替代后端单测、前端 lint/build 或写入型数据运维。

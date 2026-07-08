@@ -309,6 +309,9 @@ export default function DictTypePage() {
         onOk={handleSubmit}
       >
         <Form form={form} layout="vertical" initialValues={initialForm}>
+          <Form.Item name="dictId" hidden>
+            <Input />
+          </Form.Item>
           <Form.Item label="字典名称" name="dictName" rules={[{ required: true, message: '字典名称不能为空' }]}>
             <Input />
           </Form.Item>

@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.test.util.ReflectionTestUtils;
-import software.amazon.awssdk.core.async.BlockingInputStreamAsyncRequestBody;
+import software.amazon.awssdk.core.async.AsyncRequestBody;
 import software.amazon.awssdk.core.async.ResponsePublisher;
 import software.amazon.awssdk.core.async.SdkPublisher;
 import software.amazon.awssdk.regions.Region;
@@ -19,22 +19,9 @@ import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 import software.amazon.awssdk.transfer.s3.S3TransferManager;
-import software.amazon.awssdk.transfer.s3.model.CompletedDownload;
-import software.amazon.awssdk.transfer.s3.model.CompletedFileDownload;
-import software.amazon.awssdk.transfer.s3.model.CompletedFileUpload;
-import software.amazon.awssdk.transfer.s3.model.Download;
-import software.amazon.awssdk.transfer.s3.model.DownloadFileRequest;
-import software.amazon.awssdk.transfer.s3.model.DownloadRequest;
-import software.amazon.awssdk.transfer.s3.model.FileDownload;
-import software.amazon.awssdk.transfer.s3.model.FileUpload;
-import software.amazon.awssdk.transfer.s3.model.UploadFileRequest;
-import software.amazon.awssdk.transfer.s3.model.UploadRequest;
+import software.amazon.awssdk.transfer.s3.model.*;
 
-import java.io.BufferedInputStream;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -48,19 +35,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
-import static org.mockito.ArgumentMatchers.nullable;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 @Tag("dev")
 class OssClientTest {
@@ -204,7 +181,7 @@ class OssClientTest {
     }
 
     @Test
-    @DisplayName("upload(stream) lambdas: should configure put/upload request builders")
+    @DisplayName("upload(stream) lambdas: should configure put/upload request builders with replayable body")
     void uploadStreamLambdasShouldConfigureBuilders() {
         OssClient client = new OssClient("minio", baseProperties());
         try {
@@ -215,15 +192,51 @@ class OssClientTest {
             assertEquals("dir/stream.txt", putRequest.key());
             assertEquals("text/plain", putRequest.contentType());
 
-            BlockingInputStreamAsyncRequestBody body = BlockingInputStreamAsyncRequestBody.builder()
-                .contentLength(3L)
-                .build();
+            AsyncRequestBody body = AsyncRequestBody.fromBytes("abc".getBytes(StandardCharsets.UTF_8));
             UploadRequest.Builder uploadBuilder = UploadRequest.builder();
             ReflectionTestUtils.invokeMethod(client, "lambda$upload$3", body, "dir/stream.txt", "text/plain", uploadBuilder);
             UploadRequest uploadRequest = uploadBuilder.build();
             assertNotNull(uploadRequest.requestBody());
+            assertEquals(3L, uploadRequest.requestBody().contentLength().orElseThrow());
+            assertFalse(uploadRequest.requestBody().getClass().getName().contains("BlockingInputStream"));
             assertNotNull(uploadRequest.putObjectRequest());
             assertEquals("dir/stream.txt", uploadRequest.putObjectRequest().key());
+        } finally {
+            closeClient(client);
+        }
+    }
+
+    @Test
+    @DisplayName("upload(stream): should create replayable request body for sdk retries")
+    void uploadStreamShouldUseReplayableRequestBody() throws Exception {
+        OssClient client = new OssClient("minio", baseProperties());
+        S3TransferManager transferManager = Mockito.mock(S3TransferManager.class);
+        Upload upload = Mockito.mock(Upload.class);
+        CompletedUpload completed = CompletedUpload.builder()
+            .response(PutObjectResponse.builder().eTag("etag-stream").build())
+            .build();
+        when(transferManager.upload(Mockito.<Consumer<UploadRequest.Builder>>any())).thenAnswer(invocation -> {
+            Consumer<UploadRequest.Builder> consumer = invocation.getArgument(0);
+            UploadRequest.Builder builder = UploadRequest.builder();
+            consumer.accept(builder);
+            UploadRequest uploadRequest = builder.build();
+            assertEquals("dir/stream.txt", uploadRequest.putObjectRequest().key());
+            assertEquals("text/plain", uploadRequest.putObjectRequest().contentType());
+            assertEquals(3L, uploadRequest.requestBody().contentLength().orElseThrow());
+            assertFalse(uploadRequest.requestBody().getClass().getName().contains("BlockingInputStream"));
+            return upload;
+        });
+        when(upload.completionFuture()).thenReturn(CompletableFuture.completedFuture(completed));
+        setField(client, "transferManager", transferManager);
+        try {
+            UploadResult result = client.upload(
+                new BufferedInputStream(new ByteArrayInputStream("abc".getBytes(StandardCharsets.UTF_8))),
+                "dir/stream.txt",
+                3L,
+                "text/plain");
+
+            assertEquals("dir/stream.txt", result.getFilename());
+            assertTrue(result.getUrl().endsWith("/dir/stream.txt"));
         } finally {
             closeClient(client);
         }

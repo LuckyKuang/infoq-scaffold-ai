@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-06-04T17:10:58.186Z",
-  "repoRoot": "/Users/pontus/DevTools/code/GitHub/infoq-scaffold-ai",
+  "generatedAt": "2026-07-05T18:42:05.020Z",
+  "repoRoot": ".",
   "sources": {
     "sqlFiles": [
       "sql/infoq_scaffold_2.0.0.sql",
@@ -49,6 +49,47 @@
       "infoq-scaffold-frontend-react/src/pages/system/user/profile/userAvatar.tsx",
       "infoq-scaffold-frontend-react/src/pages/system/user/profile/userInfo.tsx"
     ],
+    "reactProPages": [
+      "infoq-scaffold-frontend-react-pro/src/pages/BackendRouteView.tsx",
+      "infoq-scaffold-frontend-react-pro/src/pages/error/401.tsx",
+      "infoq-scaffold-frontend-react-pro/src/pages/error/404.tsx",
+      "infoq-scaffold-frontend-react-pro/src/pages/forgot-password.tsx",
+      "infoq-scaffold-frontend-react-pro/src/pages/index.tsx",
+      "infoq-scaffold-frontend-react-pro/src/pages/monitor/cache/index.tsx",
+      "infoq-scaffold-frontend-react-pro/src/pages/monitor/dataSource/index.tsx",
+      "infoq-scaffold-frontend-react-pro/src/pages/monitor/job/index.tsx",
+      "infoq-scaffold-frontend-react-pro/src/pages/monitor/jobLog/index.tsx",
+      "infoq-scaffold-frontend-react-pro/src/pages/monitor/loginInfo/index.tsx",
+      "infoq-scaffold-frontend-react-pro/src/pages/monitor/online/index.tsx",
+      "infoq-scaffold-frontend-react-pro/src/pages/monitor/operLog/index.tsx",
+      "infoq-scaffold-frontend-react-pro/src/pages/monitor/operLog/oper-info-dialog.tsx",
+      "infoq-scaffold-frontend-react-pro/src/pages/monitor/server/index.tsx",
+      "infoq-scaffold-frontend-react-pro/src/pages/oauth-callback.tsx",
+      "infoq-scaffold-frontend-react-pro/src/pages/redirect/index.tsx",
+      "infoq-scaffold-frontend-react-pro/src/pages/register.tsx",
+      "infoq-scaffold-frontend-react-pro/src/pages/system/client/index.tsx",
+      "infoq-scaffold-frontend-react-pro/src/pages/system/config/index.tsx",
+      "infoq-scaffold-frontend-react-pro/src/pages/system/dept/index.tsx",
+      "infoq-scaffold-frontend-react-pro/src/pages/system/dict/data.tsx",
+      "infoq-scaffold-frontend-react-pro/src/pages/system/dict/index.tsx",
+      "infoq-scaffold-frontend-react-pro/src/pages/system/invite/index.tsx",
+      "infoq-scaffold-frontend-react-pro/src/pages/system/menu/index.tsx",
+      "infoq-scaffold-frontend-react-pro/src/pages/system/notice/index.tsx",
+      "infoq-scaffold-frontend-react-pro/src/pages/system/oss/config.tsx",
+      "infoq-scaffold-frontend-react-pro/src/pages/system/oss/index.tsx",
+      "infoq-scaffold-frontend-react-pro/src/pages/system/post/index.tsx",
+      "infoq-scaffold-frontend-react-pro/src/pages/system/role/authUser.tsx",
+      "infoq-scaffold-frontend-react-pro/src/pages/system/role/index.tsx",
+      "infoq-scaffold-frontend-react-pro/src/pages/system/role/selectUser.tsx",
+      "infoq-scaffold-frontend-react-pro/src/pages/system/user/authRole.tsx",
+      "infoq-scaffold-frontend-react-pro/src/pages/system/user/index.tsx",
+      "infoq-scaffold-frontend-react-pro/src/pages/system/user/profile/index.tsx",
+      "infoq-scaffold-frontend-react-pro/src/pages/system/user/profile/onlineDevice.tsx",
+      "infoq-scaffold-frontend-react-pro/src/pages/system/user/profile/resetPwd.tsx",
+      "infoq-scaffold-frontend-react-pro/src/pages/system/user/profile/userAvatar.tsx",
+      "infoq-scaffold-frontend-react-pro/src/pages/system/user/profile/userInfo.tsx",
+      "infoq-scaffold-frontend-react-pro/src/pages/user/login/index.tsx"
+    ],
     "vueViews": [
       "infoq-scaffold-frontend-vue/src/views/error/401.vue",
       "infoq-scaffold-frontend-vue/src/views/error/404.vue",
@@ -96,6 +137,7 @@
       "infoq-scaffold-frontend-react/tests/api/user-guards.test.ts",
       "infoq-scaffold-frontend-react/tests/components/bridge-components.test.tsx",
       "infoq-scaffold-frontend-react/tests/components/common-components.test.tsx",
+      "infoq-scaffold-frontend-react/tests/components/CrudModal.test.tsx",
       "infoq-scaffold-frontend-react/tests/components/svg-icon.test.tsx",
       "infoq-scaffold-frontend-react/tests/components/upload-editor.test.tsx",
       "infoq-scaffold-frontend-react/tests/layout/keep-alive.test.tsx",
@@ -103,6 +145,8 @@
       "infoq-scaffold-frontend-react/tests/layout/tags-view-bar.test.tsx",
       "infoq-scaffold-frontend-react/tests/pages/cache-page.test.tsx",
       "infoq-scaffold-frontend-react/tests/pages/data-source-page.test.tsx",
+      "infoq-scaffold-frontend-react/tests/pages/error-401.test.tsx",
+      "infoq-scaffold-frontend-react/tests/pages/error-404.test.tsx",
       "infoq-scaffold-frontend-react/tests/pages/forgot-password.test.tsx",
       "infoq-scaffold-frontend-react/tests/pages/home.test.tsx",
       "infoq-scaffold-frontend-react/tests/pages/login.test.tsx",
@@ -130,6 +174,51 @@
       "infoq-scaffold-frontend-react/tests/utils/request.test.ts",
       "infoq-scaffold-frontend-react/tests/utils/scaffold-lang.test.ts"
     ],
+    "reactProTests": [
+      "infoq-scaffold-frontend-react-pro/tests/api/login.test.ts",
+      "infoq-scaffold-frontend-react-pro/tests/api/system/invite.test.ts",
+      "infoq-scaffold-frontend-react-pro/tests/api/type-contract.test.ts",
+      "infoq-scaffold-frontend-react-pro/tests/api/user-guards.test.ts",
+      "infoq-scaffold-frontend-react-pro/tests/components/bridge-components.test.tsx",
+      "infoq-scaffold-frontend-react-pro/tests/components/common-components.test.tsx",
+      "infoq-scaffold-frontend-react-pro/tests/components/pagination.test.tsx",
+      "infoq-scaffold-frontend-react-pro/tests/components/svg-icon.test.tsx",
+      "infoq-scaffold-frontend-react-pro/tests/components/upload-editor.test.tsx",
+      "infoq-scaffold-frontend-react-pro/tests/hooks/use-initial-load-effect.test.tsx",
+      "infoq-scaffold-frontend-react-pro/tests/layout/keep-alive.test.tsx",
+      "infoq-scaffold-frontend-react-pro/tests/layout/main-layout-icons.test.tsx",
+      "infoq-scaffold-frontend-react-pro/tests/layout/tags-view-bar.test.tsx",
+      "infoq-scaffold-frontend-react-pro/tests/pages/cache-page.test.tsx",
+      "infoq-scaffold-frontend-react-pro/tests/pages/data-source-page.test.tsx",
+      "infoq-scaffold-frontend-react-pro/tests/pages/error-401.test.tsx",
+      "infoq-scaffold-frontend-react-pro/tests/pages/error-404.test.tsx",
+      "infoq-scaffold-frontend-react-pro/tests/pages/forgot-password.test.tsx",
+      "infoq-scaffold-frontend-react-pro/tests/pages/home.test.tsx",
+      "infoq-scaffold-frontend-react-pro/tests/pages/login.test.tsx",
+      "infoq-scaffold-frontend-react-pro/tests/pages/monitor-auth-profile.test.tsx",
+      "infoq-scaffold-frontend-react-pro/tests/pages/monitor-scheduler.test.tsx",
+      "infoq-scaffold-frontend-react-pro/tests/pages/ops-pages.test.tsx",
+      "infoq-scaffold-frontend-react-pro/tests/pages/register.test.tsx",
+      "infoq-scaffold-frontend-react-pro/tests/pages/server-page.test.tsx",
+      "infoq-scaffold-frontend-react-pro/tests/pages/system-config.test.tsx",
+      "infoq-scaffold-frontend-react-pro/tests/pages/system-invite.test.tsx",
+      "infoq-scaffold-frontend-react-pro/tests/pages/system-pages.test.tsx",
+      "infoq-scaffold-frontend-react-pro/tests/router/app-router.test.tsx",
+      "infoq-scaffold-frontend-react-pro/tests/router/auth-permission.test.tsx",
+      "infoq-scaffold-frontend-react-pro/tests/router/backend-route-view.test.tsx",
+      "infoq-scaffold-frontend-react-pro/tests/router/component-map.test.ts",
+      "infoq-scaffold-frontend-react-pro/tests/router/path-to-component.test.ts",
+      "infoq-scaffold-frontend-react-pro/tests/router/route-transform.test.ts",
+      "infoq-scaffold-frontend-react-pro/tests/store/layout-store.test.ts",
+      "infoq-scaffold-frontend-react-pro/tests/store/permission-store.test.ts",
+      "infoq-scaffold-frontend-react-pro/tests/store/user.test.ts",
+      "infoq-scaffold-frontend-react-pro/tests/utils/auth.test.ts",
+      "infoq-scaffold-frontend-react-pro/tests/utils/crypto.test.ts",
+      "infoq-scaffold-frontend-react-pro/tests/utils/modal.test.ts",
+      "infoq-scaffold-frontend-react-pro/tests/utils/realtime.test.ts",
+      "infoq-scaffold-frontend-react-pro/tests/utils/request.test.ts",
+      "infoq-scaffold-frontend-react-pro/tests/utils/scaffold-lang.test.ts"
+    ],
     "vueTests": [
       "infoq-scaffold-frontend-vue/tests/animate.test.ts",
       "infoq-scaffold-frontend-vue/tests/api/login.test.ts",
@@ -143,21 +232,22 @@
       "infoq-scaffold-frontend-vue/tests/components/IconSelect.test.ts",
       "infoq-scaffold-frontend-vue/tests/components/InfoQGit.test.ts",
       "infoq-scaffold-frontend-vue/tests/components/LangSelect.test.ts",
+      "infoq-scaffold-frontend-vue/tests/components/OssUpload.test.ts",
       "infoq-scaffold-frontend-vue/tests/components/Pagination.test.ts",
+      "infoq-scaffold-frontend-vue/tests/components/requireIcons.test.ts",
       "infoq-scaffold-frontend-vue/tests/components/RightToolbar.test.ts",
       "infoq-scaffold-frontend-vue/tests/components/ScreenFull.test.ts",
       "infoq-scaffold-frontend-vue/tests/components/SizeSelect.test.ts",
       "infoq-scaffold-frontend-vue/tests/components/TopNav.test.ts",
-      "infoq-scaffold-frontend-vue/tests/components/requireIcons.test.ts",
       "infoq-scaffold-frontend-vue/tests/directive/copyText.test.ts",
       "infoq-scaffold-frontend-vue/tests/directive/permission.test.ts",
       "infoq-scaffold-frontend-vue/tests/layout/components/AppMain.test.ts",
       "infoq-scaffold-frontend-vue/tests/layout/components/Navbar.test.ts",
+      "infoq-scaffold-frontend-vue/tests/layout/components/notice.test.ts",
       "infoq-scaffold-frontend-vue/tests/layout/components/ScrollPane.test.ts",
       "infoq-scaffold-frontend-vue/tests/layout/components/Settings.test.ts",
       "infoq-scaffold-frontend-vue/tests/layout/components/TagsViewIndex.test.ts",
       "infoq-scaffold-frontend-vue/tests/layout/components/TopBarSearch.test.ts",
-      "infoq-scaffold-frontend-vue/tests/layout/components/notice.test.ts",
       "infoq-scaffold-frontend-vue/tests/permission.guard.test.ts",
       "infoq-scaffold-frontend-vue/tests/plugins/auth.test.ts",
       "infoq-scaffold-frontend-vue/tests/plugins/cache.test.ts",
@@ -235,9 +325,11 @@
     "p1": 69,
     "p2": 21,
     "reactCases": 114,
+    "reactProCases": 114,
     "vueCases": 114,
     "sideEffectCases": 51,
-    "gaps": 4
+    "gaps": 0,
+    "safetyGates": 6
   },
   "cases": [
     {
@@ -252,6 +344,7 @@
       "component": "forgot-password",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [],
@@ -279,6 +372,7 @@
       "cleanup": "无需业务数据清理。",
       "existingTests": [
         "infoq-scaffold-frontend-react/tests/pages/forgot-password.test.tsx",
+        "infoq-scaffold-frontend-react-pro/tests/pages/forgot-password.test.tsx",
         "infoq-scaffold-frontend-vue/tests/views/forgot-password.test.ts"
       ],
       "gaps": [],
@@ -296,6 +390,7 @@
       "component": "login",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [],
@@ -324,6 +419,8 @@
       "existingTests": [
         "infoq-scaffold-frontend-react/tests/api/login.test.ts",
         "infoq-scaffold-frontend-react/tests/pages/login.test.tsx",
+        "infoq-scaffold-frontend-react-pro/tests/api/login.test.ts",
+        "infoq-scaffold-frontend-react-pro/tests/pages/login.test.tsx",
         "infoq-scaffold-frontend-vue/tests/api/login.test.ts",
         "infoq-scaffold-frontend-vue/tests/views/login.test.ts",
         "infoq-scaffold-frontend-vue/tests/views/monitor/loginInfo/index.test.ts"
@@ -343,6 +440,7 @@
       "component": "oauth-callback",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [],
@@ -383,6 +481,7 @@
       "component": "register",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [],
@@ -410,6 +509,7 @@
       "cleanup": "无需业务数据清理。",
       "existingTests": [
         "infoq-scaffold-frontend-react/tests/pages/register.test.tsx",
+        "infoq-scaffold-frontend-react-pro/tests/pages/register.test.tsx",
         "infoq-scaffold-frontend-vue/tests/views/register.test.ts"
       ],
       "gaps": [],
@@ -427,6 +527,7 @@
       "component": "error/401",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [],
@@ -451,10 +552,11 @@
       ],
       "testData": "只读或固定入口数据。",
       "cleanup": "无需业务数据清理。",
-      "existingTests": [],
-      "gaps": [
-        "未发现直接关联的页面或路由单测"
+      "existingTests": [
+        "infoq-scaffold-frontend-react/tests/pages/error-401.test.tsx",
+        "infoq-scaffold-frontend-react-pro/tests/pages/error-401.test.tsx"
       ],
+      "gaps": [],
       "sourceFile": ""
     },
     {
@@ -469,6 +571,7 @@
       "component": "error/404",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [],
@@ -493,10 +596,11 @@
       ],
       "testData": "只读或固定入口数据。",
       "cleanup": "无需业务数据清理。",
-      "existingTests": [],
-      "gaps": [
-        "未发现直接关联的页面或路由单测"
+      "existingTests": [
+        "infoq-scaffold-frontend-react/tests/pages/error-404.test.tsx",
+        "infoq-scaffold-frontend-react-pro/tests/pages/error-404.test.tsx"
       ],
+      "gaps": [],
       "sourceFile": ""
     },
     {
@@ -511,6 +615,7 @@
       "component": "index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [],
@@ -575,6 +680,7 @@
       "component": "",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [],
@@ -607,6 +713,8 @@
       "existingTests": [
         "infoq-scaffold-frontend-react/tests/pages/monitor-auth-profile.test.tsx",
         "infoq-scaffold-frontend-react/tests/pages/monitor-scheduler.test.tsx",
+        "infoq-scaffold-frontend-react-pro/tests/pages/monitor-auth-profile.test.tsx",
+        "infoq-scaffold-frontend-react-pro/tests/pages/monitor-scheduler.test.tsx",
         "infoq-scaffold-frontend-vue/tests/views/monitor/cache/index.test.ts",
         "infoq-scaffold-frontend-vue/tests/views/monitor/dataSource/index.test.ts",
         "infoq-scaffold-frontend-vue/tests/views/monitor/job/index.test.ts",
@@ -632,6 +740,7 @@
       "component": "monitor/cache/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -681,6 +790,7 @@
       "component": "monitor/dataSource/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -729,6 +839,7 @@
       "component": "monitor/dataSource/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -776,6 +887,7 @@
       "component": "monitor/job/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -826,6 +938,7 @@
       "component": "monitor/job/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -875,6 +988,7 @@
       "component": "monitor/job/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -927,6 +1041,7 @@
       "component": "monitor/job/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -979,6 +1094,7 @@
       "component": "monitor/job/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -1031,6 +1147,7 @@
       "component": "monitor/job/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -1083,6 +1200,7 @@
       "component": "monitor/job/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -1135,6 +1253,7 @@
       "component": "monitor/job/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -1187,6 +1306,7 @@
       "component": "monitor/jobLog/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -1236,6 +1356,7 @@
       "component": "monitor/jobLog/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -1284,6 +1405,7 @@
       "component": "monitor/jobLog/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -1335,6 +1457,7 @@
       "component": "monitor/jobLog/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -1386,6 +1509,7 @@
       "component": "monitor/jobLog/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -1437,6 +1561,7 @@
       "component": "monitor/loginInfo/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -1485,6 +1610,7 @@
       "component": "monitor/loginInfo/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -1536,6 +1662,7 @@
       "component": "monitor/loginInfo/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -1587,6 +1714,7 @@
       "component": "monitor/loginInfo/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -1638,6 +1766,7 @@
       "component": "monitor/loginInfo/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -1687,6 +1816,7 @@
       "component": "monitor/online/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -1735,6 +1865,7 @@
       "component": "monitor/online/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -1786,6 +1917,7 @@
       "component": "monitor/online/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -1837,6 +1969,7 @@
       "component": "monitor/online/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -1886,6 +2019,7 @@
       "component": "monitor/operLog/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -1935,6 +2069,7 @@
       "component": "monitor/operLog/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -1987,6 +2122,7 @@
       "component": "monitor/operLog/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -2039,6 +2175,7 @@
       "component": "monitor/operLog/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -2089,6 +2226,7 @@
       "component": "monitor/server/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -2137,6 +2275,7 @@
       "component": "monitor/server/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -2184,6 +2323,7 @@
       "component": "redirect/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [],
@@ -2226,6 +2366,7 @@
       "component": "",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [],
@@ -2260,6 +2401,10 @@
         "infoq-scaffold-frontend-react/tests/pages/system-config.test.tsx",
         "infoq-scaffold-frontend-react/tests/pages/system-invite.test.tsx",
         "infoq-scaffold-frontend-react/tests/pages/system-pages.test.tsx",
+        "infoq-scaffold-frontend-react-pro/tests/api/system/invite.test.ts",
+        "infoq-scaffold-frontend-react-pro/tests/pages/system-config.test.tsx",
+        "infoq-scaffold-frontend-react-pro/tests/pages/system-invite.test.tsx",
+        "infoq-scaffold-frontend-react-pro/tests/pages/system-pages.test.tsx",
         "infoq-scaffold-frontend-vue/tests/api/system/invite.test.ts",
         "infoq-scaffold-frontend-vue/tests/views/system/client/index.test.ts",
         "infoq-scaffold-frontend-vue/tests/views/system/config/index.test.ts",
@@ -2298,6 +2443,7 @@
       "component": "system/client/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -2345,6 +2491,7 @@
       "component": "system/client/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -2395,6 +2542,7 @@
       "component": "system/client/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -2445,6 +2593,7 @@
       "component": "system/client/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -2495,6 +2644,7 @@
       "component": "system/client/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -2545,6 +2695,7 @@
       "component": "system/client/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -2593,6 +2744,7 @@
       "component": "system/config/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -2624,6 +2776,7 @@
       "cleanup": "无需业务数据清理。",
       "existingTests": [
         "infoq-scaffold-frontend-react/tests/pages/system-config.test.tsx",
+        "infoq-scaffold-frontend-react-pro/tests/pages/system-config.test.tsx",
         "infoq-scaffold-frontend-vue/tests/views/system/config/index.test.ts"
       ],
       "gaps": [],
@@ -2641,6 +2794,7 @@
       "component": "system/config/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -2675,6 +2829,7 @@
       "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
       "existingTests": [
         "infoq-scaffold-frontend-react/tests/pages/system-config.test.tsx",
+        "infoq-scaffold-frontend-react-pro/tests/pages/system-config.test.tsx",
         "infoq-scaffold-frontend-vue/tests/views/system/config/index.test.ts"
       ],
       "gaps": [],
@@ -2692,6 +2847,7 @@
       "component": "system/config/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -2726,6 +2882,7 @@
       "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
       "existingTests": [
         "infoq-scaffold-frontend-react/tests/pages/system-config.test.tsx",
+        "infoq-scaffold-frontend-react-pro/tests/pages/system-config.test.tsx",
         "infoq-scaffold-frontend-vue/tests/views/system/config/index.test.ts"
       ],
       "gaps": [],
@@ -2743,6 +2900,7 @@
       "component": "system/config/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -2777,6 +2935,7 @@
       "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
       "existingTests": [
         "infoq-scaffold-frontend-react/tests/pages/system-config.test.tsx",
+        "infoq-scaffold-frontend-react-pro/tests/pages/system-config.test.tsx",
         "infoq-scaffold-frontend-vue/tests/views/system/config/index.test.ts"
       ],
       "gaps": [],
@@ -2794,6 +2953,7 @@
       "component": "system/config/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -2828,6 +2988,7 @@
       "cleanup": "无需业务数据清理。",
       "existingTests": [
         "infoq-scaffold-frontend-react/tests/pages/system-config.test.tsx",
+        "infoq-scaffold-frontend-react-pro/tests/pages/system-config.test.tsx",
         "infoq-scaffold-frontend-vue/tests/views/system/config/index.test.ts"
       ],
       "gaps": [],
@@ -2845,6 +3006,7 @@
       "component": "system/config/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -2877,6 +3039,7 @@
       "cleanup": "无需业务数据清理。",
       "existingTests": [
         "infoq-scaffold-frontend-react/tests/pages/system-config.test.tsx",
+        "infoq-scaffold-frontend-react-pro/tests/pages/system-config.test.tsx",
         "infoq-scaffold-frontend-vue/tests/views/system/config/index.test.ts"
       ],
       "gaps": [],
@@ -2894,6 +3057,7 @@
       "component": "system/dept/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -2941,6 +3105,7 @@
       "component": "system/dept/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -2991,6 +3156,7 @@
       "component": "system/dept/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -3041,6 +3207,7 @@
       "component": "system/dept/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -3091,6 +3258,7 @@
       "component": "system/dept/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -3139,6 +3307,7 @@
       "component": "system/dict/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -3187,6 +3356,7 @@
       "component": "system/dict/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -3238,6 +3408,7 @@
       "component": "system/dict/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -3289,6 +3460,7 @@
       "component": "system/dict/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -3340,6 +3512,7 @@
       "component": "system/dict/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -3391,6 +3564,7 @@
       "component": "system/dict/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -3440,6 +3614,7 @@
       "component": "system/dict/data",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -3489,6 +3664,7 @@
       "component": "system/invite/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -3524,6 +3700,8 @@
       "existingTests": [
         "infoq-scaffold-frontend-react/tests/api/system/invite.test.ts",
         "infoq-scaffold-frontend-react/tests/pages/system-invite.test.tsx",
+        "infoq-scaffold-frontend-react-pro/tests/api/system/invite.test.ts",
+        "infoq-scaffold-frontend-react-pro/tests/pages/system-invite.test.tsx",
         "infoq-scaffold-frontend-vue/tests/api/system/invite.test.ts",
         "infoq-scaffold-frontend-vue/tests/views/system/invite/index.test.ts"
       ],
@@ -3542,6 +3720,7 @@
       "component": "system/invite/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -3577,6 +3756,8 @@
       "existingTests": [
         "infoq-scaffold-frontend-react/tests/api/system/invite.test.ts",
         "infoq-scaffold-frontend-react/tests/pages/system-invite.test.tsx",
+        "infoq-scaffold-frontend-react-pro/tests/api/system/invite.test.ts",
+        "infoq-scaffold-frontend-react-pro/tests/pages/system-invite.test.tsx",
         "infoq-scaffold-frontend-vue/tests/api/system/invite.test.ts",
         "infoq-scaffold-frontend-vue/tests/views/system/invite/index.test.ts"
       ],
@@ -3595,6 +3776,7 @@
       "component": "system/invite/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -3630,6 +3812,8 @@
       "existingTests": [
         "infoq-scaffold-frontend-react/tests/api/system/invite.test.ts",
         "infoq-scaffold-frontend-react/tests/pages/system-invite.test.tsx",
+        "infoq-scaffold-frontend-react-pro/tests/api/system/invite.test.ts",
+        "infoq-scaffold-frontend-react-pro/tests/pages/system-invite.test.tsx",
         "infoq-scaffold-frontend-vue/tests/api/system/invite.test.ts",
         "infoq-scaffold-frontend-vue/tests/views/system/invite/index.test.ts"
       ],
@@ -3648,6 +3832,7 @@
       "component": "system/invite/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -3683,6 +3868,8 @@
       "existingTests": [
         "infoq-scaffold-frontend-react/tests/api/system/invite.test.ts",
         "infoq-scaffold-frontend-react/tests/pages/system-invite.test.tsx",
+        "infoq-scaffold-frontend-react-pro/tests/api/system/invite.test.ts",
+        "infoq-scaffold-frontend-react-pro/tests/pages/system-invite.test.tsx",
         "infoq-scaffold-frontend-vue/tests/api/system/invite.test.ts",
         "infoq-scaffold-frontend-vue/tests/views/system/invite/index.test.ts"
       ],
@@ -3701,6 +3888,7 @@
       "component": "system/invite/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -3734,6 +3922,8 @@
       "existingTests": [
         "infoq-scaffold-frontend-react/tests/api/system/invite.test.ts",
         "infoq-scaffold-frontend-react/tests/pages/system-invite.test.tsx",
+        "infoq-scaffold-frontend-react-pro/tests/api/system/invite.test.ts",
+        "infoq-scaffold-frontend-react-pro/tests/pages/system-invite.test.tsx",
         "infoq-scaffold-frontend-vue/tests/api/system/invite.test.ts",
         "infoq-scaffold-frontend-vue/tests/views/system/invite/index.test.ts"
       ],
@@ -3752,6 +3942,7 @@
       "component": "",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [],
@@ -3797,6 +3988,7 @@
       "component": "system/menu/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -3844,6 +4036,7 @@
       "component": "system/menu/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -3894,6 +4087,7 @@
       "component": "system/menu/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -3944,6 +4138,7 @@
       "component": "system/menu/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -3994,6 +4189,7 @@
       "component": "system/menu/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -4042,6 +4238,7 @@
       "component": "system/notice/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -4089,6 +4286,7 @@
       "component": "system/notice/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -4139,6 +4337,7 @@
       "component": "system/notice/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -4189,6 +4388,7 @@
       "component": "system/notice/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -4239,6 +4439,7 @@
       "component": "system/notice/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -4287,6 +4488,7 @@
       "component": "system/oss/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -4338,6 +4540,7 @@
       "component": "system/oss/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -4388,6 +4591,7 @@
       "component": "system/oss/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -4441,6 +4645,7 @@
       "component": "system/oss/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -4494,6 +4699,7 @@
       "component": "system/oss/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -4547,6 +4753,7 @@
       "component": "system/oss/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -4597,6 +4804,7 @@
       "component": "system/oss/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -4650,6 +4858,7 @@
       "component": "system/oss/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -4703,6 +4912,7 @@
       "component": "system/oss/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -4756,6 +4966,7 @@
       "component": "system/oss/config",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -4807,6 +5018,7 @@
       "component": "system/post/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -4854,6 +5066,7 @@
       "component": "system/post/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -4904,6 +5117,7 @@
       "component": "system/post/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -4954,6 +5168,7 @@
       "component": "system/post/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -5004,6 +5219,7 @@
       "component": "system/post/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -5054,6 +5270,7 @@
       "component": "system/post/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -5102,6 +5319,7 @@
       "component": "system/role/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -5151,6 +5369,7 @@
       "component": "system/role/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -5203,6 +5422,7 @@
       "component": "system/role/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -5253,6 +5473,7 @@
       "component": "system/role/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -5305,6 +5526,7 @@
       "component": "system/role/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -5357,6 +5579,7 @@
       "component": "system/role/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -5409,6 +5632,7 @@
       "component": "system/role/authUser",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -5458,6 +5682,7 @@
       "component": "system/user/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -5512,6 +5737,7 @@
       "component": "system/user/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -5565,6 +5791,7 @@
       "component": "system/user/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -5621,6 +5848,7 @@
       "component": "system/user/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -5677,6 +5905,7 @@
       "component": "system/user/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -5733,6 +5962,7 @@
       "component": "system/user/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -5789,6 +6019,7 @@
       "component": "system/user/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -5845,6 +6076,7 @@
       "component": "system/user/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -5901,6 +6133,7 @@
       "component": "system/user/authRole",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [
@@ -5950,6 +6183,7 @@
       "component": "system/user/profile/index",
       "clients": [
         "react",
+        "react-pro",
         "vue"
       ],
       "permissions": [],
@@ -5987,28 +6221,13 @@
       "sourceFile": ""
     }
   ],
-  "gaps": [
-    {
-      "type": "case-gap",
-      "id": "FE-ERROR-401",
-      "moduleKey": "error.401",
-      "message": "未发现直接关联的页面或路由单测"
-    },
-    {
-      "type": "case-gap",
-      "id": "FE-ERROR-404",
-      "moduleKey": "error.404",
-      "message": "未发现直接关联的页面或路由单测"
-    },
-    {
-      "type": "react-page-without-menu",
-      "component": "system/role/selectUser",
-      "message": "React 页面未直接匹配菜单组件"
-    },
-    {
-      "type": "vue-view-without-menu",
-      "component": "system/role/selectUser",
-      "message": "Vue 页面未直接匹配菜单组件"
-    }
+  "gaps": [],
+  "safetyGates": [
+    "不自动删除非 e2e_ 数据。",
+    "不清空日志。",
+    "不强退非当前 run 创建的 e2e_ 在线会话。",
+    "不触发定时任务“立即执行”。",
+    "不触碰真实 OSS 对象上传/删除。",
+    "对 OSS 对象、日志、在线用户这类场景，缺少隔离 fixture 时记录 blocker，不伪造通过。"
   ]
 }

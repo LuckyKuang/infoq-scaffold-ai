@@ -29,12 +29,15 @@ describe('system user guards', () => {
     expect(() => assertUserProfileData({ roleGroup: '管理员', postGroup: '开发' })).toThrow('用户资料响应 data.user 必须是对象');
   });
 
-  it('requires role and post id arrays for user detail forms', () => {
+  it('requires role id arrays and normalizes optional post fields for user detail forms', () => {
     const data = { user, roles: [], posts: [], roleIds: ['1'], postIds: ['2'], roleGroup: '', postGroup: '' };
 
-    expect(assertUserDetailData(data)).toBe(data);
+    expect(assertUserDetailData(data)).toEqual(data);
+    expect(assertUserDetailData({ ...data, posts: undefined, postIds: undefined })).toMatchObject({
+      posts: [],
+      postIds: []
+    });
     expect(() => assertUserDetailData({ ...data, roleIds: undefined })).toThrow('用户详情响应 data.roleIds 必须是数组');
-    expect(() => assertUserDetailData({ ...data, postIds: undefined })).toThrow('用户详情响应 data.postIds 必须是数组');
   });
 
   it('requires a non-empty avatar upload url', () => {

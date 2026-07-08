@@ -1,27 +1,7 @@
-import {
-  DeleteOutlined,
-  EditOutlined,
-  PlusOutlined,
-  ReloadOutlined,
-  SearchOutlined,
-} from '@ant-design/icons';
-import {
-  Button,
-  Card,
-  Col,
-  Form,
-  Input,
-  Radio,
-  Row,
-  Select,
-  Space,
-  Switch,
-  Table,
-  Tag,
-  Tooltip,
-} from 'antd';
-import type { ColumnsType } from 'antd/es/table';
-import { useCallback, useState } from 'react';
+import {DeleteOutlined, EditOutlined, PlusOutlined, ReloadOutlined, SearchOutlined,} from '@ant-design/icons';
+import {Button, Card, Col, Form, Input, Radio, Row, Select, Space, Switch, Table, Tag, Tooltip,} from 'antd';
+import type {ColumnsType} from 'antd/es/table';
+import {useCallback, useState} from 'react';
 import {
   addOssConfig,
   changeOssConfigStatus,
@@ -30,11 +10,7 @@ import {
   listOssConfig,
   updateOssConfig,
 } from '@/api/system/ossConfig';
-import type {
-  OssConfigForm,
-  OssConfigQuery,
-  OssConfigVO,
-} from '@/api/system/ossConfig/types';
+import type {OssConfigForm, OssConfigQuery, OssConfigVO,} from '@/api/system/ossConfig/types';
 import CrudModal from '@/components/CrudModal';
 import Pagination from '@/components/Pagination';
 import RightToolbar from '@/components/RightToolbar';
@@ -443,6 +419,9 @@ export default function OssConfigPage() {
         onOk={handleSubmit}
       >
         <Form form={form} layout="vertical" initialValues={initialForm}>
+          <Form.Item name="ossConfigId" hidden>
+            <Input />
+          </Form.Item>
           <Form.Item
             label="配置Key"
             name="configKey"

@@ -12,6 +12,7 @@ import auth from '@/utils/permission';
 import { parseTime } from '@/utils/scaffold';
 
 type OnlineRow = OnlineVO & {
+  _rowKey: string;
   clientKey?: string;
   deviceType?: string;
 };
@@ -35,7 +36,17 @@ export default function OnlinePage() {
       setLoading(true);
       try {
         const response = await list(nextQuery);
-        setListData(response.rows);
+        setListData(
+          response.rows.map((row, index) => {
+            const fallbackKeyBase =
+              [row.userName, row.ipaddr, row.loginTime].filter((item) => item !== undefined && item !== null && item !== '').join('-') ||
+              'online-row';
+            return {
+              ...row,
+              _rowKey: row.tokenId || `${fallbackKeyBase}-${index}`
+            };
+          })
+        );
         setTotal(response.total);
       } finally {
         setLoading(false);
@@ -213,7 +224,7 @@ export default function OnlinePage() {
       </Card>
 
       <Card>
-        <Table<OnlineRow> rowKey="tokenId" bordered loading={loading} columns={columns} dataSource={listData} pagination={false} />
+        <Table<OnlineRow> rowKey="_rowKey" bordered loading={loading} columns={columns} dataSource={listData} pagination={false} />
         <Pagination
           total={total}
           page={query.pageNum}

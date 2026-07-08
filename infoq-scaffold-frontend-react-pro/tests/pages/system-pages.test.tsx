@@ -3,12 +3,14 @@ import {StrictMode} from 'react';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import * as deptApi from '@/api/system/dept';
 import * as menuApi from '@/api/system/menu';
+import * as noticeApi from '@/api/system/notice';
 import * as postApi from '@/api/system/post';
 import * as roleApi from '@/api/system/role';
 import * as userApi from '@/api/system/user';
 import {clearInitialLoadEffectDedupe} from '@/hooks/useInitialLoadEffect';
 import DeptPage from '@/pages/system/dept/index';
 import MenuPage from '@/pages/system/menu/index';
+import NoticePage from '@/pages/system/notice/index';
 import PostPage from '@/pages/system/post/index';
 import RolePage from '@/pages/system/role/index';
 import UserPage from '@/pages/system/user/index';
@@ -27,6 +29,14 @@ const dictOptions = vi.hoisted(() => ({
   sys_show_hide: [
     { label: '显示', value: '0' },
     { label: '隐藏', value: '1' },
+  ],
+  sys_notice_status: [
+    { label: '正常', value: '0' },
+    { label: '关闭', value: '1' },
+  ],
+  sys_notice_type: [
+    { label: '通知', value: '1' },
+    { label: '公告', value: '2' },
   ],
 }));
 
@@ -85,6 +95,10 @@ vi.mock('@/components/DictTag', () => ({
       .join(',');
     return <span>{text}</span>;
   },
+}));
+
+vi.mock('@/components/Editor', () => ({
+  default: () => <textarea data-testid="mock-editor" />,
 }));
 
 vi.mock('@/utils/modal', () => ({
@@ -233,6 +247,28 @@ vi.mock('@/api/system/post', () => ({
   delPost: vi.fn(),
   getPost: vi.fn(),
   updatePost: vi.fn(),
+}));
+
+vi.mock('@/api/system/notice', () => ({
+  listNotice: vi.fn().mockResolvedValue({
+    rows: [
+      {
+        noticeId: 100,
+        noticeTitle: 'e2e_notice_a',
+        noticeType: '1',
+        status: '0',
+        createByName: 'admin',
+        createTime: '2026-03-10 10:00:00',
+        noticeContent: '',
+        remark: '',
+      },
+    ],
+    total: 1,
+  }),
+  getNotice: vi.fn(),
+  addNotice: vi.fn(),
+  updateNotice: vi.fn(),
+  delNotice: vi.fn(),
 }));
 
 function asResolvedValue<T>(value: unknown): T {
@@ -407,6 +443,37 @@ beforeEach(() => {
   vi.mocked(postApi.optionselect).mockResolvedValue(
     asResolvedValue<Awaited<ReturnType<typeof postApi.optionselect>>>({
       data: [{ postId: 10, postName: '研发岗' }],
+    }),
+  );
+
+  vi.mocked(noticeApi.listNotice).mockResolvedValue(
+    asResolvedValue<Awaited<ReturnType<typeof noticeApi.listNotice>>>({
+      rows: [
+        {
+          noticeId: 100,
+          noticeTitle: 'e2e_notice_a',
+          noticeType: '1',
+          status: '0',
+          createByName: 'admin',
+          createTime: '2026-03-10 10:00:00',
+          noticeContent: '',
+          remark: '',
+        },
+      ],
+      total: 1,
+    }),
+  );
+  vi.mocked(noticeApi.getNotice).mockResolvedValue(
+    asResolvedValue<Awaited<ReturnType<typeof noticeApi.getNotice>>>({
+      data: {
+        noticeId: 100,
+        noticeTitle: 'e2e_notice_a',
+        noticeType: '1',
+        status: '0',
+        noticeContent: '',
+        remark: '',
+        createByName: 'admin',
+      },
     }),
   );
 });
@@ -623,5 +690,46 @@ describe('pages/system', () => {
       expect(postApi.listPost).toHaveBeenCalled();
       expect(postApi.deptTreeSelect).toHaveBeenCalled();
     });
+  });
+
+  it('keeps noticeId when editing a notice so submit updates instead of creating', async () => {
+    renderWithRouter(<NoticePage />, '/system/notice');
+
+    expect(
+      await screen.findByPlaceholderText('请输入公告标题'),
+    ).toBeInTheDocument();
+    const rowButtons = await waitFor(() => {
+      const buttons = document.querySelectorAll('.ant-table-tbody button');
+      expect(buttons.length).toBeGreaterThanOrEqual(2);
+      return buttons;
+    });
+    fireEvent.click(rowButtons[0]);
+
+    expect(await screen.findByText('修改公告')).toBeInTheDocument();
+    const titleInput = await waitFor(() => {
+      const input = document.querySelector<HTMLInputElement>('#noticeTitle');
+      if (!input) {
+        throw new Error('未找到公告标题输入框');
+      }
+      return input;
+    });
+    fireEvent.change(titleInput, { target: { value: 'e2e_notice_b' } });
+    const okButton = document.querySelector<HTMLButtonElement>(
+      '.ant-modal-footer .ant-btn-primary',
+    );
+    if (!okButton) {
+      throw new Error('未找到公告编辑确认按钮');
+    }
+    fireEvent.click(okButton);
+
+    await waitFor(() => {
+      expect(noticeApi.updateNotice).toHaveBeenCalledWith(
+        expect.objectContaining({
+          noticeId: 100,
+          noticeTitle: 'e2e_notice_b',
+        }),
+      );
+    });
+    expect(noticeApi.addNotice).not.toHaveBeenCalled();
   });
 });

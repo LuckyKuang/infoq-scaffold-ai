@@ -21,7 +21,7 @@ outline: [2, 3]
 
 - 第一次接手仓库：[`guide/project-overview.md`](/guide/project-overview) -> [`guide/quick-start.md`](/guide/quick-start) -> [`backend/handbook.md`](/backend/handbook) -> [`admin/handbook.md`](/admin/handbook) / [`weapp/handbook.md`](/weapp/handbook) -> [`guide/faq.md`](/guide/faq)
 - 只想把项目跑起来：[`guide/quick-start.md`](/guide/quick-start)
-- 只关心部署：[`devops/deploy-prerequisites.md`](/devops/deploy-prerequisites) -> [`devops/docker-compose-deploy.md`](/devops/docker-compose-deploy) 或 [`devops/manual-deploy.md`](/devops/manual-deploy)
+- 只关心部署：[`devops/deploy-prerequisites.md`](/devops/deploy-prerequisites) -> [`devops/docker-compose-tutorial.md`](/devops/docker-compose-tutorial) -> [`devops/docker-compose-deploy.md`](/devops/docker-compose-deploy) 或 [`devops/manual-deploy.md`](/devops/manual-deploy)
 - 只关心仓库协作规范：[`collaboration/development-workflow.md`](/collaboration/development-workflow) -> [`collaboration/agents-guide.md`](/collaboration/agents-guide) -> [`collaboration/skills-guide.md`](/collaboration/skills-guide) -> [`collaboration/subagents-guide.md`](/collaboration/subagents-guide) -> [`collaboration/mcp-servers.md`](/collaboration/mcp-servers)
 
 ## 文档导航
@@ -52,6 +52,7 @@ outline: [2, 3]
 ### 部署与运维
 
 - [`devops/deploy-prerequisites.md`](/devops/deploy-prerequisites)：部署前硬性检查项。
+- [`devops/docker-compose-tutorial.md`](/devops/docker-compose-tutorial)：WSL2 Docker CE、macOS Colima、Linux Docker CE 的完整 Compose 部署教程。
 - [`devops/docker-compose-deploy.md`](/devops/docker-compose-deploy)：脚本化 / Compose 部署。
 - [`devops/manual-deploy.md`](/devops/manual-deploy)：手动部署与运维交付物。
 

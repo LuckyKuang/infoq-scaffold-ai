@@ -22,5 +22,5 @@ export interface NoticeForm {
   noticeContent: string;
   status: string;
   remark: string;
-  createByName: string;
+  createByName?: string;
 }

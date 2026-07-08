@@ -290,10 +290,22 @@ const submitForm = () => {
     }
     buttonLoading.value = true;
     try {
-      if (form.value.jobId) {
-        await updateJob(form.value);
+      const payload: JobForm = {
+        jobId: form.value.jobId,
+        jobName: form.value.jobName,
+        jobGroup: form.value.jobGroup,
+        handlerKey: form.value.handlerKey,
+        handlerParams: form.value.handlerParams,
+        cronExpression: form.value.cronExpression,
+        misfirePolicy: form.value.misfirePolicy,
+        concurrent: form.value.concurrent,
+        status: form.value.status,
+        remark: form.value.remark
+      };
+      if (payload.jobId) {
+        await updateJob(payload);
       } else {
-        await addJob(form.value);
+        await addJob(payload);
       }
       proxy?.$modal.msgSuccess('操作成功');
       dialog.visible = false;

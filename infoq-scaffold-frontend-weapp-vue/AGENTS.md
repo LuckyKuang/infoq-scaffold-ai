@@ -3,7 +3,7 @@
 |Scope:本文件适用于 `infoq-scaffold-frontend-weapp-vue` 及其子目录，用于把根规则收窄到小程序 Vue 语境。
 |Stack:uni-app 3|Vue 3|TypeScript|Sass|Pinia|WeChat Mini Program|H5
 |Workspace Layout:src/pages|src/components|src/api|src/store|src/utils|src/styles|tests|src/manifest.json|src/pages.json
-|Environment Baseline:Node >= 20.19.0|pnpm >= 10.0.0
+|Environment Baseline:Node 24.18.0|pnpm >= 10.0.0
 |Build Secrets:当 `TARO_APP_ENCRYPT=true` 时，weapp Vue dev/build 环境必须提供 `TARO_APP_RSA_PUBLIC_KEY` 与 `TARO_APP_RSA_PRIVATE_KEY`。
 |Package And Formatting:默认使用 pnpm。|遵循本地代码风格，前端使用 2-space formatting。|source、env、build config files 保持 UTF-8。
 |Commands:install=cd infoq-scaffold-frontend-weapp-vue && pnpm install|dev:h5=cd infoq-scaffold-frontend-weapp-vue && pnpm run dev:h5|dev:weapp=cd infoq-scaffold-frontend-weapp-vue && pnpm run dev:weapp|typecheck=cd infoq-scaffold-frontend-weapp-vue && pnpm run typecheck|build:h5=cd infoq-scaffold-frontend-weapp-vue && pnpm run build:h5|build:weapp=cd infoq-scaffold-frontend-weapp-vue && pnpm run build:weapp|build:weapp:dev=cd infoq-scaffold-frontend-weapp-vue && pnpm run build:weapp:dev|open:weapp:dev=pnpm --dir infoq-scaffold-frontend-weapp-vue build-open:weapp:dev|test=cd infoq-scaffold-frontend-weapp-vue && pnpm run test|coverage=cd infoq-scaffold-frontend-weapp-vue && pnpm run test:coverage|test:e2e:weapp:core=cd infoq-scaffold-frontend-weapp-vue && pnpm run test:e2e:weapp:core|test:e2e:weapp:core:backend=cd infoq-scaffold-frontend-weapp-vue && pnpm run test:e2e:weapp:core:backend|verify:build=cd infoq-scaffold-frontend-weapp-vue && pnpm run verify:build|verify:local=cd infoq-scaffold-frontend-weapp-vue && pnpm run verify:local

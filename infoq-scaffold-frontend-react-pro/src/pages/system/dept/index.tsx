@@ -432,6 +432,9 @@ export default function DeptPage() {
         onOk={handleSubmit}
       >
         <Form form={form} layout="vertical" initialValues={initialForm}>
+          <Form.Item name="deptId" hidden>
+            <Input />
+          </Form.Item>
           <Row gutter={16}>
             {showParentDept && (
               <Col span={24}>

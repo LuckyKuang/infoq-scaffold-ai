@@ -23,10 +23,8 @@
   - 顶层 `"version"`
 - `README.md`
   - `![Version](https://img.shields.io/badge/Version-x.y.z-...)`
-  - `DEPLOY_ID=x.y.z-YYYYMMDDHHMMSS` 示例中的版本前缀
 - `doc/devops/docker-compose-deploy.md`
   - `当前文档对应项目基线版本为 \`x.y.z\`。`
-  - `DEPLOY_ID=x.y.z-YYYYMMDDHHMMSS` 示例中的版本前缀
 - `doc/devops/manual-deploy.md`
   - `DEPLOY_ID=x.y.z-YYYYMMDDHHMMSS` 示例中的版本前缀
 - `doc/examples/systemd/infoq-admin.service`
@@ -34,7 +32,6 @@
 - `infoq-scaffold-docs/docs/devops/docker-compose-deploy.md`
   - 由 `infoq-scaffold-docs/scripts/sync-from-root-doc.mjs` 从根 `doc/devops/docker-compose-deploy.md` 自动同步
   - `当前文档对应项目基线版本为 \`x.y.z\`。`
-  - `DEPLOY_ID=x.y.z-YYYYMMDDHHMMSS` 示例中的版本前缀
 - `infoq-scaffold-docs/docs/devops/manual-deploy.md`
   - 由 `infoq-scaffold-docs/scripts/sync-from-root-doc.mjs` 从根 `doc/devops/manual-deploy.md` 自动同步
   - `DEPLOY_ID=x.y.z-YYYYMMDDHHMMSS` 示例中的版本前缀

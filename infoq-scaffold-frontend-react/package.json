@@ -1,7 +1,7 @@
 {
   "name": "infoq-scaffold-frontend-react",
   "private": true,
-  "version": "2.1.7",
+  "version": "2.1.8",
   "type": "module",
   "packageManager": "pnpm@10.34.1",
   "scripts": {
@@ -66,8 +66,7 @@
     }
   },
   "engines": {
-    "node": "^20.19.0 || ^22.13.0 || >=24.0.0",
-    "npm": ">=10.0.0",
+    "node": "24.18.0",
     "pnpm": ">=10.0.0"
   }
 }

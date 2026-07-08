@@ -29,7 +29,7 @@ const REQUIRED_FIELDS = [
 ];
 const VALID_PRIORITIES = new Set(['P0', 'P1', 'P2']);
 const VALID_AUTOMATION_TYPES = new Set(['smoke', 'route', 'CRUD', 'permission', 'negative', 'visual', 'integration']);
-const VALID_CLIENTS = new Set(['react', 'vue']);
+const VALID_CLIENTS = new Set(['react', 'react-pro', 'vue']);
 
 function printHelp() {
   console.log(`Usage:

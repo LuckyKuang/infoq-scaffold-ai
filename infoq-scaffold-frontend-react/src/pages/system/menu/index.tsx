@@ -274,6 +274,9 @@ export default function MenuPage() {
         onOk={handleSubmit}
       >
         <Form form={form} layout="vertical" initialValues={initialForm}>
+          <Form.Item name="menuId" hidden>
+            <Input />
+          </Form.Item>
           <Form.Item label="上级菜单" name="parentId">
             <TreeSelect treeData={toTreeSelectData(menuOptions)} placeholder="选择上级菜单" allowClear treeDefaultExpandAll />
           </Form.Item>

@@ -3,7 +3,7 @@
 |Scope:本文件适用于 `infoq-scaffold-frontend-react-pro` 及其子目录。该目录是正式 React Pro 管理端工作区，与 `infoq-scaffold-frontend-react` 和 `infoq-scaffold-frontend-vue` 并行维护。
 |Status:项目由 Ant Design Pro `6.0.2` 官方模板克隆并执行 simple 精简后迁移完成；当前作为正式并行管理端保留，不再执行删除、归档或改名接管旧 React 管理端。
 |Stack:React 19|Ant Design 6|Ant Design Pro / ProComponents 3|Umi Max 4|TypeScript 6|Vitest 4|Biome
-|Environment Baseline:沿用旧 React admin 的 `VITE_APP_*` 变量。|dev 默认 `VITE_APP_BASE_API=/dev-api`，production 默认 `/prod-api`，`VITE_APP_CONTEXT_PATH=/`，本地代理默认 `http://127.0.0.1:8080`，可通过 `VITE_APP_PROXY_TARGET` 覆盖。
+|Environment Baseline:Node 24.18.0|沿用旧 React admin 的 `VITE_APP_*` 变量。|Docker builder 固定 node:24.18.0。|dev 默认 `VITE_APP_BASE_API=/dev-api`，production 默认 `/prod-api`，`VITE_APP_CONTEXT_PATH=/`，本地代理默认 `http://127.0.0.1:8080`，可通过 `VITE_APP_PROXY_TARGET` 覆盖。
 |Package Manager:使用 pnpm；不要恢复 npm-only 工作流，不要重新引入 `package-lock.json`。
 |Commands:install=cd infoq-scaffold-frontend-react-pro && pnpm install|dev=cd infoq-scaffold-frontend-react-pro && pnpm run dev|test=cd infoq-scaffold-frontend-react-pro && pnpm run test|lint=cd infoq-scaffold-frontend-react-pro && pnpm run lint|build=cd infoq-scaffold-frontend-react-pro && pnpm run build
 |Max CLI:所有 package scripts 中的 Umi Max 命令必须通过 `scripts/max.mjs` 或 `scripts/start-dev.mjs` 进入，统一设置 `DID_YOU_KNOW=none`，禁止恢复为直接 `max setup/build/preview/dev`。

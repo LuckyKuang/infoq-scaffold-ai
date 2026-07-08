@@ -355,6 +355,9 @@ export default function NoticePage() {
         onOk={handleSubmit}
       >
         <Form form={form} layout="vertical" initialValues={initialForm}>
+          <Form.Item name="noticeId" hidden>
+            <Input />
+          </Form.Item>
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item

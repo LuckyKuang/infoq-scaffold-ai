@@ -8,6 +8,8 @@ type KeepAliveViewProps = {
   children: ReactNode;
 };
 
+const MAX_KEEP_ALIVE_ROUTES = 8;
+
 export default function KeepAliveView({
   activePath,
   noCache,
@@ -30,7 +32,23 @@ export default function KeepAliveView({
     return <>{children}</>;
   }
 
+  if (Object.hasOwn(cacheRef.current, activePath)) {
+    delete cacheRef.current[activePath];
+  }
   cacheRef.current[activePath] = children;
+
+  const cachedPaths = Object.keys(cacheRef.current);
+  if (cachedPaths.length > MAX_KEEP_ALIVE_ROUTES) {
+    for (const path of cachedPaths) {
+      if (path === activePath) {
+        continue;
+      }
+      delete cacheRef.current[path];
+      if (Object.keys(cacheRef.current).length <= MAX_KEEP_ALIVE_ROUTES) {
+        break;
+      }
+    }
+  }
 
   return (
     <>

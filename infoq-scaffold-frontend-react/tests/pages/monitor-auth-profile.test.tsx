@@ -275,6 +275,56 @@ describe('pages/monitor-auth-profile', () => {
     });
   });
 
+  it('renders online sessions with fallback row keys when token ids are missing', async () => {
+    vi.mocked(onlineApi.list).mockResolvedValue(
+      asResolvedValue<Awaited<ReturnType<typeof onlineApi.list>>>({
+        rows: [
+          {
+            tokenId: null as unknown as string,
+            userName: 'admin',
+            clientKey: 'pc-web',
+            deviceType: 'pc',
+            deptName: '研发部',
+            ipaddr: '127.0.0.1',
+            loginLocation: '上海',
+            os: 'macOS',
+            browser: 'Chrome',
+            loginTime: 1772148000000
+          },
+          {
+            tokenId: null as unknown as string,
+            userName: 'admin',
+            clientKey: 'pc-web',
+            deviceType: 'pc',
+            deptName: '研发部',
+            ipaddr: '127.0.0.1',
+            loginLocation: '北京',
+            os: 'macOS',
+            browser: 'Chrome',
+            loginTime: 1772148000000
+          }
+        ],
+        total: 2
+      })
+    );
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    try {
+      renderWithRouter(<OnlinePage />, '/monitor/online');
+
+      expect(await screen.findByText('上海')).toBeInTheDocument();
+      expect(await screen.findByText('北京')).toBeInTheDocument();
+      await waitFor(() => {
+        const duplicateKeyErrors = consoleErrorSpy.mock.calls.filter((call) =>
+          String(call[0]).includes('Encountered two children with the same key')
+        );
+        expect(duplicateKeyErrors).toHaveLength(0);
+      });
+    } finally {
+      consoleErrorSpy.mockRestore();
+    }
+  });
+
   it('renders the login info page with access logs', async () => {
     renderWithRouter(<LoginInfoPage />, '/monitor/loginInfo');
 

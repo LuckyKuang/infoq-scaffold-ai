@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/package",
   "name": "infoq-scaffold-frontend-vue",
-  "version": "2.1.7",
+  "version": "2.1.8",
   "description": "infoq-scaffold-frontend-vue后台管理系统",
   "author": "Pontus",
   "license": "MIT",
@@ -98,8 +98,7 @@
     }
   },
   "engines": {
-    "node": "^20.19.0 || ^22.13.0 || >=24.0.0",
-    "npm": ">=8.19.0",
+    "node": "24.18.0",
     "pnpm": ">=10.0.0"
   },
   "browserslist": [

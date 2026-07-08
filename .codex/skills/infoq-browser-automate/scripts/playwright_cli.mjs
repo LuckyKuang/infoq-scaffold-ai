@@ -24,7 +24,7 @@ function resolveEvidencePath(value) {
 }
 
 function buildDefaultFlowEvidencePath(extension) {
-  return path.join(repoRoot, 'test-results', 'browser-automation', `${formatTimestamp()}.${extension}`);
+  return path.join(repoRoot, 'doc', 'tmp', 'infoq-browser-automate', 'flow', `${formatTimestamp()}.${extension}`);
 }
 
 function normalizeCommandArgs(rawArgs) {

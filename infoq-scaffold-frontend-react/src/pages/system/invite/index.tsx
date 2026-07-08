@@ -467,6 +467,9 @@ export default function InvitePage() {
 
       <CrudModal open={cancelDialogOpen} title="作废邀请码" confirmLoading={submitting} onCancel={closeCancelDialog} onOk={handleCancelSubmit}>
         <Form form={cancelForm} layout="vertical" initialValues={initialCancelForm}>
+          <Form.Item name="inviteId" hidden>
+            <Input />
+          </Form.Item>
           <Form.Item label="作废原因" name="canceledReason" rules={[{ required: true, message: '作废原因不能为空' }]}>
             <Input.TextArea rows={4} maxLength={255} showCount placeholder="请输入作废原因" />
           </Form.Item>

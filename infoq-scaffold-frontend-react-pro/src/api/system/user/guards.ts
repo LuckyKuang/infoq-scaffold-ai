@@ -1,4 +1,4 @@
-import type { UserInfoVO } from './types';
+import type {UserInfoVO} from './types';
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -15,6 +15,9 @@ const assertArray = (value: unknown, label: string) => {
     throw new Error(`${label} 必须是数组`);
   }
 };
+
+const optionalArray = <T>(value: unknown): T[] =>
+  Array.isArray(value) ? (value as T[]) : [];
 
 const assertString = (value: unknown, label: string) => {
   if (typeof value !== 'string') {
@@ -40,10 +43,12 @@ export const assertUserDetailData = (
   const data = assertRecord(value, label);
   assertRecord(data.user, `${label}.user`);
   assertArray(data.roles, `${label}.roles`);
-  assertArray(data.posts, `${label}.posts`);
   assertArray(data.roleIds, `${label}.roleIds`);
-  assertArray(data.postIds, `${label}.postIds`);
-  return value as UserInfoVO;
+  return {
+    ...data,
+    posts: optionalArray(data.posts),
+    postIds: optionalArray(data.postIds),
+  } as UserInfoVO;
 };
 
 export const assertAvatarUploadData = (

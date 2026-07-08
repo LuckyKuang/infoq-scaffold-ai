@@ -348,6 +348,9 @@ export default function JobPage() {
         onOk={handleSubmit}
       >
         <Form form={form} layout="vertical" initialValues={initialForm}>
+          <Form.Item name="jobId" hidden>
+            <Input />
+          </Form.Item>
           <Form.Item label="任务名称" name="jobName" rules={[{ required: true, message: '任务名称不能为空' }]}>
             <Input />
           </Form.Item>

@@ -72,6 +72,34 @@ const panelFixture = {
   ]
 };
 
+const deletePanelFixture = {
+  groups: [
+    {
+      groupKey: 'advanced',
+      groupName: '高级配置',
+      displayOrder: 90,
+      items: [
+        {
+          configId: 901,
+          configName: 'E2E测试参数',
+          configKey: 'e2e.config.key',
+          configValue: 'before',
+          configType: 'N',
+          valueType: 'text',
+          defaultValue: 'before',
+          groupKey: 'advanced',
+          displayOrder: 1,
+          options: null,
+          uiProps: {},
+          editable: true,
+          editableReason: null,
+          remark: 'e2e 参数删除入口验证'
+        }
+      ]
+    }
+  ]
+};
+
 const largePanelFixture = {
   groups: [
     {
@@ -92,6 +120,7 @@ const largePanelFixture = {
 const configPageMocks = vi.hoisted(() => ({
   getConfigPanel: vi.fn(),
   addConfig: vi.fn(),
+  delConfig: vi.fn(),
   updateConfig: vi.fn(),
   updateConfigByKey: vi.fn(),
   resetConfigByKey: vi.fn(),
@@ -102,6 +131,7 @@ const configPageMocks = vi.hoisted(() => ({
 vi.mock('@/api/system/config', () => ({
   getConfigPanel: configPageMocks.getConfigPanel,
   addConfig: configPageMocks.addConfig,
+  delConfig: configPageMocks.delConfig,
   updateConfig: configPageMocks.updateConfig,
   updateConfigByKey: configPageMocks.updateConfigByKey,
   resetConfigByKey: configPageMocks.resetConfigByKey,
@@ -144,6 +174,7 @@ describe('pages/system/config', () => {
     configPageMocks.resetConfigByKey.mockResolvedValue({ data: 'false' });
     configPageMocks.reorderConfig.mockResolvedValue(undefined);
     configPageMocks.refreshCache.mockResolvedValue(undefined);
+    configPageMocks.delConfig.mockResolvedValue(undefined);
   });
 
   it('loads config panel groups and typed items', async () => {
@@ -226,6 +257,22 @@ describe('pages/system/config', () => {
 
     await waitFor(() => {
       expect(configPageMocks.resetConfigByKey).toHaveBeenCalledWith('sys.account.registerUser');
+    });
+  });
+
+  it('deletes a custom config definition through the visible remove entry', async () => {
+    configPageMocks.getConfigPanel.mockResolvedValue({ data: deletePanelFixture });
+    vi.mocked(modal.confirm).mockResolvedValueOnce(true);
+    renderWithRouter(<ConfigPage />, '/system/config');
+
+    expect(await screen.findByText('E2E测试参数')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /删除/ }));
+
+    await waitFor(() => {
+      expect(modal.confirm).toHaveBeenCalledWith('是否确认删除参数键名为 "e2e.config.key" 的配置定义？');
+    });
+    await waitFor(() => {
+      expect(configPageMocks.delConfig).toHaveBeenCalledWith(901);
     });
   });
 });

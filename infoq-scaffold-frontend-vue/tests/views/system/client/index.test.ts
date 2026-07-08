@@ -205,7 +205,9 @@ describe('views/system/client/index', () => {
         deviceType: 'pc',
         activeTimeout: 1800,
         timeout: 604800,
-        status: '0'
+        status: '0',
+        createTime: '2026-03-07 10:00:00',
+        createByName: 'admin'
       }
     });
     clientMocks.addClient.mockResolvedValue(undefined);
@@ -329,6 +331,12 @@ describe('views/system/client/index', () => {
     await flushPromises();
 
     expect(clientMocks.updateClient).toHaveBeenCalledTimes(1);
+    expect(clientMocks.updateClient).toHaveBeenCalledWith(
+      expect.not.objectContaining({
+        createTime: expect.anything(),
+        createByName: expect.anything()
+      })
+    );
     expect(clientMocks.msgSuccess).toHaveBeenCalledWith('修改成功');
   });
 

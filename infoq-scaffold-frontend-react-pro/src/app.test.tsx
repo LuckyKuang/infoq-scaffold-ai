@@ -59,6 +59,22 @@ vi.mock('@/components', () => ({
   OfflineBanner: () => null,
 }));
 
+vi.mock('@/components/ErrorBoundary', () => ({
+  default: ({ children }: any) => children,
+}));
+
+vi.mock('@/components/LayoutTagsView', () => ({
+  default: () => null,
+}));
+
+vi.mock('@/components/OfflineBanner', () => ({
+  default: () => null,
+}));
+
+vi.mock('@/components/RightContent/AvatarDropdown', () => ({
+  AvatarDropdown: ({ children }: any) => children,
+}));
+
 vi.mock('@/components/SvgIcon', () => ({
   default: () => null,
 }));

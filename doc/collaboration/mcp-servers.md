@@ -24,19 +24,22 @@
 - `.codex/skills/infoq-browser-automate/scripts/playwright_cli.mjs`
 - `.codex/skills/infoq-browser-automate/scripts/chrome_devtools_cli.mjs`
 
-可选只读 `mysql` / `redis` MCP 的本地启动入口位于：
+项目级 MCP 的本地启动入口位于：
 
+- `.codex/scripts/start_playwright_mcp.mjs`
 - `.codex/scripts/start_mysql_mcp.mjs`
 - `.codex/scripts/start_redis_mcp.mjs`
 
-与上述只读 MCP 启动链路直接相关的 `.codex/scripts/` 共享 helper 目前只有两个：
+与上述 MCP 启动链路直接相关的 `.codex/scripts/` 共享 helper 目前只有两个：
 
 | 路径 | 角色 | 文档定位 |
 | --- | --- | --- |
 | `.codex/scripts/resolve_backend_local_mcp_env.mjs` | 统一按 `application-local.yml -> application-dev.yml` 顺序解析 backend 本地配置，并抽取 MySQL / Redis 只读环境变量；当前同时被只读 MCP 启动脚本、`infoq-data-ops` 与 `infoq-backend-verify` 复用 | 内部 helper，不单独作为用户入口 |
 | `.codex/scripts/launch_cached_mcp_package.mjs` | 优先复用本机 npm / npx cache 中已存在的 MCP 包；缓存未命中时再回退到 `npx -y <package>` 下载启动 | 内部 helper，不单独作为用户入口 |
 
-默认行为：
+`playwright` MCP 启动时优先复用本机 npm / npx cache 中的 `@playwright/mcp`，缓存未命中时由共享 helper 回退到 `npx -y @playwright/mcp`。
+
+`mysql` / `redis` MCP 默认行为：
 
 - 按 `application-local.yml -> application-dev.yml` 顺序读取当前开发者后端依赖配置
 - 显式环境变量优先级高于解析出的 backend 配置值

@@ -31,6 +31,7 @@
 
 - 当前模块没有独立自动装配入口。
 - 真实 OSS 配置来自 Redis 中的系统 OSS 配置缓存与默认配置 key。
+- `SYS_OSS_CONFIG` 缓存值只保留 `OssProperties` 所需字段，不写入 `SysOssConfig` 主键、默认状态、审计字段或备注。
 
 ## 7. 关键数据流
 
