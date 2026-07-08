@@ -124,6 +124,7 @@ compose() {
   # Frontend commands never start infoq-admin, so this placeholder only satisfies parsing.
   local compose_security_token_secret="${SECURITY_TOKEN_SECRET:-frontend-compose-placeholder-token-secret-20260601}"
   INFOQ_DEPLOY_ROOT="${DEPLOY_ROOT}" \
+    COMPOSE_PROJECT_NAME="${INFOQ_COMPOSE_PROJECT_NAME:-${COMPOSE_PROJECT_NAME:-infoq-scaffold-ai}}" \
     DEPLOY_ID="${DEPLOY_ID:-frontend-compose-placeholder-deploy-id}" \
     MYSQL_ROOT_PASSWORD="${MYSQL_ROOT_PASSWORD:-frontend-compose-placeholder-mysql-root}" \
     INFOQ_DB_USERNAME="${INFOQ_DB_USERNAME:-frontend_placeholder_app}" \
@@ -183,11 +184,14 @@ build_frontends() {
 deploy_frontends() {
   local public_base_url="${INFOQ_PUBLIC_BASE_URL:-http://localhost}"
   public_base_url="${public_base_url%/}"
+  local frontend_containers=(infoq-frontend-vue infoq-frontend-react infoq-frontend-react-pro)
 
   resolve_compose_command
   prepare_dirs
   build_frontends
-  compose up -d --no-deps "${FRONTEND_SERVICES[@]}"
+  compose up -d --no-deps "${frontend_containers[@]}"
+  # Frontend containers are recreated during deploy; restart nginx afterwards so upstream DNS is refreshed.
+  compose up -d --no-deps --force-recreate nginx-web
   echo "[frontend] 部署完成"
   echo "[frontend] 网关入口: ${public_base_url}/vue/、${public_base_url}/react/、${public_base_url}/react-pro/、${public_base_url}/console-oss/ 和 ${public_base_url}/oss/"
   echo "[frontend] 直连端口: Vue=9091 React=9092 ReactPro=9093"

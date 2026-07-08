@@ -1,0 +1,8 @@
+.git
+.idea
+.mvn/wrapper/maven-wrapper.jar
+**/target
+**/logs
+**/*.log
+**/.flattened-pom.xml
+**/.DS_Store

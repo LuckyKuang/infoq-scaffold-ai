@@ -69,8 +69,8 @@ services:
 
   infoq-admin:
     build:
-      context: ../../infoq-scaffold-backend/infoq-admin
-      dockerfile: Dockerfile
+      context: ../../infoq-scaffold-backend
+      dockerfile: infoq-admin/Dockerfile
     image: infoq/infoq-admin:2.1.7
     container_name: infoq-admin
     restart: unless-stopped

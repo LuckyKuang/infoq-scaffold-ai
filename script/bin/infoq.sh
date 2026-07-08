@@ -11,7 +11,6 @@ SQL_DIR="${REPO_ROOT}/sql"
 SQL_INIT_REL="sql/infoq_scaffold_2.0.0.sql"
 SQL_INIT_FILE="${REPO_ROOT}/${SQL_INIT_REL}"
 BACKEND_DIR="${REPO_ROOT}/infoq-scaffold-backend"
-ADMIN_JAR="${BACKEND_DIR}/infoq-admin/target/infoq-admin.jar"
 BACKEND_SERVICES=(mysql redis minio infoq-admin)
 DEFAULT_DEPLOY_ROOT="/infoq"
 DEFAULT_ENV_FILE="/etc/infoq-scaffold-ai/deploy.env"
@@ -26,9 +25,9 @@ usage() {
 
 命令说明:
   prepare      创建后端及依赖服务所需宿主机目录，并同步 redis.conf 与 application-prod.yml
-  package      执行后端 prod 打包
+  package      通过 Docker builder 执行后端 prod 打包并构建镜像
   build-image  仅构建 infoq-admin 镜像
-  deploy       prepare + package + 启动依赖服务 + 自动初始化数据库 + 启动 infoq-admin
+  deploy       prepare + Docker 构建后端镜像 + 启动依赖服务 + 自动初始化数据库 + 启动 infoq-admin
   start        启动现有 mysql、redis、minio、infoq-admin 容器
   stop         停止 mysql、redis、minio、infoq-admin
   restart      重启现有 infoq-admin 容器
@@ -170,6 +169,7 @@ resolve_compose_command() {
 compose() {
   resolve_compose_command
   INFOQ_DEPLOY_ROOT="${DEPLOY_ROOT}" \
+    COMPOSE_PROJECT_NAME="${INFOQ_COMPOSE_PROJECT_NAME:-${COMPOSE_PROJECT_NAME:-infoq-scaffold-ai}}" \
     DEPLOY_ID="${DEPLOY_ID:-}" \
     MYSQL_ROOT_PASSWORD="${MYSQL_ROOT_PASSWORD:-}" \
     INFOQ_DB_USERNAME="${INFOQ_DB_USERNAME:-}" \
@@ -212,6 +212,8 @@ prepare_dirs() {
 
   require_env_vars REDIS_PASSWORD
   awk -v password="${REDIS_PASSWORD}" '{ gsub(/__REDIS_PASSWORD__/, password); print }' "${REDIS_CONF_SOURCE}" > "${DEPLOY_ROOT}/redis/conf/redis.conf"
+  # The official Redis image runs as a non-root user, so strict host umask must not hide the config.
+  chmod 644 "${DEPLOY_ROOT}/redis/conf/redis.conf" || true
 
   if [[ ! -f "${IP2REGION_V6_SOURCE}" ]]; then
     echo "[backend] 缺少 IPv6 地址库源文件: ${IP2REGION_V6_SOURCE}" >&2
@@ -294,11 +296,7 @@ prepare_existing_deploy_id() {
 }
 
 package_backend() {
-  require_command mvn
-  (
-    cd "${BACKEND_DIR}"
-    mvn clean package -P prod -pl infoq-admin -am
-  )
+  build_image
 }
 
 build_image() {
@@ -543,6 +541,10 @@ public_base_is_https() {
   fi
 }
 
+admin_image() {
+  printf 'infoq/infoq-admin:%s' "$(backend_revision)"
+}
+
 sync_oss_config() {
   local access_key
   local secret_key
@@ -586,12 +588,9 @@ sync_oss_config() {
 }
 
 hash_admin_password() {
-  require_command java
-  if [[ ! -f "${ADMIN_JAR}" ]]; then
-    echo "[backend] 缺少后端 Jar，无法生成管理员 BCrypt 密码: ${ADMIN_JAR}" >&2
-    exit 1
-  fi
-  printf '%s' "${INFOQ_ADMIN_PASSWORD}" | java -jar "${ADMIN_JAR}" --infoq-bcrypt-hash-stdin
+  require_command docker
+  printf '%s' "${INFOQ_ADMIN_PASSWORD}" |
+    docker run --rm -i --network none --entrypoint java "$(admin_image)" -jar /infoq/server/app.jar --infoq-bcrypt-hash-stdin
 }
 
 sync_admin_credentials() {
@@ -684,10 +683,10 @@ deploy_backend() {
   resolve_compose_command
   prepare_dirs
   prepare_new_deploy_id
-  package_backend
+  build_image
   start_dependencies
   sync_admin_credentials
-  compose up -d --build infoq-admin
+  compose up -d --no-build infoq-admin
   echo "[backend] 部署完成，访问端口: 9090"
 }
 

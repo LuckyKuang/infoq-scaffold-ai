@@ -11,13 +11,15 @@
 
 默认宿主机根目录按运行时选择：WSL2 / 原生 Linux 使用 `/infoq`，macOS Colima 使用 `$HOME/infoq`。始终显式设置 `INFOQ_DEPLOY_ROOT`，不要依赖脚本自动判断。
 
+Docker Compose / 脚本化部署不要求宿主机安装 JDK 或 Maven。后端 prod 打包在 Docker builder 镜像 `maven:3.9.12-eclipse-temurin-17` 中执行，最终 `infoq-admin` 运行镜像保持 `bellsoft/liberica-openjdk-rocky:17.0.16-cds`。
+
 如果只是一次性本地验证，并且确认该路径能被当前 Docker runtime 稳定挂载，也可以显式设置为独立临时目录；WSL2 不要把 MySQL 数据目录放在 `/mnt/c`、`/mnt/d` 等 DrvFS 路径下。
 
 ```bash
 export INFOQ_DEPLOY_ROOT="$(pwd)/doc/tmp/infoq-deploy"
 ```
 
-然后再执行后续脚本或 Docker Compose 命令。脚本会优先使用 `docker compose`，当前环境缺少 Docker Compose plugin 时回退到 standalone `docker-compose`。
+然后再执行后续脚本或 Docker Compose 命令。脚本会优先使用 `docker compose`，当前环境缺少 Docker Compose plugin 时回退到 standalone `docker-compose`。脚本默认固定 `COMPOSE_PROJECT_NAME=infoq-scaffold-ai`，避免使用 Compose 文件目录名生成 `docker_default` 这类过于通用的网络名；确需覆盖时可显式设置 `INFOQ_COMPOSE_PROJECT_NAME` 或 `COMPOSE_PROJECT_NAME`。
 
 ## 0. 推荐一键安装入口
 
@@ -26,6 +28,8 @@ export INFOQ_DEPLOY_ROOT="$(pwd)/doc/tmp/infoq-deploy"
 ```bash
 curl -sSL https://raw.githubusercontent.com/LuckyKuang/infoq-scaffold-ai/main/deploy/install.sh | sudo bash
 ```
+
+该入口的宿主机前置命令是 `curl`、`tar`、`openssl`、`docker` 和 Docker Compose；Java 与 Maven 由 Docker 镜像提供。
 
 生产或准生产环境建议固定 tag：
 
@@ -112,7 +116,7 @@ bash script/bin/infoq.sh stop
 
 - 首次空数据目录启动时，MySQL 容器会按顺序自动执行基础 SQL 与当前增量 SQL
 - 如果数据目录已存在，但 `infoq` 库表或增量结构未初始化，`deploy` / `start` 也会补导缺失 SQL 并做关键表/列校验
-- `deploy` 会生成或校验本次 `DEPLOY_ID`，然后准备宿主机目录、构建后端、启动依赖服务、同步随机凭据并拉起 `infoq-admin`
+- `deploy` 会生成或校验本次 `DEPLOY_ID`，然后准备宿主机目录、通过 Docker builder 构建后端镜像、启动依赖服务、同步随机凭据并拉起 `infoq-admin`
 - `deploy` 默认不会覆盖用户已修改的管理员账号或非默认 OSS 配置；需要重置时显式设置 `INFOQ_RESET_ADMIN=1` 或 `INFOQ_RESET_OSS=1`
 - `prepare` / `deploy` / `start` 会确保 `${INFOQ_DEPLOY_ROOT:-/infoq}/server/ip2region/ip2region_v6.xdb` 存在；如果后续单独替换该文件，需要重启 `infoq-admin` 才会生效
 - `start` 与 `restart` 会复用 `${INFOQ_DEPLOY_ROOT:-/infoq}/server/config/deploy-id`；如果文件不存在，先执行 `deploy` 或显式设置 `DEPLOY_ID`
@@ -128,7 +132,7 @@ bash script/bin/deploy-frontend.sh prepare
 bash script/bin/deploy-frontend.sh deploy
 ```
 
-`deploy` 会先同步 `${INFOQ_DEPLOY_ROOT:-/infoq}/nginx/conf/nginx.conf`，再顺序构建 Vue / React / React Pro 前端镜像，最后启动三个前端容器与 `nginx-web`。本机 Docker 验证时不要直接用 `docker compose up --build infoq-frontend-vue infoq-frontend-react infoq-frontend-react-pro` 并行构建替代脚本。
+`deploy` 会先同步 `${INFOQ_DEPLOY_ROOT:-/infoq}/nginx/conf/nginx.conf`，再顺序构建 Vue / React / React Pro 前端镜像，最后启动三个前端容器并强制重建 `nginx-web`，确保前端容器重建后的 upstream DNS 被刷新。本机 Docker 验证时不要直接用 `docker compose up --build infoq-frontend-vue infoq-frontend-react infoq-frontend-react-pro` 并行构建替代脚本。
 
 常用命令：
 
@@ -201,7 +205,55 @@ bash script/bin/infoq.sh stop
 
 `infoq-admin` 已配置 Spring Boot graceful shutdown 和 Compose `stop_grace_period`。滚动更新时应先从负载均衡或 Nginx upstream 摘除旧节点，确认旧节点不再接收新流量或长连接排空，再停止旧容器；新节点必须在 `/monitor/health/readiness` 返回 2xx 后再纳入流量。WebSocket/SSE 客户端断线重连能力仍需按前端专项验证确认。
 
-## 6. 常用运维命令
+## 6. 卸载本地部署栈
+
+如需清理本地或自管测试环境，使用 `deploy/uninstall.sh`，不要用 `docker compose down -v` 替代。脚本会先展示计划，随后逐项确认应用、MySQL、Redis、MinIO、配置目录和空部署根目录是否删除；实际删除前还必须输入固定确认短语。
+
+先预览计划：
+
+```bash
+export INFOQ_ENV_FILE=/etc/infoq-scaffold-ai/deploy.env
+bash deploy/uninstall.sh --dry-run
+```
+
+确认后执行：
+
+```bash
+sudo env INFOQ_ENV_FILE=/etc/infoq-scaffold-ai/deploy.env bash deploy/uninstall.sh
+```
+
+macOS Colima 通过 `sudo` 执行时需要继续传入用户态 Docker socket：
+
+```bash
+export DOCKER_HOST="unix://${HOME}/.colima/default/docker.sock"
+sudo env DOCKER_CONFIG="${DOCKER_CONFIG:-$HOME/.docker}" DOCKER_HOST="${DOCKER_HOST}" INFOQ_ENV_FILE=/etc/infoq-scaffold-ai/deploy.env bash deploy/uninstall.sh
+```
+
+删除语义如下：
+
+- 选择删除应用时，会删除 `infoq-admin`、`nginx-web`、`infoq-frontend-vue`、`infoq-frontend-react`、`infoq-frontend-react-pro` 容器，并删除 `${INFOQ_DEPLOY_ROOT}/server`、`${INFOQ_DEPLOY_ROOT}/nginx`、`${INFOQ_DEPLOY_ROOT}/vue`、`${INFOQ_DEPLOY_ROOT}/react`、`${INFOQ_DEPLOY_ROOT}/react-pro`。
+- 选择删除 MySQL 时，会删除 `mysql` 容器和 `${INFOQ_DEPLOY_ROOT}/mysql`；选择保留时，容器和目录都不会被删除。
+- 选择删除 Redis 时，会删除 `redis` 容器和 `${INFOQ_DEPLOY_ROOT}/redis`；选择保留时，容器和目录都不会被删除。
+- 选择删除 MinIO 时，会删除 `minio` 容器和 `${INFOQ_DEPLOY_ROOT}/minio`；选择保留时，容器和目录都不会被删除。
+- 配置目录 `${INFOQ_CONFIG_DIR:-/etc/infoq-scaffold-ai}` 与空的 `${INFOQ_DEPLOY_ROOT}` 是独立确认项。
+- 执行过容器删除动作后，脚本会删除空的 Compose 项目网络 `${INFOQ_COMPOSE_PROJECT_NAME:-infoq-scaffold-ai}_default`；如果检测到旧版本创建的空 `docker_default`，也会一并删除。若用户选择保留 MySQL、Redis 或 MinIO，对应容器仍在网络内，网络会保留。
+- 脚本不删除 Docker 镜像。
+
+自动化验证可显式传入选择项，例如：
+
+```bash
+INFOQ_UNINSTALL_APPS=yes \
+INFOQ_UNINSTALL_MYSQL=no \
+INFOQ_UNINSTALL_REDIS=no \
+INFOQ_UNINSTALL_MINIO=no \
+INFOQ_UNINSTALL_CONFIG=no \
+INFOQ_UNINSTALL_EMPTY_ROOT=no \
+bash deploy/uninstall.sh --dry-run
+```
+
+实际删除的自动化执行还必须额外传入 `INFOQ_UNINSTALL_CONFIRM='DELETE INFOQ DEPLOYMENT'`。
+
+## 7. 常用运维命令
 
 查看状态：
 
@@ -255,7 +307,7 @@ export DOCKER_HOST="unix://${HOME}/.colima/default/docker.sock"
 
 长期处理应清理失效的 `credsStore` / `credHelpers`，或安装当前配置声明的 credential helper。部署脚本会在 `deploy` / `build` 路径进入镜像拉取或构建前检查 Docker credential helper 是否存在，避免把该问题延迟到镜像拉取阶段才暴露；`status`、`stop`、`logs` 等不拉取镜像的命令不会因该检查被拦截。
 
-## 7. 如需直接使用 Docker Compose CLI
+## 8. 如需直接使用 Docker Compose CLI
 
 ```bash
 docker compose -f script/docker/docker-compose.yml up -d --build

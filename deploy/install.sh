@@ -52,8 +52,6 @@ require_runtime() {
   require_command tar
   require_command openssl
   require_command docker
-  require_command java
-  require_command mvn
 
   if ! docker compose version >/dev/null 2>&1 && ! command -v docker-compose >/dev/null 2>&1; then
     fail "缺少 Docker Compose CLI: 需要 docker compose 或 docker-compose"
@@ -119,48 +117,52 @@ secure_private_file() {
 }
 
 write_credentials() {
-  umask 077
-  {
-    printf 'InfoQ Scaffold credentials\n\n'
-    printf 'URLs:\n'
-    printf '  Vue Admin:       %s/vue/\n' "${INFOQ_PUBLIC_BASE_URL}"
-    printf '  React Admin:     %s/react/\n' "${INFOQ_PUBLIC_BASE_URL}"
-    printf '  React Pro Admin: %s/react-pro/\n' "${INFOQ_PUBLIC_BASE_URL}"
-    printf '  Backend Health:  %s/prod-api/monitor/health/readiness\n' "${INFOQ_PUBLIC_BASE_URL}"
-    printf '  MinIO Console:   %s/console-oss/\n' "${INFOQ_PUBLIC_BASE_URL}"
-    printf '  MinIO OSS:       %s/oss/\n\n' "${INFOQ_PUBLIC_BASE_URL}"
-    printf 'Generated credentials:\n'
-    printf '  Admin username:      %s\n' "${INFOQ_ADMIN_USERNAME}"
-    printf '  Admin password:      %s\n\n' "${INFOQ_ADMIN_PASSWORD}"
-    printf '  MySQL root user:     root\n'
-    printf '  MySQL root password: %s\n' "${MYSQL_ROOT_PASSWORD}"
-    printf '  MySQL app user:      %s\n' "${INFOQ_DB_USERNAME}"
-    printf '  MySQL app password:  %s\n\n' "${INFOQ_DB_PASSWORD}"
-    printf '  Redis password:      %s\n\n' "${REDIS_PASSWORD}"
-    printf '  MinIO root user:     %s\n' "${MINIO_ROOT_USER}"
-    printf '  MinIO root password: %s\n' "${MINIO_ROOT_PASSWORD}"
-  } > "${INFOQ_CREDENTIALS_FILE}"
+  (
+    umask 077
+    {
+      printf 'InfoQ Scaffold credentials\n\n'
+      printf 'URLs:\n'
+      printf '  Vue Admin:       %s/vue/\n' "${INFOQ_PUBLIC_BASE_URL}"
+      printf '  React Admin:     %s/react/\n' "${INFOQ_PUBLIC_BASE_URL}"
+      printf '  React Pro Admin: %s/react-pro/\n' "${INFOQ_PUBLIC_BASE_URL}"
+      printf '  Backend Health:  %s/prod-api/monitor/health/readiness\n' "${INFOQ_PUBLIC_BASE_URL}"
+      printf '  MinIO Console:   %s/console-oss/\n' "${INFOQ_PUBLIC_BASE_URL}"
+      printf '  MinIO OSS:       %s/oss/\n\n' "${INFOQ_PUBLIC_BASE_URL}"
+      printf 'Generated credentials:\n'
+      printf '  Admin username:      %s\n' "${INFOQ_ADMIN_USERNAME}"
+      printf '  Admin password:      %s\n\n' "${INFOQ_ADMIN_PASSWORD}"
+      printf '  MySQL root user:     root\n'
+      printf '  MySQL root password: %s\n' "${MYSQL_ROOT_PASSWORD}"
+      printf '  MySQL app user:      %s\n' "${INFOQ_DB_USERNAME}"
+      printf '  MySQL app password:  %s\n\n' "${INFOQ_DB_PASSWORD}"
+      printf '  Redis password:      %s\n\n' "${REDIS_PASSWORD}"
+      printf '  MinIO root user:     %s\n' "${MINIO_ROOT_USER}"
+      printf '  MinIO root password: %s\n' "${MINIO_ROOT_PASSWORD}"
+    } > "${INFOQ_CREDENTIALS_FILE}"
+  )
   secure_private_file "${INFOQ_CREDENTIALS_FILE}"
 }
 
 write_env_file() {
-  umask 077
-  {
-    write_env_line INFOQ_VERSION "${INFOQ_VERSION}"
-    write_env_line INFOQ_PUBLIC_BASE_URL "${INFOQ_PUBLIC_BASE_URL}"
-    write_env_line INFOQ_DEPLOY_ROOT "${INFOQ_DEPLOY_ROOT}"
-    write_env_line MYSQL_ROOT_PASSWORD "${MYSQL_ROOT_PASSWORD}"
-    write_env_line INFOQ_DB_USERNAME "${INFOQ_DB_USERNAME}"
-    write_env_line INFOQ_DB_PASSWORD "${INFOQ_DB_PASSWORD}"
-    write_env_line REDIS_PASSWORD "${REDIS_PASSWORD}"
-    write_env_line MINIO_ROOT_USER "${MINIO_ROOT_USER}"
-    write_env_line MINIO_ROOT_PASSWORD "${MINIO_ROOT_PASSWORD}"
-    write_env_line INFOQ_OSS_BUCKET "${INFOQ_OSS_BUCKET}"
-    write_env_line SECURITY_TOKEN_SECRET "${SECURITY_TOKEN_SECRET}"
-    write_env_line DEPLOY_ID "${DEPLOY_ID}"
-    write_env_line INFOQ_ADMIN_USERNAME "${INFOQ_ADMIN_USERNAME}"
-    write_env_line INFOQ_ADMIN_PASSWORD "${INFOQ_ADMIN_PASSWORD}"
-  } > "${INFOQ_ENV_FILE}"
+  (
+    umask 077
+    {
+      write_env_line INFOQ_VERSION "${INFOQ_VERSION}"
+      write_env_line INFOQ_PUBLIC_BASE_URL "${INFOQ_PUBLIC_BASE_URL}"
+      write_env_line INFOQ_DEPLOY_ROOT "${INFOQ_DEPLOY_ROOT}"
+      write_env_line MYSQL_ROOT_PASSWORD "${MYSQL_ROOT_PASSWORD}"
+      write_env_line INFOQ_DB_USERNAME "${INFOQ_DB_USERNAME}"
+      write_env_line INFOQ_DB_PASSWORD "${INFOQ_DB_PASSWORD}"
+      write_env_line REDIS_PASSWORD "${REDIS_PASSWORD}"
+      write_env_line MINIO_ROOT_USER "${MINIO_ROOT_USER}"
+      write_env_line MINIO_ROOT_PASSWORD "${MINIO_ROOT_PASSWORD}"
+      write_env_line INFOQ_OSS_BUCKET "${INFOQ_OSS_BUCKET}"
+      write_env_line SECURITY_TOKEN_SECRET "${SECURITY_TOKEN_SECRET}"
+      write_env_line DEPLOY_ID "${DEPLOY_ID}"
+      write_env_line INFOQ_ADMIN_USERNAME "${INFOQ_ADMIN_USERNAME}"
+      write_env_line INFOQ_ADMIN_PASSWORD "${INFOQ_ADMIN_PASSWORD}"
+    } > "${INFOQ_ENV_FILE}"
+  )
   secure_private_file "${INFOQ_ENV_FILE}"
 }
 
