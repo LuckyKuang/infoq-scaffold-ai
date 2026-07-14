@@ -10,4 +10,9 @@ public interface SysOauthProviderService {
     List<OAuthProviderOptionVo> listLoginProviders();
 
     SysOauthProviderVo requireLoginProvider(String providerCode);
+
+    /**
+     * 获取允许绑定的 OAuth Provider。
+     */
+    SysOauthProviderVo requireBindProvider(String providerCode);
 }

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cc.infoq.system.mapper.SysMessageMapper">
+    <delete id="deleteExpiredWithoutRecipients">
+        DELETE FROM sys_message
+        WHERE expire_time IS NOT NULL
+          AND expire_time &lt; #{expiredBefore}
+          AND NOT EXISTS (
+              SELECT 1
+              FROM sys_message_recipient
+              WHERE sys_message_recipient.message_id = sys_message.message_id
+          )
+    </delete>
+</mapper>

@@ -93,6 +93,19 @@ export const constantRoutes: RouteRecordRaw[] = [
         meta: { title: '个人中心', icon: 'user' }
       }
     ]
+  },
+  {
+    path: '/message-center',
+    component: Layout,
+    hidden: true,
+    children: [
+      {
+        path: '',
+        component: () => import('@/views/message-center/index.vue'),
+        name: 'MessageCenter',
+        meta: { title: '消息中心', icon: 'message' }
+      }
+    ]
   }
 ];
 

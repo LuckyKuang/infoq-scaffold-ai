@@ -3,9 +3,10 @@
 </template>
 
 <script setup lang="ts">
-import { onShow } from '@dcloudio/uni-app';
-import uni, { getCurrentPagesSafe } from '@/utils/uni';
-import { routes } from '@/utils/navigation';
+import {onShow} from '@dcloudio/uni-app';
+import uni, {getCurrentPagesSafe} from '@/utils/uni';
+import {routes} from '@/utils/navigation';
+import {useSessionStore} from '@/store/session';
 
 const publicRoutes = new Set<string>([routes.login]);
 
@@ -30,6 +31,9 @@ const hasToken = () => Boolean(uni.getStorageSync('Admin-Token'));
 onShow(() => {
   const currentRoute = resolveCurrentRoute();
   if (!currentRoute || publicRoutes.has(currentRoute) || hasToken()) {
+    if (hasToken()) {
+      void useSessionStore().refreshUnreadMessageCount().catch(() => undefined);
+    }
     return;
   }
   uni.reLaunch({ url: routes.login });

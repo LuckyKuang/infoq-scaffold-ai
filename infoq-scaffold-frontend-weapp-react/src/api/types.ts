@@ -36,6 +36,26 @@ export interface LoginData {
   grantType?: string;
 }
 
+export interface ProfileOauthIdentityVO {
+  identityId: number;
+  providerCode: string;
+  providerName: string;
+  status: string;
+  passwordConfirmationRequired: boolean;
+}
+
+export interface MessageRecipientVO {
+  messageId: number;
+  messageType: string;
+  messageLevel: string;
+  title: string;
+  content?: string;
+  source: string;
+  createTime: string;
+  expireTime?: string;
+  readTime?: string;
+}
+
 export interface LoginResult {
   access_token: string;
 }

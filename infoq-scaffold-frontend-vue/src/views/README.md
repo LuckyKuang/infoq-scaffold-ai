@@ -56,3 +56,8 @@ Route match
 2. 首页：`index.vue`
 3. 业务页：`system/*`（重点关注 `system/config/index.vue`、`system/invite/index.vue`）
 4. 监控页：`monitor/*`
+
+## 9. 个人身份与消息中心
+
+- `system/user/profile` 包含 OAuth 身份管理页签，绑定复用浏览器 OAuth 回调链路，解绑的当前密码确认由服务端规则决定。
+- `message-center/index.vue` 展示个人持久化收件箱，支持读取、全部已读和软删除。它与公告管理 `system/notice` 的后台 CRUD 保持职责分离。

@@ -55,3 +55,9 @@
 - 后端菜单返回的 `component` 字符串必须能被前端组件映射解析；否则 `BackendRouteView` 只能按 fallback 规则处理。
 - 请求加密、SSE、WebSocket 都受环境变量控制；文档里只记录当前代码中已经能直接确认的行为，不把可选链路写成默认能力。
 - `AGENTS.md` 只负责登记阅读入口和同步门禁，不代替这些正文说明。
+
+## P1-P3 身份与消息边界
+
+- 个人中心通过 `/system/user/profile/oauth/*` 管理当前用户的第三方身份。绑定操作先向后端取得 Provider 授权地址并消费一次性绑定 ticket；客户端不会提交外部 identity ID 或目标用户 ID。是否需要当前密码由服务端列表项的 `passwordConfirmationRequired` 返回值决定。
+- `src/api/system/message` 与 `useNoticeStore` 使用 `/system/message/*` 的分页、未读数、已读、全部已读和软删除接口；`/message-center` 是固定受保护路由。通知铃铛和消息中心均以服务端收件箱为真值。
+- SSE/WebSocket 只识别 `{ type: "message", messageId }` 一类刷新事件，并刷新服务端消息状态；实时 payload 不保存为消息正文，也不能替代离线消息读取。

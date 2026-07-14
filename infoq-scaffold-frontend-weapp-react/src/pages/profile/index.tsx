@@ -1,22 +1,24 @@
-import { View, Text } from '@tarojs/components';
-import Taro, { useDidShow } from '@tarojs/taro';
-import { AtAvatar, AtButton, AtModal, AtModalHeader, AtModalContent, AtInput } from 'taro-ui';
+import {Text, View} from '@tarojs/components';
+import Taro, {useDidShow} from '@tarojs/taro';
+import {AtAvatar, AtButton, AtInput, AtModal, AtModalContent, AtModalHeader} from 'taro-ui';
 import {
+  type DictOption,
   getDictLabel,
   getDicts,
+  getUnreadMessageCount,
   getUserProfile,
+  listProfileOauthIdentities,
   mobileEnv,
   toDictOptions,
-  updateUserPwd,
-  type DictOption
+  updateUserPwd
 } from '@/api';
 import defaultAvatar from '@/assets/images/profile.jpg';
-import { useState } from 'react';
+import {useState} from 'react';
 import BottomNav from '../../components/bottom-nav';
-import { resolveAvatarUrl } from '../../utils/avatar';
-import { navigate, relaunch, routes } from '../../utils/navigation';
-import { handlePageError } from '../../utils/ui';
-import { useSessionStore } from '../../store/session';
+import {resolveAvatarUrl} from '../../utils/avatar';
+import {navigate, relaunch, routes} from '../../utils/navigation';
+import {handlePageError} from '../../utils/ui';
+import {useSessionStore} from '../../store/session';
 import './index.scss';
 
 const getDisplayName = (userName?: string, nickName?: string) => (nickName || userName || '用户').slice(0, 1).toUpperCase();
@@ -37,6 +39,7 @@ type ProfileSummary = {
 export default function ProfilePage() {
   const loadSession = useSessionStore((state) => state.loadSession);
   const signOut = useSessionStore((state) => state.signOut);
+  const unreadMessageCount = useSessionStore((state) => state.unreadMessageCount);
   const [sexOptions, setSexOptions] = useState<DictOption[]>([]);
   const [profile, setProfile] = useState<ProfileSummary>({
     userName: '',
@@ -52,6 +55,7 @@ export default function ProfilePage() {
   });
 
   const [pwdModalVisible, setPwdModalVisible] = useState(false);
+  const [wechatBound, setWechatBound] = useState(false);
   const [pwdForm, setPwdForm] = useState({
     oldPassword: '',
     newPassword: '',
@@ -67,7 +71,12 @@ export default function ProfilePage() {
           relaunch(routes.login);
           return;
         }
-        const [profileResponse, sexResponse] = await Promise.all([getUserProfile(), getDicts('sys_user_sex')]);
+        const [profileResponse, sexResponse, identityResponse, unreadResponse] = await Promise.all([
+          getUserProfile(),
+          getDicts('sys_user_sex'),
+          listProfileOauthIdentities(),
+          getUnreadMessageCount()
+        ]);
         const remoteProfile = profileResponse.data;
         setSexOptions(toDictOptions(sexResponse.data));
         setProfile({
@@ -76,6 +85,8 @@ export default function ProfilePage() {
           roleGroup: remoteProfile.roleGroup || '',
           postGroup: remoteProfile.postGroup || ''
         });
+        setWechatBound(identityResponse.data.some((identity) => identity.providerCode === 'wechat_miniapp' && identity.status === '0'));
+        useSessionStore.setState({ unreadMessageCount: unreadResponse.data });
       } catch (error) {
         await handlePageError(error, '个人中心加载失败');
       }
@@ -182,6 +193,14 @@ export default function ProfilePage() {
               <View className="custom-list-item">
                 <Text className="item-label">电子邮箱</Text>
                 <Text className="item-value">{profile.email || '未设置'}</Text>
+              </View>
+              <View className="custom-list-item">
+                <Text className="item-label">微信小程序</Text>
+                <Text className="item-value">{wechatBound ? '已绑定' : '未绑定'}</Text>
+              </View>
+              <View className="custom-list-item" onClick={() => navigate(routes.messages)}>
+                <Text className="item-label">消息中心</Text>
+                <Text className="item-value">{unreadMessageCount > 0 ? `${unreadMessageCount} 条未读` : '暂无未读'}</Text>
               </View>
             </View>
           </View>

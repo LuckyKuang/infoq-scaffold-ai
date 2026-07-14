@@ -75,6 +75,9 @@
       >
         {{ submitting ? '正在验证...' : '登 录' }}
       </button>
+      <button v-if="isWeappRuntime && wechatLoginEnabled" class="login-btn wechat-login-btn" :disabled="submitting" @click="handleWechatLogin">
+        微信小程序登录
+      </button>
     </view>
 
     <view class="login-footer">
@@ -86,7 +89,14 @@
 <script setup lang="ts">
 import {reactive, ref} from 'vue';
 import {onLoad} from '@dcloudio/uni-app';
-import {asCaptchaImage, getCodeImg, getRememberedLogin, mobileEnv, setRememberedLogin} from '@/api';
+import {
+  asCaptchaImage,
+  getCodeImg,
+  getRememberedLogin,
+  getWechatMiniAppEnabled,
+  mobileEnv,
+  setRememberedLogin
+} from '@/api';
 import AppIcon from '@/components/AppIcon.vue';
 import {routes} from '@/utils/navigation';
 import {handlePageError} from '@/utils/ui';
@@ -96,6 +106,8 @@ const sessionStore = useSessionStore();
 const submitting = ref(false);
 const captchaEnabled = ref(true);
 const codeUrl = ref('');
+const wechatLoginEnabled = ref(false);
+const isWeappRuntime = mobileEnv.taroEnv === 'weapp';
 
 const form = reactive({
   username: '',
@@ -158,12 +170,32 @@ const handleSubmit = async () => {
   }
 };
 
+const handleWechatLogin = async () => {
+  submitting.value = true;
+  try {
+    const result = await uni.login();
+    if (!result.code) {
+      throw new Error('未获取到微信授权 code');
+    }
+    await sessionStore.signIn({ clientId: mobileEnv.clientId, grantType: 'xcx', code: result.code });
+    await uni.showToast({ title: '欢迎回来', icon: 'success' });
+    uni.reLaunch({ url: routes.home });
+  } catch (error) {
+    await handlePageError(error, '微信登录失败');
+  } finally {
+    submitting.value = false;
+  }
+};
+
 onLoad(() => {
   const rememberedLogin = getRememberedLogin();
   form.username = rememberedLogin.username;
   form.password = rememberedLogin.password;
   form.rememberMe = rememberedLogin.rememberMe;
   void loadCaptcha();
+  if (isWeappRuntime) {
+    void getWechatMiniAppEnabled().then((response) => { wechatLoginEnabled.value = response.data; }).catch(() => { wechatLoginEnabled.value = false; });
+  }
 });
 </script>
 

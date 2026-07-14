@@ -7,13 +7,13 @@
           <text style="margin-left: 8rpx">修改密码</text>
         </view>
       </view>
-      
+
       <view class="avatar-outer">
         <view class="avatar-inner">
           <image :src="avatarImage" class="avatar-img" mode="aspectFill" @error="handleAvatarLoadError" />
         </view>
       </view>
-      
+
       <view class="user-meta">
         <view class="nickname">{{ profile.nickName || profile.userName || '用户' }}</view>
         <view class="username-badge">
@@ -49,6 +49,14 @@
           <view class="info-row">
             <text class="label">电子邮箱</text>
             <text class="value">{{ profile.email || '未设置' }}</text>
+          </view>
+          <view class="info-row">
+            <text class="label">微信小程序</text>
+            <text class="value">{{ wechatBound ? '已绑定' : '未绑定' }}</text>
+          </view>
+          <view class="info-row" @click="navigate(routes.messages)">
+            <text class="label">消息中心</text>
+            <text class="value">{{ sessionStore.unreadMessageCount > 0 ? `${sessionStore.unreadMessageCount} 条未读` : '暂无未读' }}</text>
           </view>
         </view>
       </view>
@@ -88,27 +96,29 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from 'vue';
-import { onShow } from '@dcloudio/uni-app';
+import {computed, reactive, ref, watch} from 'vue';
+import {onShow} from '@dcloudio/uni-app';
 import BottomNav from '@/components/BottomNav.vue';
 import AppIcon from '@/components/AppIcon.vue';
 import defaultAvatar from '@/assets/images/profile.jpg';
-import { 
-  getDictLabel, 
-  getDicts, 
-  getUserProfile, 
-  mobileEnv, 
-  toDictOptions, 
-  updateUserPwd, 
-  type DictOption 
+import {
+  type DictOption,
+  getDictLabel,
+  getDicts,
+  getUnreadMessageCount,
+  getUserProfile,
+  listProfileOauthIdentities,
+  toDictOptions,
+  updateUserPwd
 } from '@/api';
-import { ensureAuthenticated } from '@/composables/use-auth-guard';
-import { navigate, relaunch, routes } from '@/utils/navigation';
-import { resolveAvatarUrl } from '@/utils/avatar';
-import { handlePageError, showSuccess } from '@/utils/ui';
-import { useSessionStore } from '@/store/session';
+import {ensureAuthenticated} from '@/composables/use-auth-guard';
+import {navigate, relaunch, routes} from '@/utils/navigation';
+import {resolveAvatarUrl} from '@/utils/avatar';
+import {handlePageError, showSuccess} from '@/utils/ui';
+import {useSessionStore} from '@/store/session';
 
 const sessionStore = useSessionStore();
+const wechatBound = ref(false);
 const sexOptions = ref<DictOption[]>([]);
 const profile = reactive({
   userName: '',
@@ -159,9 +169,11 @@ const loadPage = async () => {
       relaunch(routes.login);
       return;
     }
-    const [profileResponse, sexResponse] = await Promise.all([
-      getUserProfile(), 
-      getDicts('sys_user_sex')
+    const [profileResponse, sexResponse, identityResponse, unreadResponse] = await Promise.all([
+      getUserProfile(),
+      getDicts('sys_user_sex'),
+      listProfileOauthIdentities(),
+      getUnreadMessageCount()
     ]);
     const remoteProfile = profileResponse.data;
     sexOptions.value = toDictOptions(sexResponse.data);
@@ -169,6 +181,8 @@ const loadPage = async () => {
     profile.deptName = remoteProfile.user?.deptName || session.user.deptName || '';
     profile.roleGroup = remoteProfile.roleGroup || '';
     profile.postGroup = remoteProfile.postGroup || '';
+    wechatBound.value = identityResponse.data.some((identity) => identity.providerCode === 'wechat_miniapp' && identity.status === '0');
+    sessionStore.unreadMessageCount = unreadResponse.data;
   } catch (error) {
     await handlePageError(error, '个人中心加载失败');
   }
@@ -215,7 +229,7 @@ const handleLogout = async () => {
     confirmColor: '#ef4444'
   });
   if (!res.confirm) return;
-  
+
   try {
     await sessionStore.signOut();
     relaunch(routes.login);

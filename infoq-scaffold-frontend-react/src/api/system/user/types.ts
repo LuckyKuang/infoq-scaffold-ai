@@ -78,6 +78,16 @@ export interface UserInfoVO {
   postGroup: string;
 }
 
+export interface ProfileOauthIdentityVO {
+  identityId: number;
+  providerCode: string;
+  providerName: string;
+  status: string;
+  passwordConfirmationRequired: boolean;
+  lastLoginTime?: string;
+  createTime?: string;
+}
+
 export interface ResetPwdForm {
   oldPassword: string;
   newPassword: string;

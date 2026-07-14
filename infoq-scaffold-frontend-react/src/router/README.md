@@ -60,3 +60,7 @@ App.tsx
 3. 守卫初始化：`AuthGuard.tsx`
 4. 动态组件解析：`BackendRouteView.tsx`
 5. 后端菜单转换：`route-transform.ts`
+
+## 9. 固定消息中心路由
+
+`/message-center` 是固定受保护路由，不依赖后端菜单动态装配。它展示当前用户的个人收件箱；初始化仍经过 `AuthGuard`，因此不带有效 token 时不会暴露消息数据。

@@ -1,6 +1,13 @@
-import { mobileEnv } from '@/utils/env';
-import { request } from '@/api/request';
-import type { ApiResponse, LoginData, LoginResult, UserInfo, VerifyCodeResult } from '@/api/types';
+import {mobileEnv} from '@/utils/env';
+import {request} from '@/api/request';
+import type {
+  ApiResponse,
+  LoginData,
+  LoginResult,
+  ProfileOauthIdentityVO,
+  UserInfo,
+  VerifyCodeResult
+} from '@/api/types';
 
 export const login = (data: LoginData) =>
   request<ApiResponse<LoginResult>, LoginData>({
@@ -37,5 +44,20 @@ export const getCodeImg = () =>
 export const getInfo = () =>
   request<ApiResponse<UserInfo>>({
     url: '/system/user/getInfo',
+    method: 'GET'
+  });
+
+export const getWechatMiniAppEnabled = () =>
+  request<ApiResponse<boolean>>({
+    url: '/auth/wechat-miniapp/enabled',
+    method: 'GET',
+    headers: {
+      isToken: false
+    }
+  });
+
+export const listProfileOauthIdentities = () =>
+  request<ApiResponse<ProfileOauthIdentityVO[]>>({
+    url: '/system/user/profile/oauth/identities',
     method: 'GET'
   });

@@ -98,6 +98,11 @@ public interface SystemConstants {
     String GRANT_TYPE_OAUTH = "oauth";
 
     /**
+     * 微信小程序授权类型
+     */
+    String GRANT_TYPE_WECHAT_MINIAPP = "xcx";
+
+    /**
      * 系统管理员角色标识
      */
     String ADMIN_ROLE_KEY = "admin";

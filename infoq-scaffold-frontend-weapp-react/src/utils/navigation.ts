@@ -5,6 +5,7 @@ export const routes = {
   home: '/pages/home/index',
   admin: '/pages/admin/index',
   notices: '/pages/notices/index',
+  messages: '/pages/messages/index',
   noticeDetail: '/pages/notice-detail/index',
   noticeForm: '/pages/notice-form/index',
   profile: '/pages/profile/index',

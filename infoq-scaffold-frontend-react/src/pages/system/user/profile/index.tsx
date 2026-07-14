@@ -9,6 +9,7 @@ import UserAvatar from '@/pages/system/user/profile/userAvatar';
 import UserInfo from '@/pages/system/user/profile/userInfo';
 import ResetPwd from '@/pages/system/user/profile/resetPwd';
 import OnlineDevice from '@/pages/system/user/profile/onlineDevice';
+import OauthIdentityPanel from '@/pages/system/user/profile/oauthIdentity';
 import SvgIcon from '@/components/SvgIcon';
 import { useSettingsStore } from '@/store/modules/settings';
 
@@ -131,6 +132,11 @@ export default function ProfilePage() {
                 key: 'onlineDevice',
                 label: '在线设备',
                 children: <OnlineDevice devices={state.devices} onChanged={loadDevices} />
+              },
+              {
+                key: 'oauthIdentity',
+                label: '账号关联',
+                children: <OauthIdentityPanel />
               }
             ]}
           />

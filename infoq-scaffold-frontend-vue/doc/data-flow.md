@@ -128,3 +128,21 @@ userStore.logout()
 
 - 页面内部局部组件与表单细节没有在这里逐页展开；需要时继续下钻到具体 `views/*` 文件。
 - 文档只记录当前已经能由代码直接证实的动态路由和请求主链路，不推断未来插件化方案。
+
+## 7. 身份关系与持久化消息
+
+个人中心从 `/system/user/profile/oauth/identities` 读取当前用户身份。绑定先向 `/system/user/profile/oauth/{provider}/bind/authorize` 取得服务器授权地址，随后复用浏览器 OAuth 回调；客户端不会传入外部 identity ID 完成绑定。
+
+消息铃铛、导航未读角标和固定 `/message-center` 路由共用 Pinia 消息状态：
+
+```text
+Notice UI / MessageCenter
+-> /system/message/list + /system/message/unread-count
+-> 服务端持久化收件箱
+
+SSE / WebSocket { type: "message", messageId }
+-> useNoticeStore.refresh()
+-> 再请求服务端消息真值
+```
+
+实时事件不是消息正文来源，因而关闭通道、离线或刷新页面不会影响读取、已读和软删除。

@@ -4,6 +4,7 @@ import type {UserVO} from '../../src/api/types';
 
 const {
   mockGetInfo,
+  mockGetUnreadMessageCount,
   mockGetToken,
   mockHasPermission,
   mockLogin,
@@ -13,6 +14,7 @@ const {
   mockSetToken
 } = vi.hoisted(() => ({
   mockGetInfo: vi.fn(),
+  mockGetUnreadMessageCount: vi.fn(),
   mockGetToken: vi.fn(),
   mockHasPermission: vi.fn(),
   mockLogin: vi.fn(),
@@ -24,6 +26,7 @@ const {
 
 vi.mock('@/api', () => ({
   getInfo: mockGetInfo,
+  getUnreadMessageCount: mockGetUnreadMessageCount,
   getToken: mockGetToken,
   hasPermission: mockHasPermission,
   login: mockLogin,
@@ -35,9 +38,10 @@ vi.mock('@/api', () => ({
 
 describe('store/session', () => {
   beforeEach(() => {
-    useSessionStore.setState({ token: '', user: null, permissions: [], initialized: false });
+    useSessionStore.setState({ token: '', user: null, permissions: [], initialized: false, unreadMessageCount: 0 });
 
     mockGetInfo.mockReset();
+    mockGetUnreadMessageCount.mockReset();
     mockGetToken.mockReset();
     mockHasPermission.mockReset();
     mockLogin.mockReset();
@@ -201,6 +205,22 @@ describe('store/session', () => {
     expect(mockLogout).not.toHaveBeenCalled();
     expect(mockRemoveToken).toHaveBeenCalledTimes(1);
     expect(useSessionStore.getState().user).toBeNull();
+  });
+
+  it('refreshes unread messages only for an authenticated session', async () => {
+    mockGetToken.mockReturnValue('message-token');
+    mockGetUnreadMessageCount.mockResolvedValue({ data: 4 });
+
+    await useSessionStore.getState().refreshUnreadMessageCount();
+
+    expect(mockGetUnreadMessageCount).toHaveBeenCalledTimes(1);
+    expect(useSessionStore.getState().unreadMessageCount).toBe(4);
+
+    mockGetToken.mockReturnValue('');
+    await useSessionStore.getState().refreshUnreadMessageCount();
+
+    expect(mockGetUnreadMessageCount).toHaveBeenCalledTimes(1);
+    expect(useSessionStore.getState().unreadMessageCount).toBe(0);
   });
 
   it('patchUser should merge when user exists and initialize when user is null', () => {

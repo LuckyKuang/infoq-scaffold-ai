@@ -12,12 +12,14 @@ import cc.infoq.system.domain.vo.SysNoticeVo;
 import cc.infoq.system.domain.vo.SysUserVo;
 import cc.infoq.system.mapper.SysNoticeMapper;
 import cc.infoq.system.mapper.SysUserMapper;
+import cc.infoq.system.service.SysMessageService;
 import cc.infoq.system.service.SysNoticeService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Arrays;
 import java.util.List;
@@ -33,6 +35,7 @@ public class SysNoticeServiceImpl implements SysNoticeService {
 
     private final SysNoticeMapper sysNoticeMapper;
     private final SysUserMapper sysUserMapper;
+    private final SysMessageService sysMessageService;
 
     /**
      * 分页查询通知公告列表
@@ -90,9 +93,14 @@ public class SysNoticeServiceImpl implements SysNoticeService {
      * @return 结果
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public int insertNotice(SysNoticeBo bo) {
         SysNotice notice = MapstructUtils.convert(bo, SysNotice.class);
-        return sysNoticeMapper.insert(notice);
+        int rows = sysNoticeMapper.insert(notice);
+        if (rows > 0) {
+            sysMessageService.publishSystemNotice(notice.getNoticeTitle(), notice.getNoticeContent(), notice.getNoticeType(), "notice:" + notice.getNoticeId());
+        }
+        return rows;
     }
 
     /**

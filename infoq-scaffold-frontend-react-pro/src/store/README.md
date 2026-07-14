@@ -75,3 +75,7 @@
 2. 动态路由：`modules/permission.ts`
 3. 界面偏好：`modules/app.ts`、`modules/settings.ts`
 4. 标签页与通知：`modules/tagsView.ts`、`modules/notice.ts`
+
+## 9. 持久化消息状态
+
+`modules/notice.ts` 是 `/system/message/*` 的服务端状态投影，供 `NoticeBell` 和 `/message-center` 共用。SSE/WebSocket 收到 `type=message` 时只触发刷新；消息正文、阅读状态与权限边界不在实时通道中维护。

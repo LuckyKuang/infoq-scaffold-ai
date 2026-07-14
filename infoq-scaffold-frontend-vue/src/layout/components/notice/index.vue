@@ -2,54 +2,50 @@
   <div v-loading="state.loading" class="layout-navbars-breadcrumb-user-news">
     <div class="head-box">
       <div class="head-box-title">通知公告</div>
-      <div class="head-box-btn" @click="readAll">全部已读</div>
+      <div class="head-box-btn" @click="onReadAll">全部已读</div>
     </div>
     <div v-loading="state.loading" class="content-box">
       <template v-if="newsList.length > 0">
-        <div v-for="(v, k) in newsList" :key="k" class="content-box-item" @click="onNewsClick(k)">
+        <div v-for="v in newsList" :key="v.messageId" class="content-box-item" @click="onNewsClick(v.messageId)">
           <div class="item-conten">
-            <div>{{ v.message }}</div>
+            <div>{{ v.title }}</div>
             <div class="content-box-msg"></div>
-            <div class="content-box-time">{{ v.time }}</div>
+            <div class="content-box-time">{{ v.createTime }}</div>
           </div>
           <!-- 已读/未读 -->
-          <span v-if="v.read" class="el-tag el-tag--success el-tag--mini read">已读</span>
+          <span v-if="v.readTime" class="el-tag el-tag--success el-tag--mini read">已读</span>
           <span v-else class="el-tag el-tag--danger el-tag--mini read">未读</span>
         </div>
       </template>
       <el-empty v-else :description="'消息为空'"></el-empty>
     </div>
+    <el-button link type="primary" class="all-message-button" @click="router.push('/message-center')">全部消息</el-button>
   </div>
 </template>
 
 <script setup lang="ts" name="layoutBreadcrumbUserNews">
-import { useNoticeStore } from '@/store/modules/notice';
 import type { NoticeItem } from '@/store/modules/notice';
+import { useNoticeStore } from '@/store/modules/notice';
+import router from '@/router';
 
 const noticeStore = useNoticeStore();
-const { readAll } = useNoticeStore();
-
-// 定义变量内容
-const state = reactive({
-  loading: false
-});
-const newsList = ref<NoticeItem[]>([]);
+const state = noticeStore.state;
+const newsList = computed<NoticeItem[]>(() => state.notices);
 
 /**
  * 初始化数据
  * @returns
  */
 const getTableData = async () => {
-  state.loading = true;
-  newsList.value = noticeStore.state.notices;
-  state.loading = false;
+  await noticeStore.refresh();
 };
 
-//点击消息，写入已读
-const onNewsClick = (index: number) => {
-  newsList.value[index].read = true;
-  //并且写入pinia
-  noticeStore.state.notices = newsList.value;
+const onNewsClick = (messageId: number) => {
+  void noticeStore.markRead(messageId);
+};
+
+const onReadAll = () => {
+  void noticeStore.readAll();
 };
 
 onMounted(() => {
@@ -106,6 +102,9 @@ onMounted(() => {
   }
   :deep(.el-empty__description p) {
     font-size: 13px;
+  }
+  .all-message-button {
+    width: 100%;
   }
 }
 </style>

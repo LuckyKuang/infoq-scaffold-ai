@@ -6,12 +6,10 @@ import cc.infoq.common.log.enums.BusinessType;
 import cc.infoq.common.mybatis.core.page.PageQuery;
 import cc.infoq.common.mybatis.core.page.TableDataInfo;
 import cc.infoq.common.redis.annotation.RepeatSubmit;
-import cc.infoq.common.service.DictService;
 import cc.infoq.common.web.core.BaseController;
 import cc.infoq.system.domain.bo.SysNoticeBo;
 import cc.infoq.system.domain.vo.SysNoticeVo;
 import cc.infoq.system.service.SysNoticeService;
-import cc.infoq.system.support.plugin.OptionalSseHelper;
 import lombok.AllArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -29,7 +27,6 @@ import org.springframework.web.bind.annotation.*;
 public class SysNoticeController extends BaseController {
 
     private final SysNoticeService sysNoticeService;
-    private final DictService dictService;
 
     /**
      * 获取通知公告列表
@@ -63,8 +60,6 @@ public class SysNoticeController extends BaseController {
         if (rows <= 0) {
             return ApiResult.fail();
         }
-        String type = dictService.getDictLabel("sys_notice_type", notice.getNoticeType());
-        OptionalSseHelper.publishAll("[" + type + "] " + notice.getNoticeTitle());
         return ApiResult.ok();
     }
 

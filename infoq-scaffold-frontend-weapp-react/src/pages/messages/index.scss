@@ -1,0 +1,9 @@
+.messages-page { min-height: 100vh; padding: 24rpx; background: #f5f7f9; }
+.message-card { display: flex; gap: 18rpx; justify-content: space-between; margin-top: 20rpx; padding: 24rpx; background: #fff; border-left: 6rpx solid transparent; }
+.message-card.unread { border-left-color: #1677ff; }
+.message-main { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 10rpx; }
+.message-title { font-size: 30rpx; color: #1f2937; }
+.message-time { font-size: 24rpx; color: #6b7280; }
+.message-actions { display: flex; flex-direction: column; gap: 16rpx; color: #1677ff; font-size: 26rpx; }
+.danger { color: #dc2626; }
+.empty, .back-profile { padding: 48rpx 0; text-align: center; color: #6b7280; }

@@ -41,6 +41,12 @@ export default [
     component: './index',
   },
   {
+    path: '/message-center',
+    name: '消息中心',
+    locale: false,
+    component: './message-center',
+  },
+  {
     path: '/',
     redirect: '/index',
   },

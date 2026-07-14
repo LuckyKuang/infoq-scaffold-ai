@@ -19,6 +19,7 @@
 | [`infoq-plugin-quartz`](./infoq-plugin-quartz/README.md) | 自动装配 | Quartz 托管任务调度 |
 | [`infoq-plugin-sse`](./infoq-plugin-sse/README.md) | 自动装配 | SSE 控制器、Emitter 管理、Redis topic 监听 |
 | [`infoq-plugin-websocket`](./infoq-plugin-websocket/README.md) | 自动装配 | WebSocket 端点、会话管理、集群广播 |
+| [`infoq-plugin-push`](./infoq-plugin-push/README.md) | 条件自动装配 | 关闭态默认的实时 Push 契约、通道选择和提交后提醒 |
 | [`infoq-plugin-jackson`](./infoq-plugin-jackson/README.md) | 自动装配 | Jackson 序列化与 JSON 校验 |
 | [`infoq-plugin-translation`](./infoq-plugin-translation/README.md) | 自动装配 | 返回值翻译与字典/用户/部门/OSS 名称补全 |
 | [`infoq-plugin-oss`](./infoq-plugin-oss/README.md) | 库模块 | OSS 客户端与工厂 |
@@ -33,7 +34,7 @@
 ## 4. 依赖方向
 
 - 基础依赖层常见组合是 `core-common -> jackson -> redis/security/web/mybatis`。
-- `infoq-system` 按业务需要依赖 `oss`、`security`、`web`、`doc`、`encrypt`、`sse`、`quartz`、`mail`、`websocket`。
+- `infoq-system` 按业务需要依赖 `oss`、`security`、`web`、`doc`、`encrypt`、`sse`、`push`、`quartz`、`mail`、`websocket`。
 - `infoq-core-data` 则在数据层直接接入 `mybatis`、`log`、`sensitive`、`translation`、`excel`、`jackson`。
 
 ## 5. 典型调用链

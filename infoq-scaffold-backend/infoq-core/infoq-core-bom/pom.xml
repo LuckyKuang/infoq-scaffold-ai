@@ -67,6 +67,13 @@
                 <version>${revision}</version>
             </dependency>
 
+            <!-- Push 通道抽象 -->
+            <dependency>
+                <groupId>cc.infoq</groupId>
+                <artifactId>infoq-plugin-push</artifactId>
+                <version>${revision}</version>
+            </dependency>
+
             <!-- 文档服务 -->
             <dependency>
                 <groupId>cc.infoq</groupId>

@@ -52,3 +52,9 @@
 - 后端菜单返回的 `component` 字符串必须能在 `src/views` 里解析到真实 `.vue` 页面；否则权限 store 只能返回空组件映射。
 - 登录、注册与部分写请求是否加密，取决于 `VITE_APP_ENCRYPT` 和 RSA/AES 环境变量。
 - 本工作区的动态路由装配放在 Pinia + Vue Router 里完成，不能直接套用 React admin 的路径解析实现。
+
+## P1-P3 身份与消息边界
+
+- 个人中心通过 `/system/user/profile/oauth/*` 管理当前用户的第三方身份。绑定只使用服务端生成的授权地址和回调 ticket；解绑是否要求当前密码以身份列表返回的 `passwordConfirmationRequired` 为准。
+- `src/api/system/message`、`useNoticeStore` 和固定受保护路由 `/message-center` 共同构成个人消息盒子。通知铃铛、导航未读角标和消息中心都以 `/system/message/*` 的服务端结果为真值。
+- SSE/WebSocket 只处理 `{ type: "message", messageId }` 刷新事件，不把事件 payload 当作消息正文存储或展示。

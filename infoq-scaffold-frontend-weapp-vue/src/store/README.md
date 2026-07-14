@@ -47,3 +47,7 @@
 ## 8. 下钻阅读路径
 
 1. `session.ts`
+
+## 9. 未读消息状态
+
+`session` 额外维护 `unreadMessageCount` 与刷新动作。应用 `onShow` 或个人资料页触发时，已认证会话可请求服务端未读数；消息列表、正文和读/删操作仍由 `pages/messages` 通过 `api/message.ts` 获取，避免把收件箱内容塞进会话 store。

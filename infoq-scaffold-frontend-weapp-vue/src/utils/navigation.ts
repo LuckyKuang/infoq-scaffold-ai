@@ -1,10 +1,11 @@
-import uni, { getCurrentPagesSafe } from '@/utils/uni';
+import uni, {getCurrentPagesSafe} from '@/utils/uni';
 
 export const routes = {
   login: '/pages/login/index',
   home: '/pages/home/index',
   admin: '/pages/admin/index',
   notices: '/pages/notices/index',
+  messages: '/pages/messages/index',
   noticeDetail: '/pages/notice-detail/index',
   noticeForm: '/pages/notice-form/index',
   profile: '/pages/profile/index',

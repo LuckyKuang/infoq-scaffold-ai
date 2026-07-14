@@ -1,8 +1,41 @@
-import { notification } from 'antd';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { useNoticeStore } from '@/store/modules/notice';
-import { closeSSE, initSSE } from '@/utils/sse';
-import { closeWebSocket, initWebSocket } from '@/utils/websocket';
+import {notification} from 'antd';
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
+import {useNoticeStore} from '@/store/modules/notice';
+import {closeSSE, initSSE} from '@/utils/sse';
+import {closeWebSocket, initWebSocket} from '@/utils/websocket';
+
+const messageApi = vi.hoisted(() => ({
+  deleteMessages: vi.fn(),
+  getUnreadMessageCount: vi.fn(),
+  listMessages: vi.fn(),
+  markAllMessagesRead: vi.fn(),
+  markMessageRead: vi.fn(),
+}));
+
+vi.mock('@/api/system/message', () => messageApi);
+
+const mockMessageRefresh = (content: string) => {
+  messageApi.listMessages.mockResolvedValueOnce({
+    rows: [
+      {
+        messageId: 1,
+        messageType: 'system',
+        messageLevel: 'normal',
+        title: 'System message',
+        content,
+        source: 'test',
+        createTime: '2026-07-14 00:00:00',
+      },
+    ],
+    total: 1,
+  });
+  messageApi.getUnreadMessageCount.mockResolvedValueOnce({ data: 1 });
+};
+
+const waitForStoreRefresh = async () => {
+  await Promise.resolve();
+  await Promise.resolve();
+};
 
 class MockEventSource {
   static instances: MockEventSource[] = [];
@@ -49,7 +82,7 @@ describe('utils/realtime', () => {
     vi.stubEnv('VITE_APP_WEBSOCKET', 'true');
 
     localStorage.setItem('Admin-Token', 'token-test');
-    useNoticeStore.setState({ notices: [] });
+    useNoticeStore.setState({ notices: [], unreadCount: 0 });
     MockEventSource.instances = [];
     MockWebSocket.instances = [];
 
@@ -69,21 +102,27 @@ describe('utils/realtime', () => {
     vi.unstubAllEnvs();
   });
 
-  it('initializes SSE and records notice messages', () => {
+  it('refreshes persistent notices after an SSE message event', async () => {
     initSSE('/resource/sse');
     expect(MockEventSource.instances).toHaveLength(1);
 
     const instance = MockEventSource.instances[0];
     expect(instance.url).toContain('Authorization=Bearer token-test');
 
-    instance.onmessage?.({ data: 'new message' } as MessageEvent<string>);
-    expect(useNoticeStore.getState().notices[0].message).toBe('new message');
+    mockMessageRefresh('new message');
+    instance.onmessage?.({
+      data: JSON.stringify({ type: 'message' }),
+    } as MessageEvent<string>);
+
+    await waitForStoreRefresh();
+    expect(useNoticeStore.getState().notices[0]?.content).toBe('new message');
+    expect(messageApi.getUnreadMessageCount).toHaveBeenCalledOnce();
 
     closeSSE();
     expect(instance.close).toHaveBeenCalled();
   });
 
-  it('initializes websocket, sends heartbeat, and records notice messages', () => {
+  it('refreshes persistent notices after a websocket message event', async () => {
     initWebSocket('/resource/ws');
     expect(MockWebSocket.instances).toHaveLength(1);
 
@@ -94,8 +133,14 @@ describe('utils/realtime', () => {
     vi.advanceTimersByTime(10000);
     expect(ws.send).toHaveBeenCalled();
 
-    ws.onmessage?.({ data: 'biz-message' } as MessageEvent<string>);
-    expect(useNoticeStore.getState().notices[0].message).toBe('biz-message');
+    mockMessageRefresh('biz-message');
+    ws.onmessage?.({
+      data: JSON.stringify({ type: 'message' }),
+    } as MessageEvent<string>);
+
+    await waitForStoreRefresh();
+    expect(useNoticeStore.getState().notices[0]?.content).toBe('biz-message');
+    expect(messageApi.getUnreadMessageCount).toHaveBeenCalledOnce();
 
     closeWebSocket();
     expect(ws.close).toHaveBeenCalled();

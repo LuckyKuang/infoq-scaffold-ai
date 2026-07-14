@@ -256,6 +256,23 @@ websocket:
 
 --- # Quartz 托管任务
 infoq:
+  auth:
+    wechat-miniapp:
+      # 默认关闭；部署时通过环境变量注入 AppID 与 Secret 后再启用。
+      enabled: false
+      app-id: ${WECHAT_MINIAPP_APP_ID:}
+      secret: ${WECHAT_MINIAPP_SECRET:}
+      auto-register-enabled: false
+      require-invite-when-invite-register-enabled: true
+  push:
+    enabled: false
+    websocket-enabled: false
+    sse-enabled: false
+  message:
+    cleanup:
+      # 仅由 sys_job 显式启用的处理器执行；关闭时保留全部消息历史。
+      enabled: false
+      soft-delete-retention-days: 30
   quartz:
     # 是否启用 Quartz 托管任务能力
     enabled: true

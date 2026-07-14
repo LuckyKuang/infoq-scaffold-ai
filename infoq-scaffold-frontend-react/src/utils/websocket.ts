@@ -1,6 +1,5 @@
 import { getToken } from '@/utils/auth';
 import { useNoticeStore } from '@/store/modules/notice';
-import modal from '@/utils/modal';
 
 let ws: WebSocket | null = null;
 let heartBeatTimer: ReturnType<typeof setInterval> | null = null;
@@ -77,16 +76,14 @@ export const initWebSocket = (url: string) => {
     if (typeof evt.data === 'string' && evt.data.includes('ping')) {
       return;
     }
-    useNoticeStore.getState().addNotice({
-      message: String(evt.data),
-      read: false,
-      time: new Date().toLocaleString()
-    });
-    modal.notifySuccess({
-      title: '消息',
-      description: String(evt.data),
-      duration: 3
-    });
+    try {
+      const event = JSON.parse(String(evt.data)) as { type?: string };
+      if (event.type === 'message') {
+        void useNoticeStore.getState().refresh();
+      }
+    } catch {
+      // 只处理结构化消息刷新事件，其他 WebSocket 载荷不进入个人消息盒子。
+    }
   };
 
   ws.onerror = () => {

@@ -47,4 +47,6 @@ public class SysOauthIdentityVo implements Serializable {
     private String status;
 
     private Date lastLoginTime;
+
+    private Date createTime;
 }

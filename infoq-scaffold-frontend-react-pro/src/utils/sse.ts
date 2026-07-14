@@ -1,6 +1,5 @@
-import { useNoticeStore } from '@/store/modules/notice';
-import { getToken } from '@/utils/auth';
-import modal from '@/utils/modal';
+import {useNoticeStore} from '@/store/modules/notice';
+import {getToken} from '@/utils/auth';
 
 let eventSource: EventSource | null = null;
 let activeUrl = '';
@@ -43,16 +42,14 @@ export const initSSE = (baseUrl: string) => {
     if (!evt.data) {
       return;
     }
-    useNoticeStore.getState().addNotice({
-      message: evt.data,
-      read: false,
-      time: new Date().toLocaleString(),
-    });
-    modal.notifySuccess({
-      title: '消息',
-      description: evt.data,
-      duration: 3,
-    });
+    try {
+      const event = JSON.parse(evt.data) as { type?: string };
+      if (event.type === 'message') {
+        void useNoticeStore.getState().refresh();
+      }
+    } catch {
+      // 只处理结构化消息刷新事件，其他 SSE 载荷不进入个人消息盒子。
+    }
   };
 
   eventSource.onerror = () => {

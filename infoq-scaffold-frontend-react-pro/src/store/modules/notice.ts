@@ -1,32 +1,53 @@
-import { create } from 'zustand';
+import {create} from 'zustand';
+import {
+  deleteMessages,
+  getUnreadMessageCount,
+  listMessages,
+  markAllMessagesRead,
+  markMessageRead
+} from '@/api/system/message';
+import type {MessageRecipientVO} from '@/api/system/message/types';
 
-export interface NoticeItem {
-  message: string;
-  read: boolean;
-  time: string;
-}
+export type NoticeItem = MessageRecipientVO;
 
 type NoticeState = {
   notices: NoticeItem[];
-  addNotice: (notice: NoticeItem) => void;
-  markRead: (index: number) => void;
-  markAllRead: () => void;
+  unreadCount: number;
+  loading: boolean;
+  refresh: (pageSize?: number) => Promise<void>;
+  markRead: (messageId: number) => Promise<void>;
+  markAllRead: () => Promise<void>;
+  deleteByIds: (messageIds: number[]) => Promise<void>;
   clearNotices: () => void;
 };
 
 export const useNoticeStore = create<NoticeState>((set) => ({
   notices: [],
-  addNotice: (notice) =>
-    set((state) => ({ notices: [notice, ...state.notices] })),
-  markRead: (index) =>
-    set((state) => ({
-      notices: state.notices.map((item, currentIndex) =>
-        currentIndex === index ? { ...item, read: true } : item,
-      ),
-    })),
-  markAllRead: () =>
-    set((state) => ({
-      notices: state.notices.map((item) => ({ ...item, read: true })),
-    })),
-  clearNotices: () => set({ notices: [] }),
+  unreadCount: 0,
+  loading: false,
+  refresh: async (pageSize = 10) => {
+    set({ loading: true });
+    try {
+      const [listResponse, unreadResponse] = await Promise.all([
+        listMessages({ pageNum: 1, pageSize }),
+        getUnreadMessageCount(),
+      ]);
+      set({ notices: listResponse.rows, unreadCount: unreadResponse.data });
+    } finally {
+      set({ loading: false });
+    }
+  },
+  markRead: async (messageId) => {
+    await markMessageRead(messageId);
+    await useNoticeStore.getState().refresh();
+  },
+  markAllRead: async () => {
+    await markAllMessagesRead();
+    await useNoticeStore.getState().refresh();
+  },
+  deleteByIds: async (messageIds) => {
+    await deleteMessages(messageIds);
+    await useNoticeStore.getState().refresh();
+  },
+  clearNotices: () => set({ notices: [], unreadCount: 0, loading: false }),
 }));

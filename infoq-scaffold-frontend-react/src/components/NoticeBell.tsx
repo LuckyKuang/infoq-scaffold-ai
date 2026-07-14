@@ -1,19 +1,26 @@
-import { Badge, Button, Empty, Popover, Tag, Tooltip, theme } from 'antd';
-import { useState } from 'react';
+import { Badge, Button, Empty, Popover, Tag, theme, Tooltip } from 'antd';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { useNoticeStore } from '@/store/modules/notice';
 import SvgIcon from '@/components/SvgIcon';
 
 export default function NoticeBell() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [popoverOpen, setPopoverOpen] = useState(false);
   const notices = useNoticeStore((state) => state.notices);
   const markRead = useNoticeStore((state) => state.markRead);
   const markAllRead = useNoticeStore((state) => state.markAllRead);
-  const unreadCount = notices.filter((item) => !item.read).length;
+  const refresh = useNoticeStore((state) => state.refresh);
+  const unreadCount = useNoticeStore((state) => state.unreadCount);
   const {
     token: { colorBorderSecondary, colorTextSecondary }
   } = theme.useToken();
+
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
 
   const content = (
     <div style={{ width: 300 }} className="layout-notice-panel">
@@ -30,7 +37,7 @@ export default function NoticeBell() {
         <div>{t('notice.title')}</div>
         <button
           type="button"
-          onClick={markAllRead}
+          onClick={() => void markAllRead()}
           style={{
             border: 'none',
             background: 'transparent',
@@ -48,12 +55,12 @@ export default function NoticeBell() {
         {notices.length > 0 ? (
           notices.slice(0, 10).map((item, index) => (
             <div
-              key={`${item.time}-${index}`}
-              onClick={() => markRead(index)}
+              key={item.messageId}
+              onClick={() => void markRead(item.messageId)}
               onKeyDown={(event) => {
                 if (event.key === 'Enter' || event.key === ' ') {
                   event.preventDefault();
-                  markRead(index);
+                  void markRead(item.messageId);
                 }
               }}
               role="button"
@@ -67,11 +74,11 @@ export default function NoticeBell() {
               }}
             >
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-                <div>{item.message}</div>
-                <div style={{ color: colorTextSecondary, marginTop: 5 }}>{item.time}</div>
+                <div>{item.title}</div>
+                <div style={{ color: colorTextSecondary, marginTop: 5 }}>{item.createTime}</div>
               </div>
-              <Tag color={item.read ? 'success' : 'error'} style={{ alignSelf: 'center', marginInlineEnd: 0 }}>
-                {item.read ? t('notice.read') : t('notice.unread')}
+              <Tag color={item.readTime ? 'success' : 'error'} style={{ alignSelf: 'center', marginInlineEnd: 0 }}>
+                {item.readTime ? t('notice.read') : t('notice.unread')}
               </Tag>
             </div>
           ))
@@ -79,11 +86,30 @@ export default function NoticeBell() {
           <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={t('notice.empty')} />
         )}
       </div>
+      <Button
+        type="link"
+        block
+        onClick={() => {
+          setPopoverOpen(false);
+          navigate('/message-center');
+        }}
+      >
+        全部消息
+      </Button>
     </div>
   );
 
   return (
-    <Popover content={content} trigger="click" placement="bottomRight" open={popoverOpen} onOpenChange={setPopoverOpen}>
+    <Popover
+      content={content}
+      trigger="click"
+      placement="bottomRight"
+      open={popoverOpen}
+      onOpenChange={(open) => {
+        setPopoverOpen(open);
+        if (open) void refresh();
+      }}
+    >
       <span style={{ display: 'inline-flex' }}>
         <Tooltip title={t('navbar.message')} open={popoverOpen ? false : undefined}>
           <Button

@@ -4,6 +4,7 @@ export default defineAppConfig({
     'pages/admin/index',
     'pages/login/index',
     'pages/notices/index',
+    'pages/messages/index',
     'pages/notice-detail/index',
     'pages/notice-form/index',
     'pages/profile/index',

@@ -2,6 +2,7 @@ import {defineStore} from 'pinia';
 import {
     getInfo,
     getToken,
+    getUnreadMessageCount,
     hasPermission as hasGrantedPermission,
     login,
     type LoginData,
@@ -18,13 +19,15 @@ export type SessionState = {
   user: UserVO | null;
   permissions: string[];
   initialized: boolean;
+  unreadMessageCount: number;
 };
 
 const clearSessionState: SessionState = {
   token: '',
   user: null,
   permissions: [],
-  initialized: true
+  initialized: true,
+  unreadMessageCount: 0
 };
 
 const resolvePermissions = (value: unknown) => {
@@ -39,7 +42,8 @@ export const useSessionStore = defineStore('infoq-weapp-vue-session', {
     token: getToken(),
     user: null,
     permissions: [],
-    initialized: false
+    initialized: false,
+    unreadMessageCount: 0
   }),
   actions: {
     async loadSession(force = false): Promise<UserInfo | null> {
@@ -73,6 +77,14 @@ export const useSessionStore = defineStore('infoq-weapp-vue-session', {
       this.user = info.user;
       this.permissions = resolvePermissions(info.permissions);
       this.initialized = true;
+    },
+    async refreshUnreadMessageCount() {
+      if (!getToken()) {
+        this.unreadMessageCount = 0;
+        return;
+      }
+      const response = await getUnreadMessageCount();
+      this.unreadMessageCount = response.data;
     },
     async signOut() {
       let logoutError: unknown;
