@@ -16,10 +16,10 @@
 - 认证主干是 Spring Security + JWT access token + Redis session / revocation / online index，登录时会把 `clientId` 写入 token session，后续请求再由安全过滤器做一致性校验。
 - Redis 参与验证码、登录失败计数、在线用户、限流、防重提交和若干缓存组。
 - 配置按 `application.yml + application-{dev,prod,local}.yml` 叠加：
-  - `application.yml` 承载通用运行时行为配置，包括 Undertow、captcha、Spring Security token、`api-decrypt`、SpringDoc、SSE、WebSocket、`infoq.quartz`、MyBatis-Plus、Jackson、XSS、lock4j、security excludes 等。
+  - `application.yml` 承载通用运行时行为配置，包括 Undertow、captcha、Spring Security token、`api-decrypt`、SpringDoc、SSE、WebSocket、默认关闭的 MQTT/Elasticsearch、`infoq.quartz`、MyBatis-Plus、Jackson、XSS、lock4j、security excludes 等。
   - `application-dev.yml` 是默认激活 profile，主要补充/覆写 datasource、Redis、Redisson、Quartz 开发环境差异、`infoq.quartz.bootstrap` 和 mail。
   - `application-prod.yml` 补充/覆写 datasource、Redis、Redisson、Quartz 生产环境差异、`infoq.quartz.bootstrap`、graceful shutdown 和 mail；`application-local.yml` 补充/覆写 datasource、Redis、Redisson、mail，但不重写 Quartz。
-- 第三方身份、微信小程序登录、实时 Push 与消息清理均是关闭态默认能力：`infoq.auth.wechat-miniapp.enabled=false`、`infoq.push.enabled=false`、`infoq.message.cleanup.enabled=false`；启用微信登录必须同时提供部署侧 AppID/Secret 并启用 Provider，启用 Push 必须显式选择已开启的 SSE 或 WebSocket 通道。
+- 第三方身份、微信小程序登录、实时 Push、MQTT、Elasticsearch 与消息清理均是关闭态默认能力：`infoq.auth.wechat-miniapp.enabled=false`、`infoq.push.enabled=false`、`infoq.mqtt.enabled=false`、`infoq.elasticsearch.enabled=false`、`infoq.message.cleanup.enabled=false`；启用微信登录必须同时提供部署侧 AppID/Secret 并启用 Provider，启用 Push 必须显式选择已开启的 SSE 或 WebSocket 通道，启用 MQTT/Elasticsearch 必须注入各自连接配置。
 
 ## 模块导航
 

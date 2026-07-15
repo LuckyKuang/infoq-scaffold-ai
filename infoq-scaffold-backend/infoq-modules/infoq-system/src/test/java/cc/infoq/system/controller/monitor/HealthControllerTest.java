@@ -1,8 +1,13 @@
 package cc.infoq.system.controller.monitor;
 
+import cc.infoq.common.elasticsearch.ElasticsearchPluginStatus;
+import cc.infoq.common.elasticsearch.ElasticsearchStatusProvider;
+import cc.infoq.common.mqtt.MqttPluginStatus;
+import cc.infoq.common.mqtt.MqttStatusProvider;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.data.redis.RedisConnectionFailureException;
 import org.springframework.data.redis.connection.RedisConnection;
@@ -12,6 +17,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -34,12 +41,15 @@ class HealthControllerTest {
         GetMapping readinessMapping = HealthController.class.getMethod("readiness").getAnnotation(GetMapping.class);
         assertNotNull(readinessMapping);
         assertArrayEquals(new String[]{"/readiness"}, readinessMapping.value());
+        GetMapping optionalMapping = HealthController.class.getMethod("optional").getAnnotation(GetMapping.class);
+        assertNotNull(optionalMapping);
+        assertArrayEquals(new String[]{"/optional"}, optionalMapping.value());
     }
 
     @Test
     @DisplayName("liveness: should stay lightweight and return ok")
     void livenessShouldReturnOk() {
-        HealthController controller = new HealthController(mock(JdbcTemplate.class), mock(RedisConnectionFactory.class));
+        HealthController controller = controller(mock(JdbcTemplate.class), mock(RedisConnectionFactory.class));
 
         assertEquals("ok", controller.checkHealth());
         assertEquals("ok", controller.liveness());
@@ -54,7 +64,7 @@ class HealthControllerTest {
         when(jdbcTemplate.queryForObject("SELECT 1", Integer.class)).thenReturn(1);
         when(redisConnectionFactory.getConnection()).thenReturn(redisConnection);
         when(redisConnection.ping()).thenReturn("PONG");
-        HealthController controller = new HealthController(jdbcTemplate, redisConnectionFactory);
+        HealthController controller = controller(jdbcTemplate, redisConnectionFactory);
 
         ResponseEntity<HealthController.HealthReport> response = controller.readiness();
 
@@ -76,7 +86,7 @@ class HealthControllerTest {
             .thenThrow(new DataAccessResourceFailureException("database unavailable"));
         when(redisConnectionFactory.getConnection()).thenReturn(redisConnection);
         when(redisConnection.ping()).thenReturn("PONG");
-        HealthController controller = new HealthController(jdbcTemplate, redisConnectionFactory);
+        HealthController controller = controller(jdbcTemplate, redisConnectionFactory);
 
         ResponseEntity<HealthController.HealthReport> response = controller.readiness();
 
@@ -96,7 +106,7 @@ class HealthControllerTest {
         RedisConnectionFactory redisConnectionFactory = mock(RedisConnectionFactory.class);
         when(jdbcTemplate.queryForObject("SELECT 1", Integer.class)).thenReturn(1);
         when(redisConnectionFactory.getConnection()).thenThrow(new RedisConnectionFailureException("redis unavailable"));
-        HealthController controller = new HealthController(jdbcTemplate, redisConnectionFactory);
+        HealthController controller = controller(jdbcTemplate, redisConnectionFactory);
 
         ResponseEntity<HealthController.HealthReport> response = controller.readiness();
 
@@ -106,5 +116,33 @@ class HealthControllerTest {
         assertEquals("UP", response.getBody().dependencies().get("database").status());
         assertEquals("DOWN", response.getBody().dependencies().get("redis").status());
         assertEquals("RedisConnectionFailureException", response.getBody().dependencies().get("redis").reason());
+    }
+
+    @Test
+    void shouldExposeOptionalMiddlewareWithoutChangingReadinessContract() {
+        MqttStatusProvider mqttStatusProvider = () -> new MqttPluginStatus(false, Map.of());
+        ElasticsearchStatusProvider elasticsearchStatusProvider =
+            () -> new ElasticsearchPluginStatus(false, false, "disabled", 0, 0, 0, 0, 0, 0);
+        ObjectProvider<MqttStatusProvider> mqttProvider = provider(mqttStatusProvider);
+        ObjectProvider<ElasticsearchStatusProvider> elasticsearchProvider = provider(elasticsearchStatusProvider);
+        HealthController controller = new HealthController(mock(JdbcTemplate.class), mock(RedisConnectionFactory.class),
+            mqttProvider, elasticsearchProvider);
+
+        HealthController.OptionalHealthReport report = controller.optional();
+
+        assertEquals(mqttStatusProvider.status(), report.dependencies().get("mqtt"));
+        assertEquals(elasticsearchStatusProvider.status(), report.dependencies().get("elasticsearch"));
+    }
+
+    private static HealthController controller(JdbcTemplate jdbcTemplate,
+                                               RedisConnectionFactory redisConnectionFactory) {
+        return new HealthController(jdbcTemplate, redisConnectionFactory, provider(null), provider(null));
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T> ObjectProvider<T> provider(T value) {
+        ObjectProvider<T> provider = mock(ObjectProvider.class);
+        when(provider.getIfAvailable()).thenReturn(value);
+        return provider;
     }
 }

@@ -37,6 +37,9 @@
         <oshi.version>7.2.1</oshi.version>
         <!-- OSS 配置 -->
         <aws.sdk.version>2.45.1</aws.sdk.version>
+        <!-- 可关闭中间件插件 -->
+        <paho-mqtt.version>1.2.5</paho-mqtt.version>
+        <elasticsearch-java.version>8.18.8</elasticsearch-java.version>
         <!-- 限制框架中的fastjson版本 -->
         <fastjson.version>1.2.83</fastjson.version>
         <!-- 面向运行时的D-ORM依赖 -->
@@ -197,6 +200,22 @@
                 <groupId>software.amazon.awssdk</groupId>
                 <artifactId>netty-nio-client</artifactId>
                 <version>${aws.sdk.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.eclipse.paho</groupId>
+                <artifactId>org.eclipse.paho.client.mqttv3</artifactId>
+                <version>${paho-mqtt.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.paho</groupId>
+                <artifactId>org.eclipse.paho.mqttv5.client</artifactId>
+                <version>${paho-mqtt.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>co.elastic.clients</groupId>
+                <artifactId>elasticsearch-java</artifactId>
+                <version>${elasticsearch-java.version}</version>
             </dependency>
 
             <!--redisson-->

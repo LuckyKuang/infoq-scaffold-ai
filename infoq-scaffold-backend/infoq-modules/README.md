@@ -17,7 +17,7 @@
 ## 4. 依赖方向
 
 - `infoq-system` 直接依赖 `infoq-core-common`、`infoq-core-data`。
-- 业务能力再按需接入 `oss`、`security`、`web`、`doc`、`encrypt`、`sse`、`push`、`quartz`、`mail`、`websocket` 等插件。
+- 业务能力再按需接入 `oss`、`security`、`web`、`doc`、`encrypt`、`sse`、`push`、`quartz`、`mail`、`websocket`、`mqtt`、`elasticsearch` 等插件。
 - `infoq-admin` 只直接依赖 `infoq-system`，说明业务模块是启动入口与基础设施之间的业务桥梁。
 
 ## 5. 典型调用链

@@ -14,12 +14,14 @@
 | [`infoq-plugin-mybatis`](./infoq-plugin-mybatis/README.md) | 自动装配 | MyBatis-Plus、多数据源、分页、数据权限、审计元字段 |
 | [`infoq-plugin-doc`](./infoq-plugin-doc/README.md) | 自动装配 | Springdoc OpenAPI |
 | [`infoq-plugin-encrypt`](./infoq-plugin-encrypt/README.md) | 自动装配 | API 请求解密、字段加解密、MyBatis 加解密拦截 |
+| [`infoq-plugin-elasticsearch`](./infoq-plugin-elasticsearch/README.md) | 条件自动装配 | 默认关闭的 Elastic 官方客户端连接、状态、中性索引定义与 Alias 原子切换边界 |
 | [`infoq-plugin-log`](./infoq-plugin-log/README.md) | 自动装配 | `@Log` 切面、登录/操作日志事件 |
 | [`infoq-plugin-mail`](./infoq-plugin-mail/README.md) | 自动装配 | 邮件配置与发送工具 |
 | [`infoq-plugin-quartz`](./infoq-plugin-quartz/README.md) | 自动装配 | Quartz 托管任务调度 |
 | [`infoq-plugin-sse`](./infoq-plugin-sse/README.md) | 自动装配 | SSE 控制器、Emitter 管理、Redis topic 监听 |
 | [`infoq-plugin-websocket`](./infoq-plugin-websocket/README.md) | 自动装配 | WebSocket 端点、会话管理、集群广播 |
 | [`infoq-plugin-push`](./infoq-plugin-push/README.md) | 条件自动装配 | 关闭态默认的实时 Push 契约、通道选择和提交后提醒 |
+| [`infoq-plugin-mqtt`](./infoq-plugin-mqtt/README.md) | 条件自动装配 | 默认关闭的 MQTT 3.1.1/MQTT 5 中性发布、订阅与状态管理 |
 | [`infoq-plugin-jackson`](./infoq-plugin-jackson/README.md) | 自动装配 | Jackson 序列化与 JSON 校验 |
 | [`infoq-plugin-translation`](./infoq-plugin-translation/README.md) | 自动装配 | 返回值翻译与字典/用户/部门/OSS 名称补全 |
 | [`infoq-plugin-oss`](./infoq-plugin-oss/README.md) | 库模块 | OSS 客户端与工厂 |
@@ -34,7 +36,7 @@
 ## 4. 依赖方向
 
 - 基础依赖层常见组合是 `core-common -> jackson -> redis/security/web/mybatis`。
-- `infoq-system` 按业务需要依赖 `oss`、`security`、`web`、`doc`、`encrypt`、`sse`、`push`、`quartz`、`mail`、`websocket`。
+- `infoq-system` 按业务需要依赖 `oss`、`security`、`web`、`doc`、`encrypt`、`sse`、`push`、`quartz`、`mail`、`websocket`、`mqtt`、`elasticsearch`。
 - `infoq-core-data` 则在数据层直接接入 `mybatis`、`log`、`sensitive`、`translation`、`excel`、`jackson`。
 
 ## 5. 典型调用链

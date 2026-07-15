@@ -43,6 +43,8 @@ flowchart TB
     quartzPlugin[plugin-quartz]
     mailPlugin[plugin-mail]
     websocketPlugin[plugin-websocket]
+    mqttPlugin[plugin-mqtt]
+    elasticsearchPlugin[plugin-elasticsearch]
 
     admin --> system
     system --> common
@@ -56,6 +58,8 @@ flowchart TB
     system --> quartzPlugin
     system --> mailPlugin
     system --> websocketPlugin
+    system --> mqttPlugin
+    system --> elasticsearchPlugin
 
     securityPlugin --> redisPlugin
     ossPlugin --> redisPlugin
@@ -103,6 +107,8 @@ flowchart TB
 | `plugin-quartz` | Quartz 托管任务自动配置 | `QuartzAutoConfiguration` |
 | `plugin-mail` | 邮件发送自动配置，当前由 `OptionalMailHelper` 反射调用 | `MailConfig`、`OptionalMailHelper` |
 | `plugin-websocket` | WebSocket 自动配置，当前配置默认关闭 | `WebSocketConfig` |
+| `plugin-mqtt` | MQTT 3.1.1/MQTT 5 条件自动配置，当前配置默认关闭 | `MqttAutoConfiguration`、`MqttClientRegistry` |
+| `plugin-elasticsearch` | Elastic Java API Client 条件自动配置，当前配置默认关闭 | `ElasticsearchAutoConfiguration`、`ElasticsearchOperations` |
 
 如果要继续确认这些职责的入口类、配置项和边界，请继续下钻到 [`../infoq-plugin/README.md`](../infoq-plugin/README.md) 与对应叶子模块 README。
 
@@ -131,6 +137,7 @@ flowchart TB
 - `api-decrypt.enabled=true`，请求解密头标识是 `encrypt-key`。
 - `springdoc.api-docs.enabled=true`。
 - `sse.enabled=true`，`websocket.enabled=false`。
+- `infoq.mqtt.enabled=false`、`infoq.elasticsearch.enabled=false`；两者只有显式启用并注入连接配置后才创建外部客户端。
 - `infoq.quartz.enabled=true`；Quartz 使用 JDBC 持久化，表前缀是 `QRTZ_`（位于 `spring.quartz.properties.org.quartz.jobStore.tablePrefix`）。
 - 同时还包含 MyBatis-Plus、`mybatis-encryptor`、`xss`、`lock4j`、`security.excludes` 排除路径、`infoq.quartz.bootstrap` 默认值等行为配置。
 
@@ -163,7 +170,7 @@ flowchart TB
 - `plugin-mail` 通过 `MailConfig` 和 `MailProperties` 提供邮件发送所需的自动配置与工具类。
 - `plugin-web` 负责 Web 层公共配置与统一异常出口。
 - `plugin-log` 把 `@Log` 注解变成 `OperLogEvent`。
-- `plugin-doc`、`plugin-encrypt`、`plugin-sse`、`plugin-quartz`、`plugin-websocket` 分别装配文档、加密、SSE、定时任务、WebSocket 能力。
+- `plugin-doc`、`plugin-encrypt`、`plugin-sse`、`plugin-quartz`、`plugin-websocket`、`plugin-mqtt`、`plugin-elasticsearch` 分别装配文档、加密、SSE、定时任务、WebSocket、MQTT、Elasticsearch 能力；后两者受各自的 `enabled` 配置控制。
 
 其中 `plugin-redis` 对 `infoq-system` 来说主要是传递依赖：
 
@@ -307,7 +314,7 @@ MyBatis 层由 `MybatisPlusConfig` 注入 `PlusDataPermissionInterceptor` 和 `D
 - `/monitor/job`
 - `/monitor/jobLog`
 
-此外 `HealthController` 暴露了 `/monitor/health`、`/monitor/health/liveness` 与 `/monitor/health/readiness`。其中 readiness 会探测 MySQL 与 Redis，失败时返回非 2xx；Spring Security public matcher 显式放行 `/monitor/health` 及其子路径。
+此外 `HealthController` 暴露了 `/monitor/health`、`/monitor/health/liveness`、`/monitor/health/readiness` 与 `/monitor/health/optional`。其中 readiness 会探测 MySQL 与 Redis，失败时返回非 2xx；optional 只返回已装配 MQTT、Elasticsearch 等可选 provider 的内存状态快照，不主动探测外部服务，也不改变 readiness 结果；Spring Security public matcher 显式放行 `/monitor/health` 及其子路径。
 
 ## 9. 当前可确认的可选链路
 

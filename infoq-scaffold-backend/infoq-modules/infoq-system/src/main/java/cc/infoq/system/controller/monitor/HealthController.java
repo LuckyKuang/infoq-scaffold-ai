@@ -1,6 +1,9 @@
 package cc.infoq.system.controller.monitor;
 
+import cc.infoq.common.elasticsearch.ElasticsearchStatusProvider;
+import cc.infoq.common.mqtt.MqttStatusProvider;
 import lombok.AllArgsConstructor;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.http.HttpStatus;
@@ -30,6 +33,10 @@ public class HealthController {
      private final JdbcTemplate jdbcTemplate;
 
      private final RedisConnectionFactory redisConnectionFactory;
+
+     private final ObjectProvider<MqttStatusProvider> mqttStatusProvider;
+
+     private final ObjectProvider<ElasticsearchStatusProvider> elasticsearchStatusProvider;
 
      /**
       * 获取健康检查信息
@@ -61,6 +68,23 @@ public class HealthController {
          HealthReport report = new HealthReport(ready ? UP : DOWN, dependencies);
          return ResponseEntity.status(ready ? HttpStatus.OK : HttpStatus.SERVICE_UNAVAILABLE)
              .body(report);
+     }
+
+     /**
+      * Optional middleware status. It never changes the core database/Redis readiness result.
+      */
+     @GetMapping("/optional")
+     public OptionalHealthReport optional() {
+         Map<String, Object> dependencies = new LinkedHashMap<>();
+         MqttStatusProvider mqtt = mqttStatusProvider.getIfAvailable();
+         ElasticsearchStatusProvider elasticsearch = elasticsearchStatusProvider.getIfAvailable();
+         if (mqtt != null) {
+             dependencies.put("mqtt", mqtt.status());
+         }
+         if (elasticsearch != null) {
+             dependencies.put("elasticsearch", elasticsearch.status());
+         }
+         return new OptionalHealthReport(dependencies);
      }
 
      private DependencyHealth checkDatabase() {
@@ -98,6 +122,9 @@ public class HealthController {
      }
 
      public record HealthReport(String status, Map<String, DependencyHealth> dependencies) {
+     }
+
+     public record OptionalHealthReport(Map<String, Object> dependencies) {
      }
 
      public record DependencyHealth(String status, String reason) {

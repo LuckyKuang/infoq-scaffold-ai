@@ -76,6 +76,14 @@
             <groupId>cc.infoq</groupId>
             <artifactId>infoq-plugin-websocket</artifactId>
         </dependency>
+        <dependency>
+            <groupId>cc.infoq</groupId>
+            <artifactId>infoq-plugin-mqtt</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>cc.infoq</groupId>
+            <artifactId>infoq-plugin-elasticsearch</artifactId>
+        </dependency>
 
         <!-- Mysql驱动包 -->
         <dependency>

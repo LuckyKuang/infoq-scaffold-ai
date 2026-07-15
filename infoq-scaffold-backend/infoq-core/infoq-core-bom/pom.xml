@@ -39,6 +39,13 @@
                 <version>${revision}</version>
             </dependency>
 
+            <!-- Elasticsearch 官方客户端插件 -->
+            <dependency>
+                <groupId>cc.infoq</groupId>
+                <artifactId>infoq-plugin-elasticsearch</artifactId>
+                <version>${revision}</version>
+            </dependency>
+
             <!-- 日志记录 -->
             <dependency>
                 <groupId>cc.infoq</groupId>
@@ -50,6 +57,13 @@
             <dependency>
                 <groupId>cc.infoq</groupId>
                 <artifactId>infoq-plugin-mail</artifactId>
+                <version>${revision}</version>
+            </dependency>
+
+            <!-- MQTT 双协议插件 -->
+            <dependency>
+                <groupId>cc.infoq</groupId>
+                <artifactId>infoq-plugin-mqtt</artifactId>
                 <version>${revision}</version>
             </dependency>
 

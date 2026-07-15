@@ -33,7 +33,7 @@
 
 - 数据层：`infoq-core-data` 的 Entity、Bo、Vo、Mapper、XML
 - 公共层：`infoq-core-common` 的异常、工具、DTO、服务契约
-- 插件层：`oss`、`security`、`web`、`doc`、`encrypt`、`sse`、`push`、`quartz`、`mail`、`websocket`
+- 插件层：`oss`、`security`、`web`、`doc`、`encrypt`、`sse`、`push`、`quartz`、`mail`、`websocket`、`mqtt`、`elasticsearch`
 
 ## 6. 关键配置
 
@@ -61,6 +61,7 @@
 
 - 登录日志、操作日志、在线用户、任务日志、缓存、服务监控、数据源监控均在当前模块内提供控制器或服务。
 - 运行时审计与日志记录由 `infoq-plugin-log`、`infoq-plugin-web`、`infoq-plugin-security` 等插件配合完成。
+- `/monitor/health/optional` 只返回当前已装配的 MQTT、Elasticsearch 等可选 provider 的内存状态快照；关闭态 MQTT 与 Elasticsearch 均不注册 provider，因此不会出现在该响应中。该端点不探测外部服务，也不改变数据库/Redis 的 `/monitor/health/readiness` 结果。
 
 ## 10. 已知边界
 
