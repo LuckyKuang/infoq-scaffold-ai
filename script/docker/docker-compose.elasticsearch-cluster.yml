@@ -1,0 +1,71 @@
+# Production optional Elasticsearch cluster overlay. It starts three Elasticsearch 8.18.8 nodes only.
+# It never builds or runs local/CI test tools. Required host material is documented in doc/devops/docker-compose-deploy.md.
+x-elasticsearch-cluster-common: &elasticsearch-cluster-common
+  image: docker.elastic.co/elasticsearch/elasticsearch:8.18.8
+  restart: unless-stopped
+  ulimits:
+    memlock:
+      soft: -1
+      hard: -1
+  environment: &elasticsearch-cluster-environment
+    cluster.name: ${ES_CLUSTER_NAME:-infoq-elasticsearch}
+    node.roles: "master,data,ingest"
+    network.host: 0.0.0.0
+    discovery.seed_hosts: "es01,es02,es03"
+    cluster.initial_master_nodes: "${ES_CLUSTER_INITIAL_MASTER_NODES:-}"
+    bootstrap.memory_lock: "true"
+    xpack.license.self_generated.type: basic
+    xpack.security.enabled: "true"
+    xpack.security.http.ssl.enabled: "true"
+    xpack.security.http.ssl.certificate: /usr/share/elasticsearch/config/certs/tls.crt
+    xpack.security.http.ssl.key: /usr/share/elasticsearch/config/certs/tls.key
+    xpack.security.http.ssl.certificate_authorities: /usr/share/elasticsearch/config/certs/ca.crt
+    xpack.security.transport.ssl.enabled: "true"
+    xpack.security.transport.ssl.verification_mode: certificate
+    xpack.security.transport.ssl.certificate: /usr/share/elasticsearch/config/certs/tls.crt
+    xpack.security.transport.ssl.key: /usr/share/elasticsearch/config/certs/tls.key
+    xpack.security.transport.ssl.certificate_authorities: /usr/share/elasticsearch/config/certs/ca.crt
+    ELASTIC_PASSWORD: ${ES_BOOTSTRAP_PASSWORD:?Set ES_BOOTSTRAP_PASSWORD in the production env file}
+    ES_JAVA_OPTS: ${ES_CLUSTER_JAVA_OPTS:--Xms1g -Xmx1g}
+  healthcheck:
+    test: ["CMD-SHELL", "curl --fail --silent --show-error --cacert /usr/share/elasticsearch/config/certs/ca.crt -u elastic:$${ELASTIC_PASSWORD} 'https://127.0.0.1:9200/_cluster/health?wait_for_status=yellow&timeout=1s' >/dev/null"]
+    interval: 10s
+    timeout: 5s
+    retries: 24
+    start_period: 60s
+
+services:
+  es01:
+    <<: *elasticsearch-cluster-common
+    environment:
+      <<: *elasticsearch-cluster-environment
+      node.name: es01
+    ports:
+      - "${ES_CLUSTER_HTTP_BIND_ADDRESS:-127.0.0.1}:${ES_CLUSTER_HTTP_PORT:-9200}:9200"
+    volumes:
+      - ${INFOQ_DEPLOY_ROOT:?Set INFOQ_DEPLOY_ROOT in the production env file}/elasticsearch/data/es01:/usr/share/elasticsearch/data:rw
+      - ${INFOQ_DEPLOY_ROOT:?Set INFOQ_DEPLOY_ROOT in the production env file}/elasticsearch/certs/ca.crt:/usr/share/elasticsearch/config/certs/ca.crt:ro
+      - ${INFOQ_DEPLOY_ROOT:?Set INFOQ_DEPLOY_ROOT in the production env file}/elasticsearch/certs/es01/tls.crt:/usr/share/elasticsearch/config/certs/tls.crt:ro
+      - ${INFOQ_DEPLOY_ROOT:?Set INFOQ_DEPLOY_ROOT in the production env file}/elasticsearch/certs/es01/tls.key:/usr/share/elasticsearch/config/certs/tls.key:ro
+
+  es02:
+    <<: *elasticsearch-cluster-common
+    environment:
+      <<: *elasticsearch-cluster-environment
+      node.name: es02
+    volumes:
+      - ${INFOQ_DEPLOY_ROOT:?Set INFOQ_DEPLOY_ROOT in the production env file}/elasticsearch/data/es02:/usr/share/elasticsearch/data:rw
+      - ${INFOQ_DEPLOY_ROOT:?Set INFOQ_DEPLOY_ROOT in the production env file}/elasticsearch/certs/ca.crt:/usr/share/elasticsearch/config/certs/ca.crt:ro
+      - ${INFOQ_DEPLOY_ROOT:?Set INFOQ_DEPLOY_ROOT in the production env file}/elasticsearch/certs/es02/tls.crt:/usr/share/elasticsearch/config/certs/tls.crt:ro
+      - ${INFOQ_DEPLOY_ROOT:?Set INFOQ_DEPLOY_ROOT in the production env file}/elasticsearch/certs/es02/tls.key:/usr/share/elasticsearch/config/certs/tls.key:ro
+
+  es03:
+    <<: *elasticsearch-cluster-common
+    environment:
+      <<: *elasticsearch-cluster-environment
+      node.name: es03
+    volumes:
+      - ${INFOQ_DEPLOY_ROOT:?Set INFOQ_DEPLOY_ROOT in the production env file}/elasticsearch/data/es03:/usr/share/elasticsearch/data:rw
+      - ${INFOQ_DEPLOY_ROOT:?Set INFOQ_DEPLOY_ROOT in the production env file}/elasticsearch/certs/ca.crt:/usr/share/elasticsearch/config/certs/ca.crt:ro
+      - ${INFOQ_DEPLOY_ROOT:?Set INFOQ_DEPLOY_ROOT in the production env file}/elasticsearch/certs/es03/tls.crt:/usr/share/elasticsearch/config/certs/tls.crt:ro
+      - ${INFOQ_DEPLOY_ROOT:?Set INFOQ_DEPLOY_ROOT in the production env file}/elasticsearch/certs/es03/tls.key:/usr/share/elasticsearch/config/certs/tls.key:ro

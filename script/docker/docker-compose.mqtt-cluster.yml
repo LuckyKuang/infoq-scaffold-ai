@@ -1,0 +1,68 @@
+# Production optional MQTT cluster overlay. It starts three EMQX Community 5.8.9 nodes only.
+# It never builds or runs local/CI test tools. Required host material is documented in doc/devops/docker-compose-deploy.md.
+x-mqtt-cluster-common: &mqtt-cluster-common
+  image: emqx/emqx:5.8.9
+  restart: unless-stopped
+  environment: &mqtt-cluster-environment
+    EMQX_NODE__COOKIE: ${MQTT_NODE_COOKIE:?Set MQTT_NODE_COOKIE in the production env file}
+    EMQX_DASHBOARD__DEFAULT_USERNAME: ${MQTT_ADMIN_USERNAME:?Set MQTT_ADMIN_USERNAME in the production env file}
+    EMQX_DASHBOARD__DEFAULT_PASSWORD: ${MQTT_ADMIN_PASSWORD:?Set MQTT_ADMIN_PASSWORD in the production env file}
+    EMQX_CLUSTER__DISCOVERY_STRATEGY: static
+    EMQX_CLUSTER__STATIC__SEEDS: "[emqx@mqtt-broker-1.infoq.local,emqx@mqtt-broker-2.infoq.local,emqx@mqtt-broker-3.infoq.local]"
+  healthcheck:
+    test: ["CMD", "emqx", "ctl", "status"]
+    interval: 10s
+    timeout: 5s
+    retries: 18
+    start_period: 25s
+
+services:
+  mqtt-broker-1:
+    <<: *mqtt-cluster-common
+    environment:
+      <<: *mqtt-cluster-environment
+      EMQX_NODE__NAME: emqx@mqtt-broker-1.infoq.local
+    networks:
+      default:
+        aliases:
+          - mqtt-broker-1.infoq.local
+    ports:
+      - "${MQTT_CLUSTER_TLS_BIND_ADDRESS:-127.0.0.1}:${MQTT_CLUSTER_TLS_HOST_PORT:-8883}:8883"
+    volumes:
+      - ./mqtt/production/base.hocon:/opt/emqx/etc/base.hocon:ro
+      - ${INFOQ_DEPLOY_ROOT:?Set INFOQ_DEPLOY_ROOT in the production env file}/mqtt/data/mqtt-broker-1:/opt/emqx/data:rw
+      - ${INFOQ_DEPLOY_ROOT:?Set INFOQ_DEPLOY_ROOT in the production env file}/mqtt/certs/ca.crt:/opt/emqx/etc/certs/ca/ca.crt:ro
+      - ${INFOQ_DEPLOY_ROOT:?Set INFOQ_DEPLOY_ROOT in the production env file}/mqtt/certs/mqtt-broker-1/tls.crt:/opt/emqx/etc/certs/mqtt-broker/tls.crt:ro
+      - ${INFOQ_DEPLOY_ROOT:?Set INFOQ_DEPLOY_ROOT in the production env file}/mqtt/certs/mqtt-broker-1/tls.key:/opt/emqx/etc/certs/mqtt-broker/tls.key:ro
+
+  mqtt-broker-2:
+    <<: *mqtt-cluster-common
+    environment:
+      <<: *mqtt-cluster-environment
+      EMQX_NODE__NAME: emqx@mqtt-broker-2.infoq.local
+    networks:
+      default:
+        aliases:
+          - mqtt-broker-2.infoq.local
+    volumes:
+      - ./mqtt/production/base.hocon:/opt/emqx/etc/base.hocon:ro
+      - ${INFOQ_DEPLOY_ROOT:?Set INFOQ_DEPLOY_ROOT in the production env file}/mqtt/data/mqtt-broker-2:/opt/emqx/data:rw
+      - ${INFOQ_DEPLOY_ROOT:?Set INFOQ_DEPLOY_ROOT in the production env file}/mqtt/certs/ca.crt:/opt/emqx/etc/certs/ca/ca.crt:ro
+      - ${INFOQ_DEPLOY_ROOT:?Set INFOQ_DEPLOY_ROOT in the production env file}/mqtt/certs/mqtt-broker-2/tls.crt:/opt/emqx/etc/certs/mqtt-broker/tls.crt:ro
+      - ${INFOQ_DEPLOY_ROOT:?Set INFOQ_DEPLOY_ROOT in the production env file}/mqtt/certs/mqtt-broker-2/tls.key:/opt/emqx/etc/certs/mqtt-broker/tls.key:ro
+
+  mqtt-broker-3:
+    <<: *mqtt-cluster-common
+    environment:
+      <<: *mqtt-cluster-environment
+      EMQX_NODE__NAME: emqx@mqtt-broker-3.infoq.local
+    networks:
+      default:
+        aliases:
+          - mqtt-broker-3.infoq.local
+    volumes:
+      - ./mqtt/production/base.hocon:/opt/emqx/etc/base.hocon:ro
+      - ${INFOQ_DEPLOY_ROOT:?Set INFOQ_DEPLOY_ROOT in the production env file}/mqtt/data/mqtt-broker-3:/opt/emqx/data:rw
+      - ${INFOQ_DEPLOY_ROOT:?Set INFOQ_DEPLOY_ROOT in the production env file}/mqtt/certs/ca.crt:/opt/emqx/etc/certs/ca/ca.crt:ro
+      - ${INFOQ_DEPLOY_ROOT:?Set INFOQ_DEPLOY_ROOT in the production env file}/mqtt/certs/mqtt-broker-3/tls.crt:/opt/emqx/etc/certs/mqtt-broker/tls.crt:ro
+      - ${INFOQ_DEPLOY_ROOT:?Set INFOQ_DEPLOY_ROOT in the production env file}/mqtt/certs/mqtt-broker-3/tls.key:/opt/emqx/etc/certs/mqtt-broker/tls.key:ro

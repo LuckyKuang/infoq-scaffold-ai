@@ -1,0 +1,34 @@
+# Production optional middleware overlay. It starts Elasticsearch only and never builds or runs local/CI test tools.
+# Required host material is documented in doc/devops/docker-compose-deploy.md.
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.18.8
+    restart: unless-stopped
+    environment:
+      discovery.type: single-node
+      xpack.license.self_generated.type: basic
+      xpack.security.enabled: "true"
+      xpack.security.http.ssl.enabled: "true"
+      xpack.security.http.ssl.certificate: /usr/share/elasticsearch/config/certs/tls.crt
+      xpack.security.http.ssl.key: /usr/share/elasticsearch/config/certs/tls.key
+      xpack.security.http.ssl.certificate_authorities: /usr/share/elasticsearch/config/certs/ca.crt
+      xpack.security.transport.ssl.enabled: "true"
+      xpack.security.transport.ssl.verification_mode: certificate
+      xpack.security.transport.ssl.certificate: /usr/share/elasticsearch/config/certs/tls.crt
+      xpack.security.transport.ssl.key: /usr/share/elasticsearch/config/certs/tls.key
+      xpack.security.transport.ssl.certificate_authorities: /usr/share/elasticsearch/config/certs/ca.crt
+      ELASTIC_PASSWORD: ${ES_BOOTSTRAP_PASSWORD:?Set ES_BOOTSTRAP_PASSWORD in the production env file}
+      ES_JAVA_OPTS: ${ES_JAVA_OPTS:--Xms1g -Xmx1g}
+    ports:
+      - "${ES_HTTP_BIND_ADDRESS:-127.0.0.1}:${ES_HTTP_PORT:-9200}:9200"
+    volumes:
+      - ${INFOQ_DEPLOY_ROOT:?Set INFOQ_DEPLOY_ROOT in the production env file}/elasticsearch/data:/usr/share/elasticsearch/data:rw
+      - ${INFOQ_DEPLOY_ROOT:?Set INFOQ_DEPLOY_ROOT in the production env file}/elasticsearch/certs/ca.crt:/usr/share/elasticsearch/config/certs/ca.crt:ro
+      - ${INFOQ_DEPLOY_ROOT:?Set INFOQ_DEPLOY_ROOT in the production env file}/elasticsearch/certs/tls.crt:/usr/share/elasticsearch/config/certs/tls.crt:ro
+      - ${INFOQ_DEPLOY_ROOT:?Set INFOQ_DEPLOY_ROOT in the production env file}/elasticsearch/certs/tls.key:/usr/share/elasticsearch/config/certs/tls.key:ro
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail --silent --show-error --cacert /usr/share/elasticsearch/config/certs/ca.crt -u elastic:$${ELASTIC_PASSWORD} 'https://127.0.0.1:9200/_cluster/health?wait_for_status=yellow&timeout=1s' >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 40s

@@ -1,0 +1,24 @@
+# Production optional middleware overlay. It starts EMQX only and never builds or runs local/CI test tools.
+# Required host material is documented in doc/devops/docker-compose-deploy.md.
+services:
+  mqtt-broker:
+    image: emqx/emqx:5.8.9
+    restart: unless-stopped
+    environment:
+      EMQX_NODE__COOKIE: ${MQTT_NODE_COOKIE:?Set MQTT_NODE_COOKIE in the production env file}
+      EMQX_DASHBOARD__DEFAULT_USERNAME: ${MQTT_ADMIN_USERNAME:?Set MQTT_ADMIN_USERNAME in the production env file}
+      EMQX_DASHBOARD__DEFAULT_PASSWORD: ${MQTT_ADMIN_PASSWORD:?Set MQTT_ADMIN_PASSWORD in the production env file}
+    ports:
+      - "${MQTT_TLS_BIND_ADDRESS:-127.0.0.1}:${MQTT_TLS_HOST_PORT:-8883}:8883"
+    volumes:
+      - ./mqtt/production/base.hocon:/opt/emqx/etc/base.hocon:ro
+      - ${INFOQ_DEPLOY_ROOT:?Set INFOQ_DEPLOY_ROOT in the production env file}/mqtt/data:/opt/emqx/data:rw
+      - ${INFOQ_DEPLOY_ROOT:?Set INFOQ_DEPLOY_ROOT in the production env file}/mqtt/certs/ca.crt:/opt/emqx/etc/certs/ca/ca.crt:ro
+      - ${INFOQ_DEPLOY_ROOT:?Set INFOQ_DEPLOY_ROOT in the production env file}/mqtt/certs/tls.crt:/opt/emqx/etc/certs/mqtt-broker/tls.crt:ro
+      - ${INFOQ_DEPLOY_ROOT:?Set INFOQ_DEPLOY_ROOT in the production env file}/mqtt/certs/tls.key:/opt/emqx/etc/certs/mqtt-broker/tls.key:ro
+    healthcheck:
+      test: ["CMD", "emqx", "ctl", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 15s

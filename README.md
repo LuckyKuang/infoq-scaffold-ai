@@ -388,7 +388,7 @@ pnpm run verify:local
 
 如果要让 Codex 直接按本仓库脚本执行本地或 WSL2/macOS Colima/Linux Docker Compose 部署验证，使用 `infoq-deploy-verify`。它会覆盖 WSL2 Docker CE、macOS Colima、Linux Docker CE 三种免费商用运行时，以及后端、MySQL、Redis、MinIO、选定或全部管理端前端、nginx 网关、localhost smoke、证据留存和常见部署阻断，并会在执行 deploy 前提醒并确认 `/tmp/infoq-deploy` 与 `${INFOQ_DEPLOY_ROOT}/server/temp` 已存在。
 
-如果是第一次完整部署，建议先按 [`doc/devops/docker-compose-tutorial.md`](./doc/devops/docker-compose-tutorial.md) 操作；需要脚本参数和日常运维命令时，再看 [`doc/devops/docker-compose-deploy.md`](./doc/devops/docker-compose-deploy.md)。
+如果是第一次完整部署，建议先按 [`doc/devops/docker-compose-tutorial.md`](./doc/devops/docker-compose-tutorial.md) 操作；需要脚本参数和日常运维命令时，再看 [`doc/devops/docker-compose-deploy.md`](./doc/devops/docker-compose-deploy.md)。MQTT 与 Elasticsearch 是默认关闭的可选生产组件；运维必须通过 `bash script/bin/deploy-middleware.sh <mqtt|elasticsearch> <single|cluster> <action>` 显式选择单节点或同一 Docker 主机内三节点 cluster，基础部署不会启动它们。`*-it.yml`、`mqtt-tools` 与 `elasticsearch-tools` 仅用于本地/CI 集成测试。
 
 macOS Colima 环境如果出现 `error getting credentials` 且缺少 `docker-credential-desktop`，通常是 Docker config 残留 Docker Desktop credential helper。按教程中的 Colima credential helper 排查处理，不要因此切换到 Docker Desktop。
 
