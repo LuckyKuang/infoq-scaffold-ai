@@ -3,7 +3,7 @@
 |Scope:本文件适用于 `infoq-scaffold-frontend-weapp-react` 及其子目录，用于把根规则收窄到小程序 React 语境。
 |Stack:Taro 4|React 18|TypeScript|Sass|Zustand|WeChat Mini Program|H5
 |Workspace Layout:src/pages|src/components|src/api|src/store|src/utils|src/styles|config|types|tests
-|Environment Baseline:Node 24.18.0|pnpm >= 10.0.0
+|Environment Baseline:Node 24.18.0|pnpm >= 10.0.0|packageManager pnpm@10.34.1
 |Build Secrets:当 `TARO_APP_ENCRYPT=true` 时，weapp React dev/build 环境必须提供 `TARO_APP_RSA_PUBLIC_KEY` 与 `TARO_APP_RSA_PRIVATE_KEY`。
 |Package And Formatting:默认使用 pnpm。|遵循本地 eslint/stylelint 配置，前端使用 2-space formatting。|source、env、build config files 保持 UTF-8。
 |Commands:install=cd infoq-scaffold-frontend-weapp-react && pnpm install|dev:h5=cd infoq-scaffold-frontend-weapp-react && pnpm run dev:h5|dev:weapp=cd infoq-scaffold-frontend-weapp-react && pnpm run dev:weapp|build:h5=cd infoq-scaffold-frontend-weapp-react && pnpm run build:h5|build:weapp=cd infoq-scaffold-frontend-weapp-react && pnpm run build:weapp|build:weapp:dev=cd infoq-scaffold-frontend-weapp-react && pnpm run build:weapp:dev|open:weapp:dev=pnpm --dir infoq-scaffold-frontend-weapp-react build-open:weapp:dev|test=cd infoq-scaffold-frontend-weapp-react && pnpm run test|coverage=cd infoq-scaffold-frontend-weapp-react && pnpm run test:coverage|lint=cd infoq-scaffold-frontend-weapp-react && pnpm run lint|test:e2e:weapp:core=cd infoq-scaffold-frontend-weapp-react && pnpm run test:e2e:weapp:core|test:e2e:weapp:core:backend=cd infoq-scaffold-frontend-weapp-react && pnpm run test:e2e:weapp:core:backend|verify:local=cd infoq-scaffold-frontend-weapp-react && pnpm run verify:local
