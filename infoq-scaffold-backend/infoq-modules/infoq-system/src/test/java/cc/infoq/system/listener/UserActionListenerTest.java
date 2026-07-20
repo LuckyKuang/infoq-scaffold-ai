@@ -83,8 +83,8 @@ class UserActionListenerTest {
         HttpServletRequest request = mock(HttpServletRequest.class);
         when(request.getHeader("User-Agent"))
             .thenReturn("Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 Chrome/120.0.0.0 Mobile Safari/537.36");
-        when(request.getHeader("x-client-key")).thenReturn("weapp");
-        when(request.getHeader("x-device-type")).thenReturn("weapp");
+        when(request.getHeader("x-client-key")).thenReturn("miniapp");
+        when(request.getHeader("x-device-type")).thenReturn("miniapp");
 
         try (MockedStatic<ServletUtils> servletUtils = mockStatic(ServletUtils.class);
              MockedStatic<AddressUtils> addressUtils = mockStatic(AddressUtils.class)) {
@@ -94,10 +94,10 @@ class UserActionListenerTest {
 
             UserOnlineDTO dto = listener.buildOnlineUser(loginUser, "admin-client", "pc");
 
-            assertEquals("weapp", dto.getClientKey());
-            assertEquals("weapp", dto.getDeviceType());
-            assertEquals("weapp", loginUser.getClientKey());
-            assertEquals("weapp", loginUser.getDeviceType());
+            assertEquals("miniapp", dto.getClientKey());
+            assertEquals("miniapp", dto.getDeviceType());
+            assertEquals("miniapp", loginUser.getClientKey());
+            assertEquals("miniapp", loginUser.getDeviceType());
         }
     }
 

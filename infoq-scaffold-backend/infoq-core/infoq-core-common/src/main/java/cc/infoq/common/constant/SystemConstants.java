@@ -100,7 +100,7 @@ public interface SystemConstants {
     /**
      * 微信小程序授权类型
      */
-    String GRANT_TYPE_WECHAT_MINIAPP = "xcx";
+    String GRANT_TYPE_WECHAT_MINIAPP = "miniapp";
 
     /**
      * 系统管理员角色标识

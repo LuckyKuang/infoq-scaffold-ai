@@ -38,7 +38,7 @@
 ## 6. 关键配置
 
 - `AuthController` 登录时要求请求体能解析出 `clientId` 与 `grantType`。
-- `grantType=xcx` 仅在 `infoq.auth.wechat-miniapp.enabled=true` 时注册；策略启动时校验 AppID、Secret 和 session endpoint，关闭时不创建 HTTP 客户端也不发起远端调用。
+- `grantType=miniapp` 仅在 `infoq.auth.wechat-miniapp.enabled=true` 时注册；策略启动时校验 AppID、Secret 和 session endpoint，关闭时不创建 HTTP 客户端也不发起远端调用。
 - `SysConfigController` 的配置中心接口继续保留旧列表/导出语义，同时新增 `panel`、`resetByKey`、`reorder`；`configType` 仍表示是否系统内置，值类型由 `valueType` 表达。
 - Quartz 相关 runner、Controller 和部分任务处理通过 `infoq.quartz.enabled` 控制是否装配。
 - 登录成功后会经 `OptionalSseHelper` 延迟推送欢迎消息，是否真正推送取决于 SSE 能力是否开启。

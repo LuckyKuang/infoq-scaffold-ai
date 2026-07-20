@@ -401,7 +401,7 @@ OptionalSseHelper.publishToUsers(List.of(userId), welcomeMessage)
 
 当前用户的浏览器 OAuth 身份管理入口是 `GET /system/user/profile/oauth/identities`、`GET /system/user/profile/oauth/{provider}/bind/authorize` 与 `POST /system/user/profile/oauth/identities/{identityId}/unbind`。列表只返回当前用户身份；绑定授权由后端生成一次性绑定 ticket，客户端不提交外部 identity ID 或目标用户 ID；解绑仍以当前用户身份和服务端的最后凭证规则为准。
 
-微信小程序登录复用 `POST /auth/login`。小程序仅在微信运行时先探测 `GET /auth/wechat-miniapp/enabled`，服务端确认启用后再提交已加密的 `{ clientId, grantType: "xcx", code }`。认证策略使用配置的 AppID 和 OpenID 在既有 OAuth identity 中定位用户，随后进入与密码登录相同的 token、在线态和登录审计链路。`infoq.auth.wechat-miniapp.enabled=false` 时策略不会装配，既不调用微信，也不提供可用入口；日志不得记录 code、session key、token 或完整 OpenID。
+微信小程序登录复用 `POST /auth/login`。小程序仅在微信运行时先探测 `GET /auth/wechat-miniapp/enabled`，服务端确认启用后再提交已加密的 `{ clientId, grantType: "miniapp", code }`。认证策略使用配置的 AppID 和 OpenID 在既有 OAuth identity 中定位用户，随后进入与密码登录相同的 token、在线态和登录审计链路。`infoq.auth.wechat-miniapp.enabled=false` 时策略不会装配，既不调用微信，也不提供可用入口；日志不得记录 code、session key、token 或完整 OpenID。
 
 ## 10. 持久化消息盒子与提交后 Push
 
