@@ -228,8 +228,8 @@ class SysLoginInfoServiceImplTest {
         request.setRemoteAddr("127.0.0.1");
         request.addHeader("User-Agent", "Mozilla/5.0");
         request.addHeader(SecurityAuthNames.CLIENT_ID, "client-1");
-        request.addHeader("x-client-key", "weapp");
-        request.addHeader("x-device-type", "weapp");
+        request.addHeader("x-client-key", "miniapp");
+        request.addHeader("x-device-type", "miniapp");
 
         LoginInfoEvent event = new LoginInfoEvent();
         event.setRequest(request);
@@ -243,8 +243,8 @@ class SysLoginInfoServiceImplTest {
         }
 
         SysLoginInfoBo bo = captor.getValue();
-        assertEquals("weapp", bo.getClientKey());
-        assertEquals("weapp", bo.getDeviceType());
+        assertEquals("miniapp", bo.getClientKey());
+        assertEquals("miniapp", bo.getDeviceType());
         assertEquals(Constants.SUCCESS, bo.getStatus());
     }
 

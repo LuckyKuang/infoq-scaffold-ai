@@ -40,7 +40,7 @@ import org.springframework.web.util.UriComponentsBuilder;
  * 微信小程序 code 认证策略。
  */
 @Slf4j
-@Service("xcx" + AuthStrategy.BASE_NAME)
+@Service(SystemConstants.GRANT_TYPE_WECHAT_MINIAPP + AuthStrategy.BASE_NAME)
 @RequiredArgsConstructor
 @ConditionalOnProperty(prefix = "infoq.auth.wechat-miniapp", name = "enabled", havingValue = "true")
 public class WechatMiniAppAuthStrategy implements AuthStrategy, InitializingBean {

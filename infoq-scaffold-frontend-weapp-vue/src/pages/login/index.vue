@@ -177,7 +177,7 @@ const handleWechatLogin = async () => {
     if (!result.code) {
       throw new Error('未获取到微信授权 code');
     }
-    await sessionStore.signIn({ clientId: mobileEnv.clientId, grantType: 'xcx', code: result.code });
+    await sessionStore.signIn({ clientId: mobileEnv.clientId, grantType: 'miniapp', code: result.code });
     await uni.showToast({ title: '欢迎回来', icon: 'success' });
     uni.reLaunch({ url: routes.home });
   } catch (error) {

@@ -24,17 +24,13 @@ import cc.infoq.common.utils.ip.AddressUtils;
 import cc.infoq.common.utils.regex.RegexUtils;
 import cc.infoq.common.utils.regex.RegexValidator;
 import cc.infoq.common.xss.XssValidator;
-import cn.hutool.core.lang.Dict;
 import cn.hutool.core.exceptions.ValidateException;
+import cn.hutool.core.lang.Dict;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import jakarta.validation.constraints.NotBlank;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.context.support.GenericApplicationContext;
 
 import java.math.BigDecimal;
@@ -42,13 +38,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 @Tag("dev")
 class CoreCommonCoverageBackfillTest {
@@ -124,7 +114,7 @@ class CoreCommonCoverageBackfillTest {
     @DisplayName("enum/constants/spring/object defaults: should cover utility branches")
     void enumConstantsSpringAndObjectShouldWork() {
         assertEquals("pc", DeviceType.PC.getDevice());
-        assertEquals("weapp", DeviceType.WEAPP.getDevice());
+        assertEquals("miniapp", DeviceType.MINIAPP.getDevice());
         assertEquals("0", UserStatus.OK.getCode());
         assertEquals("user.password.retry.limit.exceed", LoginType.PASSWORD.getRetryLimitExceed());
         assertEquals("0", Constants.SUCCESS);

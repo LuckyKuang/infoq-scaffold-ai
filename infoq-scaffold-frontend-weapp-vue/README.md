@@ -85,6 +85,6 @@ pnpm run verify:local
 
 ## P1-P3 微信登录与消息盒子
 
-- 登录页只在 `weapp` 运行时探测 `GET /auth/wechat-miniapp/enabled`。后端和 Provider 均启用后才显示微信入口，并通过既有加密登录链路提交 `grantType=xcx` 与 `uni.login()` 的 code；H5 不显示不可用入口。
+- 登录页只在 `weapp` 运行时探测 `GET /auth/wechat-miniapp/enabled`。后端和 Provider 均启用后才显示微信入口，并通过既有加密登录链路提交 `grantType=miniapp` 与 `uni.login()` 的 code；H5 不显示不可用入口。
 - `pages/messages/index.vue` 是个人持久化收件箱，个人资料页提供入口和未读数。消息分页、阅读、全部已读和软删除均调用 `/system/message/*`；应用 `onShow` 会刷新已认证会话的未读数。
 - 小程序不建立 SSE/WebSocket 连接。个人资料上的微信绑定状态和消息未读数都以服务端 API 为准。

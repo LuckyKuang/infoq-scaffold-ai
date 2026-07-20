@@ -68,7 +68,7 @@ api/* business wrapper
 
 - 自动补 `clientid`
 - 有 token 时补 `Authorization`
-- 小程序环境自动补 `x-client-key=weapp` 和 `x-device-type=weapp`
+- 小程序环境自动补 `x-client-key=miniapp` 和 `x-device-type=miniapp`
 - 写请求可选 RSA/AES 加密
 - 500ms 内相同 `POST/PUT` 视为重复提交
 
@@ -117,7 +117,7 @@ Page
 Login Page
 -> GET /auth/wechat-miniapp/enabled
 -> Taro.login()
--> encrypted POST /auth/login { grantType: "xcx", code }
+-> encrypted POST /auth/login { grantType: "miniapp", code }
 -> sessionStore.signIn()
 ```
 

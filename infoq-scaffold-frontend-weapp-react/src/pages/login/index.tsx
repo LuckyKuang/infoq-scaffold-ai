@@ -114,7 +114,7 @@ export default function LoginPage() {
       if (!result.code) {
         throw new Error('未获取到微信授权 code');
       }
-      await signIn({ clientId: mobileEnv.clientId, grantType: 'xcx', code: result.code });
+      await signIn({ clientId: mobileEnv.clientId, grantType: 'miniapp', code: result.code });
       await Taro.showToast({ title: '登录成功', icon: 'success' });
       Taro.reLaunch({ url: routes.home });
     } catch (error) {

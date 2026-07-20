@@ -25,7 +25,7 @@ public enum DeviceType {
     /**
      * 微信小程序端
      */
-    WEAPP("weapp");
+    MINIAPP("miniapp");
 
     /**
      * 设备标识

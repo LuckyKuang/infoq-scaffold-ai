@@ -1,16 +1,30 @@
 -- P1/P2: OAuth 身份关系与微信小程序登录。
 -- 目标表：sys_client、sys_oauth_provider、sys_oauth_identity。
--- 执行后清理 Redis 键 global:sys_client#30d，使新增 xcx grant type 立即生效。
+-- 执行后清理 Redis 键 global:sys_client#30d，使新增 miniapp grant type 立即生效。
 
--- 为既有小程序客户端增加 xcx 授权类型；重复执行不重复追加。
+-- 将冻结初始化基线中的小程序客户端标识和授权类型统一为 miniapp；重复执行不重复追加授权类型。
 UPDATE `sys_client`
-SET `grant_type` = CASE
-    WHEN FIND_IN_SET('xcx', REPLACE(`grant_type`, ' ', '')) > 0 THEN `grant_type`
-    WHEN `grant_type` IS NULL OR `grant_type` = '' THEN 'xcx'
-    ELSE CONCAT(`grant_type`, ',xcx')
-END,
-`update_time` = NOW()
-WHERE `client_key` = 'weapp' AND `del_flag` = '0';
+SET `client_key` = 'miniapp',
+    `client_secret` = 'miniapp123',
+    `device_type` = 'miniapp',
+    `update_time` = NOW()
+WHERE `client_id` = 'edda41a953c4a2604febf8a305b441ce' AND `del_flag` = '0';
+
+-- 冻结初始化基线保留旧字典值；新功能脚本执行时将小程序认证字典直接设为 miniapp。
+UPDATE `sys_dict_data`
+SET `dict_value` = 'miniapp',
+    `update_time` = NOW()
+WHERE `dict_type` = 'sys_grant_type'
+  AND `dict_label` = '小程序认证'
+  AND `dict_value` = 'xcx';
+
+-- 将冻结初始化基线中的小程序设备类型字典值直接设为 miniapp。
+UPDATE `sys_dict_data`
+SET `dict_value` = 'miniapp',
+    `update_time` = NOW()
+WHERE `dict_type` = 'sys_device_type'
+  AND `dict_label` = '小程序'
+  AND `dict_value` = 'weapp';
 
 -- Provider 默认禁用；启用微信登录前必须同时配置 infoq.auth.wechat-miniapp 和该 Provider。
 INSERT IGNORE INTO `sys_oauth_provider`
@@ -19,10 +33,10 @@ VALUES
 (9001, 'wechat_miniapp', '微信小程序', '1', '1', '1', '1', 100, '由部署配置控制，默认禁用', '0', 103, 1, NOW(), 1, NOW());
 
 -- 验证查询：
--- SELECT client_id, client_key, grant_type FROM sys_client WHERE client_key = 'weapp' AND del_flag = '0';
+-- SELECT client_id, client_key, client_secret, grant_type, device_type FROM sys_client WHERE client_id = 'edda41a953c4a2604febf8a305b441ce' AND del_flag = '0';
 -- SELECT provider_code, enabled, allow_login, allow_bind, allow_auto_register FROM sys_oauth_provider WHERE provider_code = 'wechat_miniapp';
 
--- 回滚说明：若未创建任何微信身份记录，可手动移除 xcx grant 并删除 Provider；
+-- 回滚说明：若未创建任何微信身份记录，可手动移除 miniapp grant 并删除 Provider；
 -- 已有 sys_oauth_identity.provider_code='wechat_miniapp' 记录时，仅关闭 Provider 和配置开关，不删除历史身份数据。
 
 -- P3: 持久化消息盒子。消息正文与接收人状态分表，接收人删除为软删除状态。
@@ -58,25 +72,10 @@ CREATE TABLE IF NOT EXISTS `sys_message_recipient` (
     `update_time` datetime DEFAULT NULL,
     PRIMARY KEY (`recipient_id`),
     UNIQUE KEY `uk_sys_message_recipient` (`message_id`, `user_id`),
-    KEY `idx_sys_message_recipient_inbox` (`user_id`, `delete_time`, `read_time`, `message_id`)
+    KEY `idx_sys_message_recipient_inbox` (`user_id`, `delete_time`, `read_time`, `message_id`),
+    KEY `idx_sys_message_recipient_delete_time` (`delete_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='系统消息接收人';
 
--- 对已创建过消息表的环境补充软删除清理索引；重复执行保持安全。
-SET @message_recipient_delete_index_exists = (
-    SELECT COUNT(*)
-    FROM information_schema.statistics
-    WHERE table_schema = DATABASE()
-      AND table_name = 'sys_message_recipient'
-      AND index_name = 'idx_sys_message_recipient_delete_time'
-);
-SET @message_recipient_delete_index_sql = IF(
-    @message_recipient_delete_index_exists = 0,
-    'ALTER TABLE sys_message_recipient ADD INDEX idx_sys_message_recipient_delete_time (delete_time)',
-    'SELECT 1'
-);
-PREPARE message_recipient_delete_index_stmt FROM @message_recipient_delete_index_sql;
-EXECUTE message_recipient_delete_index_stmt;
-DEALLOCATE PREPARE message_recipient_delete_index_stmt;
 
 -- 验证查询：
 -- SELECT COUNT(*) AS unread_count FROM sys_message_recipient WHERE user_id = ? AND read_time IS NULL AND delete_time IS NULL;
