@@ -22,7 +22,7 @@
 
 - 当 `POST /system/notice` 插入成功时
 - 则系统必须批量创建 `sys_message` 与 `sys_message_recipient` 记录
-- 并且实时事件只可包含 `{ type: "message", messageId }` 所需的刷新信息
+- 并且实时事件只可包含 `{ type: "message", messageId }` 所需的刷新信息，且 `messageId` 必须为十进制字符串以保持 64 位 ID 精确
 - 并且 Push 关闭、通道不可用或用户离线时，新增公告流程不得失败
 
 ### 要求：前端提醒通道开关

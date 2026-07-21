@@ -1,11 +1,11 @@
 import { nextTick, ref } from 'vue';
-import { ElNotification } from 'element-plus/es/components/notification/index';
+import { closeSSE, initSSE } from '@/utils/sse';
 
 const sseMocks = vi.hoisted(() => {
   return {
     useEventSource: vi.fn(),
     getToken: vi.fn(),
-    addNotice: vi.fn()
+    refresh: vi.fn()
   };
 });
 
@@ -19,15 +19,11 @@ vi.mock('@/utils/auth', () => ({
 
 vi.mock('@/store/modules/notice', () => ({
   useNoticeStore: vi.fn(() => ({
-    addNotice: sseMocks.addNotice
+    refresh: sseMocks.refresh
   }))
 }));
 
-import { closeSSE, initSSE } from '@/utils/sse';
-
 describe('utils/sse', () => {
-  const notificationMock = ElNotification as unknown as ReturnType<typeof vi.fn>;
-
   beforeEach(() => {
     closeSSE();
     vi.clearAllMocks();
@@ -51,7 +47,7 @@ describe('utils/sse', () => {
     expect(sseMocks.useEventSource).not.toHaveBeenCalled();
   });
 
-  it('initializes sse and handles incoming data/error watchers', async () => {
+  it('initializes sse and refreshes persisted messages only for structured events', async () => {
     const data = ref<string | null>(null);
     const error = ref<unknown>(null);
     const close = vi.fn();
@@ -86,18 +82,15 @@ describe('utils/sse', () => {
 
     data.value = '系统消息';
     await nextTick();
-    expect(sseMocks.addNotice).toHaveBeenCalledWith(
-      expect.objectContaining({
-        message: '系统消息',
-        read: false
-      })
-    );
-    expect(notificationMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        message: '系统消息',
-        type: 'success'
-      })
-    );
+    expect(sseMocks.refresh).not.toHaveBeenCalled();
+
+    data.value = JSON.stringify({ type: 'message' });
+    await nextTick();
+    expect(sseMocks.refresh).toHaveBeenCalledTimes(1);
+
+    data.value = JSON.stringify({ type: 'ping' });
+    await nextTick();
+    expect(sseMocks.refresh).toHaveBeenCalledTimes(1);
     expect(data.value).toBeNull();
 
     connectOptions.autoReconnect.onFailed();

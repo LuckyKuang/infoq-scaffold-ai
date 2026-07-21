@@ -11,7 +11,7 @@
 - `public-routes.ts`：登录前公开路由白名单匹配。
 - `BackendRouteView.tsx`：后端组件名到真实页面组件的解析与 tags view 同步。
 - `route-transform.ts`：后端菜单结构转换、组件映射构建、冲突检测。
-- `component-map.tsx`、`path-to-component.ts`：组件路径和页面组件解析。
+- `component-map.ts`、`path-to-component.ts`：组件路径和页面组件解析。
 
 ## 3. 子模块职责摘要
 

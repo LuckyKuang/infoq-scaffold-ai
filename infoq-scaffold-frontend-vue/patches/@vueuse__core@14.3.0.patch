@@ -1,0 +1,30 @@
+diff --git a/dist/index.js b/dist/index.js
+index fbd5761f2ac04e6535daed77175233b424698ace..4cf4855aeb2e44b47ed09b461695480f5332171f 100644
+--- a/dist/index.js
++++ b/dist/index.js
+@@ -3359,7 +3359,6 @@ function useElementVisibility(element, options = {}) {
+ }
+ //#endregion
+ //#region useEventBus/internal.ts
+-/* #__PURE__ */
+ const events = /* @__PURE__ */ new Map();
+ //#endregion
+ //#region useEventBus/index.ts
+@@ -5777,7 +5776,7 @@ function usePerformanceObserver(options, callback) {
+ }
+ //#endregion
+ //#region usePointer/index.ts
+-const defaultState = (/* #__PURE__ */ {
++const defaultState = {
+ 	x: 0,
+ 	y: 0,
+ 	pointerId: 0,
+@@ -5788,7 +5787,7 @@ const defaultState = (/* #__PURE__ */ {
+ 	height: 0,
+ 	twist: 0,
+ 	pointerType: null
+-});
++};
+ const keys = /* @__PURE__ */ Object.keys(defaultState);
+ /**
+ * Reactive pointer state.

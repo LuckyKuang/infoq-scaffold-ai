@@ -26,8 +26,11 @@ const navbarMocks = vi.hoisted(() => ({
   },
   noticeStore: {
     state: {
-      notices: [] as Array<{ message: string; read: boolean; time: string }>
+      notices: [] as Array<{ messageId: number; title: string; createTime: string; readTime: string | null }>,
+      unreadCount: 0,
+      loading: false
     },
+    refresh: vi.fn(),
     readAll: vi.fn()
   },
   router: {
@@ -146,8 +149,11 @@ describe('layout/components/Navbar', () => {
     navbarMocks.appStore.toggleSideBar = navbarMocks.toggleSideBar;
     navbarMocks.userStore.logout = navbarMocks.logout;
     navbarMocks.noticeStore.state = reactive({
-      notices: []
+      notices: [],
+      unreadCount: 0,
+      loading: false
     });
+    navbarMocks.noticeStore.refresh.mockResolvedValue(undefined);
     navbarMocks.router.replace = navbarMocks.routerReplace;
     navbarMocks.router.currentRoute.value.fullPath = '/system/user?tab=1';
     (ElMessageBox.confirm as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(true);
@@ -189,8 +195,11 @@ describe('layout/components/Navbar', () => {
       }
     });
 
-  it('handles sidebar toggle, search open and setLayout command', async () => {
+  it('refreshes persisted messages on mount and handles sidebar, search and layout commands', async () => {
     const wrapper = mountNavbar();
+    await flushPromises();
+
+    expect(navbarMocks.noticeStore.refresh).toHaveBeenCalledTimes(1);
 
     await wrapper.find('button.hamburger-stub').trigger('click');
     expect(navbarMocks.toggleSideBar).toHaveBeenCalledWith(false);
@@ -206,11 +215,7 @@ describe('layout/components/Navbar', () => {
   it('updates unread badge and performs logout flow', async () => {
     const wrapper = mountNavbar();
 
-    navbarMocks.noticeStore.state.notices = [
-      { message: 'm1', time: '2026-03-08', read: false },
-      { message: 'm2', time: '2026-03-08', read: true },
-      { message: 'm3', time: '2026-03-08', read: false }
-    ];
+    navbarMocks.noticeStore.state.unreadCount = 2;
     await flushPromises();
 
     expect(wrapper.find('.el-badge-stub').attributes('data-value')).toBe('2');

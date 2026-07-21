@@ -26,7 +26,7 @@ public class SysMessagePushListener {
         try {
             pushService.push(new PushRequest(event.correlationId(), event.messageId(),
                 event.recipientUserIds().stream().map(PushRecipient::new).toList(),
-                "{\"type\":\"message\",\"messageId\":" + event.messageId() + "}"));
+                "{\"type\":\"message\",\"messageId\":\"" + event.messageId() + "\"}"));
         } catch (RuntimeException e) {
             log.warn("Message Push failed after commit, correlationId:{}, messageId:{}, recipients:{}, type:{}",
                 event.correlationId(), event.messageId(), event.recipientUserIds().size(), e.getClass().getSimpleName());

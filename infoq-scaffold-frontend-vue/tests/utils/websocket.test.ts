@@ -1,10 +1,8 @@
-import { ElNotification } from 'element-plus/es/components/notification/index';
-
 const websocketMocks = vi.hoisted(() => {
   return {
     useWebSocket: vi.fn(),
     getToken: vi.fn(),
-    addNotice: vi.fn()
+    refresh: vi.fn()
   };
 });
 
@@ -18,15 +16,13 @@ vi.mock('@/utils/auth', () => ({
 
 vi.mock('@/store/modules/notice', () => ({
   useNoticeStore: vi.fn(() => ({
-    addNotice: websocketMocks.addNotice
+    refresh: websocketMocks.refresh
   }))
 }));
 
 import { initWebSocket } from '@/utils/websocket';
 
 describe('utils/websocket', () => {
-  const notificationMock = ElNotification as unknown as ReturnType<typeof vi.fn>;
-
   beforeEach(() => {
     vi.clearAllMocks();
     (import.meta.env as Record<string, string>).VITE_APP_CLIENT_ID = 'test-client-id';
@@ -39,7 +35,7 @@ describe('utils/websocket', () => {
     expect(websocketMocks.useWebSocket).not.toHaveBeenCalled();
   });
 
-  it('initializes websocket and handles message callback', () => {
+  it('initializes websocket and refreshes persisted messages only for structured events', () => {
     websocketMocks.getToken.mockReturnValue('ws-token');
     websocketMocks.useWebSocket.mockReturnValue({});
 
@@ -63,18 +59,10 @@ describe('utils/websocket', () => {
     );
 
     options.onMessage({}, { data: '业务通知' });
-    expect(websocketMocks.addNotice).toHaveBeenCalledWith(
-      expect.objectContaining({
-        message: '业务通知',
-        read: false
-      })
-    );
-    expect(notificationMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        message: '业务通知',
-        type: 'success'
-      })
-    );
+    expect(websocketMocks.refresh).not.toHaveBeenCalled();
+
+    options.onMessage({}, { data: JSON.stringify({ type: 'message' }) });
+    expect(websocketMocks.refresh).toHaveBeenCalledTimes(1);
   });
 
   it('ignores websocket ping messages', () => {
@@ -91,8 +79,7 @@ describe('utils/websocket', () => {
 
     options.onMessage({}, { data: 'ping' });
 
-    expect(websocketMocks.addNotice).not.toHaveBeenCalled();
-    expect(notificationMock).not.toHaveBeenCalled();
+    expect(websocketMocks.refresh).not.toHaveBeenCalled();
   });
 
   it('logs reconnect failure at error level', () => {

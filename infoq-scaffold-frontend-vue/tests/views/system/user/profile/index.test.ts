@@ -4,11 +4,22 @@ import ProfileView from '@/views/system/user/profile/index.vue';
 
 const profileMocks = vi.hoisted(() => ({
   getUserProfile: vi.fn(),
+  listProfileOauthIdentities: vi.fn(),
+  getProfileOauthBindAuthorizeUrl: vi.fn(),
+  unbindProfileOauthIdentity: vi.fn(),
+  getOAuthProviders: vi.fn(),
   getOnline: vi.fn()
 }));
 
 vi.mock('@/api/system/user', () => ({
-  getUserProfile: profileMocks.getUserProfile
+  getUserProfile: profileMocks.getUserProfile,
+  listProfileOauthIdentities: profileMocks.listProfileOauthIdentities,
+  getProfileOauthBindAuthorizeUrl: profileMocks.getProfileOauthBindAuthorizeUrl,
+  unbindProfileOauthIdentity: profileMocks.unbindProfileOauthIdentity
+}));
+
+vi.mock('@/api/login', () => ({
+  getOAuthProviders: profileMocks.getOAuthProviders
 }));
 
 vi.mock('@/api/monitor/online', () => ({
@@ -42,6 +53,8 @@ describe('views/system/user/profile/index', () => {
     profileMocks.getOnline.mockResolvedValue({
       rows: [{ tokenId: 'tk-1' }]
     });
+    profileMocks.listProfileOauthIdentities.mockResolvedValue({ data: [] });
+    profileMocks.getOAuthProviders.mockResolvedValue({ data: [] });
   });
 
   it('loads profile and online device data on mount', async () => {
@@ -66,6 +79,8 @@ describe('views/system/user/profile/index', () => {
 
     expect(profileMocks.getUserProfile).toHaveBeenCalledTimes(1);
     expect(profileMocks.getOnline).toHaveBeenCalledTimes(1);
+    expect(profileMocks.listProfileOauthIdentities).toHaveBeenCalledTimes(1);
+    expect(profileMocks.getOAuthProviders).toHaveBeenCalledTimes(1);
     expect(wrapper.text()).toContain('admin');
     expect(wrapper.text()).toContain('13800138000');
     expect(wrapper.text()).toContain('admin@example.com');

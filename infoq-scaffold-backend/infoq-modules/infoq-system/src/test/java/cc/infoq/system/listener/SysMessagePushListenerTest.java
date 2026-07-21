@@ -30,7 +30,7 @@ class SysMessagePushListenerTest {
         assertEquals("message-7", request.getValue().correlationId());
         assertEquals(7L, request.getValue().messageId());
         assertEquals(List.of(10L), request.getValue().recipients().stream().map(item -> item.userId()).toList());
-        assertEquals("{\"type\":\"message\",\"messageId\":7}", request.getValue().payload());
+        assertEquals("{\"type\":\"message\",\"messageId\":\"7\"}", request.getValue().payload());
     }
 
     @Test

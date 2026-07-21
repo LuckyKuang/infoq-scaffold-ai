@@ -1,4 +1,4 @@
-import { Button, Empty, Form, Input, List, Modal, Select, Space, Tag, Typography } from 'antd';
+import { Button, Card, Empty, Form, Input, Modal, Select, Space, Tag, Typography } from 'antd';
 import { DeleteOutlined, LinkOutlined } from '@ant-design/icons';
 import { useEffect, useState } from 'react';
 import { getOAuthProviders } from '@/api/login';
@@ -11,7 +11,8 @@ export default function OauthIdentityPanel() {
   const [bindOpen, setBindOpen] = useState(false);
   const [unbindTarget, setUnbindTarget] = useState<ProfileOauthIdentityVO | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [form] = Form.useForm<{ provider: string; currentPassword?: string }>();
+  const [bindForm] = Form.useForm<{ provider: string }>();
+  const [unbindForm] = Form.useForm<{ currentPassword?: string }>();
 
   const loadIdentities = async () => {
     const response = await listProfileOauthIdentities();
@@ -24,7 +25,7 @@ export default function OauthIdentityPanel() {
   }, []);
 
   const handleBind = async () => {
-    const { provider } = await form.validateFields(['provider']);
+    const { provider } = await bindForm.validateFields(['provider']);
     setSubmitting(true);
     try {
       const response = await getProfileOauthBindAuthorizeUrl(provider, `${window.location.origin}/user/profile`);
@@ -36,12 +37,12 @@ export default function OauthIdentityPanel() {
 
   const handleUnbind = async () => {
     if (!unbindTarget) return;
-    const values = await form.validateFields(unbindTarget.passwordConfirmationRequired ? ['currentPassword'] : []);
+    const values = await unbindForm.validateFields(unbindTarget.passwordConfirmationRequired ? ['currentPassword'] : []);
     setSubmitting(true);
     try {
       await unbindProfileOauthIdentity(unbindTarget.identityId, values.currentPassword);
       setUnbindTarget(null);
-      form.resetFields(['currentPassword']);
+      unbindForm.resetFields(['currentPassword']);
       await loadIdentities();
     } finally {
       setSubmitting(false);
@@ -49,39 +50,46 @@ export default function OauthIdentityPanel() {
   };
 
   return (
-    <Space direction="vertical" size={16} style={{ width: '100%' }}>
+    <Space orientation="vertical" size={16} style={{ width: '100%' }}>
       <Button type="primary" icon={<LinkOutlined />} onClick={() => setBindOpen(true)} disabled={providers.length === 0}>
         绑定第三方账号
       </Button>
       {identities.length === 0 ? (
         <Empty description="尚未绑定第三方账号" />
       ) : (
-        <List
-          size="small"
-          dataSource={identities}
-          renderItem={(identity) => (
-            <List.Item
-              actions={[
-                <Button key="unbind" type="link" danger icon={<DeleteOutlined />} onClick={() => setUnbindTarget(identity)}>
+        <Space orientation="vertical" size={8} style={{ width: '100%' }}>
+          {identities.map((identity) => (
+            <Card
+              key={identity.identityId}
+              size="small"
+              title={
+                <Space>
+                  <Typography.Text>{identity.providerName}</Typography.Text>
+                  <Tag color={identity.status === '0' ? 'green' : 'default'}>{identity.status === '0' ? '已绑定' : '已停用'}</Tag>
+                </Space>
+              }
+              extra={
+                <Button type="link" danger icon={<DeleteOutlined />} onClick={() => setUnbindTarget(identity)}>
                   解绑
                 </Button>
-              ]}
+              }
             >
-              <List.Item.Meta
-                title={
-                  <Space>
-                    <Typography.Text>{identity.providerName}</Typography.Text>
-                    <Tag color={identity.status === '0' ? 'green' : 'default'}>{identity.status === '0' ? '已绑定' : '已停用'}</Tag>
-                  </Space>
-                }
-                description={identity.lastLoginTime ? `最近登录：${identity.lastLoginTime}` : '尚未使用该身份登录'}
-              />
-            </List.Item>
-          )}
-        />
+              <Typography.Text type="secondary">
+                {identity.lastLoginTime ? `最近登录：${identity.lastLoginTime}` : '尚未使用该身份登录'}
+              </Typography.Text>
+            </Card>
+          ))}
+        </Space>
       )}
-      <Modal title="绑定第三方账号" open={bindOpen} confirmLoading={submitting} onOk={() => void handleBind()} onCancel={() => setBindOpen(false)}>
-        <Form form={form} layout="vertical">
+      <Modal
+        forceRender
+        title="绑定第三方账号"
+        open={bindOpen}
+        confirmLoading={submitting}
+        onOk={() => void handleBind()}
+        onCancel={() => setBindOpen(false)}
+      >
+        <Form form={bindForm} layout="vertical">
           <Form.Item name="provider" label="第三方平台" rules={[{ required: true, message: '请选择第三方平台' }]}>
             <Select options={providers.map((provider) => ({ label: provider.providerName, value: provider.providerCode }))} />
           </Form.Item>
@@ -90,21 +98,22 @@ export default function OauthIdentityPanel() {
       <Modal
         title="解绑第三方账号"
         open={Boolean(unbindTarget)}
+        forceRender
         confirmLoading={submitting}
         onOk={() => void handleUnbind()}
         onCancel={() => {
           setUnbindTarget(null);
-          form.resetFields(['currentPassword']);
+          unbindForm.resetFields(['currentPassword']);
         }}
       >
-        <Typography.Paragraph>确认解绑 {unbindTarget?.providerName}？</Typography.Paragraph>
-        {unbindTarget?.passwordConfirmationRequired && (
-          <Form form={form} layout="vertical">
+        <Form form={unbindForm} layout="vertical">
+          <Typography.Paragraph>确认解绑 {unbindTarget?.providerName}？</Typography.Paragraph>
+          {unbindTarget?.passwordConfirmationRequired && (
             <Form.Item name="currentPassword" label="当前密码" rules={[{ required: true, message: '请输入当前密码' }]}>
               <Input.Password autoComplete="current-password" />
             </Form.Item>
-          </Form>
-        )}
+          )}
+        </Form>
       </Modal>
     </Space>
   );
