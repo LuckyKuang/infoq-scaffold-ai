@@ -1,6 +1,6 @@
 {
   "name": "infoq-scaffold-frontend-weapp-vue",
-  "version": "2.1.8",
+  "version": "2.1.9",
   "private": true,
   "type": "module",
   "packageManager": "pnpm@10.34.1",

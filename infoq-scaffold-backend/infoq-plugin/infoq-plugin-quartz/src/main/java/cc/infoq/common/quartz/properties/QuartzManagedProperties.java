@@ -51,7 +51,7 @@ public class QuartzManagedProperties {
         private String markerPrefix = "infoq:quartz:bootstrap:applied";
 
         /**
-         * 当前部署批次唯一标识；推荐格式为 版本号-日期-序号，例如 2.1.8-20260602120000。
+         * 当前部署批次唯一标识；推荐格式为 版本号-日期-序号，例如 2.1.9-20260602120000。
          * 生产环境开启受控 reconcile 时必须提供，并且同一次部署的所有节点必须保持一致。
          */
         private String deployId;

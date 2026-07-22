@@ -1,7 +1,7 @@
 # Docker Compose 部署说明
 
 本文档以当前仓库的 `script/docker/docker-compose.yml` 为基础部署基线，并说明可显式合并的 MQTT / Elasticsearch 生产 optional overlay。默认部署不会启动这两个可选中间件。
-当前文档对应项目基线版本为 `2.1.8`。
+当前文档对应项目基线版本为 `2.1.9`。
 
 如果你是第一次用 Docker Compose 部署本项目，建议先阅读教程，再回到本文查看脚本细节：
 

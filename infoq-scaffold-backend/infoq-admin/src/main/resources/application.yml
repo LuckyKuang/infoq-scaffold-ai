@@ -315,7 +315,7 @@ infoq:
       marker-enabled: false
       # 启动期 reconcile 执行完成后的 Redis 部署级 marker key 前缀
       marker-prefix: infoq:quartz:bootstrap:applied
-      # 当前部署批次唯一标识；推荐格式为 版本号-日期-序号，例如 2.1.8-20260602120000
+      # 当前部署批次唯一标识；推荐格式为 版本号-日期-序号，例如 2.1.9-20260602120000
       # 生产环境开启受控 reconcile 时必须给同一批部署节点注入同一个 deploy-id
       deploy-id:
       # 启动期 reconcile 使用的全局分布式锁 key 前缀

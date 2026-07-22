@@ -10,8 +10,8 @@ outline: [2, 3]
 
 # Docker Compose 部署说明
 
-本文档以当前仓库的 `script/docker/docker-compose.yml` 为准，只保留现有工程真正可执行的部署入口。
-当前文档对应项目基线版本为 `2.1.8`。
+本文档以当前仓库的 `script/docker/docker-compose.yml` 为基础部署基线，并说明可显式合并的 MQTT / Elasticsearch 生产 optional overlay。默认部署不会启动这两个可选中间件。
+当前文档对应项目基线版本为 `2.1.9`。
 
 如果你是第一次用 Docker Compose 部署本项目，建议先阅读教程，再回到本文查看脚本细节：
 
@@ -66,6 +66,141 @@ sudo env INFOQ_VERSION=<tag> INFOQ_FRONTEND_TARGET=all INFOQ_PUBLIC_BASE_URL=htt
 sudo env INFOQ_SOURCE_DIR="$(pwd)" INFOQ_FRONTEND_TARGET=all INFOQ_PUBLIC_BASE_URL=http://127.0.0.1 INFOQ_DEPLOY_ROOT="${HOME}/infoq" bash deploy/install.sh
 ```
 
+## 0.1 可选 MQTT / Elasticsearch：单节点与三节点集群部署
+
+MQTT 与 Elasticsearch 不是基础部署的必选项。`script/docker/docker-compose.yml`、`deploy/install.sh`、`script/bin/infoq.sh deploy` 与 `script/bin/deploy-frontend.sh deploy` 均不会合并或启动它们。只有运维显式调用 `script/bin/deploy-middleware.sh` 选择组件与拓扑时，才会使用对应 production overlay。
+
+生产编排与本地/CI 测试严格分离：
+
+| 场景 | MQTT | Elasticsearch | 是否包含工具 / 测试材料 |
+| --- | --- | --- | --- |
+| 单节点生产 | `docker-compose.mqtt.yml` | `docker-compose.elasticsearch.yml` | 否，仅实际节点 |
+| 三节点集群生产 | `docker-compose.mqtt-cluster.yml` | `docker-compose.elasticsearch-cluster.yml` | 否，仅实际节点 |
+| 本地 / CI 集成测试 | `docker-compose.mqtt-it.yml` | `docker-compose.elasticsearch-it.yml` | 是，且仅限测试 |
+
+所有 production overlay 只使用实际的 `emqx/emqx:5.8.9` 或 `docker.elastic.co/elasticsearch/elasticsearch:8.18.8` 服务；它们不包含 `mqtt-tools`、`elasticsearch-tools`、自签证书生成、测试账户、测试 ACL、测试 Topic/索引、`MIDDLEWARE_*` 变量或 Maven verifier。
+
+### 0.1.1 生产环境变量与外置材料
+
+必须从受保护的 `${INFOQ_ENV_FILE}`（通常是 `/etc/infoq-scaffold-ai/deploy.env`，权限 `600`）加载基础 Compose 已有变量，并按所选组件提供以下变量。选择 MQTT 不要求 ES 密码；选择 ES 不要求 MQTT 管理变量。缺失时选择脚本或 Compose 会明确失败。
+
+```text
+# MQTT single 或 cluster
+INFOQ_DEPLOY_ROOT
+MQTT_NODE_COOKIE
+MQTT_ADMIN_USERNAME
+MQTT_ADMIN_PASSWORD
+
+# Elasticsearch single 或 cluster
+INFOQ_DEPLOY_ROOT
+ES_BOOTSTRAP_PASSWORD
+```
+
+生产安全材料由运维/组织 PKI 提供，不能复用 `doc/tmp/`、`/infoq/mqtt-it/` 或 `/infoq/elasticsearch-it/` 的测试 run 材料。私钥应只允许最小必要的容器用户读取；ES 数据目录必须允许容器用户 `1000:0` 写入。选择脚本只会在 root 身份下创建缺失数据目录并设置为 `1000:0`、`0750`；非 root 必须由运维先创建，已有目录绝不自动修改 owner 或权限。脚本绝不生成证书、账户、ACL 或私钥。
+
+单节点所需路径：
+
+```text
+${INFOQ_DEPLOY_ROOT}/mqtt/certs/ca.crt
+${INFOQ_DEPLOY_ROOT}/mqtt/certs/tls.crt
+${INFOQ_DEPLOY_ROOT}/mqtt/certs/tls.key
+${INFOQ_DEPLOY_ROOT}/mqtt/data
+${INFOQ_DEPLOY_ROOT}/elasticsearch/certs/ca.crt
+${INFOQ_DEPLOY_ROOT}/elasticsearch/certs/tls.crt
+${INFOQ_DEPLOY_ROOT}/elasticsearch/certs/tls.key
+${INFOQ_DEPLOY_ROOT}/elasticsearch/data
+```
+
+三节点 cluster 所需路径：
+
+```text
+${INFOQ_DEPLOY_ROOT}/mqtt/certs/ca.crt
+${INFOQ_DEPLOY_ROOT}/mqtt/certs/mqtt-broker-1/tls.crt
+${INFOQ_DEPLOY_ROOT}/mqtt/certs/mqtt-broker-1/tls.key
+${INFOQ_DEPLOY_ROOT}/mqtt/certs/mqtt-broker-2/tls.crt
+${INFOQ_DEPLOY_ROOT}/mqtt/certs/mqtt-broker-2/tls.key
+${INFOQ_DEPLOY_ROOT}/mqtt/certs/mqtt-broker-3/tls.crt
+${INFOQ_DEPLOY_ROOT}/mqtt/certs/mqtt-broker-3/tls.key
+${INFOQ_DEPLOY_ROOT}/mqtt/data/mqtt-broker-1
+${INFOQ_DEPLOY_ROOT}/mqtt/data/mqtt-broker-2
+${INFOQ_DEPLOY_ROOT}/mqtt/data/mqtt-broker-3
+
+${INFOQ_DEPLOY_ROOT}/elasticsearch/certs/ca.crt
+${INFOQ_DEPLOY_ROOT}/elasticsearch/certs/es01/tls.crt
+${INFOQ_DEPLOY_ROOT}/elasticsearch/certs/es01/tls.key
+${INFOQ_DEPLOY_ROOT}/elasticsearch/certs/es02/tls.crt
+${INFOQ_DEPLOY_ROOT}/elasticsearch/certs/es02/tls.key
+${INFOQ_DEPLOY_ROOT}/elasticsearch/certs/es03/tls.crt
+${INFOQ_DEPLOY_ROOT}/elasticsearch/certs/es03/tls.key
+${INFOQ_DEPLOY_ROOT}/elasticsearch/data/es01
+${INFOQ_DEPLOY_ROOT}/elasticsearch/data/es02
+${INFOQ_DEPLOY_ROOT}/elasticsearch/data/es03
+```
+
+MQTT 生产基线配置在 [script/docker/mqtt/production/base.hocon](https://github.com/luckykuang/infoq-scaffold-ai/blob/main/script/docker/mqtt/production/base.hocon)：它只启用 TLS `8883`、关闭明文 `1883`、启用 built-in database 认证并默认拒绝未匹配授权。它不包含任何 MQTT 账户、ACL、证书或私钥。上线前必须通过受控运维流程创建业务账户与最小权限 ACL；客户端不得回退到匿名访问。
+
+### 0.1.2 拓扑选择脚本
+
+唯一受支持的选择入口为：
+
+```bash
+bash script/bin/deploy-middleware.sh <mqtt|elasticsearch> <single|cluster> <prepare|config|deploy|bootstrap|status|stop>
+```
+
+`prepare` 只创建缺失数据目录，且在证书/变量检查后执行；`config` 只校验并渲染，不创建容器或目录；`deploy` 只启动所选节点；`status` 和 `stop` 也只作用于所选节点，`stop` 不使用 `down -v`。`bootstrap` 仅允许 `elasticsearch cluster` 的首次建群使用。
+
+先加载环境文件：
+
+```bash
+export INFOQ_ENV_FILE=/etc/infoq-scaffold-ai/deploy.env
+set -a
+. "${INFOQ_ENV_FILE}"
+set +a
+```
+
+单节点示例：
+
+```bash
+bash script/bin/deploy-middleware.sh mqtt single prepare
+bash script/bin/deploy-middleware.sh mqtt single config
+bash script/bin/deploy-middleware.sh mqtt single deploy
+
+bash script/bin/deploy-middleware.sh elasticsearch single prepare
+bash script/bin/deploy-middleware.sh elasticsearch single config
+bash script/bin/deploy-middleware.sh elasticsearch single deploy
+```
+
+三节点 cluster 示例：
+
+```bash
+# MQTT：三个 EMQX Community 节点以 static discovery 组成集群。
+bash script/bin/deploy-middleware.sh mqtt cluster prepare
+bash script/bin/deploy-middleware.sh mqtt cluster config
+bash script/bin/deploy-middleware.sh mqtt cluster deploy
+
+# Elasticsearch：首次建群仅使用一次 bootstrap；之后的启动、重启或扩容前检查必须使用 deploy。
+bash script/bin/deploy-middleware.sh elasticsearch cluster prepare
+bash script/bin/deploy-middleware.sh elasticsearch cluster config
+bash script/bin/deploy-middleware.sh elasticsearch cluster bootstrap
+```
+
+例如停止 MQTT cluster：
+
+```bash
+bash script/bin/deploy-middleware.sh mqtt cluster stop
+```
+
+### 0.1.3 三节点 cluster 的安全与运行边界
+
+MQTT cluster 固定为 `mqtt-broker-1`、`mqtt-broker-2`、`mqtt-broker-3`，并在 Compose 网络中分别使用 FQDN 别名 `mqtt-broker-1.infoq.local`、`mqtt-broker-2.infoq.local`、`mqtt-broker-3.infoq.local` 作为 EMQX Erlang 节点名和静态发现地址。三个节点使用同一个 `MQTT_NODE_COOKIE`、TLS-only `8883`、独立数据目录和逐节点证书。每张节点证书的 SAN 至少应包含对应的 FQDN 别名，以及经审阅的外部发布主机名；默认只把节点一的 TLS listener 发布到 `127.0.0.1:8883`，节点二、三只在 Compose 网络内通信。若经评审需对外暴露，设置 `MQTT_CLUSTER_TLS_BIND_ADDRESS` / `MQTT_CLUSTER_TLS_HOST_PORT`，并在外部 TCP 负载均衡、DNS、证书 SAN、防火墙和监控准备完成后再接流量。
+
+Elasticsearch cluster 固定为 `es01`、`es02`、`es03`：启用认证、HTTP TLS、transport TLS、节点发现和独立数据目录/证书，默认仅把 `es01` 的 HTTP endpoint 发布到 `127.0.0.1:9200`。逐节点证书 SAN 必须包含节点服务名。若需调整公开端口，设置 `ES_CLUSTER_HTTP_BIND_ADDRESS` / `ES_CLUSTER_HTTP_PORT`；不得因方便把 ES 直接暴露到公网。生产应用必须使用受控创建的业务 role/user，不能使用 `elastic` bootstrap 用户。
+
+首次执行 `elasticsearch cluster bootstrap` 时，脚本要求三个 `${INFOQ_DEPLOY_ROOT}/elasticsearch/data/es0[1-3]` 目录均为空，才会仅对该启动尝试注入 `es01,es02,es03` 初始主节点列表。任一目录已有内容时脚本会明确拒绝并提示使用 `deploy`；不会清空目录、删除容器或创建新集群。ES 部署/首次 bootstrap 还会检查 Linux `vm.max_map_count` 至少为 `262144`；该内核参数由运维在宿主机修复，脚本不会修改它。
+
+这套三节点编排运行在**同一个 Docker Compose 主机**上，能提供三节点发现、持久化和 TLS/认证拓扑验证，但不能替代跨物理主机、跨可用区或跨故障域的高可用。跨主机网络、负载均衡、备份恢复、容量压测、PKI 自动化与证书轮换均须单独规划。
+
+停止时只使用选择脚本的目标 `stop` 操作；不使用 `down -v`，不删除 `${INFOQ_DEPLOY_ROOT}`、数据目录或 Docker volume。生产证书续期、EMQX 配置/ACL 变更、ES role 变更、备份、恢复和版本升级须走独立运维变更流程。
 ## 1. 准备宿主机目录
 
 先按 [script/docker/redis/data/README.md](https://github.com/luckykuang/infoq-scaffold-ai/blob/main/script/docker/redis/data/README.md) 创建 `${INFOQ_DEPLOY_ROOT:-/infoq}/...` 目录。
