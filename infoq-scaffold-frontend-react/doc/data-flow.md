@@ -167,3 +167,21 @@ userStore.logout()
 
 - 页面内部局部状态和表单交互没有在这里逐页展开；需要时继续下钻到对应页面文件。
 - 文档只记录当前已经能由代码直接证实的动态路由与消息链路，不推断未来页面扩展方案。
+
+## 7. 身份关系与持久化消息
+
+个人中心加载后从 `/system/user/profile/oauth/identities` 读取当前用户身份。绑定先请求 `/system/user/profile/oauth/{provider}/bind/authorize` 并进入现有浏览器 OAuth 回调链路，解绑请求始终由当前登录用户和服务端最后凭证规则校验。
+
+管理端消息主链路不再把 SSE/WebSocket 文本当作消息存储：
+
+```text
+NoticeBell / MessageCenter
+-> /system/message/list + /system/message/unread-count
+-> 服务端持久化收件箱
+
+SSE / WebSocket { type: "message", messageId }
+-> useNoticeStore.refresh()
+-> 再请求服务端消息真值
+```
+
+因此关闭实时通道、用户离线或刷新页面都不影响既有消息的读取、已读和删除。

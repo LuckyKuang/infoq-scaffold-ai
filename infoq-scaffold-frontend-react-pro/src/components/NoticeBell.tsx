@@ -1,19 +1,26 @@
 import {Badge, Button, Empty, Popover, Tag, theme} from 'antd';
-import {useState} from 'react';
+import {useEffect, useState} from 'react';
 import {useTranslation} from 'react-i18next';
+import {useNavigate} from '@umijs/max';
 import SvgIcon from '@/components/SvgIcon';
 import {useNoticeStore} from '@/store/modules/notice';
 
 export default function NoticeBell() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [popoverOpen, setPopoverOpen] = useState(false);
   const notices = useNoticeStore((state) => state.notices);
   const markRead = useNoticeStore((state) => state.markRead);
   const markAllRead = useNoticeStore((state) => state.markAllRead);
-  const unreadCount = notices.filter((item) => !item.read).length;
+  const unreadCount = useNoticeStore((state) => state.unreadCount);
+  const refresh = useNoticeStore((state) => state.refresh);
   const {
     token: { colorBorderSecondary, colorTextSecondary },
   } = theme.useToken();
+
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
 
   const content = (
     <div style={{ width: 300 }} className="layout-notice-panel">
@@ -30,7 +37,7 @@ export default function NoticeBell() {
         <div>{t('notice.title')}</div>
         <button
           type="button"
-          onClick={markAllRead}
+          onClick={() => void markAllRead()}
           style={{
             border: 'none',
             background: 'transparent',
@@ -49,12 +56,12 @@ export default function NoticeBell() {
           notices.slice(0, 10).map((item, index) => (
             <button
               type="button"
-              key={`${item.time}-${item.message}`}
-              onClick={() => markRead(index)}
+              key={item.messageId}
+              onClick={() => void markRead(item.messageId)}
               onKeyDown={(event) => {
                 if (event.key === 'Enter' || event.key === ' ') {
                   event.preventDefault();
-                  markRead(index);
+                  void markRead(item.messageId);
                 }
               }}
               style={{
@@ -82,16 +89,16 @@ export default function NoticeBell() {
                   minWidth: 0,
                 }}
               >
-                <div>{item.message}</div>
+                <div>{item.title}</div>
                 <div style={{ color: colorTextSecondary, marginTop: 5 }}>
-                  {item.time}
+                  {item.createTime}
                 </div>
               </div>
               <Tag
-                color={item.read ? 'success' : 'error'}
+                color={item.readTime ? 'success' : 'error'}
                 style={{ alignSelf: 'center', marginInlineEnd: 0 }}
               >
-                {item.read ? t('notice.read') : t('notice.unread')}
+                {item.readTime ? t('notice.read') : t('notice.unread')}
               </Tag>
             </button>
           ))
@@ -102,6 +109,9 @@ export default function NoticeBell() {
           />
         )}
       </div>
+      <Button type="link" block onClick={() => { setPopoverOpen(false); navigate('/message-center'); }}>
+        全部消息
+      </Button>
     </div>
   );
 
@@ -111,7 +121,10 @@ export default function NoticeBell() {
       trigger="click"
       placement="bottomRight"
       open={popoverOpen}
-      onOpenChange={setPopoverOpen}
+      onOpenChange={(open) => {
+        setPopoverOpen(open);
+        if (open) void refresh();
+      }}
     >
       <Button
         type="text"

@@ -3,7 +3,6 @@ package cc.infoq.system.controller.system;
 import cc.infoq.common.domain.ApiResult;
 import cc.infoq.common.mybatis.core.page.PageQuery;
 import cc.infoq.common.mybatis.core.page.TableDataInfo;
-import cc.infoq.common.service.DictService;
 import cc.infoq.system.domain.bo.SysNoticeBo;
 import cc.infoq.system.domain.vo.SysNoticeVo;
 import cc.infoq.system.service.SysNoticeService;
@@ -24,9 +23,6 @@ class SysNoticeControllerTest {
 
     @Mock
     private SysNoticeService sysNoticeService;
-    @Mock
-    private DictService dictService;
-
     @InjectMocks
     private SysNoticeController controller;
 

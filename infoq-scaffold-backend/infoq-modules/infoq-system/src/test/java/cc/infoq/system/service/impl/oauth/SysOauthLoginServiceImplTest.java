@@ -6,18 +6,9 @@ import cc.infoq.common.oauth.domain.OAuthCallbackResult;
 import cc.infoq.common.oauth.domain.OAuthIdentityProfile;
 import cc.infoq.common.oauth.service.OAuthFlowService;
 import cc.infoq.common.oauth.service.OAuthLoginTicketService;
-import cc.infoq.system.domain.entity.SysOauthIdentity;
-import cc.infoq.system.domain.vo.SysOauthIdentityVo;
 import cc.infoq.system.domain.vo.SysOauthProviderVo;
-import cc.infoq.system.mapper.SysOauthIdentityMapper;
-import cc.infoq.system.service.SysConfigService;
-import cc.infoq.system.service.SysLoginService;
-import cc.infoq.system.service.SysOauthAutoRegistrationService;
+import cc.infoq.system.service.SysOauthIdentityService;
 import cc.infoq.system.service.SysOauthProviderService;
-import com.baomidou.mybatisplus.core.metadata.TableInfoHelper;
-import org.apache.ibatis.builder.MapperBuilderAssistant;
-import org.apache.ibatis.session.Configuration;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -29,10 +20,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.lang.reflect.Method;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @Tag("dev")
@@ -45,72 +36,52 @@ class SysOauthLoginServiceImplTest {
     @Mock
     private SysOauthProviderService providerService;
     @Mock
-    private SysOauthIdentityMapper identityMapper;
-    @Mock
-    private SysConfigService configService;
-    @Mock
-    private SysLoginService loginService;
-    @Mock
-    private SysOauthAutoRegistrationService autoRegistrationService;
-
-    @BeforeEach
-    void setUp() {
-        if (TableInfoHelper.getTableInfo(SysOauthIdentity.class) == null) {
-            TableInfoHelper.initTableInfo(new MapperBuilderAssistant(new Configuration(), ""), SysOauthIdentity.class);
-        }
-    }
+    private SysOauthIdentityService identityService;
 
     @Test
     @DisplayName("transaction boundary: callback should not wrap external profile fetch")
     void callbackShouldNotDeclareTransaction() throws NoSuchMethodException {
         Method callback = SysOauthLoginServiceImpl.class.getMethod(
             "handleCallback", String.class, OAuthCallbackRequest.class, String.class);
-        Method autoRegister = SysOauthAutoRegistrationServiceImpl.class.getMethod(
-            "autoRegisterAndBind", OAuthIdentityProfile.class);
 
         assertFalse(callback.isAnnotationPresent(Transactional.class));
-        assertTrue(autoRegister.isAnnotationPresent(Transactional.class));
     }
 
     @Test
-    @DisplayName("handleCallback: should use existing identity without auto register")
-    void handleCallbackShouldUseExistingIdentityWithoutAutoRegister() {
-        SysOauthLoginServiceImpl service = buildService();
-        OAuthIdentityProfile profile = profile();
-        OAuthCallbackRequest request = callbackRequest();
-        SysOauthIdentityVo identity = new SysOauthIdentityVo();
-        identity.setIdentityId(10L);
-        identity.setUserId(100L);
-        identity.setStatus("0");
-        when(providerService.requireLoginProvider("github")).thenReturn(provider());
-        when(oAuthFlowService.handleCallback(eq("github"), any(OAuthCallbackRequest.class), eq(""))).thenReturn(callbackResult(profile));
-        when(identityMapper.selectVoOne(any())).thenReturn(identity);
-        when(ticketService.createTicket(any())).thenReturn("ticket-1");
-        when(oAuthFlowService.getProperties()).thenReturn(oauthProperties());
-
-        service.handleCallback("github", request, "");
-
-        verify(autoRegistrationService, never()).autoRegisterAndBind(any());
-    }
-
-    @Test
-    @DisplayName("handleCallback: should delegate missing identity auto registration to separate bean")
-    void handleCallbackShouldDelegateMissingIdentityAutoRegistration() {
+    @DisplayName("handleCallback: should delegate identity resolution to the unified identity service")
+    void handleCallbackShouldDelegateIdentityResolution() {
         SysOauthLoginServiceImpl service = buildService();
         OAuthIdentityProfile profile = profile();
         OAuthCallbackRequest request = callbackRequest();
         when(providerService.requireLoginProvider("github")).thenReturn(provider());
         when(oAuthFlowService.handleCallback(eq("github"), any(OAuthCallbackRequest.class), eq(""))).thenReturn(callbackResult(profile));
-        when(identityMapper.selectVoOne(any())).thenReturn(null);
-        when(configService.selectRegisterEnabled()).thenReturn(true);
-        when(configService.selectInviteRegisterEnabled()).thenReturn(false);
-        when(autoRegistrationService.autoRegisterAndBind(profile)).thenReturn(101L);
+        when(identityService.resolveLoginUser(any(), eq(profile), eq(true), eq(true))).thenReturn(100L);
         when(ticketService.createTicket(any())).thenReturn("ticket-1");
         when(oAuthFlowService.getProperties()).thenReturn(oauthProperties());
 
         service.handleCallback("github", request, "");
 
-        verify(autoRegistrationService).autoRegisterAndBind(profile);
+        verify(identityService).resolveLoginUser(any(), eq(profile), eq(true), eq(true));
+    }
+
+    @Test
+    @DisplayName("handleCallback: should pass configured auto registration policy to the identity service")
+    void handleCallbackShouldPassConfiguredAutoRegistrationPolicy() {
+        SysOauthLoginServiceImpl service = buildService();
+        OAuthIdentityProfile profile = profile();
+        OAuthCallbackRequest request = callbackRequest();
+        when(providerService.requireLoginProvider("github")).thenReturn(provider());
+        when(oAuthFlowService.handleCallback(eq("github"), any(OAuthCallbackRequest.class), eq(""))).thenReturn(callbackResult(profile));
+        OAuthProperties properties = oauthProperties();
+        properties.setAutoRegisterEnabled(true);
+        properties.setRequireInviteWhenInviteRegisterEnabled(false);
+        when(oAuthFlowService.getProperties()).thenReturn(properties);
+        when(identityService.resolveLoginUser(any(), eq(profile), eq(true), eq(false))).thenReturn(101L);
+        when(ticketService.createTicket(any())).thenReturn("ticket-1");
+
+        service.handleCallback("github", request, "");
+
+        verify(identityService).resolveLoginUser(any(), eq(profile), eq(true), eq(false));
     }
 
     private SysOauthLoginServiceImpl buildService() {
@@ -118,10 +89,7 @@ class SysOauthLoginServiceImplTest {
             oAuthFlowService,
             ticketService,
             providerService,
-            identityMapper,
-            configService,
-            loginService,
-            autoRegistrationService);
+            identityService);
     }
 
     private SysOauthProviderVo provider() {
@@ -158,6 +126,7 @@ class SysOauthLoginServiceImplTest {
     private OAuthProperties oauthProperties() {
         OAuthProperties properties = new OAuthProperties();
         properties.setFrontendCallbackPath("/oauth/callback");
+        properties.setRequireInviteWhenInviteRegisterEnabled(true);
         return properties;
     }
 }

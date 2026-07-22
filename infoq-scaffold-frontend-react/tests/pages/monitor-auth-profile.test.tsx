@@ -162,7 +162,14 @@ vi.mock('@/api/system/user', () => ({
       roleGroup: '管理员',
       postGroup: '研发岗'
     }
-  })
+  }),
+  listProfileOauthIdentities: vi.fn().mockResolvedValue({ data: [] }),
+  getProfileOauthBindAuthorizeUrl: vi.fn(),
+  unbindProfileOauthIdentity: vi.fn()
+}));
+
+vi.mock('@/api/login', () => ({
+  getOAuthProviders: vi.fn().mockResolvedValue({ data: [] })
 }));
 
 const { default: OnlinePage } = await import('@/pages/monitor/online/index');
@@ -261,6 +268,9 @@ beforeEach(() => {
         postGroup: '研发岗'
       }
     })
+  );
+  vi.mocked(userApi.listProfileOauthIdentities).mockResolvedValue(
+    asResolvedValue<Awaited<ReturnType<typeof userApi.listProfileOauthIdentities>>>({ data: [] })
   );
 });
 

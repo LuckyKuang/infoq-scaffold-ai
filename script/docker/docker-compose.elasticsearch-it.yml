@@ -1,0 +1,124 @@
+# Local/CI integration-test overlay only. It provisions ephemeral test credentials, self-signed certificates, and a Maven verifier; do not use it for production deployment.
+
+services:
+  es-cert-init:
+    build:
+      context: ./elasticsearch
+      dockerfile: Dockerfile
+    image: infoq/elasticsearch-tools:2.1.8
+    user: "0:0"
+    command: ["/opt/infoq-elasticsearch/generate-certificates.sh", "elasticsearch"]
+    environment:
+      MIDDLEWARE_TRUSTSTORE_PASSWORD: ${MIDDLEWARE_TRUSTSTORE_PASSWORD:?Set MIDDLEWARE_TRUSTSTORE_PASSWORD in the run env file}
+    volumes:
+      - ${MIDDLEWARE_SECRET_DIR:?Set MIDDLEWARE_SECRET_DIR in the run env file}:/run/secrets:rw
+    networks:
+      - elasticsearch-it
+
+  es-data-init:
+    image: infoq/elasticsearch-tools:2.1.8
+    build:
+      context: ./elasticsearch
+      dockerfile: Dockerfile
+    user: "0:0"
+    command:
+      - bash
+      - -euc
+      - >-
+        install -d -m 0750 -o 1000 -g 0 /usr/share/elasticsearch/data
+    volumes:
+      - ${INFOQ_DEPLOY_ROOT:-/infoq}/elasticsearch/data:/usr/share/elasticsearch/data:rw
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.18.8
+    restart: "no"
+    environment:
+      discovery.type: single-node
+      xpack.license.self_generated.type: basic
+      xpack.security.enabled: "true"
+      xpack.security.http.ssl.enabled: "true"
+      xpack.security.http.ssl.certificate: /usr/share/elasticsearch/config/certs/tls.crt
+      xpack.security.http.ssl.key: /usr/share/elasticsearch/config/certs/tls.key
+      xpack.security.http.ssl.certificate_authorities: /usr/share/elasticsearch/config/certs/ca.crt
+      xpack.security.transport.ssl.enabled: "true"
+      xpack.security.transport.ssl.verification_mode: certificate
+      xpack.security.transport.ssl.certificate: /usr/share/elasticsearch/config/certs/tls.crt
+      xpack.security.transport.ssl.key: /usr/share/elasticsearch/config/certs/tls.key
+      xpack.security.transport.ssl.certificate_authorities: /usr/share/elasticsearch/config/certs/ca.crt
+      ELASTIC_PASSWORD: ${ES_BOOTSTRAP_PASSWORD:?Set ES_BOOTSTRAP_PASSWORD in the run env file}
+      ES_JAVA_OPTS: -Xms1g -Xmx1g
+    ports:
+      - "127.0.0.1:19200:9200"
+    volumes:
+      - ${INFOQ_DEPLOY_ROOT:-/infoq}/elasticsearch/data:/usr/share/elasticsearch/data:rw
+      - ${MIDDLEWARE_SECRET_DIR:?Set MIDDLEWARE_SECRET_DIR in the run env file}/certs/ca/ca.crt:/usr/share/elasticsearch/config/certs/ca.crt:ro
+      - ${MIDDLEWARE_SECRET_DIR:?Set MIDDLEWARE_SECRET_DIR in the run env file}/certs/elasticsearch/tls.crt:/usr/share/elasticsearch/config/certs/tls.crt:ro
+      - ${MIDDLEWARE_SECRET_DIR:?Set MIDDLEWARE_SECRET_DIR in the run env file}/certs/elasticsearch/tls.key:/usr/share/elasticsearch/config/certs/tls.key:ro
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail --silent --show-error --cacert /usr/share/elasticsearch/config/certs/ca.crt -u elastic:$${ELASTIC_PASSWORD} 'https://127.0.0.1:9200/_cluster/health?wait_for_status=yellow&timeout=1s' >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 40s
+    depends_on:
+      es-cert-init:
+        condition: service_completed_successfully
+      es-data-init:
+        condition: service_completed_successfully
+    networks:
+      - elasticsearch-it
+
+  es-security-init:
+    image: infoq/elasticsearch-tools:2.1.8
+    build:
+      context: ./elasticsearch
+      dockerfile: Dockerfile
+    user: "0:0"
+    command: ["/opt/infoq-elasticsearch/init-elasticsearch-security.sh"]
+    environment:
+      MIDDLEWARE_RUN_ID: ${MIDDLEWARE_RUN_ID:?Set MIDDLEWARE_RUN_ID in the run env file}
+      ES_BOOTSTRAP_PASSWORD: ${ES_BOOTSTRAP_PASSWORD:?Set ES_BOOTSTRAP_PASSWORD in the run env file}
+      ES_IT_USERNAME: ${ES_IT_USERNAME:?Set ES_IT_USERNAME in the run env file}
+      ES_IT_PASSWORD: ${ES_IT_PASSWORD:?Set ES_IT_PASSWORD in the run env file}
+    volumes:
+      - ${MIDDLEWARE_SECRET_DIR:?Set MIDDLEWARE_SECRET_DIR in the run env file}/certs/ca/ca.crt:/run/certs/ca.crt:ro
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - elasticsearch-it
+
+  es-verifier:
+    image: maven:3.9.12-eclipse-temurin-17
+    working_dir: /workspace
+    command:
+      - bash
+      - -lc
+      - >-
+        mvn -Dmaven.repo.local=/maven-repo -Dprofiles.active=docker-it
+        -pl infoq-plugin/infoq-plugin-elasticsearch -am -DskipTests=false -Dtest=ElasticsearchDockerIntegrationTest
+        -Dsurefire.failIfNoSpecifiedTests=false test
+    environment:
+      JAVA_TOOL_OPTIONS: >-
+        -Djavax.net.ssl.trustStore=/run/secrets/truststore.p12
+        -Djavax.net.ssl.trustStoreType=PKCS12
+        -Djavax.net.ssl.trustStorePassword=${MIDDLEWARE_TRUSTSTORE_PASSWORD:?Set MIDDLEWARE_TRUSTSTORE_PASSWORD in the run env file}
+      INFOQ_IT_RUN_ID: ${MIDDLEWARE_RUN_ID:?Set MIDDLEWARE_RUN_ID in the run env file}
+      INFOQ_IT_ES_URI: https://elasticsearch:9200
+      INFOQ_IT_ES_USERNAME: ${ES_IT_USERNAME:?Set ES_IT_USERNAME in the run env file}
+      INFOQ_IT_ES_PASSWORD: ${ES_IT_PASSWORD:?Set ES_IT_PASSWORD in the run env file}
+      INFOQ_IT_ES_INDEX_PREFIX: infoq_elasticsearch_it_${MIDDLEWARE_RUN_ID:?Set MIDDLEWARE_RUN_ID in the run env file}_
+    volumes:
+      - ../../infoq-scaffold-backend:/workspace:rw
+      - ${MIDDLEWARE_MAVEN_REPO:?Set MIDDLEWARE_MAVEN_REPO in the run env file}:/maven-repo:ro
+      - ${MIDDLEWARE_SECRET_DIR:?Set MIDDLEWARE_SECRET_DIR in the run env file}/truststore.p12:/run/secrets/truststore.p12:ro
+    depends_on:
+      es-security-init:
+        condition: service_completed_successfully
+    networks:
+      - elasticsearch-it
+
+networks:
+  elasticsearch-it:
+    name: ${MIDDLEWARE_PROJECT_NAME:?Set MIDDLEWARE_PROJECT_NAME in the run env file}-elasticsearch
+    driver: bridge

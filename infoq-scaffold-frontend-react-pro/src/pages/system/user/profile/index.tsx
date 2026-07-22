@@ -1,16 +1,17 @@
-import { Card, Col, Row, Tabs, theme } from 'antd';
-import { useEffect, useState } from 'react';
-import { getOnline } from '@/api/monitor/online';
-import type { OnlineVO } from '@/api/monitor/online/types';
-import { getUserProfile } from '@/api/system/user';
-import { assertUserProfileData } from '@/api/system/user/guards';
-import type { UserVO } from '@/api/system/user/types';
+import {Card, Col, Row, Tabs, theme} from 'antd';
+import {useEffect, useState} from 'react';
+import {getOnline} from '@/api/monitor/online';
+import type {OnlineVO} from '@/api/monitor/online/types';
+import {getUserProfile} from '@/api/system/user';
+import {assertUserProfileData} from '@/api/system/user/guards';
+import type {UserVO} from '@/api/system/user/types';
 import SvgIcon from '@/components/SvgIcon';
 import OnlineDevice from '@/pages/system/user/profile/onlineDevice';
+import OauthIdentityPanel from '@/pages/system/user/profile/oauthIdentity';
 import ResetPwd from '@/pages/system/user/profile/resetPwd';
 import UserAvatar from '@/pages/system/user/profile/userAvatar';
 import UserInfo from '@/pages/system/user/profile/userInfo';
-import { useSettingsStore } from '@/store/modules/settings';
+import {useSettingsStore} from '@/store/modules/settings';
 
 type ProfileState = {
   user: Partial<UserVO>;
@@ -148,6 +149,11 @@ export default function ProfilePage() {
                     onChanged={loadDevices}
                   />
                 ),
+              },
+              {
+                key: 'oauthIdentity',
+                label: '账号关联',
+                children: <OauthIdentityPanel />,
               },
             ]}
           />

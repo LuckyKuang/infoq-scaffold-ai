@@ -1,0 +1,34 @@
+# Production EMQX baseline. It contains no account, ACL rule, private key, certificate, or password.
+# Operators must provision broker users and authorization rules before allowing application traffic.
+listeners.tcp.default {
+  enable = false
+  bind = "0.0.0.0:1883"
+}
+
+listeners.ssl.default {
+  enable = true
+  bind = "0.0.0.0:8883"
+  ssl_options {
+    cacertfile = "/opt/emqx/etc/certs/ca/ca.crt"
+    certfile = "/opt/emqx/etc/certs/mqtt-broker/tls.crt"
+    keyfile = "/opt/emqx/etc/certs/mqtt-broker/tls.key"
+    versions = ["tlsv1.2", "tlsv1.3"]
+    verify = verify_none
+    fail_if_no_peer_cert = false
+  }
+}
+
+authentication = [
+  {
+    mechanism = password_based
+    backend = built_in_database
+    user_id_type = username
+    password_hash_algorithm {
+      name = sha256
+      salt_position = suffix
+    }
+  }
+]
+
+authorization.no_match = deny
+authorization.deny_action = disconnect

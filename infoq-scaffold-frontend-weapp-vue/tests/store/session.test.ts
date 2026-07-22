@@ -4,6 +4,7 @@ import {useSessionStore} from '../../src/store/session';
 
 const {
   mockGetInfo,
+  mockGetUnreadMessageCount,
   mockGetToken,
   mockHasPermission,
   mockLogin,
@@ -13,6 +14,7 @@ const {
   mockSetToken
 } = vi.hoisted(() => ({
   mockGetInfo: vi.fn(),
+  mockGetUnreadMessageCount: vi.fn(),
   mockGetToken: vi.fn(),
   mockHasPermission: vi.fn(),
   mockLogin: vi.fn(),
@@ -24,6 +26,7 @@ const {
 
 vi.mock('@/api', () => ({
   getInfo: mockGetInfo,
+  getUnreadMessageCount: mockGetUnreadMessageCount,
   getToken: mockGetToken,
   hasPermission: mockHasPermission,
   login: mockLogin,
@@ -38,6 +41,7 @@ describe('store/session', () => {
     setActivePinia(createPinia());
 
     mockGetInfo.mockReset();
+    mockGetUnreadMessageCount.mockReset();
     mockGetToken.mockReset();
     mockHasPermission.mockReset();
     mockLogin.mockReset();
@@ -216,6 +220,23 @@ describe('store/session', () => {
     expect(mockLogout).not.toHaveBeenCalled();
     expect(mockRemoveToken).toHaveBeenCalledTimes(1);
     expect(store.user).toBeNull();
+  });
+
+  it('refreshes unread messages only for an authenticated session', async () => {
+    const store = useSessionStore();
+    mockGetToken.mockReturnValue('message-token');
+    mockGetUnreadMessageCount.mockResolvedValue({ data: 4 });
+
+    await store.refreshUnreadMessageCount();
+
+    expect(mockGetUnreadMessageCount).toHaveBeenCalledTimes(1);
+    expect(store.unreadMessageCount).toBe(4);
+
+    mockGetToken.mockReturnValue('');
+    await store.refreshUnreadMessageCount();
+
+    expect(mockGetUnreadMessageCount).toHaveBeenCalledTimes(1);
+    expect(store.unreadMessageCount).toBe(0);
   });
 
   it('patchUser should merge when user exists and initialize when user is null', () => {

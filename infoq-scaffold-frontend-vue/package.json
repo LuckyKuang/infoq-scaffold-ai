@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/package",
   "name": "infoq-scaffold-frontend-vue",
-  "version": "2.1.8",
+  "version": "2.1.9",
   "description": "infoq-scaffold-frontend-vue后台管理系统",
   "author": "Pontus",
   "license": "MIT",
@@ -95,6 +95,9 @@
       "@vue/compiler-core": "3.5.35",
       "@vue/compiler-dom": "3.5.35",
       "vite-plugin-inspect": "11.4.1"
+    },
+    "patchedDependencies": {
+      "@vueuse/core@14.3.0": "patches/@vueuse__core@14.3.0.patch"
     }
   },
   "engines": {

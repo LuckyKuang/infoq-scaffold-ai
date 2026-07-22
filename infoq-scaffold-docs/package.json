@@ -2,8 +2,8 @@
   "name": "infoq-scaffold-docs",
   "private": true,
   "type": "module",
-  "version": "2.1.8",
-  "packageManager": "pnpm@10.28.2",
+  "version": "2.1.9",
+  "packageManager": "pnpm@10.34.1",
   "scripts": {
     "build": "pnpm run docs:build",
     "dev": "pnpm run docs:dev",

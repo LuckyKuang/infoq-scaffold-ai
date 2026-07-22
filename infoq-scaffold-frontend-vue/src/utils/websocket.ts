@@ -1,6 +1,4 @@
 import { getToken } from '@/utils/auth';
-import 'element-plus/es/components/notification/style/css';
-import { ElNotification } from 'element-plus/es/components/notification/index';
 import { useNoticeStore } from '@/store/modules/notice';
 
 // 初始化socket
@@ -30,17 +28,14 @@ export const initWebSocket = (url: string) => {
       if (typeof e.data === 'string' && e.data.indexOf('ping') >= 0) {
         return;
       }
-      useNoticeStore().addNotice({
-        message: e.data,
-        read: false,
-        time: new Date().toLocaleString()
-      });
-      ElNotification({
-        title: '消息',
-        message: e.data,
-        type: 'success',
-        duration: 3000
-      });
+      try {
+        const event = JSON.parse(String(e.data)) as { type?: string };
+        if (event.type === 'message') {
+          void useNoticeStore().refresh();
+        }
+      } catch {
+        // 只处理结构化消息刷新事件，其他 WebSocket 载荷不进入个人消息盒子。
+      }
     }
   });
 };

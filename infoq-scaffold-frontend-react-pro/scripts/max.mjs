@@ -1,31 +1,28 @@
 #!/usr/bin/env node
 
 import {spawn} from 'node:child_process';
-import {existsSync} from 'node:fs';
-import {dirname, join} from 'node:path';
+import {dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {createMaxCommand} from './max-command.mjs';
 
 const rootDir = dirname(dirname(fileURLToPath(import.meta.url)));
-const maxBin = join(
-  rootDir,
-  'node_modules',
-  '.bin',
-  process.platform === 'win32' ? 'max.cmd' : 'max',
-);
 
-if (!existsSync(maxBin)) {
+let maxCommand;
+try {
+  maxCommand = createMaxCommand(rootDir, process.argv.slice(2), {
+    ...process.env,
+    DID_YOU_KNOW: 'none',
+  });
+} catch (error) {
   console.error(
-    `[react-pro-max] Cannot find ${maxBin}. Run pnpm install in ${rootDir} first.`,
+    `[react-pro-max] Cannot resolve Umi Max. Run pnpm install in ${rootDir} first. ${error.message}`,
   );
   process.exit(1);
 }
 
-const child = spawn(maxBin, process.argv.slice(2), {
+const child = spawn(maxCommand.command, maxCommand.arguments, {
   cwd: rootDir,
-  env: {
-    ...process.env,
-    DID_YOU_KNOW: 'none',
-  },
+  env: maxCommand.env,
   stdio: 'inherit',
   windowsHide: false,
 });

@@ -10,10 +10,13 @@ import { useTagsViewStore } from '@/store/modules/tagsView';
 import { useSettingsStore } from '@/store/modules/settings';
 import { useUserStore } from '@/store/modules/user';
 
+const refreshMock = vi.fn();
+
 describe('layouts/main-layout-icons', () => {
   let logoutMock = vi.fn<() => Promise<void>>(async () => undefined);
 
   beforeEach(() => {
+    vi.clearAllMocks();
     localStorage.clear();
 
     useAppStore.setState({
@@ -35,7 +38,21 @@ describe('layouts/main-layout-icons', () => {
       cachedViews: ['Cache']
     });
     useNoticeStore.setState({
-      notices: [{ message: '系统通知', read: false, time: '2026-03-11 09:00:00' }]
+      notices: [
+        {
+          messageId: 101,
+          messageType: '1',
+          messageLevel: 'info',
+          title: '系统通知',
+          content: '消息内容',
+          source: 'system_notice',
+          createTime: '2026-03-11 09:00:00',
+          readTime: null
+        }
+      ],
+      unreadCount: 1,
+      loading: false,
+      refresh: refreshMock.mockResolvedValue(undefined)
     });
     logoutMock = vi.fn<() => Promise<void>>(async () => undefined);
     useUserStore.setState({
@@ -68,9 +85,7 @@ describe('layouts/main-layout-icons', () => {
         },
         ...monitorRoutes
       ],
-      sidebarRouters: [
-        ...monitorRoutes
-      ],
+      sidebarRouters: [...monitorRoutes],
       getRouteByPath: () => ({
         path: '/monitor/cache',
         component: 'monitor/cache/index',
@@ -104,7 +119,7 @@ describe('layouts/main-layout-icons', () => {
     });
   });
 
-  it('renders breadcrumb titles from route meta instead of raw path segments', () => {
+  it('renders breadcrumb titles from route meta instead of raw path segments', async () => {
     usePermissionStore.setState({
       routes: [
         {
@@ -159,6 +174,9 @@ describe('layouts/main-layout-icons', () => {
       </MemoryRouter>
     );
 
+    await waitFor(() => {
+      expect(screen.getByTestId('main-breadcrumb')).toHaveTextContent('用户管理');
+    });
     expect(screen.getByTestId('main-breadcrumb')).toHaveTextContent('首页');
     expect(screen.getByTestId('main-breadcrumb')).toHaveTextContent('系统管理');
     expect(screen.getByTestId('main-breadcrumb')).toHaveTextContent('用户管理');
@@ -166,7 +184,7 @@ describe('layouts/main-layout-icons', () => {
     expect(screen.getByTestId('main-breadcrumb')).not.toHaveTextContent('/system/user');
   });
 
-  it('uses dark sidebar menu theme and dark tag bar background in dark mode', () => {
+  it('uses dark sidebar menu theme and dark tag bar background in dark mode', async () => {
     useSettingsStore.setState({
       dark: true,
       sideTheme: 'theme-dark',
@@ -193,7 +211,9 @@ describe('layouts/main-layout-icons', () => {
       </ConfigProvider>
     );
 
-    expect(container.querySelector('.ant-menu-dark')).not.toBeNull();
+    await waitFor(() => {
+      expect(container.querySelector('.ant-menu-dark')).not.toBeNull();
+    });
     expect(screen.getByTestId('tags-view-bar')).toHaveStyle({
       background: darkToken.colorBgContainer
     });

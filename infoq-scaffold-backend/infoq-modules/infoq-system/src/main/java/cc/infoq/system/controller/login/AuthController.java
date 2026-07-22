@@ -11,6 +11,7 @@ import cc.infoq.common.json.utils.JsonUtils;
 import cc.infoq.common.utils.DateUtils;
 import cc.infoq.common.utils.MessageUtils;
 import cc.infoq.common.utils.ValidatorUtils;
+import cc.infoq.system.config.WechatMiniAppProperties;
 import cc.infoq.system.domain.vo.LoginVo;
 import cc.infoq.system.domain.vo.SysClientVo;
 import cc.infoq.system.service.*;
@@ -49,6 +50,12 @@ public class AuthController {
     private final SysForgotPasswordService sysForgotPasswordService;
     private final ScheduledExecutorService scheduledExecutorService;
     private final SysInviteCodeService sysInviteCodeService;
+    private final WechatMiniAppProperties wechatMiniAppProperties;
+
+    @GetMapping("/wechat-miniapp/enabled")
+    public ApiResult<Boolean> wechatMiniAppEnabled() {
+        return ApiResult.ok(wechatMiniAppProperties.isEnabled());
+    }
 
     @ApiEncrypt
     @PostMapping("/login")

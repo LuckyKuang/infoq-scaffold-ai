@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { notification } from 'antd';
 import { useNoticeStore } from '@/store/modules/notice';
 import { closeSSE, initSSE } from '@/utils/sse';
 import { closeWebSocket, initWebSocket } from '@/utils/websocket';
@@ -40,6 +39,8 @@ class MockWebSocket {
   }
 }
 
+const refreshMock = vi.fn();
+
 describe('utils/realtime', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -49,18 +50,13 @@ describe('utils/realtime', () => {
     vi.stubEnv('VITE_APP_WEBSOCKET', 'true');
 
     localStorage.setItem('Admin-Token', 'token-test');
-    useNoticeStore.setState({ notices: [] });
+    refreshMock.mockResolvedValue(undefined);
+    useNoticeStore.setState({ notices: [], unreadCount: 0, loading: false, refresh: refreshMock });
     MockEventSource.instances = [];
     MockWebSocket.instances = [];
 
     vi.stubGlobal('EventSource', MockEventSource);
     vi.stubGlobal('WebSocket', MockWebSocket);
-
-    vi.spyOn(notification, 'success').mockImplementation(() => {
-      return {
-        then: undefined
-      } as never;
-    });
   });
 
   afterEach(() => {
@@ -71,7 +67,7 @@ describe('utils/realtime', () => {
     vi.unstubAllEnvs();
   });
 
-  it('initializes SSE and records notice messages', () => {
+  it('initializes SSE and refreshes persisted messages only for structured events', () => {
     initSSE('/resource/sse');
     expect(MockEventSource.instances).toHaveLength(1);
 
@@ -79,13 +75,16 @@ describe('utils/realtime', () => {
     expect(instance.url).toContain('Authorization=Bearer token-test');
 
     instance.onmessage?.({ data: 'new message' } as MessageEvent<string>);
-    expect(useNoticeStore.getState().notices[0].message).toBe('new message');
+    expect(refreshMock).not.toHaveBeenCalled();
+
+    instance.onmessage?.({ data: JSON.stringify({ type: 'message' }) } as MessageEvent<string>);
+    expect(refreshMock).toHaveBeenCalledTimes(1);
 
     closeSSE();
     expect(instance.close).toHaveBeenCalled();
   });
 
-  it('initializes websocket, sends heartbeat, and records notice messages', () => {
+  it('initializes websocket, sends heartbeat, and refreshes persisted messages only for structured events', () => {
     initWebSocket('/resource/ws');
     expect(MockWebSocket.instances).toHaveLength(1);
 
@@ -97,7 +96,10 @@ describe('utils/realtime', () => {
     expect(ws.send).toHaveBeenCalled();
 
     ws.onmessage?.({ data: 'biz-message' } as MessageEvent<string>);
-    expect(useNoticeStore.getState().notices[0].message).toBe('biz-message');
+    expect(refreshMock).not.toHaveBeenCalled();
+
+    ws.onmessage?.({ data: JSON.stringify({ type: 'message' }) } as MessageEvent<string>);
+    expect(refreshMock).toHaveBeenCalledTimes(1);
 
     closeWebSocket();
     expect(ws.close).toHaveBeenCalled();

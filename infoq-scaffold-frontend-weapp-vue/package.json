@@ -1,9 +1,9 @@
 {
   "name": "infoq-scaffold-frontend-weapp-vue",
-  "version": "2.1.8",
+  "version": "2.1.9",
   "private": true,
   "type": "module",
-  "packageManager": "pnpm@10.23.0",
+  "packageManager": "pnpm@10.34.1",
   "description": "InfoQ Vue mobile scaffold based on uni-app",
   "scripts": {
     "dev:h5": "uni -p h5 --mode development",

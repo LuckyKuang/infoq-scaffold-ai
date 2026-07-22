@@ -3,11 +3,17 @@ import { defineComponent, h, reactive } from 'vue';
 import NoticePanel from '@/layout/components/notice/index.vue';
 
 const noticePanelMocks = vi.hoisted(() => ({
+  refresh: vi.fn(),
+  markRead: vi.fn(),
   readAll: vi.fn(),
   store: {
     state: {
-      notices: [] as Array<{ message: string; time: string; read: boolean }>
+      notices: [] as Array<{ messageId: number; title: string; createTime: string; readTime: string | null }>,
+      unreadCount: 0,
+      loading: false
     },
+    refresh: vi.fn(),
+    markRead: vi.fn(),
     readAll: vi.fn()
   }
 }));
@@ -29,6 +35,13 @@ const ElEmptyStub = defineComponent({
   }
 });
 
+const ElButtonStub = defineComponent({
+  name: 'ElButton',
+  setup(_, { slots }) {
+    return () => h('button', slots.default?.());
+  }
+});
+
 const loadingDirective = {
   mounted(el: HTMLElement, binding: { value: boolean }) {
     el.setAttribute('data-loading', String(binding.value));
@@ -42,9 +55,16 @@ describe('layout/components/notice', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     noticePanelMocks.store.state = reactive({
-      notices: []
+      notices: [],
+      unreadCount: 0,
+      loading: false
     });
+    noticePanelMocks.store.refresh = noticePanelMocks.refresh;
+    noticePanelMocks.store.markRead = noticePanelMocks.markRead;
     noticePanelMocks.store.readAll = noticePanelMocks.readAll;
+    noticePanelMocks.refresh.mockResolvedValue(undefined);
+    noticePanelMocks.markRead.mockResolvedValue(undefined);
+    noticePanelMocks.readAll.mockResolvedValue(undefined);
   });
 
   const mountPanel = () =>
@@ -54,7 +74,8 @@ describe('layout/components/notice', () => {
           loading: loadingDirective
         },
         stubs: {
-          'el-empty': ElEmptyStub
+          'el-empty': ElEmptyStub,
+          'el-button': ElButtonStub
         }
       }
     });
@@ -63,20 +84,23 @@ describe('layout/components/notice', () => {
     const wrapper = mountPanel();
     await flushPromises();
 
+    expect(noticePanelMocks.refresh).toHaveBeenCalledTimes(1);
     expect(wrapper.find('.el-empty-stub').text()).toBe('消息为空');
   });
 
   it('marks notice as read on click and forwards readAll action', async () => {
     noticePanelMocks.store.state.notices = [
       {
-        message: '待办消息',
-        time: '2026-03-08 22:00:00',
-        read: false
+        messageId: 101,
+        title: '待办消息',
+        createTime: '2026-03-08 22:00:00',
+        readTime: null
       },
       {
-        message: '已读消息',
-        time: '2026-03-08 22:01:00',
-        read: true
+        messageId: 102,
+        title: '已读消息',
+        createTime: '2026-03-08 22:01:00',
+        readTime: '2026-03-08 22:02:00'
       }
     ];
 
@@ -88,7 +112,7 @@ describe('layout/components/notice', () => {
     expect(wrapper.text()).toContain('未读');
 
     await items[0].trigger('click');
-    expect(noticePanelMocks.store.state.notices[0].read).toBe(true);
+    expect(noticePanelMocks.markRead).toHaveBeenCalledWith(101);
 
     await wrapper.find('.head-box-btn').trigger('click');
     expect(noticePanelMocks.readAll).toHaveBeenCalledTimes(1);

@@ -2,7 +2,7 @@ import { DeptTreeVO } from './../dept/types';
 import { RoleVO } from '@/api/system/role/types';
 import request from '@/utils/request';
 import type { ApiResponse, TableResponse } from '@/api/types';
-import { UserForm, UserInfoVO, UserQuery, UserVO } from './types';
+import { ProfileOauthIdentityVO, UserForm, UserInfoVO, UserQuery, UserVO } from './types';
 import { parseStrEmpty } from '@/utils/scaffold';
 
 /**
@@ -165,6 +165,33 @@ export const uploadAvatar = (data: FormData) => {
   });
 };
 
+export const listProfileOauthIdentities = () => {
+  return request<ApiResponse<ProfileOauthIdentityVO[]>>({
+    url: '/system/user/profile/oauth/identities',
+    method: 'get'
+  });
+};
+
+export const getProfileOauthBindAuthorizeUrl = (provider: string, redirect: string) => {
+  return request<ApiResponse<string>>({
+    url: `/system/user/profile/oauth/${provider}/bind/authorize`,
+    method: 'get',
+    params: { redirect }
+  });
+};
+
+export const unbindProfileOauthIdentity = (identityId: number, currentPassword?: string) => {
+  return request({
+    url: `/system/user/profile/oauth/identities/${identityId}/unbind`,
+    method: 'post',
+    headers: {
+      isEncrypt: true,
+      repeatSubmit: false
+    },
+    data: currentPassword ? { currentPassword } : undefined
+  });
+};
+
 /**
  * 查询授权角色
  * @param userId 用户ID
@@ -222,6 +249,9 @@ export default {
   updateUserProfile,
   updateUserPwd,
   uploadAvatar,
+  listProfileOauthIdentities,
+  getProfileOauthBindAuthorizeUrl,
+  unbindProfileOauthIdentity,
   getAuthRole,
   updateAuthRole,
   deptTreeSelect,

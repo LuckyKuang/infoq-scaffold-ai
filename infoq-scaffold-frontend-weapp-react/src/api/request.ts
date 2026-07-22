@@ -11,7 +11,7 @@ const runtimeClientKeyHeader = 'x-client-key';
 const runtimeDeviceTypeHeader = 'x-device-type';
 const duplicateRequestWindow = 500;
 const recentRequests = new Map<string, number>();
-const weappRuntimeType = 'weapp';
+const miniappClientType = 'miniapp';
 
 type RequestMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
 
@@ -76,9 +76,9 @@ const shouldAttachToken = (headers?: RequestHeaders) => headers?.isToken !== fal
 
 const shouldCheckDuplicate = (headers?: RequestHeaders) => headers?.repeatSubmit !== false && headers?.repeatSubmit !== 'false';
 
-const getRuntimeClientKey = () => (mobileEnv.taroEnv === 'weapp' ? weappRuntimeType : '');
+const getRuntimeClientKey = () => (mobileEnv.taroEnv === 'weapp' ? miniappClientType : '');
 
-const getRuntimeDeviceType = () => (mobileEnv.taroEnv === 'weapp' ? weappRuntimeType : '');
+const getRuntimeDeviceType = () => (mobileEnv.taroEnv === 'weapp' ? miniappClientType : '');
 
 const extractRequestHeaders = (headers?: RequestHeaders) => {
   const result: Record<string, string> = {};

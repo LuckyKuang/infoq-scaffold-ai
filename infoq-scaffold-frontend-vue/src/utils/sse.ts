@@ -1,6 +1,4 @@
 import { getToken } from '@/utils/auth';
-import 'element-plus/es/components/notification/style/css';
-import { ElNotification } from 'element-plus/es/components/notification/index';
 import { useNoticeStore } from '@/store/modules/notice';
 
 let stopErrorWatch: (() => void) | null = null;
@@ -78,17 +76,14 @@ export const initSSE = (baseUrl: string) => {
 
   stopDataWatch = watch(data, () => {
     if (!data.value) return;
-    useNoticeStore().addNotice({
-      message: data.value,
-      read: false,
-      time: new Date().toLocaleString()
-    });
-    ElNotification({
-      title: '消息',
-      message: data.value,
-      type: 'success',
-      duration: 3000
-    });
+    try {
+      const event = JSON.parse(data.value) as { type?: string };
+      if (event.type === 'message') {
+        void useNoticeStore().refresh();
+      }
+    } catch {
+      // 只处理结构化消息刷新事件，其他 SSE 载荷不进入个人消息盒子。
+    }
     data.value = null;
   });
 };

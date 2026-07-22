@@ -48,6 +48,8 @@ outline: [2, 3]
 | MySQL | 8.x |
 | Redis | 7.x |
 | Nginx | 1.30.x |
+| MQTT（可选） | EMQX 社区版 5.8.9 |
+| Elasticsearch（可选） | 8.18.8 |
 | Docker Compose | 仅在脚本化部署时需要 |
 
 说明：
@@ -72,6 +74,8 @@ outline: [2, 3]
 | Redis | 6379 |
 | MinIO API | 9000 |
 | MinIO Console | 9001 |
+| MQTT TLS（可选） | single / cluster 均默认节点一 `127.0.0.1:8883` |
+| Elasticsearch HTTPS（可选） | single / cluster 均默认节点一 `127.0.0.1:9200` |
 
 前端目标与直连端口关系：
 
@@ -90,6 +94,8 @@ outline: [2, 3]
 - 基础服务端口和目标前端直连端口未被其他进程占用
 - 服务器安全组、防火墙、反向代理策略允许目标端口访问
 - 如需公网 HTTPS，证书和域名已准备完成
+- 如启用可选 MQTT / Elasticsearch，已通过 `deploy-middleware.sh` 选择 `single` 或 `cluster`；生产逐节点证书、最小权限账户/ACL/role、数据目录权限和 `deploy.env` 变量已按 [docker-compose-deploy.md](/devops/docker-compose-deploy#01-可选-mqtt--elasticsearch单节点与三节点集群部署) 准备；不得使用 `*-it` 测试材料
+- 选择 Elasticsearch cluster 时，宿主机 `vm.max_map_count` 至少为 `262144`，三个节点各自具备足够内存、磁盘与容器用户 `1000:0` 的数据目录写入权限；首次建群只允许数据目录为空时执行 `bootstrap`
 - 首次安装会生成 `/etc/infoq-scaffold-ai/deploy.env` 和 `/etc/infoq-scaffold-ai/credentials.txt`，两个文件必须保留且权限为 `600`
 
 ## 4. 目录与权限准备

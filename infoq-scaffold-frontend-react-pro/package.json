@@ -1,6 +1,6 @@
 {
   "name": "infoq-scaffold-frontend-react-pro",
-  "version": "2.1.8",
+  "version": "2.1.9",
   "private": true,
   "description": "infoq-scaffold React Ant Design Pro admin",
   "packageManager": "pnpm@10.34.1",

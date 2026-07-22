@@ -22,7 +22,14 @@ public class OAuthLoginTicketService {
     }
 
     public String createTicket(OAuthLoginTicketPayload payload) {
-        String ticket = OAuthPkceUtils.secureToken();
+        return createTicket(payload, "");
+    }
+
+    /**
+     * 创建带业务前缀的一次性票据。前缀仅用于回调场景区分，票据仍由高熵随机值构成。
+     */
+    public String createTicket(OAuthLoginTicketPayload payload, String prefix) {
+        String ticket = StringUtils.blankToDefault(prefix, "") + OAuthPkceUtils.secureToken();
         payload.setIssuedAt(System.currentTimeMillis());
         RBucket<OAuthLoginTicketPayload> bucket = redissonClient.getBucket(buildKey(ticket));
         bucket.set(payload, properties.getTicketTtl());

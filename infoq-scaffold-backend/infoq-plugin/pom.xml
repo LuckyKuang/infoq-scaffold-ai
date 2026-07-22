@@ -11,12 +11,15 @@
 
     <modules>
         <module>infoq-plugin-encrypt</module>
+        <module>infoq-plugin-elasticsearch</module>
         <module>infoq-plugin-excel</module>
         <module>infoq-plugin-jackson</module>
         <module>infoq-plugin-log</module>
         <module>infoq-plugin-mail</module>
+        <module>infoq-plugin-mqtt</module>
         <module>infoq-plugin-mybatis</module>
         <module>infoq-plugin-oauth</module>
+        <module>infoq-plugin-push</module>
         <module>infoq-plugin-oss</module>
         <module>infoq-plugin-redis</module>
         <module>infoq-plugin-security</module>

@@ -15,6 +15,7 @@ const ForgotPasswordPage = lazy(() => import('@/pages/forgot-password'));
 const RedirectPage = lazy(() => import('@/pages/redirect/index'));
 const Error401Page = lazy(() => import('@/pages/error/401'));
 const HomePage = lazy(() => import('@/pages/index'));
+const MessageCenterPage = lazy(() => import('@/pages/message-center'));
 const Error404Page = lazy(() => import('@/pages/error/404'));
 
 NProgress.configure({ showSpinner: false });
@@ -63,6 +64,7 @@ export default function AppRouter() {
           >
             <Route index element={<Navigate to="/index" replace />} />
             <Route path="index" element={<HomePage />} />
+            <Route path="message-center" element={<MessageCenterPage />} />
             <Route path="user/profile" element={<BackendRouteView />} />
             <Route path="*" element={<BackendRouteView />} />
           </Route>

@@ -56,3 +56,8 @@ Route match
 2. 首页：`index.tsx`
 3. 业务页：`system/*`（重点关注 `system/config/index.tsx`、`system/invite/index.tsx`）
 4. 监控页：`monitor/*`
+
+## 9. 个人身份与消息中心
+
+- `system/user/profile` 包含 OAuth 身份关系管理页签，使用服务端授权地址发起绑定，并在服务端要求时提交当前密码确认解绑。
+- `message-center/index.tsx` 是个人消息盒子，支持分页阅读、标记已读、全部已读和软删除；公告后台 CRUD 仍在 `system/notice`，两者不是同一个页面或数据模型。

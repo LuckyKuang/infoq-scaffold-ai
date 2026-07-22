@@ -1,17 +1,11 @@
 #!/usr/bin/env node
 
-import {existsSync} from 'node:fs';
-import {dirname, join} from 'node:path';
+import {dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {spawn} from 'node:child_process';
+import {createMaxCommand} from './max-command.mjs';
 
 const rootDir = dirname(dirname(fileURLToPath(import.meta.url)));
-const maxBin = join(
-  rootDir,
-  'node_modules',
-  '.bin',
-  process.platform === 'win32' ? 'max.cmd' : 'max',
-);
 
 const printHelp = () => {
   console.log(`Usage: node scripts/start-dev.mjs [options] [-- max-dev-args]
@@ -144,24 +138,27 @@ if (options.help) {
   process.exit(0);
 }
 
-if (!existsSync(maxBin)) {
-  console.error(
-    `[react-pro-dev] Cannot find ${maxBin}. Run pnpm install in ${rootDir} first.`,
-  );
-  process.exit(1);
-}
-
 const port = process.env.PORT || process.env.VITE_APP_PORT || '80';
-const child = spawn(maxBin, ['dev', ...options.passthrough], {
-  cwd: rootDir,
-  env: {
+let maxCommand;
+try {
+  maxCommand = createMaxCommand(rootDir, ['dev', ...options.passthrough], {
     ...process.env,
     PORT: port,
     VITE_APP_PORT: process.env.VITE_APP_PORT || port,
     UMI_ENV: options.umiEnv,
     MOCK: options.mock,
     DID_YOU_KNOW: 'none',
-  },
+  });
+} catch (error) {
+  console.error(
+    `[react-pro-dev] Cannot resolve Umi Max. Run pnpm install in ${rootDir} first. ${error.message}`,
+  );
+  process.exit(1);
+}
+
+const child = spawn(maxCommand.command, maxCommand.arguments, {
+  cwd: rootDir,
+  env: maxCommand.env,
   stdio: ['inherit', 'pipe', 'pipe'],
   windowsHide: false,
 });

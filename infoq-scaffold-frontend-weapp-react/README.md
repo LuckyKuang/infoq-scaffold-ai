@@ -80,3 +80,9 @@ pnpm run verify:local
 - `build-open:weapp*` 依赖真实的 AppID；`touristappid` 只是占位值，不能作为正式启动参数。
 - 小程序请求域名校验、本地 `TARO_APP_API_ORIGIN` / `TARO_APP_MINI_BASE_API` 以及 e2e 自动登录细节，仍以 `.env.*`、`package.json` 和 `tests/e2e/weapp/*` 当前实现为准。
 - 小程序端错误文案禁止退化成 `[object Object]`；相关归一化逻辑在 `src/api/request.ts`。
+
+## P1-P3 微信登录与消息盒子
+
+- 登录页只在 `weapp` 运行时探测 `GET /auth/wechat-miniapp/enabled`。后端和 Provider 均启用后才显示微信入口，并通过既有加密登录链路提交 `grantType=miniapp` 与 `Taro.login()` 的 code；H5 不显示不可用入口。
+- `pages/messages` 是个人持久化收件箱，个人资料页提供入口和未读数。消息分页、阅读、全部已读和软删除均调用 `/system/message/*`；应用启动和前台恢复会刷新未读数。
+- 小程序不建立 SSE/WebSocket 连接。个人资料上的微信绑定状态和消息未读数都以服务端 API 为准。

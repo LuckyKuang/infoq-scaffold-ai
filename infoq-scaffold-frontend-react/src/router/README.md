@@ -11,7 +11,7 @@
 - `public-routes.ts`：登录前公开路由白名单匹配。
 - `BackendRouteView.tsx`：后端组件名到真实页面组件的解析与 tags view 同步。
 - `route-transform.ts`：后端菜单结构转换、组件映射构建、冲突检测。
-- `component-map.tsx`、`path-to-component.ts`：组件路径和页面组件解析。
+- `component-map.ts`、`path-to-component.ts`：组件路径和页面组件解析。
 
 ## 3. 子模块职责摘要
 
@@ -60,3 +60,7 @@ App.tsx
 3. 守卫初始化：`AuthGuard.tsx`
 4. 动态组件解析：`BackendRouteView.tsx`
 5. 后端菜单转换：`route-transform.ts`
+
+## 9. 固定消息中心路由
+
+`/message-center` 是固定受保护路由，不依赖后端菜单动态装配。它展示当前用户的个人收件箱；初始化仍经过 `AuthGuard`，因此不带有效 token 时不会暴露消息数据。

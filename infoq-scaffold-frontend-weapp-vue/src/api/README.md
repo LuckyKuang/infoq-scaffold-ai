@@ -54,3 +54,8 @@ Page / Session Store
 1. 请求主干：`request.ts`
 2. 会话接口：`auth.ts`
 3. 业务接口：`system/*`、`monitor/*`、`notice.ts`
+
+## 9. 微信登录与个人消息接口
+
+- `auth.ts` 提供微信小程序启用探测；仅 WeChat runtime 可在启用后把 `uni.login()` 返回的 code 作为 `grantType=miniapp` 登录请求的一部分。该请求仍走统一加密与错误归一化路径。
+- `message.ts` 提供当前用户的消息分页、未读数、单条/全部已读和软删除接口。它不接收用户 ID，且不依赖或暴露任何实时通道。

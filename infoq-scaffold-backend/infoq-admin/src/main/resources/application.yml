@@ -256,6 +256,51 @@ websocket:
 
 --- # Quartz 托管任务
 infoq:
+  auth:
+    wechat-miniapp:
+      # 默认关闭；部署时通过环境变量注入 AppID 与 Secret 后再启用。
+      enabled: false
+      app-id: ${WECHAT_MINIAPP_APP_ID:}
+      secret: ${WECHAT_MINIAPP_SECRET:}
+      auto-register-enabled: false
+      require-invite-when-invite-register-enabled: true
+  push:
+    enabled: false
+    websocket-enabled: false
+    sse-enabled: false
+  mqtt:
+    # 默认关闭；Broker URI、账号与密码仅通过部署环境变量注入。
+    enabled: false
+    required: false
+    v3:
+      enabled: false
+      uri: ${MQTT_V3_URI:}
+      client-id: ${MQTT_V3_CLIENT_ID:}
+      username: ${MQTT_V3_USERNAME:}
+      password: ${MQTT_V3_PASSWORD:}
+      tls-enabled: false
+    v5:
+      enabled: false
+      uri: ${MQTT_V5_URI:}
+      client-id: ${MQTT_V5_CLIENT_ID:}
+      username: ${MQTT_V5_USERNAME:}
+      password: ${MQTT_V5_PASSWORD:}
+      tls-enabled: false
+  elasticsearch:
+    # 默认关闭；节点和认证仅通过部署环境变量或 Secret 注入。TLS 使用 https URI 与部署进程的 JDK trust store。
+    enabled: false
+    required: false
+    uris: ${ELASTICSEARCH_URIS:}
+    username: ${ELASTICSEARCH_USERNAME:}
+    password: ${ELASTICSEARCH_PASSWORD:}
+    tls-enabled: true
+    connect-timeout: 5s
+    request-timeout: 10s
+  message:
+    cleanup:
+      # 仅由 sys_job 显式启用的处理器执行；关闭时保留全部消息历史。
+      enabled: false
+      soft-delete-retention-days: 30
   quartz:
     # 是否启用 Quartz 托管任务能力
     enabled: true
@@ -270,7 +315,7 @@ infoq:
       marker-enabled: false
       # 启动期 reconcile 执行完成后的 Redis 部署级 marker key 前缀
       marker-prefix: infoq:quartz:bootstrap:applied
-      # 当前部署批次唯一标识；推荐格式为 版本号-日期-序号，例如 2.1.8-20260602120000
+      # 当前部署批次唯一标识；推荐格式为 版本号-日期-序号，例如 2.1.9-20260602120000
       # 生产环境开启受控 reconcile 时必须给同一批部署节点注入同一个 deploy-id
       deploy-id:
       # 启动期 reconcile 使用的全局分布式锁 key 前缀

@@ -15,7 +15,7 @@
         <!-- 消息 -->
         <el-tooltip :content="proxy.$t('navbar.message')" effect="dark" placement="bottom">
           <div>
-            <el-popover placement="bottom" trigger="click" transition="el-zoom-in-top" :width="300" :persistent="false">
+            <el-popover placement="bottom" trigger="click" transition="el-zoom-in-top" :width="300" :persistent="false" @show="noticeStore.refresh()">
               <template #reference>
                 <el-badge :value="newNotice > 0 ? newNotice : ''" :max="99">
                   <div class="right-menu-item hover-effect" style="display: block"><svg-icon icon-class="message" /></div>
@@ -81,8 +81,8 @@ import { ElMessageBoxOptions } from 'element-plus/es/components/message-box/src/
 const appStore = useAppStore();
 const userStore = useUserStore();
 const settingsStore = useSettingsStore();
-const noticeStore = storeToRefs(useNoticeStore());
-const newNotice = ref(<number>0);
+const noticeStore = useNoticeStore();
+const newNotice = computed(() => noticeStore.state.unreadCount);
 
 const { proxy } = getCurrentInstance() as ComponentInternalInstance;
 
@@ -129,15 +129,9 @@ const handleCommand = (command: string) => {
     commandMap[command]();
   }
 };
-//用深度监听 消息
-watch(
-  () => noticeStore.state.value.notices,
-  (newVal) => {
-    const notices = (newVal || []) as Array<{ read?: boolean }>;
-    newNotice.value = notices.filter((item) => !item.read).length;
-  },
-  { deep: true }
-);
+onMounted(() => {
+  void noticeStore.refresh();
+});
 </script>
 
 <style lang="scss" scoped>

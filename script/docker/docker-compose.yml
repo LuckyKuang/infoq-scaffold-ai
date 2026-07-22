@@ -71,7 +71,7 @@ services:
     build:
       context: ../../infoq-scaffold-backend
       dockerfile: infoq-admin/Dockerfile
-    image: infoq/infoq-admin:2.1.8
+    image: infoq/infoq-admin:2.1.9
     container_name: infoq-admin
     restart: unless-stopped
     stop_grace_period: 45s
@@ -115,7 +115,7 @@ services:
         VITE_APP_CONTEXT_PATH: ${INFOQ_VUE_CONTEXT_PATH:-/vue/}
         VITE_APP_BASE_API: /prod-api
         VITE_APP_PORT: 9091
-    image: infoq/infoq-frontend-vue:2.1.8
+    image: infoq/infoq-frontend-vue:2.1.9
     container_name: infoq-frontend-vue
     restart: unless-stopped
     environment:
@@ -134,7 +134,7 @@ services:
         VITE_APP_CONTEXT_PATH: ${INFOQ_REACT_CONTEXT_PATH:-/react/}
         VITE_APP_BASE_API: /prod-api
         VITE_APP_PORT: 9092
-    image: infoq/infoq-frontend-react:2.1.8
+    image: infoq/infoq-frontend-react:2.1.9
     container_name: infoq-frontend-react
     restart: unless-stopped
     environment:
@@ -153,7 +153,7 @@ services:
         VITE_APP_CONTEXT_PATH: ${INFOQ_REACT_PRO_CONTEXT_PATH:-/react-pro/}
         VITE_APP_BASE_API: /prod-api
         VITE_APP_PORT: 9093
-    image: infoq/infoq-frontend-react-pro:2.1.8
+    image: infoq/infoq-frontend-react-pro:2.1.9
     container_name: infoq-frontend-react-pro
     restart: unless-stopped
     environment:

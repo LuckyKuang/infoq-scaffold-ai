@@ -54,6 +54,12 @@ container port `9093`.
 utoopack later fails because of worker process or local port restrictions, rerun
 the same command through the repository approval flow and record the reason.
 
+## P1-P3 Identity and Messages
+
+- Personal-center OAuth identity management uses `/system/user/profile/oauth/*`. The browser receives a server-created bind authorization URL; it never submits an external identity ID or another user ID to bind an account.
+- `/message-center` is a fixed authenticated Umi route. Its notice store reads `/system/message/*` for the personal inbox, unread count, read actions, and soft delete. The notice bell uses the same server-backed state.
+- SSE/WebSocket only accept structured `{ type: "message", messageId }` refresh signals. Event payloads are not cached as message content, so offline access remains independent of real-time transport.
+
 ## Project Notes
 
 Original migration planning and verification records are maintained in:

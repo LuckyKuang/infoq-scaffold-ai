@@ -15,13 +15,16 @@ COPY infoq-modules/infoq-system/pom.xml infoq-modules/infoq-system/pom.xml
 COPY infoq-plugin/pom.xml infoq-plugin/pom.xml
 COPY infoq-plugin/infoq-plugin-doc/pom.xml infoq-plugin/infoq-plugin-doc/pom.xml
 COPY infoq-plugin/infoq-plugin-encrypt/pom.xml infoq-plugin/infoq-plugin-encrypt/pom.xml
+COPY infoq-plugin/infoq-plugin-elasticsearch/pom.xml infoq-plugin/infoq-plugin-elasticsearch/pom.xml
 COPY infoq-plugin/infoq-plugin-excel/pom.xml infoq-plugin/infoq-plugin-excel/pom.xml
 COPY infoq-plugin/infoq-plugin-jackson/pom.xml infoq-plugin/infoq-plugin-jackson/pom.xml
 COPY infoq-plugin/infoq-plugin-log/pom.xml infoq-plugin/infoq-plugin-log/pom.xml
 COPY infoq-plugin/infoq-plugin-mail/pom.xml infoq-plugin/infoq-plugin-mail/pom.xml
+COPY infoq-plugin/infoq-plugin-mqtt/pom.xml infoq-plugin/infoq-plugin-mqtt/pom.xml
 COPY infoq-plugin/infoq-plugin-mybatis/pom.xml infoq-plugin/infoq-plugin-mybatis/pom.xml
 COPY infoq-plugin/infoq-plugin-oauth/pom.xml infoq-plugin/infoq-plugin-oauth/pom.xml
 COPY infoq-plugin/infoq-plugin-oss/pom.xml infoq-plugin/infoq-plugin-oss/pom.xml
+COPY infoq-plugin/infoq-plugin-push/pom.xml infoq-plugin/infoq-plugin-push/pom.xml
 COPY infoq-plugin/infoq-plugin-quartz/pom.xml infoq-plugin/infoq-plugin-quartz/pom.xml
 COPY infoq-plugin/infoq-plugin-redis/pom.xml infoq-plugin/infoq-plugin-redis/pom.xml
 COPY infoq-plugin/infoq-plugin-security/pom.xml infoq-plugin/infoq-plugin-security/pom.xml

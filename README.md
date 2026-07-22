@@ -6,7 +6,7 @@
 
 > 一个以 AI 为主力研发者的全栈工程脚手架。仓库通过 `AGENTS.md` 约束协作规则，通过 `.codex/skills` 固化自动化 SOP，并以 `OpenSpec` 管理长期规格与变更，将能力落到 Spring Boot 3 后端、Vue/React/React Pro 管理端、Vue/React 小程序端、脚本、SQL、MCP 与文档工作区中。社区：[Linux DO](https://linux.do)
 
-![Version](https://img.shields.io/badge/Version-2.1.8-f66a39)
+![Version](https://img.shields.io/badge/Version-2.1.9-f66a39)
 ![JDK](https://img.shields.io/badge/JDK-17-1677FF)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.14-6DB33F)
 ![Vue](https://img.shields.io/badge/Vue-3.5.35-42B883)
@@ -16,6 +16,20 @@
 ![License](https://img.shields.io/badge/License-MIT-F7C948)
 
 </div>
+
+---
+
+### ⚠️ 重要提醒
+
+**使用本项目前，请务必仔细阅读以下内容：**
+
+🚨 本项目仅供技术学习、研究与测试使用。项目仍可能存在功能缺陷、安全漏洞、兼容性问题或文档更新不及时等情况，请务必在非生产环境中完成充分测试、验证与安全评估后再行使用。
+
+📖 使用本项目所产生的风险、数据损失、服务中断、经济损失或其他直接、间接损失，应由使用者自行评估并承担。在适用法律允许的最大范围内，项目作者及贡献者不对因使用或无法使用本项目而产生的任何损失承担责任。
+
+🚫 未经项目权利人书面授权，不得以本项目名义开展商业运营、宣传、销售或提供商业服务。任何第三方基于本项目开展的商业活动，均与本项目作者及贡献者无关，其产生的纠纷、损失及法律责任由相关行为主体自行承担。
+
+⚖️ 项目的使用、修改、分发及商业用途，仍应以本项目所适用的开源许可证或其他授权文件为准。
 
 ---
 
@@ -388,7 +402,7 @@ pnpm run verify:local
 
 如果要让 Codex 直接按本仓库脚本执行本地或 WSL2/macOS Colima/Linux Docker Compose 部署验证，使用 `infoq-deploy-verify`。它会覆盖 WSL2 Docker CE、macOS Colima、Linux Docker CE 三种免费商用运行时，以及后端、MySQL、Redis、MinIO、选定或全部管理端前端、nginx 网关、localhost smoke、证据留存和常见部署阻断，并会在执行 deploy 前提醒并确认 `/tmp/infoq-deploy` 与 `${INFOQ_DEPLOY_ROOT}/server/temp` 已存在。
 
-如果是第一次完整部署，建议先按 [`doc/devops/docker-compose-tutorial.md`](./doc/devops/docker-compose-tutorial.md) 操作；需要脚本参数和日常运维命令时，再看 [`doc/devops/docker-compose-deploy.md`](./doc/devops/docker-compose-deploy.md)。
+如果是第一次完整部署，建议先按 [`doc/devops/docker-compose-tutorial.md`](./doc/devops/docker-compose-tutorial.md) 操作；需要脚本参数和日常运维命令时，再看 [`doc/devops/docker-compose-deploy.md`](./doc/devops/docker-compose-deploy.md)。MQTT 与 Elasticsearch 是默认关闭的可选生产组件；运维必须通过 `bash script/bin/deploy-middleware.sh <mqtt|elasticsearch> <single|cluster> <action>` 显式选择单节点或同一 Docker 主机内三节点 cluster，基础部署不会启动它们。`*-it.yml`、`mqtt-tools` 与 `elasticsearch-tools` 仅用于本地/CI 集成测试。
 
 macOS Colima 环境如果出现 `error getting credentials` 且缺少 `docker-credential-desktop`，通常是 Docker config 残留 Docker Desktop credential helper。按教程中的 Colima credential helper 排查处理，不要因此切换到 Docker Desktop。
 

@@ -125,8 +125,8 @@ describe('request', () => {
     expect(payload.header).toMatchObject({
       clientid: 'client-id',
       Authorization: 'Bearer token-1',
-      'x-client-key': 'weapp',
-      'x-device-type': 'weapp'
+      'x-client-key': 'miniapp',
+      'x-device-type': 'miniapp'
     });
   });
 

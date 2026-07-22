@@ -4,6 +4,7 @@
     { "path": "pages/admin/index", "style": { "navigationBarTitleText": "管理台" } },
     { "path": "pages/login/index", "style": { "navigationBarTitleText": "登录" } },
     { "path": "pages/notices/index", "style": { "navigationBarTitleText": "公告" } },
+    { "path": "pages/messages/index", "style": { "navigationBarTitleText": "消息中心", "enablePullDownRefresh": true } },
     { "path": "pages/notice-detail/index", "style": { "navigationBarTitleText": "公告详情" } },
     { "path": "pages/notice-form/index", "style": { "navigationBarTitleText": "编辑公告" } },
     { "path": "pages/profile/index", "style": { "navigationBarTitleText": "我的" } },

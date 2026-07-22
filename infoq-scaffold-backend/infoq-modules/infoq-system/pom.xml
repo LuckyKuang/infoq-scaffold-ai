@@ -40,6 +40,10 @@
             <groupId>cc.infoq</groupId>
             <artifactId>infoq-plugin-oauth</artifactId>
         </dependency>
+        <dependency>
+            <groupId>cc.infoq</groupId>
+            <artifactId>infoq-plugin-push</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>cc.infoq</groupId>
@@ -71,6 +75,14 @@
         <dependency>
             <groupId>cc.infoq</groupId>
             <artifactId>infoq-plugin-websocket</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>cc.infoq</groupId>
+            <artifactId>infoq-plugin-mqtt</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>cc.infoq</groupId>
+            <artifactId>infoq-plugin-elasticsearch</artifactId>
         </dependency>
 
         <!-- Mysql驱动包 -->

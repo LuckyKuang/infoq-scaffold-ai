@@ -12,12 +12,12 @@
 
 | 子模块 | 当前职责 |
 | --- | --- |
-| `infoq-system` | 登录、注册、首页、用户角色菜单部门岗位、字典参数通知、OSS、客户端、在线用户、日志、缓存、服务监控、数据源监控、定时任务 |
+| `infoq-system` | 登录、注册、OAuth 身份关系、微信小程序认证、个人消息盒子、首页、用户角色菜单部门岗位、字典参数通知、OSS、客户端、在线用户、日志、缓存、服务监控、数据源监控、定时任务 |
 
 ## 4. 依赖方向
 
 - `infoq-system` 直接依赖 `infoq-core-common`、`infoq-core-data`。
-- 业务能力再按需接入 `oss`、`security`、`web`、`doc`、`encrypt`、`sse`、`quartz`、`mail`、`websocket` 等插件。
+- 业务能力再按需接入 `oss`、`security`、`web`、`doc`、`encrypt`、`sse`、`push`、`quartz`、`mail`、`websocket`、`mqtt`、`elasticsearch` 等插件。
 - `infoq-admin` 只直接依赖 `infoq-system`，说明业务模块是启动入口与基础设施之间的业务桥梁。
 
 ## 5. 典型调用链

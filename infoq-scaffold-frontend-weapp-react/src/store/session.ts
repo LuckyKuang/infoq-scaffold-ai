@@ -2,6 +2,7 @@ import {create} from 'zustand';
 import {
   getInfo,
   getToken,
+  getUnreadMessageCount,
   hasPermission as hasGrantedPermission,
   login,
   type LoginData,
@@ -18,7 +19,9 @@ type SessionState = {
   user: UserVO | null;
   permissions: string[];
   initialized: boolean;
+  unreadMessageCount: number;
   loadSession: (force?: boolean) => Promise<UserInfo | null>;
+  refreshUnreadMessageCount: () => Promise<void>;
   signIn: (payload: LoginData) => Promise<void>;
   signOut: () => Promise<void>;
   patchUser: (patch: Partial<UserVO>) => void;
@@ -29,7 +32,8 @@ const clearSessionState = {
   token: '',
   user: null,
   permissions: [] as string[],
-  initialized: true
+  initialized: true,
+  unreadMessageCount: 0
 };
 
 const resolvePermissions = (value: unknown) => {
@@ -44,6 +48,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   user: null,
   permissions: [],
   initialized: false,
+  unreadMessageCount: 0,
   loadSession: async (force = false) => {
     const currentToken = getToken();
     if (!currentToken) {
@@ -80,6 +85,14 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       permissions: resolvePermissions(info.permissions),
       initialized: true
     });
+  },
+  refreshUnreadMessageCount: async () => {
+    if (!getToken()) {
+      set({ unreadMessageCount: 0 });
+      return;
+    }
+    const response = await getUnreadMessageCount();
+    set({ unreadMessageCount: response.data });
   },
   signOut: async () => {
     let logoutError: unknown;

@@ -8,6 +8,7 @@ WORKDIR /infoq/vue
 RUN corepack enable pnpm
 
 COPY package.json pnpm-lock.yaml ./
+COPY patches ./patches
 
 RUN pnpm install --frozen-lockfile --network-concurrency=2
 

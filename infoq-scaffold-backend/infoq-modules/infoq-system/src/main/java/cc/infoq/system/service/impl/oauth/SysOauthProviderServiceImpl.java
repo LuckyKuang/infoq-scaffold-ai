@@ -67,4 +67,15 @@ public class SysOauthProviderServiceImpl implements SysOauthProviderService {
         }
         return provider;
     }
+
+    @Override
+    public SysOauthProviderVo requireBindProvider(String providerCode) {
+        SysOauthProviderVo provider = providerMapper.selectVoOne(new LambdaQueryWrapper<SysOauthProvider>()
+            .eq(SysOauthProvider::getProviderCode, providerCode));
+        if (provider == null || !SystemConstants.NORMAL.equals(provider.getEnabled())
+            || !SystemConstants.NORMAL.equals(provider.getAllowBind())) {
+            throw new ServiceException(MessageUtils.message("auth.oauth.provider.bind.disabled"));
+        }
+        return provider;
+    }
 }

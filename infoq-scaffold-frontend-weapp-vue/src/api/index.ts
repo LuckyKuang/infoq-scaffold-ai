@@ -5,6 +5,7 @@ export * from './monitor/cache';
 export * from './monitor/loginInfo';
 export * from './monitor/online';
 export * from './monitor/operLog';
+export * from './message';
 export * from './notice';
 export * from './system/dept';
 export * from './system/menu';

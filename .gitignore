@@ -86,9 +86,11 @@ test-results/
 .pnpm-store/
 .swc/
 
-# 忽略 doc/tmp/ doc/plan/ openspec/changes/*/ 这些目录，不要加入git diff
+# 忽略 doc/tmp/、doc/plan/ 与未归属的历史 OpenSpec change；当前 active change 显式纳入版本控制。
 doc/tmp/
 doc/plan/
 openspec/changes/*/
+!openspec/changes/rename-miniapp-grant-type/
+!openspec/changes/rename-miniapp-grant-type/**
 
 settings.local.json

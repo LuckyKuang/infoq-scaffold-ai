@@ -46,3 +46,7 @@ main.ts
 1. 固定路由：`index.ts`
 2. 全局守卫：`../permission.ts`
 3. 动态注入：`../store/modules/permission.ts`
+
+## 9. 固定消息中心路由
+
+`/message-center` 是与 `/profile` 同类的固定受保护路由，不依赖后端菜单。全局守卫仍会先恢复用户资料和权限，因此匿名访问不能查询个人消息。

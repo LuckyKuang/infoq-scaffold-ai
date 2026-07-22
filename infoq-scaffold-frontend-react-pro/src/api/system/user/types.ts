@@ -1,5 +1,5 @@
-import type { PostVO } from '@/api/system/post/types';
-import type { RoleVO } from '@/api/system/role/types';
+import type {PostVO} from '@/api/system/post/types';
+import type {RoleVO} from '@/api/system/role/types';
 
 /**
  * 用户信息
@@ -76,6 +76,16 @@ export interface UserInfoVO {
   postIds: string[];
   roleGroup: string;
   postGroup: string;
+}
+
+export interface ProfileOauthIdentityVO {
+  identityId: number;
+  providerCode: string;
+  providerName: string;
+  status: string;
+  passwordConfirmationRequired: boolean;
+  lastLoginTime?: string;
+  createTime?: string;
 }
 
 export interface ResetPwdForm {

@@ -2,7 +2,14 @@ import {Image, Text, View} from '@tarojs/components';
 import Taro, {useLoad} from '@tarojs/taro';
 import {useState} from 'react';
 import {AtButton, AtInput, AtSwitch} from 'taro-ui';
-import {asCaptchaImage, getCodeImg, getRememberedLogin, mobileEnv, setRememberedLogin} from '@/api';
+import {
+  asCaptchaImage,
+  getCodeImg,
+  getRememberedLogin,
+  getWechatMiniAppEnabled,
+  mobileEnv,
+  setRememberedLogin
+} from '@/api';
 import {routes} from '../../utils/navigation';
 import {handlePageError} from '../../utils/ui';
 import {useSessionStore} from '../../store/session';
@@ -20,6 +27,8 @@ export default function LoginPage() {
   const [codeUrl, setCodeUrl] = useState('');
   const [captchaEnabled, setCaptchaEnabled] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [wechatLoginEnabled, setWechatLoginEnabled] = useState(false);
+  const isWeappRuntime = mobileEnv.taroEnv === 'weapp';
 
   const loadCaptcha = async () => {
     try {
@@ -56,6 +65,9 @@ export default function LoginPage() {
       rememberMe: rememberedLogin.rememberMe
     }));
     void loadCaptcha();
+    if (isWeappRuntime) {
+      void getWechatMiniAppEnabled().then((response) => setWechatLoginEnabled(response.data)).catch(() => setWechatLoginEnabled(false));
+    }
   });
 
   const handleSubmit = async () => {
@@ -90,6 +102,23 @@ export default function LoginPage() {
       if (captchaEnabled) {
         await loadCaptcha();
       }
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleWechatLogin = async () => {
+    setSubmitting(true);
+    try {
+      const result = await Taro.login();
+      if (!result.code) {
+        throw new Error('未获取到微信授权 code');
+      }
+      await signIn({ clientId: mobileEnv.clientId, grantType: 'miniapp', code: result.code });
+      await Taro.showToast({ title: '登录成功', icon: 'success' });
+      Taro.reLaunch({ url: routes.home });
+    } catch (error) {
+      await handlePageError(error, '微信登录失败');
     } finally {
       setSubmitting(false);
     }
@@ -167,6 +196,11 @@ export default function LoginPage() {
           >
             登 录
           </AtButton>
+          {isWeappRuntime && wechatLoginEnabled && (
+            <AtButton className="submit-btn" loading={submitting} onClick={() => void handleWechatLogin()}>
+              微信小程序登录
+            </AtButton>
+          )}
         </View>
       </View>
 

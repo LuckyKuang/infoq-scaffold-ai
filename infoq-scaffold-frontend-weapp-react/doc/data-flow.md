@@ -68,7 +68,7 @@ api/* business wrapper
 
 - 自动补 `clientid`
 - 有 token 时补 `Authorization`
-- 小程序环境自动补 `x-client-key=weapp` 和 `x-device-type=weapp`
+- 小程序环境自动补 `x-client-key=miniapp` 和 `x-device-type=miniapp`
 - 写请求可选 RSA/AES 加密
 - 500ms 内相同 `POST/PUT` 视为重复提交
 
@@ -108,3 +108,29 @@ Page
 
 - 页面内部局部交互、表单和 UI 状态没有在这里逐页展开；需要时继续下钻到具体页面文件。
 - 文档只记录当前能由代码直接证实的页面级鉴权与请求链路，不推断未来会改成中心化 guard。
+
+## 7. 微信小程序登录与消息收件箱
+
+微信登录只在 `Taro.getEnv()` 判定为 `weapp` 后执行：
+
+```text
+Login Page
+-> GET /auth/wechat-miniapp/enabled
+-> Taro.login()
+-> encrypted POST /auth/login { grantType: "miniapp", code }
+-> sessionStore.signIn()
+```
+
+后端关闭该能力或当前为 H5 时，不展示微信按钮。微信 code 不进入页面日志或本地会话状态。
+
+个人消息链路不依赖实时连接：
+
+```text
+App launch / foreground / Profile
+-> session.refreshUnreadMessageCount()
+-> GET /system/message/unread-count
+
+pages/messages
+-> /system/message/list, read, read-all, delete
+-> 服务端持久化收件箱
+```

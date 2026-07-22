@@ -1,12 +1,13 @@
 package cc.infoq.system.service.impl;
 
+import cc.infoq.common.utils.MapstructUtils;
+import cc.infoq.common.utils.SpringUtils;
 import cc.infoq.system.domain.bo.SysNoticeBo;
 import cc.infoq.system.domain.entity.SysNotice;
 import cc.infoq.system.domain.vo.SysNoticeVo;
-import cc.infoq.common.utils.MapstructUtils;
-import cc.infoq.common.utils.SpringUtils;
 import cc.infoq.system.mapper.SysNoticeMapper;
 import cc.infoq.system.mapper.SysUserMapper;
+import cc.infoq.system.service.SysMessageService;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import io.github.linpeilie.Converter;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,8 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @Tag("dev")
@@ -36,6 +36,8 @@ class SysNoticeServiceImplTest {
     private SysNoticeMapper sysNoticeMapper;
     @Mock
     private SysUserMapper sysUserMapper;
+    @Mock
+    private SysMessageService sysMessageService;
 
     @BeforeEach
     void setUp() {
@@ -48,7 +50,7 @@ class SysNoticeServiceImplTest {
     @Test
     @DisplayName("deleteNoticeByIds: should return rows from mapper")
     void deleteNoticeByIdsShouldReturnMapperRows() {
-        SysNoticeServiceImpl service = new SysNoticeServiceImpl(sysNoticeMapper, sysUserMapper);
+        SysNoticeServiceImpl service = new SysNoticeServiceImpl(sysNoticeMapper, sysUserMapper, sysMessageService);
         when(sysNoticeMapper.deleteByIds(anyList())).thenReturn(2);
 
         int rows = service.deleteNoticeByIds(new Long[]{1L, 2L});
@@ -59,7 +61,7 @@ class SysNoticeServiceImplTest {
     @Test
     @DisplayName("selectNoticeById/deleteNoticeById: should delegate to mapper")
     void selectAndDeleteByIdShouldDelegate() {
-        SysNoticeServiceImpl service = new SysNoticeServiceImpl(sysNoticeMapper, sysUserMapper);
+        SysNoticeServiceImpl service = new SysNoticeServiceImpl(sysNoticeMapper, sysUserMapper, sysMessageService);
         SysNoticeVo noticeVo = new SysNoticeVo();
         noticeVo.setNoticeId(11L);
         when(sysNoticeMapper.selectVoById(11L)).thenReturn(noticeVo);
@@ -75,7 +77,7 @@ class SysNoticeServiceImplTest {
     @Test
     @DisplayName("selectNoticeList/selectPageNoticeList: should delegate with wrapper and return mapper data")
     void selectNoticeListAndPageShouldReturnMapperData() {
-        SysNoticeServiceImpl service = new SysNoticeServiceImpl(sysNoticeMapper, sysUserMapper);
+        SysNoticeServiceImpl service = new SysNoticeServiceImpl(sysNoticeMapper, sysUserMapper, sysMessageService);
         SysNoticeBo bo = new SysNoticeBo();
         bo.setNoticeTitle("公告");
         SysNoticeVo vo = new SysNoticeVo();
@@ -98,7 +100,7 @@ class SysNoticeServiceImplTest {
     @Test
     @DisplayName("insertNotice/updateNotice: should convert bo and delegate to mapper")
     void insertNoticeAndUpdateNoticeShouldConvertAndDelegate() {
-        SysNoticeServiceImpl service = new SysNoticeServiceImpl(sysNoticeMapper, sysUserMapper);
+        SysNoticeServiceImpl service = new SysNoticeServiceImpl(sysNoticeMapper, sysUserMapper, sysMessageService);
         SysNoticeBo bo = new SysNoticeBo();
         bo.setNoticeId(30L);
         bo.setNoticeTitle("系统维护");
@@ -116,6 +118,7 @@ class SysNoticeServiceImplTest {
 
             assertEquals(1, insertRows);
             assertEquals(1, updateRows);
+            verify(sysMessageService).publishSystemNotice("系统维护", null, null, "notice:30");
         }
     }
 }

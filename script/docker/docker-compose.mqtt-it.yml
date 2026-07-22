@@ -1,0 +1,123 @@
+# Local/CI integration-test overlay only. It provisions ephemeral test credentials, self-signed certificates, and a Maven verifier; do not use it for production deployment.
+
+services:
+  mqtt-cert-init:
+    build:
+      context: ./mqtt
+      dockerfile: Dockerfile
+    image: infoq/mqtt-tools:2.1.8
+    user: "0:0"
+    command: ["/opt/infoq-mqtt/generate-certificates.sh", "mqtt-broker"]
+    environment:
+      MIDDLEWARE_TRUSTSTORE_PASSWORD: ${MIDDLEWARE_TRUSTSTORE_PASSWORD:?Set MIDDLEWARE_TRUSTSTORE_PASSWORD in the run env file}
+    volumes:
+      - ${MIDDLEWARE_SECRET_DIR:?Set MIDDLEWARE_SECRET_DIR in the run env file}:/run/secrets:rw
+    networks:
+      - mqtt-it
+
+  mqtt-config-init:
+    image: infoq/mqtt-tools:2.1.8
+    build:
+      context: ./mqtt
+      dockerfile: Dockerfile
+    user: "0:0"
+    command: ["/opt/infoq-mqtt/init-emqx.sh", "config"]
+    volumes:
+      - ${MIDDLEWARE_SECRET_DIR:?Set MIDDLEWARE_SECRET_DIR in the run env file}:/run/secrets:ro
+      - ${MIDDLEWARE_MQTT_CONFIG_DIR:?Set MIDDLEWARE_MQTT_CONFIG_DIR in the run env file}:/opt/infoq-mqtt-config:rw
+      - ${MIDDLEWARE_MQTT_DATA_DIR:?Set MIDDLEWARE_MQTT_DATA_DIR in the run env file}:/opt/infoq-mqtt-data:rw
+    depends_on:
+      mqtt-cert-init:
+        condition: service_completed_successfully
+    networks:
+      - mqtt-it
+
+  mqtt-broker:
+    image: emqx/emqx:5.8.9
+    restart: "no"
+    environment:
+      EMQX_NODE__COOKIE: ${MQTT_NODE_COOKIE:?Set MQTT_NODE_COOKIE in the run env file}
+      EMQX_DASHBOARD__DEFAULT_USERNAME: ${MQTT_ADMIN_USERNAME:?Set MQTT_ADMIN_USERNAME in the run env file}
+      EMQX_DASHBOARD__DEFAULT_PASSWORD: ${MQTT_ADMIN_PASSWORD:?Set MQTT_ADMIN_PASSWORD in the run env file}
+    ports:
+      - "127.0.0.1:18883:8883"
+    volumes:
+      - ${MIDDLEWARE_MQTT_CONFIG_DIR:?Set MIDDLEWARE_MQTT_CONFIG_DIR in the run env file}/base.hocon:/opt/emqx/etc/base.hocon:ro
+      - ${MIDDLEWARE_MQTT_DATA_DIR:?Set MIDDLEWARE_MQTT_DATA_DIR in the run env file}:/opt/emqx/data:rw
+      - ${MIDDLEWARE_SECRET_DIR:?Set MIDDLEWARE_SECRET_DIR in the run env file}/certs/ca/ca.crt:/opt/emqx/etc/certs/ca/ca.crt:ro
+      - ${MIDDLEWARE_SECRET_DIR:?Set MIDDLEWARE_SECRET_DIR in the run env file}/certs/mqtt-broker/tls.crt:/opt/emqx/etc/certs/mqtt-broker/tls.crt:ro
+      - ${MIDDLEWARE_SECRET_DIR:?Set MIDDLEWARE_SECRET_DIR in the run env file}/certs/mqtt-broker/tls.key:/opt/emqx/etc/certs/mqtt-broker/tls.key:ro
+    depends_on:
+      mqtt-config-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "emqx", "ctl", "status"]
+      interval: 5s
+      timeout: 5s
+      retries: 24
+      start_period: 10s
+    networks:
+      - mqtt-it
+
+  mqtt-security-init:
+    image: infoq/mqtt-tools:2.1.8
+    build:
+      context: ./mqtt
+      dockerfile: Dockerfile
+    user: "0:0"
+    command: ["/opt/infoq-mqtt/init-emqx.sh", "security"]
+    environment:
+      MIDDLEWARE_RUN_ID: ${MIDDLEWARE_RUN_ID:?Set MIDDLEWARE_RUN_ID in the run env file}
+      MQTT_ADMIN_USERNAME: ${MQTT_ADMIN_USERNAME:?Set MQTT_ADMIN_USERNAME in the run env file}
+      MQTT_ADMIN_PASSWORD: ${MQTT_ADMIN_PASSWORD:?Set MQTT_ADMIN_PASSWORD in the run env file}
+      MQTT_V3_USERNAME: ${MQTT_V3_USERNAME:?Set MQTT_V3_USERNAME in the run env file}
+      MQTT_V5_USERNAME: ${MQTT_V5_USERNAME:?Set MQTT_V5_USERNAME in the run env file}
+      MQTT_PROBE_USERNAME: ${MQTT_PROBE_USERNAME:?Set MQTT_PROBE_USERNAME in the run env file}
+      MQTT_DENIED_USERNAME: ${MQTT_DENIED_USERNAME:?Set MQTT_DENIED_USERNAME in the run env file}
+    volumes:
+      - ${MIDDLEWARE_SECRET_DIR:?Set MIDDLEWARE_SECRET_DIR in the run env file}:/run/secrets:ro
+    depends_on:
+      mqtt-broker:
+        condition: service_healthy
+    networks:
+      - mqtt-it
+
+  mqtt-verifier:
+    image: maven:3.9.12-eclipse-temurin-17
+    working_dir: /workspace
+    command:
+      - bash
+      - -lc
+      - >-
+        mvn -Dmaven.repo.local=/maven-repo -Dprofiles.active=docker-it
+        -pl infoq-plugin/infoq-plugin-mqtt -am -DskipTests=false -Dtest=MqttDockerIntegrationTest
+        -Dsurefire.failIfNoSpecifiedTests=false test
+    environment:
+      JAVA_TOOL_OPTIONS: >-
+        -Djavax.net.ssl.trustStore=/run/secrets/truststore.p12
+        -Djavax.net.ssl.trustStoreType=PKCS12
+        -Djavax.net.ssl.trustStorePassword=${MIDDLEWARE_TRUSTSTORE_PASSWORD:?Set MIDDLEWARE_TRUSTSTORE_PASSWORD in the run env file}
+      INFOQ_IT_RUN_ID: ${MIDDLEWARE_RUN_ID:?Set MIDDLEWARE_RUN_ID in the run env file}
+      INFOQ_IT_MQTT_URI: ssl://mqtt-broker:8883
+      INFOQ_IT_MQTT_V3_USERNAME: ${MQTT_V3_USERNAME:?Set MQTT_V3_USERNAME in the run env file}
+      INFOQ_IT_MQTT_V3_PASSWORD: ${MQTT_V3_PASSWORD:?Set MQTT_V3_PASSWORD in the run env file}
+      INFOQ_IT_MQTT_V5_USERNAME: ${MQTT_V5_USERNAME:?Set MQTT_V5_USERNAME in the run env file}
+      INFOQ_IT_MQTT_V5_PASSWORD: ${MQTT_V5_PASSWORD:?Set MQTT_V5_PASSWORD in the run env file}
+      INFOQ_IT_MQTT_PROBE_USERNAME: ${MQTT_PROBE_USERNAME:?Set MQTT_PROBE_USERNAME in the run env file}
+      INFOQ_IT_MQTT_PROBE_PASSWORD: ${MQTT_PROBE_PASSWORD:?Set MQTT_PROBE_PASSWORD in the run env file}
+      INFOQ_IT_MQTT_DENIED_USERNAME: ${MQTT_DENIED_USERNAME:?Set MQTT_DENIED_USERNAME in the run env file}
+      INFOQ_IT_MQTT_DENIED_PASSWORD: ${MQTT_DENIED_PASSWORD:?Set MQTT_DENIED_PASSWORD in the run env file}
+    volumes:
+      - ../../infoq-scaffold-backend:/workspace:rw
+      - ${MIDDLEWARE_MAVEN_REPO:?Set MIDDLEWARE_MAVEN_REPO in the run env file}:/maven-repo:ro
+      - ${MIDDLEWARE_SECRET_DIR:?Set MIDDLEWARE_SECRET_DIR in the run env file}/truststore.p12:/run/secrets/truststore.p12:ro
+    depends_on:
+      mqtt-security-init:
+        condition: service_completed_successfully
+    networks:
+      - mqtt-it
+
+networks:
+  mqtt-it:
+    name: ${MIDDLEWARE_PROJECT_NAME:?Set MIDDLEWARE_PROJECT_NAME in the run env file}-mqtt
+    driver: bridge

@@ -69,3 +69,7 @@
 2. 动态路由：`modules/permission.ts`
 3. 界面偏好：`modules/app.ts`、`modules/settings.ts`
 4. 字典与通知：`modules/dict.ts`、`modules/notice.ts`
+
+## 9. 持久化消息状态
+
+`modules/notice.ts` 从 `api/system/message` 刷新个人消息与未读数，并供导航栏、通知弹层和 `/message-center` 共用。SSE/WebSocket 仅在收到 `type=message` 时触发刷新，不缓存事件正文；离线读取、已读和软删除由后端持久化收件箱保证。

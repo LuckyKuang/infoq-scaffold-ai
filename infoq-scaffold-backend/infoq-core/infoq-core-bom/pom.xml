@@ -14,7 +14,7 @@
     </description>
 
     <properties>
-        <revision>2.1.8</revision>
+        <revision>2.1.9</revision>
     </properties>
 
     <dependencyManagement>
@@ -39,6 +39,13 @@
                 <version>${revision}</version>
             </dependency>
 
+            <!-- Elasticsearch 官方客户端插件 -->
+            <dependency>
+                <groupId>cc.infoq</groupId>
+                <artifactId>infoq-plugin-elasticsearch</artifactId>
+                <version>${revision}</version>
+            </dependency>
+
             <!-- 日志记录 -->
             <dependency>
                 <groupId>cc.infoq</groupId>
@@ -53,6 +60,13 @@
                 <version>${revision}</version>
             </dependency>
 
+            <!-- MQTT 双协议插件 -->
+            <dependency>
+                <groupId>cc.infoq</groupId>
+                <artifactId>infoq-plugin-mqtt</artifactId>
+                <version>${revision}</version>
+            </dependency>
+
             <!-- 数据库服务 -->
             <dependency>
                 <groupId>cc.infoq</groupId>
@@ -64,6 +78,13 @@
             <dependency>
                 <groupId>cc.infoq</groupId>
                 <artifactId>infoq-plugin-oauth</artifactId>
+                <version>${revision}</version>
+            </dependency>
+
+            <!-- Push 通道抽象 -->
+            <dependency>
+                <groupId>cc.infoq</groupId>
+                <artifactId>infoq-plugin-push</artifactId>
                 <version>${revision}</version>
             </dependency>
 
