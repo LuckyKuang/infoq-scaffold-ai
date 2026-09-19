@@ -1,90 +1,129 @@
-# InfoQ Scaffold 文档中心
+# 文档中心
 
-本文档中心参考若依文档站“先导航、再分专题”的组织方式，但所有内容都以当前仓库的真实目录、脚本、配置和代码入口为准，不复述第三方框架的通用说明。
+InfoQ-Scaffold-AI 的完整文档导航。所有内容基于当前仓库的真实实现，不复述第三方框架的通用说明。
 
-## 文档分层
-
-- 根 `doc/`：正文真值源与资源目录，根 `README.md` 只做导航；正文按 `guide / backend / admin / devops / collaboration` 分类维护，示例、图片和静态 UI demo 继续放在 `examples/`、`images/`、`ui-demos/`。
-
+<!-- doc-section:reading-paths -->
 ## 推荐阅读路径
 
-- 第一次接手仓库：[`guide/project-overview.md`](./guide/project-overview.md) -> [`guide/quick-start.md`](./guide/quick-start.md) -> [`backend/handbook.md`](./backend/handbook.md) -> [`admin/handbook.md`](./admin/handbook.md) -> [`guide/faq.md`](./guide/faq.md)
-- 只想把项目跑起来：[`guide/quick-start.md`](./guide/quick-start.md)
-- 只关心部署：[`devops/deploy-prerequisites.md`](./devops/deploy-prerequisites.md) -> [`devops/docker-compose-tutorial.md`](./devops/docker-compose-tutorial.md) -> [`devops/docker-compose-deploy.md`](./devops/docker-compose-deploy.md) 或 [`devops/manual-deploy.md`](./devops/manual-deploy.md)
-- 只关心仓库协作规范：[`collaboration/development-workflow.md`](./collaboration/development-workflow.md) -> [`collaboration/agents-guide.md`](./collaboration/agents-guide.md) -> [`collaboration/skills-guide.md`](./collaboration/skills-guide.md) -> [`collaboration/subagents-guide.md`](./collaboration/subagents-guide.md) -> [`collaboration/mcp-servers.md`](./collaboration/mcp-servers.md)
+**首次接手仓库**
+[项目概览](./guide/project-overview.md) → [快速开始](./guide/quick-start.md) → [后端手册](./backend/handbook.md) → [管理端手册](./admin/handbook.md) → [FAQ](./guide/faq.md)
 
+**快速启动**
+[快速开始](./guide/quick-start.md)
+
+**部署上线**
+[部署前置条件](./devops/deploy-prerequisites.md) → [Docker Compose 教程](./devops/docker-compose-tutorial.md) → [Docker Compose 部署](./devops/docker-compose-deploy.md)
+
+**协作规范**
+[开发工作流](./collaboration/development-workflow.md) → [AGENTS 指南](./collaboration/agents-guide.md) → [Skills 指南](./collaboration/skills-guide.md)
+
+<!-- doc-section:navigation -->
 ## 文档导航
 
-### 入门
+### 入门指南
 
-- [`guide/project-overview.md`](./guide/project-overview.md)：项目定位、工作区分工、能力地图、关键入口。
-- [`guide/quick-start.md`](./guide/quick-start.md)：环境准备、本地启动、最小验证闭环。
-- [`guide/faq.md`](./guide/faq.md)：常见问题和排障入口。
+| 文档 | 说明 |
+| --- | --- |
+| [项目概览](./guide/project-overview.md) | 项目定位、工作区分工、能力地图 |
+| [快速开始](./guide/quick-start.md) | 环境准备、本地启动、最小验证 |
+| [FAQ](./guide/faq.md) | 常见问题和排障 |
 
-### 架构与开发
+### 开发手册
 
-- [`backend/handbook.md`](./backend/handbook.md)：Spring Boot 后端结构、认证链路、插件和配置要点。
-- [`admin/handbook.md`](./admin/handbook.md)：Vue / React 管理端目录、路由、请求封装、页面扩展方式。
-- [`collaboration/development-workflow.md`](./collaboration/development-workflow.md)：AGENTS、OpenSpec、skills、MCP、验证顺序和日常开发闭环。
+| 文档 | 说明 |
+| --- | --- |
+| [后端手册](./backend/handbook.md) | Spring Boot 结构、认证链路、插件配置 |
+| [管理端手册](./admin/handbook.md) | Vue/React 目录、路由、请求封装 |
+| [开发工作流](./collaboration/development-workflow.md) | AGENTS、OpenSpec、skills、MCP |
 
-### 工作区实现入口
+### 部署运维
 
-- `infoq-scaffold-frontend-react`：[`README.md`](../infoq-scaffold-frontend-react/README.md) -> [`doc/architecture.md`](../infoq-scaffold-frontend-react/doc/architecture.md) -> [`doc/data-flow.md`](../infoq-scaffold-frontend-react/doc/data-flow.md)
-- `infoq-scaffold-frontend-vue`：[`README.md`](../infoq-scaffold-frontend-vue/README.md) -> [`doc/architecture.md`](../infoq-scaffold-frontend-vue/doc/architecture.md) -> [`doc/data-flow.md`](../infoq-scaffold-frontend-vue/doc/data-flow.md)
+| 文档 | 说明 |
+| --- | --- |
+| [部署前置条件](./devops/deploy-prerequisites.md) | 环境检查、依赖验证 |
+| [Docker Compose 教程](./devops/docker-compose-tutorial.md) | WSL2/macOS/Linux 容器部署 |
+| [Docker Compose 部署](./devops/docker-compose-deploy.md) | 脚本化部署流程 |
+| [手动部署](./devops/manual-deploy.md) | 非容器化部署 |
 
-### 部署与运维
+### AI 协作
 
-- [`devops/deploy-prerequisites.md`](./devops/deploy-prerequisites.md)：部署前硬性检查项。
-- [`devops/docker-compose-tutorial.md`](./devops/docker-compose-tutorial.md)：WSL2 Docker CE、macOS Colima、Linux Docker CE 的完整 Compose 部署教程。
-- [`devops/docker-compose-deploy.md`](./devops/docker-compose-deploy.md)：脚本化 / Compose 部署。
-- [`devops/manual-deploy.md`](./devops/manual-deploy.md)：手动部署与运维交付物。
+| 文档 | 说明 |
+| --- | --- |
+| [AGENTS 指南](./collaboration/agents-guide.md) | AGENTS.md 分层说明 |
+| [Skills 指南](./collaboration/skills-guide.md) | 仓库级 skills 使用 |
+| [Subagents 指南](./collaboration/subagents-guide.md) | Subagent 角色与边界 |
+| [MCP Servers](./collaboration/mcp-servers.md) | MCP server 配置 |
+| [插件目录](./collaboration/plugin-catalog.md) | 插件分类和开关矩阵 |
+| [模块文档治理](./collaboration/module-doc-governance.md) | 模块文档分层与同步 |
 
-### 协作与自动化
+### 工作区文档
 
-- [`collaboration/agents-guide.md`](./collaboration/agents-guide.md)：`AGENTS.md` 分层说明。
-- [`collaboration/skills-guide.md`](./collaboration/skills-guide.md)：仓库级 skills 目录与使用方式。
-- [`collaboration/subagents-guide.md`](./collaboration/subagents-guide.md)：subagent 角色与职责边界。
-- [`collaboration/mcp-servers.md`](./collaboration/mcp-servers.md)：项目级 MCP server 真值与审批策略。
-- [`collaboration/plugin-catalog.md`](./collaboration/plugin-catalog.md)：插件分类和软开关矩阵。
-- [`collaboration/module-doc-governance.md`](./collaboration/module-doc-governance.md)：模块文档如何分层、聚合、同步与写入 `AGENTS.md` 路由。
+| 工作区 | 文档入口 |
+| --- | --- |
+| **React 管理端** | [README](../infoq-scaffold-frontend-react/README.md) · [架构](../infoq-scaffold-frontend-react/doc/architecture.md) · [数据流](../infoq-scaffold-frontend-react/doc/data-flow.md) |
+| **Vue 管理端** | [README](../infoq-scaffold-frontend-vue/README.md) · [架构](../infoq-scaffold-frontend-vue/doc/architecture.md) · [数据流](../infoq-scaffold-frontend-vue/doc/data-flow.md) |
 
-## 根目录约定
+<!-- doc-section:structure -->
+## 目录结构
 
-- 根 `doc/` 顶层只保留导航入口、正文分类子目录和非正文目录：`README.md`、`guide/`、`backend/`、`admin/`、`devops/`、`collaboration/`、`examples/`、`images/`、`plan/`、`ui-demos/`。
-- 专题正文统一落在 `guide/`、`backend/`、`admin/`、`devops/`、`collaboration/`。
-- 新增正文时先选择分类目录并同步更新本目录导航。
-- `doc/plan/` 存放 repo-level 或高风险治理变更的执行计划，属于受版本控制资产，不作为临时目录使用。
-- 仓库内工具、验证、脚本的一次性输出继续统一放在 `doc/tmp/`，该目录才是默认忽略的临时产物目录。
+```text
+doc/
+├── README.md                    # 文档导航（当前文件）
+├── guide/                       # 入门指南
+├── backend/                     # 后端开发
+├── admin/                       # 管理端开发
+├── devops/                      # 部署运维
+├── collaboration/               # AI 协作
+├── examples/                    # 示例代码
+├── images/                      # 文档图片
+├── plan/                        # 治理计划
+├── ui-demos/                    # UI 演示
+└── tmp/                         # 临时产物（已忽略）
+```
 
-## 文档覆盖范围
-
-- 项目定位、目录结构、技术栈与模块边界。
-- 后端 `dev/local/prod` profile、登录授权、动态菜单、插件开关与调试入口。
-- Vue / React 管理端的路由、请求封装、代理、构建和测试，以及系统监控页面（在线用户、任务调度、缓存、服务监控、Hikari 连接池监控）。
-- 仓库特有的 AI 协作资产：`AGENTS.md`、`.codex/skills`、`OpenSpec`、`.codex/config.toml`。
-
-## 这套文档不做什么
-
-- 不代替接口平台，不逐字段解释所有 API 响应。
-- 不代替页面原型或视觉设计稿。
-- 不试图覆盖第三方框架的基础语法教程。
-- 不猜测未在仓库中显式声明的密码、部署密钥或生产地址。
-
+<!-- doc-section:workspaces -->
 ## 工作区总览
 
-| 工作区 | 作用 | 关键入口 |
+| 工作区 | 作用 | 技术栈 |
 | --- | --- | --- |
-| `infoq-scaffold-backend` | Spring Boot 3 多模块后端 | `infoq-admin/src/main/java/cc/infoq/admin/SysAdminApplication.java` |
-| `infoq-scaffold-frontend-vue` | Vue 3 + Element Plus 管理端 | `src/main.ts`、`src/router/index.ts` |
-| `infoq-scaffold-frontend-react` | React 19 + Ant Design 管理端 | `src/main.tsx`、`src/router/AppRouter.tsx` |
-| `openspec` | 规格、变更、设计资产 | `project.md`、`specs/`、`changes/` |
-| `script` | 部署、构建和本地辅助脚本 | `script/bin/`、`script/docker/` |
-| `sql` | 初始化 SQL 与升级脚本 | `infoq_scaffold_2.0.0.sql` |
-| `doc` | 使用者和交付文档 | 当前目录 |
+| `infoq-scaffold-backend` | Spring Boot 后端 | JDK 21, Spring Boot 4.1.1 |
+| `infoq-scaffold-frontend-vue` | Vue 管理端 | Vue 3.5, Element Plus 2.14 |
+| `infoq-scaffold-frontend-react` | React 管理端 | React 19.2, Ant Design 6.4 |
+| `openspec` | 规格与变更 | OpenSpec 标准 |
+| `script` | 部署脚本 | Bash, Docker Compose |
+| `sql` | 数据库脚本 | MySQL 8 |
 
-## 建议维护方式
+<!-- doc-section:scope -->
+## 文档覆盖范围
 
-- 用户手册真值源放在 `doc/` 的分类子目录里，面向“如何使用项目、如何启动、如何排障”。
-- 根 `README.md` 保持总览，不重复展开长篇专题内容。
-- `AGENTS.md` 只保留机器协作约束，不混入用户手册。
-- 当命令、环境变量、目录入口或部署路径发生变化时，优先同步更新受影响专题文档与本 `README.md`。
+本文档涵盖：
+
+- 项目定位、目录结构、技术栈与模块边界
+- 后端 profile、登录授权、动态菜单、插件配置
+- Vue/React 管理端路由、请求封装、构建测试
+- 系统监控（在线用户、任务调度、缓存、连接池）
+- AI 协作资产（AGENTS.md、.codex/skills、OpenSpec、MCP）
+
+本文档不涵盖：
+
+- 第三方框架的基础教程（Spring Boot、Vue、React）
+- 逐字段的 API 响应说明（使用接口平台）
+- 页面原型或视觉设计稿
+- 未在仓库中声明的密码、密钥或生产地址
+
+<!-- doc-section:maintenance -->
+## 维护建议
+
+- **用户手册**：真值源放在 `doc/` 的分类子目录
+- **根 README**：保持总览，不重复展开长篇内容
+- **AGENTS.md**：只保留机器协作约束，不混入用户手册
+- **同步更新**：命令、环境变量、路径变化时及时更新相关文档
+
+<!-- doc-section:related -->
+## 相关文档
+
+- [根 README](../README.md) - 项目总览
+- [贡献指南](../CONTRIBUTING.md) - 参与贡献
+- [开发指南](../DEV_GUIDE.md) - 本地开发
+- [安全策略](../SECURITY.md) - 安全报告
+- [部署指南](../deploy/README.md) - 快速部署
