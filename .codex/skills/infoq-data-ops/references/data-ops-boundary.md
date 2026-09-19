@@ -16,7 +16,7 @@
 - 管理端页面真实操作：使用 `infoq-admin-ops`。
 - 管理端 E2E 自动化：使用 `infoq-admin-e2e`。
 - 后端接口、Mapper XML、登录链路、Redisson OSS 验证：使用 `infoq-backend-verify`。
-- React/Vue admin 或 weapp 单测、构建和运行态验证：使用 `infoq-frontend-verify`。
+- React/Vue admin 单测、构建和运行态验证：使用 `infoq-frontend-verify`。
 - 版本升级和发布文档同步：使用 `infoq-release-ops`。
 - 高影响交付、OpenSpec 和跨工作区编排：使用 `infoq-delivery-workflow`。
 

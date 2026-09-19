@@ -102,9 +102,6 @@ createIfMissing(path.join(changeDir, 'tasks.md'), `# Tasks: ${changeId}
 - [ ] infoq-scaffold-backend：
 - [ ] infoq-scaffold-frontend-react：
 - [ ] infoq-scaffold-frontend-vue：
-- [ ] infoq-scaffold-frontend-weapp-react：
-- [ ] infoq-scaffold-frontend-weapp-vue：
-- [ ] infoq-scaffold-docs：
 - [ ] script / deploy：
 
 ## 实施任务

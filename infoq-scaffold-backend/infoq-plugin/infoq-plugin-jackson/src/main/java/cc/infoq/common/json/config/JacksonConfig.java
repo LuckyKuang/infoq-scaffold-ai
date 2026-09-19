@@ -10,9 +10,8 @@ import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
-import org.springframework.boot.autoconfigure.jackson.Jackson2ObjectMapperBuilderCustomizer;
-import org.springframework.boot.autoconfigure.jackson.JacksonAutoConfiguration;
 import org.springframework.context.annotation.Bean;
+import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -27,7 +26,7 @@ import java.util.TimeZone;
  * @author Pontus
  */
 @Slf4j
-@AutoConfiguration(before = JacksonAutoConfiguration.class)
+@AutoConfiguration
 public class JacksonConfig {
 
     @Bean
@@ -46,12 +45,12 @@ public class JacksonConfig {
     }
 
     @Bean
-    public Jackson2ObjectMapperBuilderCustomizer customizer() {
-        return builder -> {
-            builder.timeZone(TimeZone.getDefault());
-            builder.featuresToEnable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
-            log.info("初始化 jackson 配置");
-        };
+    public Jackson2ObjectMapperBuilder jackson2ObjectMapperBuilder() {
+        Jackson2ObjectMapperBuilder builder = new Jackson2ObjectMapperBuilder();
+        builder.timeZone(TimeZone.getDefault());
+        builder.featuresToEnable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+        log.info("初始化 jackson 配置");
+        return builder;
     }
 
 }

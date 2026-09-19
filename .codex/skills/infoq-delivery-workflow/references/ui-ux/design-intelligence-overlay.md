@@ -35,7 +35,7 @@
 1. 产品类型（如 SaaS dashboard、fintech app、healthcare portal）
 2. 页面类型（如 landing、admin 列表/详情、settings、checkout）
 3. 用户感知关键词（如 trustworthy、playful、calm、dense、premium）
-4. 平台上下文（React admin、Vue admin、weapp React、weapp Vue）
+4. 平台上下文（React admin、Vue admin）
 5. 约束条件（如 a11y 等级、性能敏感度、品牌要求）
 
 ## 输出契约

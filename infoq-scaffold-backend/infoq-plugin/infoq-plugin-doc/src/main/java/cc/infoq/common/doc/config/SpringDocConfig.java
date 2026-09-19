@@ -20,9 +20,9 @@ import org.springdoc.core.utils.PropertyResolverUtils;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.boot.autoconfigure.web.ServerProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
+import org.springframework.core.env.Environment;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,7 +40,7 @@ import java.util.Set;
 @ConditionalOnProperty(name = "springdoc.api-docs.enabled", havingValue = "true", matchIfMissing = true)
 public class SpringDocConfig {
 
-    private final ServerProperties serverProperties;
+    private final Environment environment;
 
     @Bean
     @ConditionalOnMissingBean(OpenAPI.class)
@@ -93,7 +93,7 @@ public class SpringDocConfig {
      */
     @Bean
     public OpenApiCustomizer openApiCustomizer() {
-        String contextPath = serverProperties.getServlet().getContextPath();
+        String contextPath = environment.getProperty("server.servlet.context-path", "");
         String finalContextPath;
         if (StringUtils.isBlank(contextPath) || "/".equals(contextPath)) {
             finalContextPath = "";

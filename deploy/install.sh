@@ -111,17 +111,14 @@ normalize_frontend_target() {
     1|react)
       printf 'react'
       ;;
-    2|react-pro|react_pro)
-      printf 'react-pro'
-      ;;
-    3|vue)
+    2|vue)
       printf 'vue'
       ;;
-    4|all)
+    3|all)
       printf 'all'
       ;;
     *)
-      fail "无效前端安装目标: $1，请使用 1|2|3|4 或 react|react-pro|vue|all"
+      fail "无效前端安装目标: $1，请使用 1|2|3 或 react|vue|all"
       ;;
   esac
 }
@@ -130,26 +127,25 @@ prompt_frontend_target() {
   local choice
 
   if [[ ! -r /dev/tty || ! -w /dev/tty ]]; then
-    fail "非交互环境必须显式设置 INFOQ_FRONTEND_TARGET=react|react-pro|vue|all"
+    fail "非交互环境必须显式设置 INFOQ_FRONTEND_TARGET=react|vue|all"
   fi
 
   while true; do
     {
       printf '\n请选择前端安装模式：\n'
       printf '  1. 只安装 React 前端\n'
-      printf '  2. 只安装 React Pro 前端\n'
-      printf '  3. 只安装 Vue 前端\n'
-      printf '  4. 安装全部前端\n'
-      printf '请输入 1-4: '
+      printf '  2. 只安装 Vue 前端\n'
+      printf '  3. 安装全部前端\n'
+      printf '请输入 1-3: '
     } >/dev/tty
     IFS= read -r choice </dev/tty || fail "读取前端安装模式失败"
     case "${choice}" in
-      1|2|3|4)
+      1|2|3)
         normalize_frontend_target "${choice}"
         return
         ;;
       *)
-        printf '无效选择，请输入 1、2、3 或 4。\n' >/dev/tty
+        printf '无效选择，请输入 1、2 或 3。\n' >/dev/tty
         ;;
     esac
   done
@@ -186,13 +182,9 @@ print_frontend_urls() {
     all)
       printf '  Vue Admin:       %s/vue/\n' "${INFOQ_PUBLIC_BASE_URL}"
       printf '  React Admin:     %s/react/\n' "${INFOQ_PUBLIC_BASE_URL}"
-      printf '  React Pro Admin: %s/react-pro/\n' "${INFOQ_PUBLIC_BASE_URL}"
       ;;
     react)
       printf '  React Admin:     %s/\n' "${INFOQ_PUBLIC_BASE_URL}"
-      ;;
-    react-pro)
-      printf '  React Pro Admin: %s/\n' "${INFOQ_PUBLIC_BASE_URL}"
       ;;
     vue)
       printf '  Vue Admin:       %s/\n' "${INFOQ_PUBLIC_BASE_URL}"

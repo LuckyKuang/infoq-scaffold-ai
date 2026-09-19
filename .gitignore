@@ -92,5 +92,11 @@ doc/plan/
 openspec/changes/*/
 !openspec/changes/rename-miniapp-grant-type/
 !openspec/changes/rename-miniapp-grant-type/**
+!openspec/changes/consolidate-supported-workspaces/
+!openspec/changes/consolidate-supported-workspaces/**
+# 当前目录治理 change 的执行计划纳入版本控制，其他历史计划仍保持忽略。
+!doc/plan/
+doc/plan/*
+!doc/plan/2026-09-16-consolidate-supported-workspaces-plan.md
 
 settings.local.json

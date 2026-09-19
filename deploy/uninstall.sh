@@ -166,11 +166,11 @@ choice_from_env_or_prompt() {
 
 normalize_frontend_target() {
   case "$1" in
-    react|react-pro|vue|all)
+    react|vue|all)
       printf '%s' "$1"
       ;;
     *)
-      fail "环境文件 ${INFOQ_ENV_FILE} 中的 INFOQ_FRONTEND_TARGET 无效: ${1:-<empty>}，必须是 react、react-pro、vue 或 all"
+      fail "环境文件 ${INFOQ_ENV_FILE} 中的 INFOQ_FRONTEND_TARGET 无效: ${1:-<empty>}，必须是 react、vue 或 all"
       ;;
   esac
 }
@@ -185,17 +185,13 @@ configure_app_scope() {
       APP_CONTAINERS+=(infoq-frontend-react)
       APP_DIRS+=(react)
       ;;
-    react-pro)
-      APP_CONTAINERS+=(infoq-frontend-react-pro)
-      APP_DIRS+=(react-pro)
-      ;;
     vue)
       APP_CONTAINERS+=(infoq-frontend-vue)
       APP_DIRS+=(vue)
       ;;
     all)
-      APP_CONTAINERS+=(infoq-frontend-vue infoq-frontend-react infoq-frontend-react-pro)
-      APP_DIRS+=(vue react react-pro)
+      APP_CONTAINERS+=(infoq-frontend-vue infoq-frontend-react)
+      APP_DIRS+=(vue react)
       ;;
   esac
 }

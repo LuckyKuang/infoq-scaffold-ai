@@ -7,7 +7,7 @@
 适用范围：
 
 - 在仓库内通过 Codex 协作完成需求分析、设计、技术方案、代码实现、自动修复与最终验收
-- 覆盖 `infoq-scaffold-backend`、React/Vue/React Pro 管理端、React/Vue 小程序端
+- 覆盖 `infoq-scaffold-backend`、React/Vue 管理端以及 `doc`、`script / deploy` 交付面
 
 ## 2. 什么是 Subagents
 
@@ -34,7 +34,7 @@ multi-agent 的价值不是“多开几个 agent”，而是把高噪声、边�
 | Agent | 责任 |
 | --- | --- |
 | `requirements_expert` | 分析需求，输出 `proposal.md` 和 spec delta |
-| `technical_designer` | 输出 `tasks.md`，明确 backend/admin/weapp 实现矩阵和验证命令 |
+| `technical_designer` | 输出 `tasks.md`，明确 backend/admin、doc 和 script/deploy 实现矩阵和验证命令 |
 | `code_implementer` | 依据 `proposal.md`、`design.md`、`tasks.md` 和 spec delta 落代码 |
 | `auto_fixer` | 运行验证并修复真实错误 |
 
@@ -84,7 +84,7 @@ change id: enhance-user-import
 1. spawn requirements_expert 生成 proposal.md 和 spec deltas
 2. spawn technical_designer 生成 tasks.md
 3. 如涉及明显 UI/交互决策，主线程先补 design.md，或改走 infoq-delivery-workflow 的四阶段 UI 门禁
-4. spawn code_implementer 按计划实现 backend、admin、weapp 需要改动的部分
+4. spawn code_implementer 按计划实现 backend、React/Vue admin、doc 和 script/deploy 需要改动的部分
 5. spawn auto_fixer 跑相关验证并修复真实问题
 6. 主线程基于验证证据做最终验收；必要时写 review.md 记录 blocker
 ```
@@ -121,13 +121,13 @@ requirements_expert
 - 布局结构
 - 用户操作流程
 - 加载、空态、错误态、无权限态
-- 对 backend/admin/weapp 的设计约束
+- 对 backend、React/Vue admin、doc 和 script/deploy 的设计约束
 
 ### `tasks.md`
 
 必须说清楚：
 
-- backend、React admin、Vue admin、React weapp、Vue weapp、docs、script/deploy 的实现矩阵
+- backend、React admin、Vue admin、doc、script/deploy 的实现矩阵
 - 哪些端不改，以及原因
 - 验证命令
 - 观测点、日志与回滚条件
@@ -147,9 +147,7 @@ openspec/changes/<change-id>/specs/<capability>/spec.md
 - `infoq-scaffold-backend`
 - `infoq-scaffold-frontend-react`
 - `infoq-scaffold-frontend-vue`
-- `infoq-scaffold-frontend-weapp-react`
-- `infoq-scaffold-frontend-weapp-vue`
-- `infoq-scaffold-docs`
+- `doc`
 - `script / deploy`
 
 这不代表每个需求都必须同时改完所有交付面，而是：
@@ -172,7 +170,5 @@ openspec/changes/<change-id>/specs/<capability>/spec.md
 - Backend：受影响模块 Maven 测试与必要编译
 - React Admin：`pnpm run test`、`pnpm run build:prod`
 - Vue Admin：`pnpm run test:unit`、`pnpm run build:prod`
-- React Weapp：`pnpm run test`、`pnpm run build:weapp:dev`，必要时 `pnpm --dir infoq-scaffold-frontend-weapp-react build-open:weapp:dev`
-- Vue Weapp：`pnpm run typecheck`、`pnpm run test`、`pnpm run build:weapp:dev`，必要时 `pnpm --dir infoq-scaffold-frontend-weapp-vue build-open:weapp:dev`
 
 只有在验证证据充分时，主线程才应该决定是否归档；如验证受阻，再按需写 `review.md` 明确 blocker。

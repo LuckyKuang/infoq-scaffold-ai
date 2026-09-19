@@ -18,10 +18,8 @@
 - 根规则：`/AGENTS.md`
 - 后端：`infoq-scaffold-backend/AGENTS.md`
 - React 管理端：`infoq-scaffold-frontend-react/AGENTS.md`
-- React Pro 管理端：`infoq-scaffold-frontend-react-pro/AGENTS.md`
+- React 管理端：`infoq-scaffold-frontend-react/AGENTS.md`
 - Vue 管理端：`infoq-scaffold-frontend-vue/AGENTS.md`
-- React 小程序端：`infoq-scaffold-frontend-weapp-react/AGENTS.md`
-- Vue 小程序端：`infoq-scaffold-frontend-weapp-vue/AGENTS.md`
 
 原则只有一条：**越靠近代码越优先**。
 
@@ -139,16 +137,16 @@ repo 级 custom agents 的真值不写在 `AGENTS.md` 之外的任意散落文�
 - 仓库静态参考：`infoq-project-reference`
 - 高影响交付、OpenSpec、重大 UI/UX 门禁和插件治理：`infoq-delivery-workflow`
 - 后端单测、登录、HTTP smoke、WebSocket cluster smoke：`infoq-backend-verify`
-- React/Vue admin 与 weapp 单测、构建和运行态：`infoq-frontend-verify`
+- React/Vue 管理端 单测、构建和运行态：`infoq-frontend-verify`
 - SQL、数据库、Redis、数据修复、迁移和一致性核对：`infoq-data-ops`
 - 管理端测试矩阵、真实验证码 E2E、CRUD E2E 模式：`infoq-admin-e2e`
 - 管理端真实页面运营维护、权限巡检和危险操作门禁：`infoq-admin-ops`
 - 通用浏览器执行器：`infoq-browser-automate`
 - Ant Design / Element Plus 组件参考：`infoq-component-reference`
-- 版本升级、package / 小程序 manifest 同步和发布操作：`infoq-release-ops`
+- 版本升级、package 与发布操作：`infoq-release-ops`
 - 本地 / WSL2 / macOS Colima / Linux Docker Compose 部署验证：`infoq-deploy-verify`
 
-React / Vue 与 admin / weapp 的差异留在 `references/*` 或 `--client react|vue` 参数里。真实验证码、OCR、登录态和动态路由 smoke 由 `infoq-admin-e2e` 负责；真实后台页面运营维护和权限巡检由 `infoq-admin-ops` 负责；SQL、数据库、Redis、数据修复、迁移和一致性核对由 `infoq-data-ops` 负责；普通页面交互、截图和 console/pageerror 证据由 `infoq-browser-automate` 负责；前端单测、构建和本地栈由 `infoq-frontend-verify` 负责；部署文档和 WSL2 Docker CE / macOS Colima / Linux Docker CE 全栈拉起验证由 `infoq-deploy-verify` 负责。
+React / Vue 管理端 的差异留在 `references/*` 或 `--client react|vue` 参数里。真实验证码、OCR、登录态和动态路由 smoke 由 `infoq-admin-e2e` 负责；真实后台页面运营维护和权限巡检由 `infoq-admin-ops` 负责；SQL、数据库、Redis、数据修复、迁移和一致性核对由 `infoq-data-ops` 负责；普通页面交互、截图和 console/pageerror 证据由 `infoq-browser-automate` 负责；前端单测、构建和本地栈由 `infoq-frontend-verify` 负责；部署文档和 WSL2 Docker CE / macOS Colima / Linux Docker CE 全栈拉起验证由 `infoq-deploy-verify` 负责。
 
 维护这些 skill 时优先破坏性重构现有领域 skill，不用新增泛化 skill 绕开边界。每个可执行 skill 默认遵循：判定范围、只读探测或 dry-run、目标与影响枚举、写入或危险动作门禁、执行后验证、`doc/tmp/` 证据留存和显式失败。
 
@@ -160,7 +158,6 @@ React / Vue 与 admin / weapp 的差异留在 `references/*` 或 `--client react
 - 旧 skill 被合并、改名或迁移
 - repo 级 custom agent 被新增、删除或调整职责
 - 栈内验证顺序发生变化
-- 小程序启动前置条件发生变化
 - `.codex/config.toml` 中的仓库级 MCP 路由或默认启用集合发生变化
 - 发布或回滚规则发生变化
 

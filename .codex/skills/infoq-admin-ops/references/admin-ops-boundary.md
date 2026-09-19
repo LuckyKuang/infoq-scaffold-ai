@@ -15,7 +15,7 @@
 - 浏览器底层执行、截图和 console/pageerror 证据：使用 `infoq-browser-automate`。
 - SQL、数据库、Redis、数据修复、迁移、幂等和 API/UI/DB 一致性验证：使用 `infoq-data-ops`。
 - 后端接口、登录链路、Redisson OSS 验证：使用 `infoq-backend-verify`。
-- React/Vue admin 或 weapp 单测、构建和运行态验证：使用 `infoq-frontend-verify`。
+- React/Vue admin 单测、构建和运行态验证：使用 `infoq-frontend-verify`。
 
 ## 写入门禁清单
 

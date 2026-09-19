@@ -48,8 +48,8 @@ repo-level 或高风险治理变更，除 active change 外，还应在 `doc/pla
 
 1. 一次只改一类问题。
 2. 优先最小闭环，不绑无关重构。
-3. `tasks.md` 默认显式评估 backend、React admin、React Pro admin、Vue admin、React weapp、Vue weapp、docs、script/deploy。
-4. 任何命令、环境变量、skill 入口、文档站同步链路或 MCP 配置变更，都要同步更新 `README.md` 与 `doc/*.md`。
+3. `tasks.md` 默认显式评估 backend、React admin、Vue admin、doc、script/deploy。
+4. 任何命令、环境变量、skill 入口或 MCP 配置变更，都要同步更新 `README.md` 与 `doc/*.md`。
 
 ### 4.3 修改后
 
@@ -82,7 +82,7 @@ backend 工作区基线是 JDK 17 与 Maven 3.9.x。
 - 真实验证码 admin E2E、测试矩阵和 CRUD E2E 模式：`infoq-admin-e2e`
 - 真实管理端页面运营维护、权限巡检和危险操作门禁：`infoq-admin-ops`
 - SQL、数据库、Redis、数据修复、迁移和一致性核对：`infoq-data-ops`
-- React/Vue admin 与 weapp 单测、构建和运行态：`infoq-frontend-verify`
+- React/Vue 管理端 单测、构建和运行态：`infoq-frontend-verify`
 - 后端登录、smoke 和单测验证：`infoq-backend-verify`
 - 本地 / WSL2 / macOS Colima / Linux Docker Compose 部署验证：`infoq-deploy-verify`
 - OpenAI / Codex / AGENTS / MCP 问题：`openai-docs`（本机/系统 skill，不作为项目级 MCP 固定配置）
@@ -107,12 +107,11 @@ backend 工作区基线是 JDK 17 与 Maven 3.9.x。
 - skill 名称或默认行为变了
 - docs 站点镜像需要同步的根文档变了
 
-根文档更新后执行：
+根文档更新后执行 UTF-8 与链接引用检查：
 
 ```bash
-pnpm --dir infoq-scaffold-docs run docs:sync
-pnpm --dir infoq-scaffold-docs run docs:check-links
-pnpm --dir infoq-scaffold-docs run docs:build
+node .codex/scripts/validate_utf8.mjs README.md doc
+rg -n '\]\([^)]*infoq-scaffold-' README.md doc
 ```
 
 ## 8. 核心原则

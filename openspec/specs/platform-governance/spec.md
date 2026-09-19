@@ -44,7 +44,7 @@
 #### 场景：维护 `tasks.md`
 
 - 当维护者编写或更新 `tasks.md` 时
-- 则必须显式评估 `infoq-scaffold-backend`、`infoq-scaffold-frontend-react`、`infoq-scaffold-frontend-vue`、`infoq-scaffold-frontend-weapp-react`、`infoq-scaffold-frontend-weapp-vue`、`infoq-scaffold-docs`、`script / deploy`
+- 则必须显式评估 `infoq-scaffold-backend`、`infoq-scaffold-frontend-react`、`infoq-scaffold-frontend-vue`、`script / deploy`
 - 并且对不受影响项必须给出原因
 
 ### 要求：active change 结构校验

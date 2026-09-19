@@ -20,9 +20,9 @@
 INFOQ_FRONTEND_TARGET=all:
   http://localhost/vue/
   http://localhost/react/
-  http://localhost/react-pro/
+  http://localhost/react/
 
-INFOQ_FRONTEND_TARGET=react|react-pro|vue:
+INFOQ_FRONTEND_TARGET=react|vue:
   http://localhost/
 
 http://localhost/prod-api/monitor/health/readiness
@@ -36,7 +36,7 @@ http://localhost/oss/
 Backend:   9090
 Vue:       9091
 React:     9092
-React Pro: 9093
+React: 9093
 MinIO API: 9000
 MinIO Console: 9001
 MySQL:     3306
@@ -58,7 +58,7 @@ chmod +x install.sh
 sudo env INFOQ_VERSION=<tag> INFOQ_FRONTEND_TARGET=all INFOQ_PUBLIC_BASE_URL=http://SERVER_IP ./install.sh
 ```
 
-`INFOQ_FRONTEND_TARGET` 是必填项，取值为 `react`、`react-pro`、`vue` 或 `all`。选择单个前端时只构建并启动目标前端，网关根路径 `/` 直接进入该管理端。
+`INFOQ_FRONTEND_TARGET` 是必填项，取值为 `react`、`react`、`vue` 或 `all`。选择单个前端时只构建并启动目标前端，网关根路径 `/` 直接进入该管理端。
 
 如果你已经有本地源码，并且只是本机验证脚本，可使用本地源码入口：
 
@@ -325,7 +325,7 @@ curl --noproxy '*' -i --max-time 15 http://127.0.0.1/prod-api/monitor/health/rea
 if [[ "${INFOQ_FRONTEND_TARGET}" == "all" ]]; then
   curl --noproxy '*' -sS -o /dev/null -w '%{http_code}\n' --max-time 15 http://127.0.0.1/vue/
   curl --noproxy '*' -sS -o /dev/null -w '%{http_code}\n' --max-time 15 http://127.0.0.1/react/
-  curl --noproxy '*' -sS -o /dev/null -w '%{http_code}\n' --max-time 15 http://127.0.0.1/react-pro/
+  curl --noproxy '*' -sS -o /dev/null -w '%{http_code}\n' --max-time 15 http://127.0.0.1/react/
 else
   curl --noproxy '*' -sS -o /dev/null -w '%{http_code}\n' --max-time 15 http://127.0.0.1/
 fi
@@ -344,7 +344,7 @@ case "${INFOQ_FRONTEND_TARGET}" in
   react)
     curl --noproxy '*' -sS -o /dev/null -w '%{http_code}\n' --max-time 15 http://127.0.0.1:9092/
     ;;
-  react-pro)
+  react)
     curl --noproxy '*' -sS -o /dev/null -w '%{http_code}\n' --max-time 15 http://127.0.0.1:9093/
     ;;
 esac
@@ -361,7 +361,7 @@ docker exec redis redis-cli -a "${REDIS_PASSWORD}" ping
 
 - `infoq-admin` 容器为 `healthy`，readiness 返回 `200`。
 - `/prod-api/monitor/health/readiness` 通过 Nginx 也返回 `200`。
-- `INFOQ_FRONTEND_TARGET=all` 时 `/vue/`、`/react/`、`/react-pro/` 通过网关返回 `200` 或 `304`；单前端目标时 `/` 返回 `200` 或 `304`。
+- `INFOQ_FRONTEND_TARGET=all` 时 `/vue/`、`/react/`、`/react/` 通过网关返回 `200` 或 `304`；单前端目标时 `/` 返回 `200` 或 `304`。
 - `/console-oss/` 可访问 MinIO Console，`/oss/minio/health/live` 返回 `200`。
 - `all` 目标时 `9091`、`9092`、`9093` 三个直连端口有响应；单前端目标时仅对应直连端口有响应。
 - MinIO live health 返回 `200`。
@@ -377,12 +377,12 @@ docker exec redis redis-cli -a "${REDIS_PASSWORD}" ping
 ```powershell
 curl.exe --noproxy * -sS -o NUL -w "%{http_code}\n" --max-time 15 http://localhost/vue/
 curl.exe --noproxy * -sS -o NUL -w "%{http_code}\n" --max-time 15 http://localhost/react/
-curl.exe --noproxy * -sS -o NUL -w "%{http_code}\n" --max-time 15 http://localhost/react-pro/
+curl.exe --noproxy * -sS -o NUL -w "%{http_code}\n" --max-time 15 http://localhost/react/
 curl.exe --noproxy * -i --max-time 15 http://localhost/prod-api/monitor/health/readiness
 curl.exe --noproxy * -sS -o NUL -w "%{http_code}\n" --max-time 15 http://localhost/console-oss/
 ```
 
-`INFOQ_FRONTEND_TARGET=react|react-pro|vue` 时验证根路径：
+`INFOQ_FRONTEND_TARGET=react|vue` 时验证根路径：
 
 ```powershell
 curl.exe --noproxy * -sS -o NUL -w "%{http_code}\n" --max-time 15 http://localhost/
@@ -465,7 +465,7 @@ sudo env DOCKER_CONFIG="${DOCKER_CONFIG:-$HOME/.docker}" DOCKER_HOST="${DOCKER_H
 
 ## 12. 升级镜像或配置后的重建
 
-例如升级 MinIO、Nginx 或前端运行时镜像后，优先继续使用仓库脚本重建。脚本会读取 `INFOQ_FRONTEND_TARGET`，只重建并启动当前目标前端；`all` 才会处理 Vue、React 和 React Pro 三个前端：
+例如升级 MinIO、Nginx 或前端运行时镜像后，优先继续使用仓库脚本重建。脚本会读取 `INFOQ_FRONTEND_TARGET`，只重建并启动当前目标前端；`all` 才会处理 Vue 和 React 三个前端：
 
 ```bash
 cd /path/to/infoq-scaffold-ai
@@ -539,7 +539,7 @@ nginx:1.30.3
 | `error getting credentials` 且缺少 `docker-credential-desktop` | Docker config 残留 Docker Desktop credential helper | Colima 验证时临时设置独立 `DOCKER_CONFIG` 和 `DOCKER_HOST`；长期清理失效的 `credsStore`/`credHelpers` 或安装匹配 helper |
 | 镜像列表出现短名和 `registry-1.docker.io/...` 双 tag | 直拉完整 tag 后又 tag 回短名 | 确认 `IMAGE ID` 一致且无容器引用长名后删除辅助 tag |
 | 前端构建出现 Corepack/packageManager 激活失败 | Node 镜像内 Corepack 或包管理器激活异常 | 先确认 Dockerfile 使用固定 `node:24.18.0`，再按工作区 `packageManager` 与 lockfile 定位；不要降回 Node 20/22 标记通过 |
-| React Pro 在 `/react-pro/` 下请求 `/logo.svg` 404 | 静态资源使用了根路径 | 使用 `VITE_APP_CONTEXT_PATH` 生成 `/react-pro/logo.svg` |
+| React 在 `/react/` 下请求 `/logo.svg` 404 | 静态资源使用了根路径 | 使用 `VITE_APP_CONTEXT_PATH` 生成 `/react/logo.svg` |
 | WSL 容器反复重启 | WSL distro 退出导致 Docker daemon 生命周期不稳定 | 部署验证期保持一个 WSL 会话或 keepalive |
 
 当前 Compose 部署不依赖宿主机 JDK/Maven；Java 17 基线由后端 builder 和 runtime 镜像固定。只有手动部署或本机直接 Maven 构建时，才需要在宿主机准备 JDK 17 与 Maven 3.9+。

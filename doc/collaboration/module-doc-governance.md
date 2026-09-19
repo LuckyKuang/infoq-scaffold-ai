@@ -9,8 +9,8 @@
 - `infoq-scaffold-backend`
 - `infoq-scaffold-frontend-react`
 - `infoq-scaffold-frontend-vue`
-- `infoq-scaffold-frontend-weapp-react`
-- `infoq-scaffold-frontend-weapp-vue`
+- `infoq-scaffold-frontend-react`
+- `infoq-scaffold-frontend-vue`
 
 如果某个工作区内部还分为父模块与叶子模块，这份规范优先采用“叶子真值 -> 父层聚合 -> 工作区总览 -> AGENTS 路由”的结构。
 

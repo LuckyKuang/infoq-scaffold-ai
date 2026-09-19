@@ -36,11 +36,7 @@ UI 密集型改动应使用 `infoq-delivery-workflow` 的四阶段 UI 门禁，�
 
 - `infoq-scaffold-backend`
 - `infoq-scaffold-frontend-react`
-- `infoq-scaffold-frontend-react-pro`
 - `infoq-scaffold-frontend-vue`
-- `infoq-scaffold-frontend-weapp-react`
-- `infoq-scaffold-frontend-weapp-vue`
-- `infoq-scaffold-docs`
 - `script / deploy`
 
 若某个工作区或交付面不受影响，必须在 `tasks.md` 中写明原因。

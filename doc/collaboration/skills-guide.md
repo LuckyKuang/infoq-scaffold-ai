@@ -10,7 +10,7 @@
 1. 每个 skill 只解决一个工作域。
 2. 仓库级 skill 统一使用 `infoq-` 前缀；创建或更新 skill 使用系统级 `skill-creator`。
 3. `.codex/skills` 下不保留共享底座型、README-only、helper-only 或已被新工作域覆盖的旧 skill 目录。
-4. React / Vue 与 admin / weapp 差异通过目标 skill 的 `references/*` 或 `--client react|vue` 参数区分，不再按技术栈碎片化拆 skill。
+4. React / Vue 管理端 差异通过目标 skill 的 `references/*` 或 `--client react|vue` 参数区分，不再按技术栈碎片化拆 skill。
 5. skill 的主执行入口必须兼容 Windows / macOS / Linux；统一使用 repo-owned Node CLI 或 `.mjs`，不再保留 `.sh` / `.ps1` / `.cmd` 作为 skill 入口。若内部仍需 Python 等实现，必须由跨平台 Node 入口调度。
 6. 仓库级 skill 默认是领域型可执行 SOP：判定范围 -> 只读探测 / dry-run -> 目标与影响枚举 -> 写入或危险动作门禁 -> 执行验证 -> `doc/tmp/` 证据留存与显式失败。
 7. 优先破坏性重构现有领域 skill；只有出现无法归入现有 skill 的新工作域时，才新增 `infoq-*` skill。
@@ -34,13 +34,13 @@
 | `infoq-project-reference` | 仓库静态参考 | 目录、入口、命令、工程规则、安全和验证基线 |
 | `infoq-delivery-workflow` | 高影响交付流程 | Acceptance Contract、OpenSpec、重大 UI/UX 门禁、跨工作区交付、插件治理计划 |
 | `infoq-backend-verify` | 后端验证闭环 | 后端单测、Mapper XML、HTTP smoke、WebSocket cluster smoke、登录/auth、Redisson OSS |
-| `infoq-frontend-verify` | 前端验证闭环 | React/Vue admin 与 weapp 单测、coverage、lint/build、本地栈、路由和截图验证 |
+| `infoq-frontend-verify` | 前端验证闭环 | React/Vue 管理端 单测、coverage、lint/build、本地栈、路由和截图验证 |
 | `infoq-data-ops` | 数据运维治理 | SQL 增量脚本、数据修复、迁移、MySQL/Redis 只读诊断、回滚脚本和一致性核对 |
 | `infoq-admin-e2e` | 管理端 E2E | 测试矩阵、真实验证码登录、动态路由 smoke、CRUD 模式、测试数据和 cleanup |
 | `infoq-admin-ops` | 管理端真实操作 | 用户、角色、菜单、字典、参数、公告、OSS、定时任务、权限巡检和页面操作门禁 |
 | `infoq-browser-automate` | 通用浏览器执行器 | `playwright-cli` 页面流转、token 注入、截图、console/pageerror 证据 |
 | `infoq-component-reference` | 组件库 API 参考 | Ant Design / Element Plus 组件选型、官方 API 核验、版本兼容性 |
-| `infoq-release-ops` | 发布与版本操作 | 版本升级、package / 小程序 manifest 字段同步、Docker tag、发布文档、发布前检查 |
+| `infoq-release-ops` | 发布与版本操作 | 版本升级、后端 revision、React/Vue package 字段同步、Docker tag、发布文档、发布前检查 |
 | `infoq-deploy-verify` | 部署验证闭环 | WSL2 Docker CE、macOS Colima、Linux Docker CE 全栈部署、nginx 网关、容器 smoke 和部署阻断收口 |
 
 ## 4. 浏览器 skill 的当前真值
@@ -110,7 +110,6 @@ node .codex/skills/infoq-delivery-workflow/scripts/openspec_check.mjs <change-id
 | --- | --- | --- |
 | `.codex/lib/skill_runtime.mjs` | repo root 解析、`doc/tmp/` 路径、命令执行、进程管理、HTTP/文件辅助等通用运行时能力 | 多数 repo-level skills 与脚本 |
 | `.codex/lib/admin_dev_stack.mjs` | 本地 admin backend + frontend 栈的启动、停止、状态文件、日志与端口收口管理 | `infoq-frontend-verify` 的 `start_admin_dev_stack.mjs` / `stop_admin_dev_stack.mjs`、`infoq-admin-e2e` |
-| `.codex/lib/weapp_smoke.mjs` | weapp 构建、backend 健康探测、WeChat DevTools smoke runner 编排和运行态状态记录 | `infoq-frontend-verify` 的 `run_weapp_smoke.mjs` |
 
 维护约束：
 
@@ -131,13 +130,13 @@ node .codex/skills/infoq-admin-e2e/scripts/validate-case-matrix.mjs doc/test/fro
 node .codex/skills/infoq-admin-e2e/scripts/captcha_login.mjs --backend-url http://127.0.0.1:8080 --print-token
 node .codex/skills/infoq-admin-e2e/scripts/run_admin_e2e.mjs --client vue
 node .codex/skills/infoq-admin-e2e/scripts/run_admin_e2e.mjs --client react
-node .codex/skills/infoq-admin-e2e/scripts/run_admin_e2e.mjs --client react-pro
+node .codex/skills/infoq-admin-e2e/scripts/run_admin_e2e.mjs --client react
 node .codex/skills/infoq-admin-e2e/scripts/run_notice_crud_e2e.mjs --client vue
 node .codex/skills/infoq-admin-e2e/scripts/run_notice_crud_e2e.mjs --client react
-node .codex/skills/infoq-admin-e2e/scripts/run_notice_crud_e2e.mjs --client react-pro
+node .codex/skills/infoq-admin-e2e/scripts/run_notice_crud_e2e.mjs --client react
 node .codex/skills/infoq-admin-e2e/scripts/run_admin_crud_e2e.mjs --client vue
 node .codex/skills/infoq-admin-e2e/scripts/run_admin_crud_e2e.mjs --client react
-node .codex/skills/infoq-admin-e2e/scripts/run_admin_crud_e2e.mjs --client react-pro
+node .codex/skills/infoq-admin-e2e/scripts/run_admin_crud_e2e.mjs --client react
 ```
 
 说明：
@@ -149,20 +148,18 @@ node .codex/skills/infoq-admin-e2e/scripts/run_admin_crud_e2e.mjs --client react
 - `run_admin_e2e.mjs` 默认在完成、失败或中断后停止本次 skill 启动的栈；只有成功且需要保留联调进程时显式传 `--keep-stack-after`，失败或中断仍会关闭 owned 进程。
 - `run_notice_crud_e2e.mjs` 仅用于已授权的 `application-local.yml` 测试数据库，执行公告 UI 新增/查询/编辑/删除，并用 API 与 MySQL 直连只读查询做分步一致性核对；cleanup 只处理当前精确 `e2e_` 标题。
 - `run_admin_crud_e2e.mjs` 仅用于已授权的 `application-local.yml` 测试数据库，默认覆盖 `role,user,menu,dept,post,dict,config,notice,client,invite,ossConfig,job,online`，执行 UI 新增/查询/编辑/删除或模块可用的选择删除/行删除入口，并用 API 与 MySQL 直连只读查询做分步一致性核对；`online` 会创建当前 run 专属 `e2e_` 用户会话并只强退该会话；cleanup 只处理当前 run 的精确 `e2e_` 数据。
-- 管理端 E2E 栈状态按 client 稳定写入 `doc/tmp/infoq-admin-e2e/stack/<vue|react|react-pro>/state.json`，断开后下一次运行会先清理未标记 `keepAlive` 的旧状态。
+- 管理端 E2E 栈状态按 client 稳定写入 `doc/tmp/infoq-admin-e2e/stack/<vue|react|react>/state.json`，断开后下一次运行会先清理未标记 `keepAlive` 的旧状态。
 - 写入型 CRUD、导出、批量操作和权限矩阵必须先定义测试数据、cleanup 和危险动作门禁。
 
 ## 10. 前端验证
 
-React / Vue admin 与 weapp 的运行态、单测、coverage、lint/build 都统一使用 `infoq-frontend-verify`。
+React / Vue admin 的运行态、单测、coverage、lint/build 都统一使用 `infoq-frontend-verify`。
 
 常用命令：
 
 ```bash
 node .codex/skills/infoq-frontend-verify/scripts/start_admin_dev_stack.mjs --client vue
 node .codex/skills/infoq-frontend-verify/scripts/start_admin_dev_stack.mjs --client react
-node .codex/skills/infoq-frontend-verify/scripts/run_weapp_smoke.mjs --client vue --suite smoke
-node .codex/skills/infoq-frontend-verify/scripts/run_weapp_smoke.mjs --client react --suite smoke
 ```
 
 真实验证码登录、OCR 和动态路由 smoke 交给 `infoq-admin-e2e`；`infoq-frontend-verify` 只保留快速登录态诊断和前端运行态验证。
@@ -196,16 +193,16 @@ node .codex/skills/infoq-backend-verify/scripts/run_cluster_smoke.mjs
 
 ## 13. 部署验证
 
-当任务要求“在 WSL2 Debian 部署项目”“在 macOS Colima 部署项目”“在 Linux Docker CE 部署项目”“验证部署文档和脚本”“MySQL/Redis 用 Docker 安装”“容器部署失败排查”或“确认 nginx / Vue / React / React Pro / backend 是否可访问”时，使用 `infoq-deploy-verify`。
+当任务要求“在 WSL2 Debian 部署项目”“在 macOS Colima 部署项目”“在 Linux Docker CE 部署项目”“验证部署文档和脚本”“MySQL/Redis 用 Docker 安装”“容器部署失败排查”或“确认 nginx / Vue / React / backend 是否可访问”时，使用 `infoq-deploy-verify`。
 
 默认职责：
 
 - 使用 `script/bin/infoq.sh deploy` 部署后端、MySQL、Redis、MinIO。
-- 使用 `script/bin/deploy-frontend.sh deploy` 部署 Vue、React、React Pro 和 `nginx-web`。
+- 使用 `script/bin/deploy-frontend.sh deploy` 部署 Vue、React、React 和 `nginx-web`。
 - 默认只使用免费商用运行时基线：WSL2 内 Docker CE、macOS Colima、原生 Linux Docker CE；不默认使用 Docker Desktop。
 - 默认把 WSL2/Linux 部署根目录放在 Linux 文件系统 `/infoq`，macOS Colima 默认使用 `$HOME/infoq`，避免 WSL DrvFS 和 Colima mount 问题。
 - 执行 deploy 前提醒并确认 `/tmp/infoq-deploy` 与 `${INFOQ_DEPLOY_ROOT}/server/temp` 已存在；WSL2/Linux 默认是 `/infoq/server/temp`，权限允许时先 `mkdir -p`，权限不足时请用户在服务器创建后继续。
-- 使用 `curl --noproxy '*'` 验证 backend readiness、`/prod-api`、`/vue/`、`/react/`、`/react-pro/` 和 `9091/9092/9093`。
+- 使用 `curl --noproxy '*'` 验证 backend readiness、`/prod-api`、`/vue/`、`/react/`、`/react/` 和 `9091/9092/9093`。
 - 证据写入 `doc/tmp/deploy-wsl2/` 或 `doc/tmp/infoq-deploy-verify/<run-id>/`。
 - 遇到 CRLF、Docker mirror、Corepack pnpm 签名、Debian 13 JDK17、WSL keepalive 等问题时显式记录 blocker 或修复建议。
 

@@ -1,6 +1,6 @@
 ---
 name: infoq-deploy-verify
-description: 在本仓库执行可复现的本地、WSL2、macOS 或 Linux Docker Compose 部署验证，覆盖免费商用容器运行时基线：WSL2 内 Docker CE、macOS Colima、原生 Linux Docker CE，以及 Docker MySQL/Redis/MinIO、后端 script/bin/infoq.sh、前端 script/bin/deploy-frontend.sh、nginx 网关、容器健康检查、localhost smoke、日志证据和常见阻断处理。适用于用户要求部署项目、验证部署文档或脚本、在 WSL2 Debian/macOS Colima/Linux Docker CE 中拉起完整栈、排查容器部署失败、确认 Vue/React/React Pro/nginx/backend 是否可访问，或沉淀部署验证结论。
+description: 在本仓库执行可复现的本地、WSL2、macOS 或 Linux Docker Compose 部署验证，覆盖免费商用容器运行时基线：WSL2 内 Docker CE、macOS Colima、原生 Linux Docker CE，以及 Docker MySQL/Redis/MinIO、后端 script/bin/infoq.sh、前端 script/bin/deploy-frontend.sh、nginx 网关、容器健康检查、localhost smoke、日志证据和常见阻断处理。适用于用户要求部署项目、验证部署文档或脚本、在 WSL2 Debian/macOS Colima/Linux Docker CE 中拉起完整栈、排查容器部署失败、确认 Vue/React/nginx/backend 是否可访问，或沉淀部署验证结论。
 ---
 
 # InfoQ 部署验证
@@ -17,7 +17,7 @@ description: 在本仓库执行可复现的本地、WSL2、macOS 或 Linux Docke
 6. 目录前置提醒：在执行任何 `deploy` 前，先明确提醒并确认服务器已存在 `/tmp/infoq-deploy` 与 `${INFOQ_DEPLOY_ROOT}/server/temp`；WSL2/Linux 默认 `INFOQ_DEPLOY_ROOT=/infoq`，所以必须确认 `/infoq/server/temp`。macOS Colima 默认用 `$HOME/infoq`，除非用户明确配置 `/infoq` 为 Colima 可挂载路径。权限允许时执行 `mkdir -p /tmp/infoq-deploy "${INFOQ_DEPLOY_ROOT}/server/temp"`，权限不足时停止并请用户创建后继续。
 7. 一键部署：优先执行 `deploy/install.sh`，让脚本生成或复用 `deploy.env` 与 `credentials.txt`，并调用后端、前端和 nginx 部署脚本。
 8. 分段部署：仅在排查时直接执行 `script/bin/infoq.sh deploy` 与 `script/bin/deploy-frontend.sh deploy`；必须先加载同一个 `INFOQ_ENV_FILE`。
-9. smoke 验证：检查容器状态、backend readiness/liveness、nginx `/prod-api` 反代、`INFOQ_FRONTEND_TARGET=all` 的 `/vue/`、`/react/`、`/react-pro/` 或单前端目标的 `/`、`/console-oss/`、`/oss/minio/health/live`、目标直连端口、MySQL 初始化数据、OSS/管理员数据库同步和 Redis。
+9. smoke 验证：检查容器状态、backend readiness/liveness、nginx `/prod-api` 反代、`INFOQ_FRONTEND_TARGET=all` 的 `/vue/`、`/react/` 或单前端目标的 `/`、`/console-oss/`、`/oss/minio/health/live`、目标直连端口、MySQL 初始化数据、OSS/管理员数据库同步和 Redis。
 10. 证据收口：日志、curl 输出、Docker 状态和 blocker 都写入 `doc/tmp/deploy-wsl2/` 或更具体的 `doc/tmp/infoq-deploy-verify/<run-id>/`。
 11. 卸载验证：如任务涉及清理本地栈，优先执行 `deploy/uninstall.sh --dry-run` 验证计划；只有用户明确确认后才执行实际卸载，且 MySQL/Redis/MinIO 每项必须独立确认删除容器和数据目录。
 12. 差异审查：若修复脚本或 Dockerfile，执行 UTF-8 校验、`git diff --check`、必要的 OpenSpec/文档同步，再汇总 residual risk。
@@ -64,7 +64,6 @@ curl --noproxy '*' -i --max-time 15 http://127.0.0.1/prod-api/monitor/health/rea
 if [[ "${INFOQ_FRONTEND_TARGET}" == "all" ]]; then
   curl --noproxy '*' -sS -o /dev/null -w '%{http_code}\n' --max-time 15 http://127.0.0.1/vue/
   curl --noproxy '*' -sS -o /dev/null -w '%{http_code}\n' --max-time 15 http://127.0.0.1/react/
-  curl --noproxy '*' -sS -o /dev/null -w '%{http_code}\n' --max-time 15 http://127.0.0.1/react-pro/
 else
   curl --noproxy '*' -sS -o /dev/null -w '%{http_code}\n' --max-time 15 http://127.0.0.1/
 fi
@@ -74,16 +73,12 @@ case "${INFOQ_FRONTEND_TARGET}" in
   all)
     curl --noproxy '*' -sS -o /dev/null -w '%{http_code}\n' --max-time 15 http://127.0.0.1:9091/
     curl --noproxy '*' -sS -o /dev/null -w '%{http_code}\n' --max-time 15 http://127.0.0.1:9092/
-    curl --noproxy '*' -sS -o /dev/null -w '%{http_code}\n' --max-time 15 http://127.0.0.1:9093/
     ;;
   vue)
     curl --noproxy '*' -sS -o /dev/null -w '%{http_code}\n' --max-time 15 http://127.0.0.1:9091/
     ;;
   react)
     curl --noproxy '*' -sS -o /dev/null -w '%{http_code}\n' --max-time 15 http://127.0.0.1:9092/
-    ;;
-  react-pro)
-    curl --noproxy '*' -sS -o /dev/null -w '%{http_code}\n' --max-time 15 http://127.0.0.1:9093/
     ;;
 esac
 docker exec mysql mysql -uroot -p"${MYSQL_ROOT_PASSWORD}" -Nse 'SELECT COUNT(*) FROM infoq.sys_menu;'

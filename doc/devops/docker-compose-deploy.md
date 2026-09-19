@@ -39,7 +39,7 @@ chmod +x install.sh
 sudo env INFOQ_VERSION=<tag> INFOQ_FRONTEND_TARGET=all INFOQ_PUBLIC_BASE_URL=http://SERVER_IP ./install.sh
 ```
 
-`INFOQ_FRONTEND_TARGET` 是必填的前端安装目标，取值为 `react`、`react-pro`、`vue` 或 `all`。选择 `all` 时保留 `/vue/`、`/react/`、`/react-pro/` 三个网关入口；选择单个前端时只部署目标前端，并把管理端挂到网关根路径 `/`。
+`INFOQ_FRONTEND_TARGET` 是必填的前端安装目标，取值为 `react`、`react`、`vue` 或 `all`。选择 `all` 时保留 `/vue/`、`/react/`、`/react/` 三个网关入口；选择单个前端时只部署目标前端，并把管理端挂到网关根路径 `/`。
 
 安装脚本会创建或复用：
 
@@ -212,7 +212,7 @@ Elasticsearch cluster 固定为 `es01`、`es02`、`es03`：启用认证、HTTP T
 /infoq/nginx/log
 /infoq/vue/logs        # INFOQ_FRONTEND_TARGET=vue 或 all
 /infoq/react/logs      # INFOQ_FRONTEND_TARGET=react 或 all
-/infoq/react-pro/logs  # INFOQ_FRONTEND_TARGET=react-pro 或 all
+/infoq/react/logs  # INFOQ_FRONTEND_TARGET=react 或 all
 ```
 
 Redis 数据目录会同时挂载到容器内 `/redis/data` 和官方镜像默认的 `/data`。前者由 `script/docker/redis/conf/redis.conf` 使用，后者用于覆盖镜像声明的默认 volume，避免 Docker 在每次创建 Redis 容器时额外生成匿名卷。
@@ -282,13 +282,13 @@ bash script/bin/deploy-frontend.sh stop "${INFOQ_FRONTEND_TARGET}"
 
 前端访问方式：
 
-- `INFOQ_FRONTEND_TARGET=all`：`http://host/vue/`、`http://host/react/`、`http://host/react-pro/`
-- `INFOQ_FRONTEND_TARGET=react|react-pro|vue`：`http://host/`
+- `INFOQ_FRONTEND_TARGET=all`：`http://host/vue/`、`http://host/react/`、`http://host/react/`
+- `INFOQ_FRONTEND_TARGET=react|vue`：`http://host/`
 - MinIO Console：`http://host/console-oss/`
 - MinIO OSS：`http://host/oss/`
 - Vue 直连端口：`9091`
 - React 直连端口：`9092`
-- React Pro 直连端口：`9093`
+- React 直连端口：`9093`
 
 单前端部署只会启动并暴露目标前端对应的直连端口；`all` 才会同时暴露 `9091`、`9092`、`9093`。
 
@@ -296,7 +296,7 @@ bash script/bin/deploy-frontend.sh stop "${INFOQ_FRONTEND_TARGET}"
 
 - Vue：`/infoq/vue/logs`，仅 `vue` 或 `all` 目标创建
 - React：`/infoq/react/logs`，仅 `react` 或 `all` 目标创建
-- React Pro：`/infoq/react-pro/logs`，仅 `react-pro` 或 `all` 目标创建
+- React：`/infoq/react/logs`，仅 `react` 或 `all` 目标创建
 - 网关 Nginx：`/infoq/nginx/log`
 
 ## 4. 日常启动步骤
@@ -316,8 +316,8 @@ bash script/bin/deploy-frontend.sh start "${INFOQ_FRONTEND_TARGET}"
 
 启动完成后可访问：
 
-- `INFOQ_FRONTEND_TARGET=all`：`http://host/vue/`、`http://host/react/`、`http://host/react-pro/`
-- `INFOQ_FRONTEND_TARGET=react|react-pro|vue`：`http://host/`
+- `INFOQ_FRONTEND_TARGET=all`：`http://host/vue/`、`http://host/react/`、`http://host/react/`
+- `INFOQ_FRONTEND_TARGET=react|vue`：`http://host/`
 - `http://host/prod-api/`
 
 说明：
@@ -368,7 +368,7 @@ sudo env DOCKER_CONFIG="${DOCKER_CONFIG:-$HOME/.docker}" DOCKER_HOST="${DOCKER_H
 
 删除语义如下：
 
-- 选择删除应用时，始终删除 `infoq-admin`、`nginx-web`、`${INFOQ_DEPLOY_ROOT}/server` 和 `${INFOQ_DEPLOY_ROOT}/nginx`，并只删除 `INFOQ_FRONTEND_TARGET` 对应的前端容器与目录；`all` 目标才会删除 `infoq-frontend-vue`、`infoq-frontend-react`、`infoq-frontend-react-pro` 以及 `${INFOQ_DEPLOY_ROOT}/vue`、`${INFOQ_DEPLOY_ROOT}/react`、`${INFOQ_DEPLOY_ROOT}/react-pro`。
+- 选择删除应用时，始终删除 `infoq-admin`、`nginx-web`、`${INFOQ_DEPLOY_ROOT}/server` 和 `${INFOQ_DEPLOY_ROOT}/nginx`，并只删除 `INFOQ_FRONTEND_TARGET` 对应的前端容器与目录；`all` 目标才会删除 `infoq-frontend-vue`、`infoq-frontend-react`、`infoq-frontend-react` 以及 `${INFOQ_DEPLOY_ROOT}/vue`、`${INFOQ_DEPLOY_ROOT}/react`、`${INFOQ_DEPLOY_ROOT}/react`。
 - 选择删除 MySQL 时，会删除 `mysql` 容器和 `${INFOQ_DEPLOY_ROOT}/mysql`；选择保留时，容器和目录都不会被删除。
 - 选择删除 Redis 时，会删除 `redis` 容器和 `${INFOQ_DEPLOY_ROOT}/redis`；选择保留时，容器和目录都不会被删除。
 - 选择删除 MinIO 时，会删除 `minio` 容器和 `${INFOQ_DEPLOY_ROOT}/minio`；选择保留时，容器和目录都不会被删除。

@@ -6,19 +6,13 @@
 - 后端参考
 - 管理端前端参考
   - React Admin
-  - React Pro Admin
   - Vue Admin
-- 小程序前端参考
-  - React Weapp
-  - Vue Weapp
 - 基础设施与运维
 - 约定
 - 命令
   - Backend
   - React Admin
   - Vue Admin
-  - React Weapp
-  - Vue Weapp
 - 验证与交付
 
 ## 项目范围
@@ -27,11 +21,7 @@
 - 活跃工作区：
   - `infoq-scaffold-backend`
   - `infoq-scaffold-frontend-react`
-  - `infoq-scaffold-frontend-react-pro`
   - `infoq-scaffold-frontend-vue`
-  - `infoq-scaffold-frontend-weapp-react`
-  - `infoq-scaffold-frontend-weapp-vue`
-  - `infoq-scaffold-docs`
   - `openspec`
   - `script`
   - `sql`
@@ -40,11 +30,7 @@
   - `AGENTS.md`
   - `infoq-scaffold-backend/AGENTS.md`
   - `infoq-scaffold-frontend-react/AGENTS.md`
-  - `infoq-scaffold-frontend-react-pro/AGENTS.md`
   - `infoq-scaffold-frontend-vue/AGENTS.md`
-  - `infoq-scaffold-frontend-weapp-react/AGENTS.md`
-  - `infoq-scaffold-frontend-weapp-vue/AGENTS.md`
-  - `infoq-scaffold-docs/AGENTS.md`
 
 ## 后端参考
 
@@ -86,29 +72,6 @@
   - 处理 chunk warning 时，优先保留“按路由边界拆 + 按 rc 重模块拆”的思路，不要回到按 `antd/es/*` 或 `antd/lib/*` 细粒度手工拆包；旧策略容易触发 circular chunk warning。
   - 验证标准以 `pnpm run build:prod` 输出为准：既要避免 circular chunk warning，也要避免 `Some chunks are larger than 500 kB after minification`。
 
-### React Pro Admin
-
-- 关键目录：
-  - `infoq-scaffold-frontend-react-pro/src/pages`
-  - `infoq-scaffold-frontend-react-pro/src/components`
-  - `infoq-scaffold-frontend-react-pro/src/api`
-  - `infoq-scaffold-frontend-react-pro/src/utils`
-  - `infoq-scaffold-frontend-react-pro/config`
-  - `infoq-scaffold-frontend-react-pro/tests`
-- 关键文件：
-  - `infoq-scaffold-frontend-react-pro/package.json`
-  - `infoq-scaffold-frontend-react-pro/config/config.ts`
-  - `infoq-scaffold-frontend-react-pro/config/routes.ts`
-  - `infoq-scaffold-frontend-react-pro/src/app.tsx`
-  - `infoq-scaffold-frontend-react-pro/.env.development`
-  - `infoq-scaffold-frontend-react-pro/scripts/start-dev.mjs`
-  - `infoq-scaffold-frontend-react-pro/scripts/max.mjs`
-- 运行与部署真值：
-  - `pnpm run dev` 通过 `scripts/start-dev.mjs` 启动 Umi Max，默认端口 `80`，ready 后自动打开浏览器。
-  - `pnpm run build`、`pnpm run prepare`、`pnpm run preview`、`pnpm run analyze` 通过 `scripts/max.mjs` 进入 Umi Max，统一设置 `DID_YOU_KNOW=none`。
-  - 可用 `PORT` 或 `VITE_APP_PORT` 覆盖端口；可用 `INFOQ_REACT_PRO_OPEN=false`、`BROWSER=none` 或 `pnpm run dev -- --no-open` 禁止自动打开浏览器。
-  - Compose 部署路径是 `/react-pro/`，容器直连端口是 `9093`。
-
 ### Vue Admin
 
 - 关键目录：
@@ -127,41 +90,6 @@
   - `infoq-scaffold-frontend-vue/.env.development`
   - `infoq-scaffold-frontend-vue/tests/setup.ts`
 
-## 小程序前端参考
-
-### React Weapp
-
-- 关键目录：
-  - `infoq-scaffold-frontend-weapp-react/src/pages`
-  - `infoq-scaffold-frontend-weapp-react/src/components`
-  - `infoq-scaffold-frontend-weapp-react/src/api`
-  - `infoq-scaffold-frontend-weapp-react/src/store`
-  - `infoq-scaffold-frontend-weapp-react/src/utils`
-  - `infoq-scaffold-frontend-weapp-react/src/styles`
-  - `infoq-scaffold-frontend-weapp-react/tests`
-- 关键文件：
-  - `infoq-scaffold-frontend-weapp-react/package.json`
-  - `infoq-scaffold-frontend-weapp-react/config/index.ts`
-  - `infoq-scaffold-frontend-weapp-react/.env.development`
-  - `infoq-scaffold-frontend-weapp-react/project.config.json`
-
-### Vue Weapp
-
-- 关键目录：
-  - `infoq-scaffold-frontend-weapp-vue/src/pages`
-  - `infoq-scaffold-frontend-weapp-vue/src/components`
-  - `infoq-scaffold-frontend-weapp-vue/src/api`
-  - `infoq-scaffold-frontend-weapp-vue/src/store`
-  - `infoq-scaffold-frontend-weapp-vue/src/utils`
-  - `infoq-scaffold-frontend-weapp-vue/src/styles`
-  - `infoq-scaffold-frontend-weapp-vue/tests`
-- 关键文件：
-  - `infoq-scaffold-frontend-weapp-vue/package.json`
-  - `infoq-scaffold-frontend-weapp-vue/vite.config.ts`
-  - `infoq-scaffold-frontend-weapp-vue/.env.development`
-  - `infoq-scaffold-frontend-weapp-vue/src/manifest.json`
-  - `infoq-scaffold-frontend-weapp-vue/src/pages.json`
-
 ## 基础设施与运维
 
 - 脚本：
@@ -175,26 +103,6 @@
   - `script/docker/redis/conf/redis.conf`
 - SQL 初始化文件：
   - `sql/infoq_scaffold_2.0.0.sql`
-
-## 文档站参考
-
-- 正文真值源：
-  - `doc/README.md`
-  - `doc/guide/project-overview.md`
-  - `doc/guide/quick-start.md`
-  - `doc/backend/handbook.md`
-  - `doc/admin/handbook.md`
-  - `doc/weapp/handbook.md`
-  - `doc/devops/deploy-prerequisites.md`
-  - `doc/devops/docker-compose-deploy.md`
-  - `doc/devops/manual-deploy.md`
-  - `doc/collaboration/development-workflow.md`
-- 文档站工作区：
-  - `infoq-scaffold-docs/package.json`
-  - `infoq-scaffold-docs/site-map.mjs`
-  - `infoq-scaffold-docs/scripts/sync-from-root-doc.mjs`
-  - `infoq-scaffold-docs/scripts/check-links.mjs`
-  - `infoq-scaffold-docs/docs/.vitepress/config.mts`
 
 ## 约定
 
@@ -227,15 +135,6 @@
 - Lint：`cd infoq-scaffold-frontend-react && pnpm run lint`
 - 构建：`cd infoq-scaffold-frontend-react && pnpm run build:prod`
 
-### React Pro Admin
-
-- 安装：`cd infoq-scaffold-frontend-react-pro && pnpm install`
-- 开发：`cd infoq-scaffold-frontend-react-pro && pnpm run dev`
-- 测试：`cd infoq-scaffold-frontend-react-pro && pnpm run test`
-- 覆盖率：`cd infoq-scaffold-frontend-react-pro && pnpm run test:coverage`
-- Lint：`cd infoq-scaffold-frontend-react-pro && pnpm run lint`
-- 构建：`cd infoq-scaffold-frontend-react-pro && pnpm run build`
-
 ### Vue Admin
 
 - 安装：`cd infoq-scaffold-frontend-vue && pnpm install`
@@ -245,38 +144,6 @@
 - Lint：`cd infoq-scaffold-frontend-vue && pnpm run lint:eslint`
 - 构建：`cd infoq-scaffold-frontend-vue && pnpm run build:prod`
 
-### React Weapp
-
-- 安装：`cd infoq-scaffold-frontend-weapp-react && pnpm install`
-- 单测：`cd infoq-scaffold-frontend-weapp-react && pnpm run test`
-- 覆盖率：`cd infoq-scaffold-frontend-weapp-react && pnpm run test:coverage`
-- Lint：`cd infoq-scaffold-frontend-weapp-react && pnpm run lint`
-- 构建 dev 包：`cd infoq-scaffold-frontend-weapp-react && pnpm run build:weapp:dev`
-- 打开微信开发者工具 dev 包：`pnpm --dir infoq-scaffold-frontend-weapp-react build-open:weapp:dev`
-- 本地运行门禁：`cd infoq-scaffold-frontend-weapp-react && pnpm run verify:local`
-
-在 `build-open:weapp:dev` 之前，将 `infoq-scaffold-frontend-weapp-react/.env.development` 中 `TARO_APP_ID` 改为你的 AppID。
-
-### Vue Weapp
-
-- 安装：`cd infoq-scaffold-frontend-weapp-vue && pnpm install`
-- 类型检查：`cd infoq-scaffold-frontend-weapp-vue && pnpm run typecheck`
-- 单测：`cd infoq-scaffold-frontend-weapp-vue && pnpm run test`
-- 覆盖率：`cd infoq-scaffold-frontend-weapp-vue && pnpm run test:coverage`
-- 构建 dev 包：`cd infoq-scaffold-frontend-weapp-vue && pnpm run build:weapp:dev`
-- 打开微信开发者工具 dev 包：`pnpm --dir infoq-scaffold-frontend-weapp-vue build-open:weapp:dev`
-- 本地运行门禁：`cd infoq-scaffold-frontend-weapp-vue && pnpm run verify:local`
-
-在 `build-open:weapp:dev` 之前，将 `infoq-scaffold-frontend-weapp-vue/.env.development` 中 `TARO_APP_ID` 改为你的 AppID。
-
-### Docs Site
-
-- 安装：`cd infoq-scaffold-docs && pnpm install`
-- 同步：`cd infoq-scaffold-docs && pnpm run docs:sync`
-- 链接检查：`cd infoq-scaffold-docs && pnpm run docs:check-links`
-- 构建：`cd infoq-scaffold-docs && pnpm run build`
-- 本地预览：`cd infoq-scaffold-docs && pnpm run docs:preview`
-
 ## 验证与交付
 
 - 默认执行闭环：`main-flow verification -> targeted tests -> lint/build -> diff review`
@@ -285,6 +152,5 @@
 - 影响共享环境、数据或部署状态的破坏性/高风险操作必须显式确认
 - SQL、数据库、Redis、数据修复、迁移、测试数据维护和 API/UI/DB 一致性验证归属 `infoq-data-ops`
 - 后端运行时、登录、smoke 与单测验证归属 `infoq-backend-verify`
-- React/Vue admin 与 weapp 运行态、单测、coverage、lint/build 归属 `infoq-frontend-verify`
-- React Pro admin 当前先使用 `infoq-scaffold-frontend-react-pro` 工作区 package scripts 执行单测、lint、build 与运行态验证
+- React/Vue admin 运行态、单测、coverage、lint/build 归属 `infoq-frontend-verify`
 - 管理端真实验证码登录、动态路由 smoke、测试矩阵与 CRUD E2E 模式归属 `infoq-admin-e2e`

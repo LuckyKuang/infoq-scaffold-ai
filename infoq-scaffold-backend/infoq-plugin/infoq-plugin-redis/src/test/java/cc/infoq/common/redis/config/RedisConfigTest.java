@@ -14,6 +14,7 @@ import org.redisson.config.SingleServerConfig;
 import org.redisson.config.SubscriptionMode;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -73,15 +74,16 @@ class RedisConfigTest {
     }
 
     @Test
-    @DisplayName("redissonCustomizer: should throw on JDK17 when virtual threads are enabled")
-    void redissonCustomizerShouldThrowWhenVirtualThreadsEnabledOnJdk17() {
+    @DisplayName("redissonCustomizer: should support virtual threads on JDK21+")
+    void redissonCustomizerShouldSupportVirtualThreadsOnJdk21() {
         RedisConfig redisConfig = new RedisConfig();
         ReflectionTestUtils.setField(redisConfig, "redissonProperties", buildClusterProperties());
 
         Config config = new Config();
         try (MockedStatic<SpringUtils> springUtils = mockStatic(SpringUtils.class)) {
             springUtils.when(SpringUtils::isVirtual).thenReturn(true);
-            assertThrows(UnsupportedOperationException.class, () -> redisConfig.redissonCustomizer().customize(config));
+            // JDK 21+ 原生支持虚拟线程，不应该抛出异常
+            assertDoesNotThrow(() -> redisConfig.redissonCustomizer().customize(config));
         }
     }
 

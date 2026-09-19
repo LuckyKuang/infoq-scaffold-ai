@@ -4,13 +4,13 @@
 
 - `infoq-scaffold-frontend-vue`
 - `infoq-scaffold-frontend-react`
-- `infoq-scaffold-frontend-react-pro`
+- `infoq-scaffold-frontend-react`
 
 三边并不是三套完全无关的产品，而是共享同一套后端、同一套菜单权限和大部分业务模块，只是在技术栈、目录组织和页面实现方式上不同。
 
 ## 1. 共通机制
 
-无论是 Vue、React 还是 React Pro 管理端，都有下面几条共同约定。
+无论是 Vue、React 还是 React 管理端，都有下面几条共同约定。
 
 ### 1.1 登录与授权
 
@@ -45,9 +45,9 @@
 
 ## 2. 管理端差异
 
-| 维度 | Vue 管理端 | React 管理端 | React Pro 管理端 |
+| 维度 | Vue 管理端 | React 管理端 | React 管理端 |
 | --- | --- | --- | --- |
-| 工作区 | `infoq-scaffold-frontend-vue` | `infoq-scaffold-frontend-react` | `infoq-scaffold-frontend-react-pro` |
+| 工作区 | `infoq-scaffold-frontend-vue` | `infoq-scaffold-frontend-react` | `infoq-scaffold-frontend-react` |
 | UI 组件库 | Element Plus | Ant Design | Ant Design Pro / ProComponents |
 | 路由入口 | `src/router/index.ts` | `src/router/AppRouter.tsx` | `config/routes.ts` + `src/app.tsx` |
 | 动态路由转换 | Vue Router 原生路由对象 | `route-transform.ts` + `BackendRouteView.tsx` | 后端菜单到 ProLayout / Umi 路由适配 |
@@ -167,7 +167,7 @@
 - 统一错误提示
 - 文件下载
 
-## 5. React Pro 管理端
+## 5. React 管理端
 
 ### 5.1 关键目录
 
@@ -183,16 +183,16 @@
 ### 5.2 启动入口
 
 ```bash
-cd infoq-scaffold-frontend-react-pro
+cd infoq-scaffold-frontend-react
 pnpm install
 pnpm run dev
 ```
 
-React Pro 默认使用 `VITE_APP_PORT=80`，`pnpm run dev` 会在 Umi Max dev server ready 后自动打开浏览器。需要关闭自动打开时，执行 `pnpm run dev -- --no-open`。
+React 默认使用 `VITE_APP_PORT=80`，`pnpm run dev` 会在 Umi Max dev server ready 后自动打开浏览器。需要关闭自动打开时，执行 `pnpm run dev -- --no-open`。
 
 ### 5.3 部署入口
 
-Compose 部署中 React Pro 的网关路径是 `/react-pro/`，容器直连端口是 `9093`。它与 `/vue/`、`/react/` 共同使用 `/prod-api/` 访问后端。
+Compose 部署中 React 的网关路径是 `/react/`，容器直连端口是 `9093`。它与 `/vue/`、`/react/` 共同使用 `/prod-api/` 访问后端。
 
 ## 6. 如何新增一个后台页面
 
@@ -200,7 +200,7 @@ Compose 部署中 React Pro 的网关路径是 `/react-pro/`，容器直连端�
 
 1. 后端先补接口和权限。
 2. 如需出现在左侧菜单，补 `sys_menu` 数据或菜单管理配置。
-3. Vue 端在 `src/views/...` 新建页面，React 和 React Pro 端在 `src/pages/...` 新建页面。
+3. Vue 端在 `src/views/...` 新建页面，React 和 React 端在 `src/pages/...` 新建页面。
 4. 保证后端菜单里的 `component` 字段沿用现有路径约定，例如 `system/user/index`。
 5. 如果页面有表格、表单、导出、权限控制，复用当前请求层、字典能力和上传 / 下载工具。
 6. 跑对应单测和构建。
@@ -231,10 +231,10 @@ pnpm run lint
 pnpm run build:prod
 ```
 
-### React Pro 管理端
+### React 管理端
 
 ```bash
-cd infoq-scaffold-frontend-react-pro
+cd infoq-scaffold-frontend-react
 pnpm install
 pnpm run dev
 pnpm run test
@@ -247,7 +247,7 @@ pnpm run build
 
 ### 8.1 多个管理端默认端口相同
 
-Vue、React 和 React Pro 的 `.env.development` 默认都是 `VITE_APP_PORT=80`。如果你要同时跑多个 dev server，先改其中至少一个端口。
+Vue 和 React 的 `.env.development` 默认都是 `VITE_APP_PORT=80`。如果你要同时跑多个 dev server，先改其中至少一个端口。
 
 ### 8.2 登录失败但后端是正常的
 
@@ -271,5 +271,4 @@ Vue、React 和 React Pro 的 `.env.development` 默认都是 `VITE_APP_PORT=80`
 
 - 总览：[`project-overview.md`](../guide/project-overview.md)
 - 快速开始：[`quick-start.md`](../guide/quick-start.md)
-- 小程序：[`weapp-handbook.md`](../weapp/handbook.md)
 - FAQ：[`faq.md`](../guide/faq.md)

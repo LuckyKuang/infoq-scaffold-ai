@@ -13,30 +13,30 @@
     <description>infoq-scaffold-backend后台管理系统</description>
 
     <properties>
-        <revision>2.1.9</revision>
-        <spring-boot.version>3.5.16</spring-boot.version>
+        <revision>3.0.0</revision>
+        <spring-boot.version>4.1.1</spring-boot.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <java.version>17</java.version>
+        <java.version>21</java.version>
         <mybatis.version>3.5.19</mybatis.version>
-        <springdoc.version>2.8.17</springdoc.version>
+        <springdoc.version>3.1.1</springdoc.version>
         <therapi-javadoc.version>0.15.0</therapi-javadoc.version>
         <fastexcel.version>1.3.0</fastexcel.version>
-        <mybatis-plus.version>3.5.16</mybatis-plus.version>
+        <mybatis-plus.version>3.5.17</mybatis-plus.version>
         <p6spy.version>3.9.1</p6spy.version>
-        <hutool.version>5.8.46</hutool.version>
+        <hutool.version>5.8.47</hutool.version>
         <redisson.version>3.52.0</redisson.version>
         <lock4j.version>2.2.7</lock4j.version>
         <dynamic-ds.version>4.5.0</dynamic-ds.version>
-        <mapstruct-plus.version>1.5.0</mapstruct-plus.version>
+        <mapstruct-plus.version>1.5.1</mapstruct-plus.version>
         <mapstruct-plus.lombok.version>0.2.0</mapstruct-plus.lombok.version>
-        <lombok.version>1.18.46</lombok.version>
+        <lombok.version>1.18.36</lombok.version>
         <bouncycastle.version>1.84</bouncycastle.version>
         <!-- 离线IP地址定位库 -->
         <ip2region.version>3.3.7</ip2region.version>
         <oshi.version>7.2.1</oshi.version>
         <!-- OSS 配置 -->
-        <aws.sdk.version>2.45.1</aws.sdk.version>
+        <aws.sdk.version>2.31.13</aws.sdk.version>
         <!-- 可关闭中间件插件 -->
         <paho-mqtt.version>1.2.5</paho-mqtt.version>
         <elasticsearch-java.version>8.18.8</elasticsearch-java.version>
@@ -48,8 +48,8 @@
         <!-- 插件版本 -->
         <maven-jar-plugin.version>3.5.0</maven-jar-plugin.version>
         <maven-war-plugin.version>3.5.1</maven-war-plugin.version>
-        <maven-compiler-plugin.version>3.15.0</maven-compiler-plugin.version>
-        <maven-surefire-plugin.version>3.5.6</maven-surefire-plugin.version>
+        <maven-compiler-plugin.version>3.13.0</maven-compiler-plugin.version>
+        <maven-surefire-plugin.version>3.6.0</maven-surefire-plugin.version>
         <jacoco-maven-plugin.version>0.8.14</jacoco-maven-plugin.version>
         <flatten-maven-plugin.version>1.7.3</flatten-maven-plugin.version>
         <backend.unit.test.timeout.seconds>60</backend.unit.test.timeout.seconds>

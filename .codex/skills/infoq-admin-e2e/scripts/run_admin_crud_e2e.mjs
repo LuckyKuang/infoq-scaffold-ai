@@ -46,16 +46,6 @@ const CLIENTS = {
     frontendPortEnv: 'REACT_PORT',
     defaultFrontendPort: 5174
   },
-  'react-pro': {
-    shortName: 'react-pro',
-    label: 'admin-crud-react-pro',
-    frontendDirName: 'infoq-scaffold-frontend-react-pro',
-    frontendDisplayName: 'React Pro admin',
-    frontendLogPrefix: 'frontend-react-pro',
-    frontendPortFlag: '--react-pro-port',
-    frontendPortEnv: 'REACT_PRO_PORT',
-    defaultFrontendPort: 4184
-  }
 };
 
 const DEFAULTS = {
@@ -113,15 +103,14 @@ const SAFETY_GATES = [
 
 function printHelp() {
   console.log(`Usage:
-  node .codex/skills/infoq-admin-e2e/scripts/run_admin_crud_e2e.mjs --client <vue|react|react-pro> [options]
+  node .codex/skills/infoq-admin-e2e/scripts/run_admin_crud_e2e.mjs --client <vue|react> [options]
 
 Examples:
   node .codex/skills/infoq-admin-e2e/scripts/run_admin_crud_e2e.mjs --client react
   node .codex/skills/infoq-admin-e2e/scripts/run_admin_crud_e2e.mjs --client vue --modules post,notice
-  node .codex/skills/infoq-admin-e2e/scripts/run_admin_crud_e2e.mjs --client react-pro --no-start-stack --frontend-origin http://127.0.0.1:4184
 
 Options:
-  --client <vue|react|react-pro>    Required admin client.
+  --client <vue|react>    Required admin client.
   --modules <csv>                   Module keys. Default: ${SAFE_MODULE_ORDER.join(',')}.
   --backend-url <url>               Backend base URL. Default: ${DEFAULTS.backendUrl}
   --frontend-origin <url>           Frontend origin. Default follows --client.
@@ -272,7 +261,7 @@ function parseArgs(argv) {
   }
 
   if (!CLIENTS[options.client]) {
-    throw new Error('--client must be one of: vue, react, react-pro');
+    throw new Error('--client must be one of: vue, react');
   }
   if (options.profile !== 'local') {
     throw new Error('Admin CRUD E2E is restricted to --profile local because it writes to application-local.yml test data only.');
@@ -868,7 +857,7 @@ async function takeScreenshot(page, runDir, name) {
 }
 
 function makeTestData(client) {
-  const clientSlug = {vue: 'vue', react: 'react', 'react-pro': 'rp'}[client];
+  const clientSlug = {vue: 'vue', react: 'react'}[client];
   const unique = `${Date.now().toString(36)}_${crypto.randomBytes(3).toString('hex')}`;
   const shortUnique = unique.replace(/_/g, '').slice(-8);
   const base = (module, max = 48) => `e2e_${module}_a_${clientSlug}_${shortUnique}`.slice(0, max);

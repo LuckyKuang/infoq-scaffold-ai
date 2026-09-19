@@ -47,9 +47,7 @@ class JacksonConfigTest {
     @DisplayName("customizer: should set default timezone")
     void customizerShouldSetDefaultTimeZone() {
         JacksonConfig config = new JacksonConfig();
-        Jackson2ObjectMapperBuilder builder = new Jackson2ObjectMapperBuilder();
-
-        config.customizer().customize(builder);
+        Jackson2ObjectMapperBuilder builder = config.jackson2ObjectMapperBuilder();
         ObjectMapper mapper = builder.build();
 
         assertEquals(TimeZone.getDefault(), mapper.getSerializationConfig().getTimeZone());

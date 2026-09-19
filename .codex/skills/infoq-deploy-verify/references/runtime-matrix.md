@@ -74,7 +74,7 @@ docker compose version || docker-compose version
 - macOS Colima 未安装，且用户没有授权安装依赖。
 - Docker Compose 不可用。
 - `/tmp/infoq-deploy` 或 `${INFOQ_DEPLOY_ROOT}/server/temp` 无法创建。
-- 基础端口 `80/443/3306/6379/9000/9001/9090` 或 `INFOQ_FRONTEND_TARGET` 对应前端直连端口被占用且用户未授权调整；`all` 目标才要求 `9091/9092/9093` 都空闲。
+- 基础端口 `80/443/3306/6379/9000/9001/9090` 或 `INFOQ_FRONTEND_TARGET` 对应前端直连端口被占用且用户未授权调整；`all` 目标才要求 `9091/9092` 都空闲。
 
 ## 部署根目录规则
 

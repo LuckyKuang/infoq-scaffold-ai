@@ -16,7 +16,7 @@ import org.springdoc.core.properties.SpringDocConfigProperties;
 import org.springdoc.core.service.OpenAPIService;
 import org.springdoc.core.service.SecurityService;
 import org.springdoc.core.utils.PropertyResolverUtils;
-import org.springframework.boot.autoconfigure.web.ServerProperties;
+import org.springframework.core.env.Environment;
 
 import java.util.List;
 import java.util.Locale;
@@ -34,8 +34,8 @@ class SpringDocConfigTest {
     @Test
     @DisplayName("openApi: should build openapi info and security requirements from properties")
     void openApiShouldBuildInfoAndSecurity() {
-        ServerProperties serverProperties = new ServerProperties();
-        SpringDocConfig config = new SpringDocConfig(serverProperties);
+        Environment environment = mock(Environment.class);
+        SpringDocConfig config = new SpringDocConfig(environment);
         SpringDocProperties properties = new SpringDocProperties();
         SpringDocProperties.InfoProperties info = new SpringDocProperties.InfoProperties();
 
@@ -64,9 +64,9 @@ class SpringDocConfigTest {
     @Test
     @DisplayName("openApiCustomizer: should prepend context path only once")
     void openApiCustomizerShouldPrependContextPathOnlyOnce() {
-        ServerProperties serverProperties = new ServerProperties();
-        serverProperties.getServlet().setContextPath("/api");
-        SpringDocConfig config = new SpringDocConfig(serverProperties);
+        Environment environment = mock(Environment.class);
+        when(environment.getProperty("server.servlet.context-path", "")).thenReturn("/api");
+        SpringDocConfig config = new SpringDocConfig(environment);
         OpenAPI openAPI = new OpenAPI();
         openAPI.setPaths(new Paths().addPathItem("/system/role", new PathItem()));
 
@@ -80,8 +80,8 @@ class SpringDocConfigTest {
     @Test
     @DisplayName("openApiBuilder: should create OpenApiHandler instance")
     void openApiBuilderShouldCreateOpenApiHandler() {
-        ServerProperties serverProperties = new ServerProperties();
-        SpringDocConfig config = new SpringDocConfig(serverProperties);
+        Environment environment = mock(Environment.class);
+        SpringDocConfig config = new SpringDocConfig(environment);
 
         SecurityService securityService = mock(SecurityService.class);
         SpringDocConfigProperties springDocConfigProperties = new SpringDocConfigProperties();

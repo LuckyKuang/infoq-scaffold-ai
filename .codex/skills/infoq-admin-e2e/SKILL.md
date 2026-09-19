@@ -11,7 +11,7 @@ description: 维护并执行本仓库 React/Vue 管理端 E2E 自动化，覆盖
 
 1. 生成或校验管理端 Web 自动化测试矩阵，使用 `generate-case-matrix.mjs` 和 `validate-case-matrix.mjs`。
 2. 不关闭验证码、通过 `/auth/code` + OCR + `/auth/login` 获取真实 token，使用共享入口 `captcha_login.mjs`；需要继续巡检动态路由时使用 `run_admin_e2e.mjs`。
-3. 执行公告模块写入型 CRUD E2E 时，读取 `references/crud/*` 并使用 `run_notice_crud_e2e.mjs`；执行三端安全模块全量 CRUD E2E 时使用 `run_admin_crud_e2e.mjs`。
+3. 执行公告模块写入型 CRUD E2E 时，读取 `references/crud/*` 并使用 `run_notice_crud_e2e.mjs`；执行 React/Vue 安全模块全量 CRUD E2E 时使用 `run_admin_crud_e2e.mjs`。
 4. 通用浏览器执行器仍使用 `infoq-browser-automate`；本 skill 负责业务范围和管理端专属流程。
 
 ## 执行顺序
@@ -37,7 +37,6 @@ node .codex/skills/infoq-admin-e2e/scripts/validate-case-matrix.mjs doc/test/fro
 ```bash
 node .codex/skills/infoq-admin-e2e/scripts/run_admin_e2e.mjs --client vue
 node .codex/skills/infoq-admin-e2e/scripts/run_admin_e2e.mjs --client react
-node .codex/skills/infoq-admin-e2e/scripts/run_admin_e2e.mjs --client react-pro
 ```
 
 公告 CRUD E2E（仅限 `application-local.yml` 指向且已授权的测试数据库，测试数据使用 `e2e_` 前缀并自动 cleanup）：
@@ -45,7 +44,6 @@ node .codex/skills/infoq-admin-e2e/scripts/run_admin_e2e.mjs --client react-pro
 ```bash
 node .codex/skills/infoq-admin-e2e/scripts/run_notice_crud_e2e.mjs --client vue
 node .codex/skills/infoq-admin-e2e/scripts/run_notice_crud_e2e.mjs --client react
-node .codex/skills/infoq-admin-e2e/scripts/run_notice_crud_e2e.mjs --client react-pro
 ```
 
 全模块 CRUD E2E（仅限 `application-local.yml` 指向且已授权的测试数据库；默认覆盖 `role,user,menu,dept,post,dict,config,notice,client,invite,ossConfig,job,online`，使用 `e2e_` 隔离数据并自动 cleanup）：
@@ -53,7 +51,6 @@ node .codex/skills/infoq-admin-e2e/scripts/run_notice_crud_e2e.mjs --client reac
 ```bash
 node .codex/skills/infoq-admin-e2e/scripts/run_admin_crud_e2e.mjs --client vue
 node .codex/skills/infoq-admin-e2e/scripts/run_admin_crud_e2e.mjs --client react
-node .codex/skills/infoq-admin-e2e/scripts/run_admin_crud_e2e.mjs --client react-pro
 ```
 
 可用 `--modules role,user` 缩小模块范围；报告会同时输出高副作用安全门禁：不删除非 `e2e_` 数据、不清空日志、不触发定时任务“立即执行”、不触碰真实 OSS 对象上传/删除。在线强退只允许对当前 run 创建的 `e2e_` 用户会话执行；缺少隔离 fixture 时记录 blocker，不伪造通过。
@@ -68,7 +65,7 @@ node .codex/skills/infoq-admin-e2e/scripts/captcha_login.mjs --backend-url http:
 
 `run_admin_e2e.mjs` 默认只使用有管理端动态菜单的 route smoke 候选账号（`admin`、`dept`）；`captcha_login.mjs` 可继续通过 `--login-candidates` 做独立账号登录诊断。不要把无动态路由权限的账号作为 route smoke 默认候选，否则会出现登录成功但无路由可巡检的假失败。
 
-`run_admin_e2e.mjs` 默认会在完成、失败或中断后停止本 skill 启动的 backend/admin dev server；只有成功且显式传 `--keep-stack-after` 才保留联调栈，失败或中断仍必须收口。栈状态按 client 稳定记录在 `doc/tmp/infoq-admin-e2e/stack/<vue|react|react-pro>/state.json`，必须包含 pid、port、log、owned/reused 和 `running`/`stopped`/`failed`/`interrupted` 状态。
+`run_admin_e2e.mjs` 默认会在完成、失败或中断后停止本 skill 启动的 backend/admin dev server；只有成功且显式传 `--keep-stack-after` 才保留联调栈，失败或中断仍必须收口。栈状态按 client 稳定记录在 `doc/tmp/infoq-admin-e2e/stack/<vue|react>/state.json`，必须包含 pid、port、log、owned/reused 和 `running`/`stopped`/`failed`/`interrupted` 状态。
 
 `run_notice_crud_e2e.mjs` 会启动或复用 backend + 指定管理端、通过真实验证码登录、在 `/system/notice` 执行 UI 新增/查询/编辑/删除，并用 API 与 MySQL 直连只读查询核对每一步；失败时先尝试 API cleanup，必要时仅对当前精确 `e2e_` 标题执行 DB fallback cleanup。报告、截图、console、DB target、Java DB helper 和 cleanup 结果写入 `doc/tmp/infoq-admin-e2e/<run-id>/`。
 

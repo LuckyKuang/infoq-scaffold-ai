@@ -32,10 +32,10 @@
                 </exclusion>
             </exclusions>
         </dependency>
-        <!-- web 容器使用 undertow 性能更强 -->
+        <!-- web 容器使用 jetty (Spring Boot 4.x 不再提供 undertow starter) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-undertow</artifactId>
+            <artifactId>spring-boot-starter-jetty</artifactId>
         </dependency>
 
         <dependency>

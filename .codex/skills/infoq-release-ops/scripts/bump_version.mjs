@@ -67,29 +67,11 @@ if (!/^\d+\.\d+\.\d+$/.test(targetVersion)) {
 const rootPom = path.join(repoRoot, 'infoq-scaffold-backend', 'pom.xml');
 const bomPom = path.join(repoRoot, 'infoq-scaffold-backend', 'infoq-core', 'infoq-core-bom', 'pom.xml');
 const reactPackage = path.join(repoRoot, 'infoq-scaffold-frontend-react', 'package.json');
-const reactProPackage = path.join(repoRoot, 'infoq-scaffold-frontend-react-pro', 'package.json');
 const vuePackage = path.join(repoRoot, 'infoq-scaffold-frontend-vue', 'package.json');
-const weappReactPackage = path.join(repoRoot, 'infoq-scaffold-frontend-weapp-react', 'package.json');
-const weappVuePackage = path.join(repoRoot, 'infoq-scaffold-frontend-weapp-vue', 'package.json');
-const weappVueManifest = path.join(repoRoot, 'infoq-scaffold-frontend-weapp-vue', 'src', 'manifest.json');
-const docsPackage = path.join(repoRoot, 'infoq-scaffold-docs', 'package.json');
 const readmeFile = path.join(repoRoot, 'README.md');
 const deployDoc = path.join(repoRoot, 'doc', 'devops', 'docker-compose-deploy.md');
 const manualDeployDoc = path.join(repoRoot, 'doc', 'devops', 'manual-deploy.md');
 const systemdExample = path.join(repoRoot, 'doc', 'examples', 'systemd', 'infoq-admin.service');
-const docsSyncScript = path.join(repoRoot, 'infoq-scaffold-docs', 'scripts', 'sync-from-root-doc.mjs');
-const docsSiteMap = path.join(repoRoot, 'infoq-scaffold-docs', 'site-map.mjs');
-const docsSyncedDeployDoc = path.join(repoRoot, 'infoq-scaffold-docs', 'docs', 'devops', 'docker-compose-deploy.md');
-const docsSyncedManualDeployDoc = path.join(repoRoot, 'infoq-scaffold-docs', 'docs', 'devops', 'manual-deploy.md');
-const docsSyncedSystemdExample = path.join(
-  repoRoot,
-  'infoq-scaffold-docs',
-  'docs',
-  'public',
-  'examples',
-  'systemd',
-  'infoq-admin.service'
-);
 const composeFile = path.join(repoRoot, 'script', 'docker', 'docker-compose.yml');
 const backendDeployScript = path.join(repoRoot, 'script', 'bin', 'infoq.sh');
 const appYaml = path.join(repoRoot, 'infoq-scaffold-backend', 'infoq-admin', 'src', 'main', 'resources', 'application.yml');
@@ -175,18 +157,11 @@ const filesToCheck = [
   rootPom,
   bomPom,
   reactPackage,
-  reactProPackage,
   vuePackage,
-  weappReactPackage,
-  weappVuePackage,
-  weappVueManifest,
-  docsPackage,
   readmeFile,
   deployDoc,
   manualDeployDoc,
   systemdExample,
-  docsSyncScript,
-  docsSiteMap,
   composeFile,
   backendDeployScript,
   appYaml,
@@ -207,10 +182,6 @@ const deployIdExampleFiles = [
   [quartzBootstrapCoordinatorTest, 'Quartz bootstrap coordinator deploy-id assertions']
 ];
 
-const syncedDeployIdExampleFiles = [
-  [docsSyncedManualDeployDoc, 'docs site manual deploy doc deploy-id example'],
-  [docsSyncedSystemdExample, 'docs site systemd deploy-id example']
-];
 
 function assertFileExists(filePath) {
   if (!fs.existsSync(filePath)) {
@@ -307,12 +278,7 @@ for (const filePath of [
   rootPom,
   bomPom,
   reactPackage,
-  reactProPackage,
   vuePackage,
-  weappReactPackage,
-  weappVuePackage,
-  weappVueManifest,
-  docsPackage,
   readmeFile,
   deployDoc,
   manualDeployDoc,
@@ -324,13 +290,9 @@ for (const filePath of [
   quartzBootstrapCoordinatorTest,
   springDocConfigTest,
   springDocPropertiesTest,
-  docsSyncedDeployDoc,
-  docsSyncedManualDeployDoc,
-  docsSyncedSystemdExample
 ]) {
   console.log(`  - ${path.relative(repoRoot, filePath).replace(/\\/g, '/')}`);
 }
-console.log(`[version-bump] docs sync script: ${path.relative(repoRoot, docsSyncScript).replace(/\\/g, '/')}`);
 
 if (dryRun) {
   console.log('[version-bump] dry-run complete; no files modified.');
@@ -340,15 +302,7 @@ if (dryRun) {
 replaceOrThrow(rootPom, /<revision>[^<]+<\/revision>/, `<revision>${targetVersion}</revision>`, 'backend revision');
 replaceOrThrow(bomPom, /<revision>[^<]+<\/revision>/, `<revision>${targetVersion}</revision>`, 'bom revision');
 replaceOrThrow(reactPackage, /("version"\s*:\s*")[^"]+(")/, `$1${targetVersion}$2`, 'react package version');
-replaceOrThrow(reactProPackage, /("version"\s*:\s*")[^"]+(")/, `$1${targetVersion}$2`, 'react pro package version');
 replaceOrThrow(vuePackage, /("version"\s*:\s*")[^"]+(")/, `$1${targetVersion}$2`, 'vue package version');
-replaceOrThrow(weappReactPackage, /("version"\s*:\s*")[^"]+(")/, `$1${targetVersion}$2`, 'weapp react package version');
-replaceOrThrow(weappVuePackage, /("version"\s*:\s*")[^"]+(")/, `$1${targetVersion}$2`, 'weapp vue package version');
-updateJsonTopLevel(weappVueManifest, {
-  versionName: targetVersion,
-  versionCode: targetVersion.replace(/\./g, '')
-});
-replaceOrThrow(docsPackage, /("version"\s*:\s*")[^"]+(")/, `$1${targetVersion}$2`, 'docs package version');
 replaceOrThrow(readmeFile, /(!\[Version\]\(https:\/\/img\.shields\.io\/badge\/Version-)\d+\.\d+\.\d+(-[^)]*\))/, `$1${targetVersion}$2`, 'README version badge');
 replaceOrThrow(deployDoc, /(当前文档对应项目基线版本为 `)[^`]+(`。)/, `$1${targetVersion}$2`, 'deploy doc baseline version');
 for (const [filePath, description] of deployIdExampleFiles) {
@@ -357,40 +311,24 @@ for (const [filePath, description] of deployIdExampleFiles) {
 replaceOrThrow(composeFile, /(image:\s+infoq\/infoq-admin:)\d+\.\d+\.\d+/, `$1${targetVersion}`, 'admin image tag');
 replaceOrThrow(composeFile, /(image:\s+infoq\/infoq-frontend-vue:)\d+\.\d+\.\d+/, `$1${targetVersion}`, 'vue image tag');
 replaceOrThrow(composeFile, /(image:\s+infoq\/infoq-frontend-react:)\d+\.\d+\.\d+/, `$1${targetVersion}`, 'react image tag');
-replaceOrThrow(composeFile, /(image:\s+infoq\/infoq-frontend-react-pro:)\d+\.\d+\.\d+/, `$1${targetVersion}`, 'react pro image tag');
 replaceOrThrow(springDocConfigTest, /(info\.setVersion\(")[^"]+("\);)/g, `$1${targetVersion}$2`, 'springdoc config test setVersion');
 replaceOrThrow(springDocConfigTest, /(assertEquals\(")[^"]+(",\s*openAPI\.getInfo\(\)\.getVersion\(\)\);)/g, `$1${targetVersion}$2`, 'springdoc config test assert');
 replaceOrThrow(springDocPropertiesTest, /(info\.setVersion\(")[^"]+("\);)/g, `$1${targetVersion}$2`, 'springdoc properties test setVersion');
 replaceOrThrow(springDocPropertiesTest, /(assertEquals\(")[^"]+(",\s*properties\.getInfo\(\)\.getVersion\(\)\);)/g, `$1${targetVersion}$2`, 'springdoc properties test assert');
 
-await runCommandChecked(process.execPath, [docsSyncScript], {
-  cwd: repoRoot
-});
 
 assertContainsFixed(rootPom, `<revision>${targetVersion}</revision>`, 'backend revision');
 assertContainsFixed(bomPom, `<revision>${targetVersion}</revision>`, 'bom revision');
 assertContainsFixed(reactPackage, `"version": "${targetVersion}"`, 'react package version');
-assertContainsFixed(reactProPackage, `"version": "${targetVersion}"`, 'react pro package version');
 assertContainsFixed(vuePackage, `"version": "${targetVersion}"`, 'vue package version');
-assertContainsFixed(weappReactPackage, `"version": "${targetVersion}"`, 'weapp react package version');
-assertContainsFixed(weappVuePackage, `"version": "${targetVersion}"`, 'weapp vue package version');
-assertJsonTopLevel(weappVueManifest, 'versionName', targetVersion, 'weapp vue manifest versionName');
-assertJsonTopLevel(weappVueManifest, 'versionCode', targetVersion.replace(/\./g, ''), 'weapp vue manifest versionCode');
-assertContainsFixed(docsPackage, `"version": "${targetVersion}"`, 'docs package version');
 assertContainsFixed(readmeFile, `![Version](https://img.shields.io/badge/Version-${targetVersion}-`, 'README version badge');
 assertContainsFixed(deployDoc, `当前文档对应项目基线版本为 \`${targetVersion}\`。`, 'deploy doc baseline version');
 for (const [filePath, description] of deployIdExampleFiles) {
   assertDeployIdVersionExamples(filePath, description);
 }
-for (const [filePath, description] of syncedDeployIdExampleFiles) {
-  assertFileExists(filePath);
-  assertDeployIdVersionExamples(filePath, description);
-}
-assertContainsFixed(docsSyncedDeployDoc, `当前文档对应项目基线版本为 \`${targetVersion}\`。`, 'docs site deploy doc baseline version');
 assertContainsFixed(composeFile, `image: infoq/infoq-admin:${targetVersion}`, 'admin image tag');
 assertContainsFixed(composeFile, `image: infoq/infoq-frontend-vue:${targetVersion}`, 'vue image tag');
 assertContainsFixed(composeFile, `image: infoq/infoq-frontend-react:${targetVersion}`, 'react image tag');
-assertContainsFixed(composeFile, `image: infoq/infoq-frontend-react-pro:${targetVersion}`, 'react pro image tag');
 assertContainsFixed(springDocConfigTest, `info.setVersion("${targetVersion}");`, 'springdoc config test setVersion');
 assertContainsFixed(springDocConfigTest, `assertEquals("${targetVersion}", openAPI.getInfo().getVersion());`, 'springdoc config test assert');
 assertContainsFixed(springDocPropertiesTest, `info.setVersion("${targetVersion}");`, 'springdoc properties test setVersion');
@@ -398,6 +336,5 @@ assertContainsFixed(springDocPropertiesTest, `assertEquals("${targetVersion}", p
 
 console.log('[version-bump] version bump completed successfully.');
 console.log('[version-bump] suggested follow-up:');
-console.log(`  rg -n "${targetVersion.replace(/\./g, '\\.')}" README.md doc script infoq-scaffold-backend infoq-scaffold-frontend-react infoq-scaffold-frontend-react-pro infoq-scaffold-frontend-vue infoq-scaffold-frontend-weapp-react infoq-scaffold-frontend-weapp-vue infoq-scaffold-docs`);
 console.log('  node .codex/scripts/backend_mvn.mjs -- -pl infoq-plugin/infoq-plugin-doc -am -DskipTests=false -Dsurefire.failIfNoSpecifiedTests=false -Dtest=SpringDocConfigTest,SpringDocPropertiesTest test');
 console.log('  node .codex/scripts/backend_mvn.mjs -- -pl infoq-modules/infoq-system -am -DskipTests=false -Dsurefire.failIfNoSpecifiedTests=false -Dtest=QuartzBootstrapCoordinatorTest test');

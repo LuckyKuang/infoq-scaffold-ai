@@ -68,9 +68,9 @@
 ### 3.3 和前端的配套约定
 
 - 管理端默认使用 `VITE_APP_CLIENT_ID`。
-- 小程序端默认使用 `TARO_APP_CLIENT_ID`。
+- 管理端默认使用各自 `.env.development` 中的客户端配置。
 - 当前代码里登录请求默认 `grantType=password`。
-- 如果你改了 `sys_client`、`clientId`、加密开关或 RSA 密钥，前端和小程序也必须同步调整。
+- 如果你改了 `sys_client`、`clientId`、加密开关或 RSA 密钥，React 与 Vue 管理端也必须同步调整。
 
 ## 4. 菜单、权限与路由来源
 

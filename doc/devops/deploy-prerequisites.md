@@ -46,7 +46,7 @@
 
 - Docker Compose / 脚本化部署不要求宿主机安装 JDK 或 Maven；后端 Maven 打包在 Docker builder 镜像 `maven:3.9.12-eclipse-temurin-17` 内完成，最终运行镜像仍是 `bellsoft/liberica-openjdk-rocky:17.0.16-cds`。后端 Dockerfile 使用 BuildKit `RUN --mount`，因此 Docker CLI 必须支持 `docker buildx`：[infoq-scaffold-backend/infoq-admin/Dockerfile](../../infoq-scaffold-backend/infoq-admin/Dockerfile)
 - 手动部署或本机直接执行 Maven 构建时，仍需要宿主机 JDK 17 与 Maven 3.9+。
-- 前端本机开发、CI、docs 站点和 Docker 构建镜像统一固定基于 Node 24.18.0：[infoq-scaffold-frontend-vue/Dockerfile](../../infoq-scaffold-frontend-vue/Dockerfile) [infoq-scaffold-frontend-react/Dockerfile](../../infoq-scaffold-frontend-react/Dockerfile) [infoq-scaffold-frontend-react-pro/Dockerfile](../../infoq-scaffold-frontend-react-pro/Dockerfile)。npm 版本不作为仓库构建基线单独固定，包管理器遵循各工作区 `packageManager` 与 lockfile。
+- 前端本机开发、CI、docs 站点和 Docker 构建镜像统一固定基于 Node 24.18.0：[infoq-scaffold-frontend-vue/Dockerfile](../../infoq-scaffold-frontend-vue/Dockerfile) [infoq-scaffold-frontend-react/Dockerfile](../../infoq-scaffold-frontend-react/Dockerfile) [infoq-scaffold-frontend-react/Dockerfile](../../infoq-scaffold-frontend-react/Dockerfile)。npm 版本不作为仓库构建基线单独固定，包管理器遵循各工作区 `packageManager` 与 lockfile。
 - Docker Compose 默认依赖 MySQL 8.0、Redis 7.2、MinIO `RELEASE.2026-06-18T00-00-00Z`、Nginx 1.30：[script/docker/docker-compose.yml](../../script/docker/docker-compose.yml)
 
 ## 3. 端口与网络准备
@@ -59,7 +59,7 @@
 | 后端 `infoq-admin` | 9090 |
 | Vue 前端直连 | 9091 |
 | React 前端直连 | 9092 |
-| React Pro 前端直连 | 9093 |
+| React 前端直连 | 9093 |
 | MySQL | 3306 |
 | Redis | 6379 |
 | MinIO API | 9000 |
@@ -71,7 +71,7 @@
 
 - `INFOQ_FRONTEND_TARGET=vue`：只需要 `9091`
 - `INFOQ_FRONTEND_TARGET=react`：只需要 `9092`
-- `INFOQ_FRONTEND_TARGET=react-pro`：只需要 `9093`
+- `INFOQ_FRONTEND_TARGET=react`：只需要 `9093`
 - `INFOQ_FRONTEND_TARGET=all`：需要 `9091`、`9092`、`9093`
 
 默认对外用户入口优先走 Nginx：
@@ -120,7 +120,7 @@ WSL2 / 原生 Linux 默认就是 `/infoq/server/temp`；macOS Colima 默认就�
 /infoq/nginx/log
 /infoq/vue/logs        # INFOQ_FRONTEND_TARGET=vue 或 all
 /infoq/react/logs      # INFOQ_FRONTEND_TARGET=react 或 all
-/infoq/react-pro/logs  # INFOQ_FRONTEND_TARGET=react-pro 或 all
+/infoq/react/logs  # INFOQ_FRONTEND_TARGET=react 或 all
 ```
 
 ### 4.2 手动部署推荐目录
@@ -195,14 +195,14 @@ WSL2 / 原生 Linux 默认就是 `/infoq/server/temp`；macOS Colima 默认就�
 
 - Vue：[infoq-scaffold-frontend-vue/.env.production](../../infoq-scaffold-frontend-vue/.env.production)
 - React：[infoq-scaffold-frontend-react/.env.production](../../infoq-scaffold-frontend-react/.env.production)
-- React Pro：[infoq-scaffold-frontend-react-pro/.env.production](../../infoq-scaffold-frontend-react-pro/.env.production)
+- React：[infoq-scaffold-frontend-react/.env.production](../../infoq-scaffold-frontend-react/.env.production)
 
 ### 5.4 网关配置
 
 如果采用统一 Nginx 网关，需要确认：
 
-- `INFOQ_FRONTEND_TARGET=all` 时 `/vue/`、`/react/`、`/react-pro/` 分别指向 Vue、React、React Pro 静态资源
-- `INFOQ_FRONTEND_TARGET=react|react-pro|vue` 时 `/` 指向被选中的单个前端
+- `INFOQ_FRONTEND_TARGET=all` 时 `/vue/`、`/react/`、`/react/` 分别指向 Vue、React、React 静态资源
+- `INFOQ_FRONTEND_TARGET=react|vue` 时 `/` 指向被选中的单个前端
 - `/prod-api/` 反代到后端 `9090`
 - HTTPS 证书路径和域名配置正确
 

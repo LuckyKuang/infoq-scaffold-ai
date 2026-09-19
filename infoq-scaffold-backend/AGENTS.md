@@ -1,7 +1,7 @@
 # AGENTS.md
 |IMPORTANT: Prefer retrieval-led reasoning over pre-training-led reasoning for any project tasks. Read repository files before relying on framework pretraining data.
 |Scope:本文件适用于 `infoq-scaffold-backend` 及其子目录，用于把根规则收窄到 backend 语境。
-|Stack:Spring Boot 3.5.x|JDK 17|Maven multi-module|MyBatis-Plus|Spring Security
+|Stack:Spring Boot 4.1.x|JDK 21|Maven multi-module|MyBatis-Plus|Spring Security
 |Workspace Layout:infoq-admin|infoq-modules/infoq-system|infoq-plugin:*|infoq-core:{infoq-core-bom,infoq-core-common,infoq-core-data}
 |Backend Docs:infoq-scaffold-backend:{README.md,doc/README.md,doc/architecture.md,doc/data-flow.md}
 |Backend Module Docs:infoq-scaffold-backend:{infoq-admin/README.md,infoq-core/README.md,infoq-modules/README.md,infoq-plugin/README.md}

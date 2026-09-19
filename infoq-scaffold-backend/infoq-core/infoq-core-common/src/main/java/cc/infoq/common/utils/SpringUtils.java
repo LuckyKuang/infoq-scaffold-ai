@@ -2,7 +2,6 @@ package cc.infoq.common.utils;
 
 import cn.hutool.extra.spring.SpringUtil;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
-import org.springframework.boot.autoconfigure.thread.Threading;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
@@ -61,7 +60,8 @@ public final class SpringUtils extends SpringUtil {
     }
 
     public static boolean isVirtual() {
-        return Threading.VIRTUAL.isActive(getBean(Environment.class));
+        // Spring Boot 4.x: Virtual threads detection changed
+        return Thread.currentThread().isVirtual();
     }
 
 }

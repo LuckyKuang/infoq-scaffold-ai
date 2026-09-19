@@ -477,7 +477,7 @@ function dependenciesFor(moduleKey, routePath, source) {
   return [...dependencies];
 }
 
-function buildCase({source, menu, parent, routePath, component, clients, reactExists, reactProExists, vueExists, testFiles}) {
+function buildCase({source, menu, parent, routePath, component, clients, reactExists, vueExists, testFiles}) {
   const inheritedComponent = component || parent?.component || '';
   const moduleKey = menu.moduleKey || componentToModuleKey(inheritedComponent || routePath);
   const operation = operationFromPermission(menu.perms, menu.menu_name);
@@ -492,9 +492,6 @@ function buildCase({source, menu, parent, routePath, component, clients, reactEx
   if (menu.menu_type === 'C' && component) {
     if (!reactExists) {
       gaps.push('React 页面组件缺失');
-    }
-    if (!reactProExists) {
-      gaps.push('React Pro 页面组件缺失');
     }
     if (!vueExists) {
       gaps.push('Vue 页面组件缺失');
@@ -591,9 +588,6 @@ const FIXED_ROUTES = [
     menuName: '登录',
     routePath: '/login',
     component: 'login',
-    clientComponents: {
-      'react-pro': ['login', 'user/login/index']
-    }
   },
   {moduleKey: 'auth.register', menuName: '注册', routePath: '/register', component: 'register'},
   {moduleKey: 'auth.forgot-password', menuName: '忘记密码', routePath: '/forgot-password', component: 'forgot-password'},
@@ -609,22 +603,18 @@ function componentForClient(route, client) {
   return route.clientComponents?.[client] || route.component;
 }
 
-function buildFixedRouteCases(reactPagesDir, reactProPagesDir, vueViewsDir, reactTests, reactProTests, vueTests) {
+function buildFixedRouteCases(reactPagesDir, vueViewsDir, reactTests, vueTests) {
   return FIXED_ROUTES.map((route, index) => {
     const reactComponent = componentForClient(route, 'react');
-    const reactProComponent = componentForClient(route, 'react-pro');
     const vueComponent = componentForClient(route, 'vue');
     const reactExists = fileExistsAny(reactPagesDir, reactComponent, '.tsx');
-    const reactProExists = fileExistsAny(reactProPagesDir, reactProComponent, '.tsx');
     const vueExists = fileExistsAny(vueViewsDir, vueComponent, '.vue');
     const clients = [
       reactExists ? 'react' : '',
-      reactProExists ? 'react-pro' : '',
       vueExists ? 'vue' : ''
     ].filter(Boolean);
     const testFiles = [
       ...routeHasTests(reactComponent, route.moduleKey, reactTests),
-      ...routeHasTests(reactProComponent, route.moduleKey, reactProTests),
       ...routeHasTests(vueComponent, route.moduleKey, vueTests)
     ];
     return buildCase({
@@ -645,14 +635,13 @@ function buildFixedRouteCases(reactPagesDir, reactProPagesDir, vueViewsDir, reac
       component: route.component,
       clients,
       reactExists,
-      reactProExists,
       vueExists,
       testFiles
     });
   });
 }
 
-function buildMenuCases({menus, reactPagesDir, reactProPagesDir, vueViewsDir, reactTests, reactProTests, vueTests}) {
+function buildMenuCases({menus, reactPagesDir, vueViewsDir, reactTests, vueTests}) {
   const byId = new Map(menus.map((menu) => [String(menu.menu_id), menu]));
   const cases = [];
 
@@ -667,17 +656,14 @@ function buildMenuCases({menus, reactPagesDir, reactProPagesDir, vueViewsDir, re
     const routePath = buildRoutePath(routeSource, byId);
     const component = normalizeComponent(menuType === 'F' ? parent?.component : menu.component);
     const reactExists = component ? fileExists(reactPagesDir, component, '.tsx') : menuType === 'M';
-    const reactProExists = component ? fileExists(reactProPagesDir, component, '.tsx') : menuType === 'M';
     const vueExists = component ? fileExists(vueViewsDir, component, '.vue') : menuType === 'M';
     const clients = [
       reactExists ? 'react' : '',
-      reactProExists ? 'react-pro' : '',
       vueExists ? 'vue' : ''
     ].filter(Boolean);
     const moduleKey = componentToModuleKey(component || routePath);
     const testFiles = [
       ...routeHasTests(component, moduleKey, reactTests),
-      ...routeHasTests(component, moduleKey, reactProTests),
       ...routeHasTests(component, moduleKey, vueTests)
     ];
 
@@ -689,7 +675,6 @@ function buildMenuCases({menus, reactPagesDir, reactProPagesDir, vueViewsDir, re
       component,
       clients,
       reactExists,
-      reactProExists,
       vueExists,
       testFiles
     }));
@@ -711,7 +696,7 @@ function uniqueById(cases) {
   return [...seen.values()].sort((left, right) => left.id.localeCompare(right.id));
 }
 
-function collectGlobalGaps(cases, menus, reactComponents, reactProComponents, vueComponents) {
+function collectGlobalGaps(cases, menus, reactComponents, vueComponents) {
   const gaps = [];
   for (const item of cases) {
     for (const gap of item.gaps) {
@@ -749,11 +734,6 @@ function collectGlobalGaps(cases, menus, reactComponents, reactProComponents, vu
       gaps.push({type: 'react-page-without-menu', component, message: 'React 页面未直接匹配菜单组件'});
     }
   }
-  for (const component of reactProComponents) {
-    if (!menuComponents.has(component) && !isKnownNonMenuComponent(component)) {
-      gaps.push({type: 'react-pro-page-without-menu', component, message: 'React Pro 页面未直接匹配菜单组件'});
-    }
-  }
   for (const component of vueComponents) {
     if (!menuComponents.has(component) && !isKnownNonMenuComponent(component)) {
       gaps.push({type: 'vue-view-without-menu', component, message: 'Vue 页面未直接匹配菜单组件'});
@@ -769,7 +749,6 @@ function summarize(cases, gaps) {
     p1: cases.filter((item) => item.priority === 'P1').length,
     p2: cases.filter((item) => item.priority === 'P2').length,
     reactCases: cases.filter((item) => item.clients.includes('react')).length,
-    reactProCases: cases.filter((item) => item.clients.includes('react-pro')).length,
     vueCases: cases.filter((item) => item.clients.includes('vue')).length,
     sideEffectCases: cases.filter((item) => item.sideEffect).length,
     gaps: gaps.length,
@@ -800,7 +779,6 @@ function renderMarkdown(matrix) {
     `- P1：${matrix.summary.p1}`,
     `- P2：${matrix.summary.p2}`,
     `- React 适用用例：${matrix.summary.reactCases}`,
-    `- React Pro 适用用例：${matrix.summary.reactProCases}`,
     `- Vue 适用用例：${matrix.summary.vueCases}`,
     `- 副作用用例：${matrix.summary.sideEffectCases}`,
     `- 缺口数：${matrix.summary.gaps}`,
@@ -863,28 +841,23 @@ function main() {
   const options = parseArgs(args);
   const sqlDir = path.join(repoRoot, 'sql');
   const reactPagesDir = path.join(repoRoot, 'infoq-scaffold-frontend-react', 'src', 'pages');
-  const reactProPagesDir = path.join(repoRoot, 'infoq-scaffold-frontend-react-pro', 'src', 'pages');
   const vueViewsDir = path.join(repoRoot, 'infoq-scaffold-frontend-vue', 'src', 'views');
   const reactTestsDir = path.join(repoRoot, 'infoq-scaffold-frontend-react', 'tests');
-  const reactProTestsDir = path.join(repoRoot, 'infoq-scaffold-frontend-react-pro', 'tests');
   const vueTestsDir = path.join(repoRoot, 'infoq-scaffold-frontend-vue', 'tests');
 
   const sqlFiles = listFiles(sqlDir, (file) => /infoq_scaffold(_update_\d{8}|_2\.0\.0)\.sql$/u.test(path.basename(file)));
   const reactPages = listFiles(reactPagesDir, (file) => file.endsWith('.tsx') || file.endsWith('.ts'));
-  const reactProPages = listFiles(reactProPagesDir, (file) => file.endsWith('.tsx') || file.endsWith('.ts'));
   const vueViews = listFiles(vueViewsDir, (file) => file.endsWith('.vue') || file.endsWith('.ts'));
   const reactTests = listFiles(reactTestsDir, (file) => /\.(test|spec)\.(ts|tsx|js|jsx)$/u.test(file));
-  const reactProTests = listFiles(reactProTestsDir, (file) => /\.(test|spec)\.(ts|tsx|js|jsx)$/u.test(file));
   const vueTests = listFiles(vueTestsDir, (file) => /\.(test|spec)\.(ts|tsx|js|jsx)$/u.test(file));
 
   const menus = readMenuRows(sqlFiles);
-  const menuCases = buildMenuCases({menus, reactPagesDir, reactProPagesDir, vueViewsDir, reactTests, reactProTests, vueTests});
-  const fixedCases = buildFixedRouteCases(reactPagesDir, reactProPagesDir, vueViewsDir, reactTests, reactProTests, vueTests);
+  const menuCases = buildMenuCases({menus, reactPagesDir, vueViewsDir, reactTests, vueTests});
+  const fixedCases = buildFixedRouteCases(reactPagesDir, vueViewsDir, reactTests, vueTests);
   const cases = uniqueById([...fixedCases, ...menuCases]);
   const reactComponents = componentSet(reactPages, reactPagesDir, '.tsx');
-  const reactProComponents = componentSet(reactProPages, reactProPagesDir, '.tsx');
   const vueComponents = componentSet(vueViews, vueViewsDir, '.vue');
-  const gaps = collectGlobalGaps(cases, menus, reactComponents, reactProComponents, vueComponents);
+  const gaps = collectGlobalGaps(cases, menus, reactComponents, vueComponents);
 
   const matrix = {
     generatedAt: new Date().toISOString(),
@@ -892,10 +865,8 @@ function main() {
     sources: {
       sqlFiles: sqlFiles.map(rel),
       reactPages: reactPages.map(rel),
-      reactProPages: reactProPages.map(rel),
       vueViews: vueViews.map(rel),
       reactTests: reactTests.map(rel),
-      reactProTests: reactProTests.map(rel),
       vueTests: vueTests.map(rel)
     },
     summary: summarize(cases, gaps),

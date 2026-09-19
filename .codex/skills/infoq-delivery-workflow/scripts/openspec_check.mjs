@@ -119,9 +119,6 @@ const requiredImpactRows = [
   'infoq-scaffold-backend',
   'infoq-scaffold-frontend-react',
   'infoq-scaffold-frontend-vue',
-  'infoq-scaffold-frontend-weapp-react',
-  'infoq-scaffold-frontend-weapp-vue',
-  'infoq-scaffold-docs',
   'script / deploy'
 ];
 

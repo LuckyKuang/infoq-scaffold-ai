@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.context.MessageSourceResolvable;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
+import org.springframework.http.HttpInputMessage;
 import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.core.MethodParameter;
 import org.springframework.expression.ExpressionException;
@@ -120,8 +121,9 @@ class GlobalExceptionHandlerTest {
         Mockito.when(request.getRequestURI()).thenReturn("/api/body");
 
         ApiResult<Void> jsonParse = handler.handleJsonParseException(new JsonParseException(null, "invalid json"), request);
+        HttpInputMessage httpInputMessage = Mockito.mock(HttpInputMessage.class);
         ApiResult<Void> bodyParse = handler.handleHttpMessageNotReadableException(
-            new HttpMessageNotReadableException("bad body", new RuntimeException("root cause")), request);
+            new HttpMessageNotReadableException("bad body", httpInputMessage), request);
         ApiResult<Void> spel = handler.handleSpelException(
             new SpelEvaluationException(org.springframework.expression.spel.SpelMessage.TYPE_CONVERSION_ERROR, "spel"), request);
 

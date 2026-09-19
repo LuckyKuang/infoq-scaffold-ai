@@ -2,14 +2,14 @@
 
 ## 目标
 
-本文件定义 `react`、`react-pro`、`vue` 三个管理端的统一白盒测试用例口径。白盒测试覆盖源码层行为，不替代浏览器 E2E；浏览器 E2E 也不得替代缺失的白盒断言。
+本文件定义 `react`、`react`、`vue` 三个管理端的统一白盒测试用例口径。白盒测试覆盖源码层行为，不替代浏览器 E2E；浏览器 E2E 也不得替代缺失的白盒断言。
 
 ## 客户端与命令基线
 
 | client | 工作区 | 测试命令 | coverage | lint | build |
 | --- | --- | --- | --- | --- | --- |
 | `react` | `infoq-scaffold-frontend-react` | `pnpm --dir infoq-scaffold-frontend-react run test` | `pnpm --dir infoq-scaffold-frontend-react run test:coverage` | `pnpm --dir infoq-scaffold-frontend-react run lint` | `pnpm --dir infoq-scaffold-frontend-react run build:prod` |
-| `react-pro` | `infoq-scaffold-frontend-react-pro` | `pnpm --dir infoq-scaffold-frontend-react-pro run test` | `pnpm --dir infoq-scaffold-frontend-react-pro run test:coverage` | `pnpm --dir infoq-scaffold-frontend-react-pro run lint` | `pnpm --dir infoq-scaffold-frontend-react-pro run build` |
+| `react` | `infoq-scaffold-frontend-react` | `pnpm --dir infoq-scaffold-frontend-react run test` | `pnpm --dir infoq-scaffold-frontend-react run test:coverage` | `pnpm --dir infoq-scaffold-frontend-react run lint` | `pnpm --dir infoq-scaffold-frontend-react run build` |
 | `vue` | `infoq-scaffold-frontend-vue` | `pnpm --dir infoq-scaffold-frontend-vue run test:unit` | `pnpm --dir infoq-scaffold-frontend-vue run test:unit:coverage` | `pnpm --dir infoq-scaffold-frontend-vue run lint:eslint` | `pnpm --dir infoq-scaffold-frontend-vue run build:prod` |
 
 ## 分层用例

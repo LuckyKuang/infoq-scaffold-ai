@@ -9,7 +9,7 @@
 
 ## React / Ant Design
 
-React 与 React Pro 默认优先使用 Testing Library 和 Playwright 的 role/name 查询。禁止依赖 Ant Design 或 ProComponents 生成的动态 class、内部层级和图标顺序。
+React 与 React 默认优先使用 Testing Library 和 Playwright 的 role/name 查询。禁止依赖 Ant Design 或 ProComponents 生成的动态 class、内部层级和图标顺序。
 
 ## Vue / Element Plus
 

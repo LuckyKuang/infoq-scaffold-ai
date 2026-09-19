@@ -56,12 +56,12 @@ mkdir -p "${INFOQ_DEPLOY_ROOT}/server/ip2region/"
 ```bash
 mkdir -p "${INFOQ_DEPLOY_ROOT}/vue/"
 mkdir -p "${INFOQ_DEPLOY_ROOT}/react/"
-mkdir -p "${INFOQ_DEPLOY_ROOT}/react-pro/"
+mkdir -p "${INFOQ_DEPLOY_ROOT}/react/"
 
 # 前端日志存放目录
 mkdir -p "${INFOQ_DEPLOY_ROOT}/vue/logs/"
 mkdir -p "${INFOQ_DEPLOY_ROOT}/react/logs/"
-mkdir -p "${INFOQ_DEPLOY_ROOT}/react-pro/logs/"
+mkdir -p "${INFOQ_DEPLOY_ROOT}/react/logs/"
 ```
 
 赋予权限

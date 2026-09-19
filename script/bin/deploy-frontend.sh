@@ -16,39 +16,36 @@ COMPOSE_CMD=()
 
 usage() {
   cat <<'EOF'
-用法: bash script/bin/deploy-frontend.sh {prepare|build|deploy|start|stop|restart|status|logs} [vue|react|react-pro|nginx|all]
+用法: bash script/bin/deploy-frontend.sh {prepare|build|deploy|start|stop|restart|status|logs} [vue|react|nginx|all]
 
 命令说明:
   prepare   创建目标前端与网关所需宿主机目录，并生成 nginx.conf
-  build     构建目标前端镜像；目标为 all 时构建 Vue、React 与 React Pro
+  build     构建目标前端镜像；目标为 all 时构建 Vue 与 React
   deploy    prepare + build + 启动目标前端与 nginx-web
   start     启动目标前端与 nginx-web
   stop      停止目标前端与 nginx-web
   restart   重启目标前端与 nginx-web
   status    查看目标前端与 nginx-web 服务状态
-  logs      查看日志，默认 all，可选 vue|react|react-pro|nginx|all
+  logs      查看日志，默认 all，可选 vue|react|nginx|all
 EOF
 }
 
 normalize_frontend_target() {
   case "$1" in
-    vue|react|react-pro|all)
+    vue|react|all)
       printf '%s' "$1"
       ;;
     1)
       printf 'react'
       ;;
     2)
-      printf 'react-pro'
-      ;;
-    3)
       printf 'vue'
       ;;
-    4)
+    3)
       printf 'all'
       ;;
     *)
-      echo "[frontend] 无效前端目标: $1，请使用 1|2|3|4 或 vue|react|react-pro|all" >&2
+      echo "[frontend] 无效前端目标: $1，请使用 1|2|3 或 vue|react|all" >&2
       exit 1
       ;;
   esac
@@ -61,9 +58,9 @@ set_target_resources() {
 
   case "${FRONTEND_TARGET}" in
     all)
-      TARGET_FRONTEND_SERVICES=(infoq-frontend-vue infoq-frontend-react infoq-frontend-react-pro)
-      TARGET_FRONTEND_DIRS=(vue react react-pro)
-      TARGET_FRONTEND_LABEL="Vue、React、React Pro"
+      TARGET_FRONTEND_SERVICES=(infoq-frontend-vue infoq-frontend-react)
+      TARGET_FRONTEND_DIRS=(vue react)
+      TARGET_FRONTEND_LABEL="Vue、React"
       ;;
     vue)
       TARGET_FRONTEND_SERVICES=(infoq-frontend-vue)
@@ -74,11 +71,6 @@ set_target_resources() {
       TARGET_FRONTEND_SERVICES=(infoq-frontend-react)
       TARGET_FRONTEND_DIRS=(react)
       TARGET_FRONTEND_LABEL="React"
-      ;;
-    react-pro)
-      TARGET_FRONTEND_SERVICES=(infoq-frontend-react-pro)
-      TARGET_FRONTEND_DIRS=(react-pro)
-      TARGET_FRONTEND_LABEL="React Pro"
       ;;
     *)
       echo "[frontend] 无效前端目标: ${FRONTEND_TARGET}" >&2
@@ -185,7 +177,6 @@ compose() {
   local compose_security_token_secret="${SECURITY_TOKEN_SECRET:-frontend-compose-placeholder-token-secret-20260601}"
   local vue_context_path="${INFOQ_VUE_CONTEXT_PATH:-/vue/}"
   local react_context_path="${INFOQ_REACT_CONTEXT_PATH:-/react/}"
-  local react_pro_context_path="${INFOQ_REACT_PRO_CONTEXT_PATH:-/react-pro/}"
 
   case "${FRONTEND_TARGET:-all}" in
     vue)
@@ -193,9 +184,6 @@ compose() {
       ;;
     react)
       react_context_path="/"
-      ;;
-    react-pro)
-      react_pro_context_path="/"
       ;;
   esac
 
@@ -211,7 +199,6 @@ compose() {
     INFOQ_PUBLIC_BASE_URL="${INFOQ_PUBLIC_BASE_URL:-http://localhost}" \
     INFOQ_VUE_CONTEXT_PATH="${vue_context_path}" \
     INFOQ_REACT_CONTEXT_PATH="${react_context_path}" \
-    INFOQ_REACT_PRO_CONTEXT_PATH="${react_pro_context_path}" \
     SECURITY_TOKEN_SECRET="${compose_security_token_secret}" \
     "${COMPOSE_CMD[@]}" -f "${COMPOSE_FILE}" "$@"
 }
@@ -238,10 +225,6 @@ render_single_frontend_nginx_conf() {
     react)
       frontend_service="infoq-frontend-react"
       frontend_port="9092"
-      ;;
-    react-pro)
-      frontend_service="infoq-frontend-react-pro"
-      frontend_port="9093"
       ;;
     *)
       echo "[frontend] 单前端 nginx 配置不支持目标: ${FRONTEND_TARGET}" >&2
@@ -312,14 +295,6 @@ http {
         }
 
         location ^~ /react/ {
-            return 302 /;
-        }
-
-        location = /react-pro {
-            return 302 /;
-        }
-
-        location ^~ /react-pro/ {
             return 302 /;
         }
 
@@ -459,8 +434,8 @@ deploy_frontends() {
   compose up -d --no-deps --force-recreate nginx-web
   echo "[frontend] 部署完成"
   if [[ "${FRONTEND_TARGET}" == "all" ]]; then
-    echo "[frontend] 网关入口: ${public_base_url}/vue/、${public_base_url}/react/、${public_base_url}/react-pro/、${public_base_url}/console-oss/ 和 ${public_base_url}/oss/"
-    echo "[frontend] 直连端口: Vue=9091 React=9092 ReactPro=9093"
+    echo "[frontend] 网关入口: ${public_base_url}/vue/、${public_base_url}/react/、${public_base_url}/console-oss/ 和 ${public_base_url}/oss/"
+    echo "[frontend] 直连端口: Vue=9091 React=9092"
   else
     echo "[frontend] 网关入口: ${public_base_url}/、${public_base_url}/console-oss/ 和 ${public_base_url}/oss/"
     echo "[frontend] 已安装前端: ${TARGET_FRONTEND_LABEL}"
@@ -495,9 +470,6 @@ show_logs() {
       ;;
     react)
       compose logs -f infoq-frontend-react
-      ;;
-    react-pro)
-      compose logs -f infoq-frontend-react-pro
       ;;
     nginx)
       compose logs -f nginx-web

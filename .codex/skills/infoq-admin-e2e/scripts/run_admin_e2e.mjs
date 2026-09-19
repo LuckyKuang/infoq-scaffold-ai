@@ -47,15 +47,6 @@ const CLIENTS = {
     frontendPortEnv: 'REACT_PORT',
     defaultFrontendPort: 5174
   },
-  'react-pro': {
-    label: 'admin-e2e-react-pro',
-    frontendDirName: 'infoq-scaffold-frontend-react-pro',
-    frontendDisplayName: 'React Pro admin',
-    frontendLogPrefix: 'frontend-react-pro',
-    frontendPortFlag: '--react-pro-port',
-    frontendPortEnv: 'REACT_PRO_PORT',
-    defaultFrontendPort: 4184
-  }
 };
 
 const DEFAULTS = {
@@ -72,16 +63,15 @@ const DEFAULTS = {
 
 function printHelp() {
   console.log(`Usage:
-  node .codex/skills/infoq-admin-e2e/scripts/run_admin_e2e.mjs --client <vue|react|react-pro> [options]
+  node .codex/skills/infoq-admin-e2e/scripts/run_admin_e2e.mjs --client <vue|react> [options]
 
 Examples:
   node .codex/skills/infoq-admin-e2e/scripts/run_admin_e2e.mjs --client vue
   node .codex/skills/infoq-admin-e2e/scripts/run_admin_e2e.mjs --client react --route-limit 1
-  node .codex/skills/infoq-admin-e2e/scripts/run_admin_e2e.mjs --client react-pro --route-limit 1
   node .codex/skills/infoq-admin-e2e/scripts/run_admin_e2e.mjs --client vue --no-start-stack --backend-url http://127.0.0.1:8080 --frontend-origin http://127.0.0.1:5173
 
 Options:
-  --client <vue|react|react-pro>    Required admin client.
+  --client <vue|react>    Required admin client.
   --backend-url <url>               Backend base URL. Default: ${DEFAULTS.backendUrl}
   --frontend-origin <url>           Frontend origin. Default follows --client.
   --start-stack                     Start or reuse backend + frontend dev stack. Default.
@@ -256,7 +246,7 @@ function parseArgs(argv) {
   }
 
   if (!CLIENTS[options.client]) {
-    throw new Error('--client must be one of: vue, react, react-pro');
+    throw new Error('--client must be one of: vue, react');
   }
   if (!Number.isInteger(options.maxCaptchaAttempts) || options.maxCaptchaAttempts <= 0) {
     throw new Error('--max-captcha-attempts must be a positive integer.');

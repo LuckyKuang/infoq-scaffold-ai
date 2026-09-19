@@ -10,7 +10,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.env.Environment;
@@ -30,7 +29,7 @@ import java.util.Set;
 /**
  * Spring Security 引导配置
  */
-@AutoConfiguration(before = SecurityAutoConfiguration.class)
+@AutoConfiguration
 @EnableWebSecurity
 @EnableMethodSecurity
 @EnableConfigurationProperties({SecurityProperties.class, SecurityTokenProperties.class, SseProperties.class})
