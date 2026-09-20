@@ -10,6 +10,7 @@ import cc.infoq.common.oss.enums.AccessPolicyType;
 import cc.infoq.common.oss.factory.OssFactory;
 import cc.infoq.common.utils.MapstructUtils;
 import cc.infoq.common.utils.SpringUtils;
+import cc.infoq.system.TableInfoTestInitializer;
 import cc.infoq.system.domain.bo.SysOssBo;
 import cc.infoq.system.domain.entity.SysOss;
 import cc.infoq.system.domain.vo.SysOssVo;
@@ -60,6 +61,7 @@ class SysOssServiceImplTest {
 
     @BeforeAll
     static void initSpringContext() {
+        TableInfoTestInitializer.initSystemTableInfo();
         GenericApplicationContext context = new GenericApplicationContext();
         context.registerBean(Converter.class, () -> mock(Converter.class));
         context.registerBean(ObjectMapper.class, () -> new ObjectMapper());

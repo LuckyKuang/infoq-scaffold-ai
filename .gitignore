@@ -94,9 +94,31 @@ openspec/changes/*/
 !openspec/changes/rename-miniapp-grant-type/**
 !openspec/changes/consolidate-supported-workspaces/
 !openspec/changes/consolidate-supported-workspaces/**
+!openspec/changes/align-docs-with-sub2api/
+!openspec/changes/align-docs-with-sub2api/**
+!openspec/changes/align-jdk21-runtime/
+!openspec/changes/align-jdk21-runtime/**
+!openspec/changes/align-deploy-hub/
+!openspec/changes/align-deploy-hub/**
+!openspec/changes/align-apple-container/
+!openspec/changes/align-apple-container/**
+!openspec/changes/align-redisson-boot4/
+!openspec/changes/align-redisson-boot4/**
+!openspec/changes/align-mybatis-boot4/
+!openspec/changes/align-mybatis-boot4/**
 # 当前目录治理 change 的执行计划纳入版本控制，其他历史计划仍保持忽略。
 !doc/plan/
 doc/plan/*
 !doc/plan/2026-09-16-consolidate-supported-workspaces-plan.md
+!doc/plan/2026-09-19-docs-align-sub2api.md
+!doc/plan/2026-09-19-align-jdk21-runtime.md
+!doc/plan/2026-09-19-align-deploy-hub.md
+!doc/plan/2026-09-19-align-apple-container.md
+!doc/plan/2026-09-20-align-redisson-boot4.md
+!doc/plan/2026-09-20-align-mybatis-boot4.md
 
 settings.local.json
+
+# Local Compose secrets. Use deploy/.env.example as the template.
+script/docker/.env
+deploy/.env

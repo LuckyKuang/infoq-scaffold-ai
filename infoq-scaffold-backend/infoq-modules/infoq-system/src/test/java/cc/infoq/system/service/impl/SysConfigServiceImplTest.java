@@ -8,6 +8,7 @@ import cc.infoq.common.security.auth.LoginUserContext;
 import cc.infoq.common.security.auth.SecurityAuthorizationService;
 import cc.infoq.common.utils.MapstructUtils;
 import cc.infoq.common.utils.SpringUtils;
+import cc.infoq.system.TableInfoTestInitializer;
 import cc.infoq.system.domain.bo.SysConfigBo;
 import cc.infoq.system.domain.entity.SysConfig;
 import cc.infoq.system.domain.vo.SysConfigVo;
@@ -51,6 +52,7 @@ class SysConfigServiceImplTest {
 
     @BeforeEach
     void setUp() {
+        TableInfoTestInitializer.initSystemTableInfo();
         cacheManager = mock(CacheManager.class);
         cache = mock(Cache.class);
         GenericApplicationContext context = new GenericApplicationContext();

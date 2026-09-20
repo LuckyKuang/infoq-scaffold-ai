@@ -118,7 +118,7 @@ flowchart TB
 
 [SysAdminApplication](../infoq-admin/src/main/java/cc/infoq/admin/SysAdminApplication.java) 是唯一启动入口：
 
-- 使用 `@SpringBootApplication(scanBasePackages = "cc.infoq")` 收拢所有模块。
+- 使用 `@SpringBootApplication(scanBasePackages = "cc.infoq")` 收拢所有模块，并排除 `UserDetailsServiceAutoConfiguration`。
 - 应用成功启动后会输出 `infoq-scaffold-backend started successfully`。
 
 ### 3.2 配置分层

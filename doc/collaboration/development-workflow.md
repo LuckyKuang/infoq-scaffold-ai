@@ -64,10 +64,10 @@ repo-level 或高风险治理变更，除 active change 外，还应在 `doc/pla
 
 ## 5. Backend Maven 预检
 
-backend 工作区基线是 JDK 17 与 Maven 3.9.x。
+backend 工作区基线是 JDK 21 与 Maven 3.9.x。
 
-- 后端 Maven 命令优先使用 `node .codex/scripts/backend_mvn.mjs -- ...`，该入口优先读取 `.idea` 项目配置，并在配置不可用时搜索本机 JDK 17 与 Maven 3.9.x。
-- 如果必须直接使用 `mvn`，先确认 `java -version` 指向 Java 17，且 `mvn -version` 指向 Maven 3.9.x 与 Java 17。
+- 后端 Maven 命令优先使用 `node .codex/scripts/backend_mvn.mjs -- ...`，该入口优先读取 `.idea` 项目配置，并在配置不可用时搜索本机 JDK 21 与 Maven 3.9.x。
+- 如果必须直接使用 `mvn`，先确认 `java -version` 指向 Java 21，且 `mvn -version` 指向 Maven 3.9.x 与 Java 21。
 - 不允许在错误 JDK 下继续碰运气编译，然后把失败误判为代码问题。
 
 ## 6. skills 与 MCP 的配合

@@ -1,7 +1,7 @@
 # Docker Compose 部署说明
 
 本文档以当前仓库的 `script/docker/docker-compose.yml` 为基础部署基线，并说明可显式合并的 MQTT / Elasticsearch 生产 optional overlay。默认部署不会启动这两个可选中间件。
-当前文档对应项目基线版本为 `2.1.9`。
+当前文档对应项目基线版本为 `3.0.0`。
 
 如果你是第一次用 Docker Compose 部署本项目，建议先阅读教程，再回到本文查看脚本细节：
 
@@ -11,7 +11,7 @@
 
 默认宿主机根目录按运行时选择：WSL2 / 原生 Linux 使用 `/infoq`，macOS Colima 使用 `$HOME/infoq`。始终显式设置 `INFOQ_DEPLOY_ROOT`，不要依赖脚本自动判断。
 
-Docker Compose / 脚本化部署不要求宿主机安装 JDK 或 Maven。后端 prod 打包在 Docker builder 镜像 `maven:3.9.12-eclipse-temurin-17` 中执行，最终 `infoq-admin` 运行镜像保持 `bellsoft/liberica-openjdk-rocky:17.0.16-cds`。后端 Dockerfile 使用 BuildKit `RUN --mount`，因此 Docker CLI 必须支持 `docker buildx`。
+Docker Compose / 脚本化部署不要求宿主机安装 JDK 或 Maven。后端 prod 打包在 Docker builder 镜像 `maven:3.9.12-eclipse-temurin-21` 中执行，最终 `infoq-admin` 运行镜像保持 `bellsoft/liberica-openjdk-rocky:21.0.12-cds`。后端 Dockerfile 使用 BuildKit `RUN --mount`，因此 Docker CLI 必须支持 `docker buildx`。
 
 如果只是一次性本地验证，并且确认该路径能被当前 Docker runtime 稳定挂载，也可以显式设置为独立临时目录；WSL2 不要把 MySQL 数据目录放在 `/mnt/c`、`/mnt/d` 等 DrvFS 路径下。
 
@@ -220,7 +220,7 @@ Redis 数据目录会同时挂载到容器内 `/redis/data` 和官方镜像默�
 其中 `${INFOQ_DEPLOY_ROOT:-/infoq}/redis/conf/redis.conf` 会在 `prepare` 时由 `script/docker/redis/conf/redis.conf` 模板渲染，`requirepass` 使用 `deploy.env` 中的随机 `REDIS_PASSWORD`，不要提交渲染后的生产配置。
 其中 `${INFOQ_DEPLOY_ROOT:-/infoq}/server/config/application-prod.yml` 会在首次执行 `bash script/bin/infoq.sh prepare` 时自动生成一份 Docker Compose 默认模板，数据库账号和 Redis 密码通过环境变量注入，不在模板内硬编码。
 其中 `${INFOQ_DEPLOY_ROOT:-/infoq}/server/ip2region/ip2region_v6.xdb` 会在 `prepare` 时从 [script/docker/server/ip2region/ip2region_v6.xdb](../../script/docker/server/ip2region/ip2region_v6.xdb) 初始化；如果目标文件已存在，脚本会保留外置磁盘上的现有文件。`infoq-admin` 容器会把 `${INFOQ_DEPLOY_ROOT:-/infoq}/server/ip2region/` 只读挂载到 `/infoq/server/ip2region/`，并设置 `INFOQ_IP2REGION_V6_PATH=/infoq/server/ip2region/ip2region_v6.xdb`。
-`bash script/bin/infoq.sh deploy` 会在启动 MySQL / Redis 后等待依赖就绪，并校验基础表、Quartz 调度表、监控菜单、配置元数据列和 OAuth 表/授权类型；缺失时会按顺序补导 `sql/infoq_scaffold_2.0.0.sql` 与当前 `sql/infoq_scaffold_update_*.sql` 增量脚本。
+`bash script/bin/infoq.sh deploy` 会在启动 MySQL / Redis 后等待依赖就绪，并校验基础表、Quartz 调度表、监控菜单、配置元数据列和 OAuth 表/授权类型；缺失时会按顺序补导 `sql/infoq_scaffold_3.0.0.sql` 与当前 `sql/infoq_scaffold_update_*.sql` 增量脚本。
 `bash script/bin/infoq.sh deploy` 还会创建 MySQL 业务账号，更新 `sys_user.user_id=1` 的随机管理员账号密码，更新 `sys_oss_config` 中 `minio` 和 `image` 的 MinIO 凭据、bucket、endpoint、domain 和 HTTPS 标记，并确认 MinIO bucket 存在。
 当前仓库的 Quartz bootstrap `deploy-id` 由 `DEPLOY_ID` 注入。脚本化 `deploy` 在未显式设置 `DEPLOY_ID` 时会生成一次当前批次号并写入 `${INFOQ_DEPLOY_ROOT:-/infoq}/server/config/deploy-id`；同一批滚动发布的所有 backend 节点必须使用同一个值。
 

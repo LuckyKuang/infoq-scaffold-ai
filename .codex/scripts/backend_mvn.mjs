@@ -29,7 +29,7 @@ function usage() {
 
 Runs backend Maven with the repository environment policy:
   1. Prefer .idea project Maven/JDK settings.
-  2. Require JDK 17.
+  2. Require JDK 21.
   3. Require Maven 3.9.x.
   4. Fall back to local OS search when .idea settings are unusable.
 
@@ -273,14 +273,14 @@ function addMacJavaHomeCandidate(candidates) {
     return;
   }
 
-  const result = spawnSync('/usr/libexec/java_home', ['-v', '17'], {
+  const result = spawnSync('/usr/libexec/java_home', ['-v', '21'], {
     encoding: 'utf8',
     stdio: ['ignore', 'pipe', 'ignore'],
     windowsHide: true
   });
   const home = result.status === 0 ? result.stdout.trim() : '';
   if (home) {
-    candidates.push({home, source: 'macos java_home -v 17'});
+    candidates.push({home, source: 'macos java_home -v 21'});
   }
 }
 
@@ -312,8 +312,8 @@ function discoverJdkHomes(idea) {
 
   for (const dir of searchedDirs) {
     const base = normalizeToken(path.basename(dir));
-    if (base.includes('jdk17') || base.includes('java17') || base.includes('zulu17') || base.includes('temurin17')) {
-      candidates.push({home: dir, source: 'local JDK17 search'});
+    if (base.includes('jdk21') || base.includes('java21') || base.includes('zulu21') || base.includes('temurin21')) {
+      candidates.push({home: dir, source: 'local JDK21 search'});
     }
   }
 
@@ -333,7 +333,7 @@ function validateJdkCandidate(candidate) {
   }
 
   const {version, major} = parseJavaMajor(versionResult.output);
-  if (major !== 17) {
+  if (major !== 21) {
     return null;
   }
 
@@ -351,7 +351,7 @@ function resolveJdk(idea) {
       return validated;
     }
   }
-  throw new Error('No usable JDK 17 found from .idea settings, JAVA_HOME, PATH, or local search.');
+  throw new Error('No usable JDK 21 found from .idea settings, JAVA_HOME, PATH, or local search.');
 }
 
 function discoverMavenHomes(idea) {

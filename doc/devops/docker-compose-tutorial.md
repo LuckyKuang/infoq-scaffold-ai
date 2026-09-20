@@ -75,7 +75,7 @@ bash script/bin/deploy-frontend.sh deploy "${INFOQ_FRONTEND_TARGET}"
 
 除非正在排查脚本问题，否则不要用手写 `docker compose up --build` 替代脚本主流程。脚本会处理目录准备、配置模板、SQL 初始化校验、后端构建、前端顺序构建、Nginx 配置同步、前端容器启动后强制重建网关，以及容器启动。
 
-Docker Compose 教程路径不要求宿主机安装 JDK 或 Maven。后端 Maven prod 打包在 Docker builder 镜像 `maven:3.9.12-eclipse-temurin-17` 中完成，最终运行镜像保持 `bellsoft/liberica-openjdk-rocky:17.0.16-cds`；宿主机需要 Docker/Compose、`docker buildx` 以及安装脚本用到的基础命令。
+Docker Compose 教程路径不要求宿主机安装 JDK 或 Maven。后端 Maven prod 打包在 Docker builder 镜像 `maven:3.9.12-eclipse-temurin-21` 中完成，最终运行镜像保持 `bellsoft/liberica-openjdk-rocky:21.0.12-cds`；宿主机需要 Docker/Compose、`docker buildx` 以及安装脚本用到的基础命令。
 
 ## 2. 先确认运行时
 
@@ -515,7 +515,7 @@ docker rmi registry-1.docker.io/library/nginx:1.30.3
 同样适用于：
 
 ```text
-bellsoft/liberica-openjdk-rocky:17.0.16-cds
+bellsoft/liberica-openjdk-rocky:21.0.12-cds
 node:24.18.0
 nginx:1.30.3
 ```
@@ -542,7 +542,7 @@ nginx:1.30.3
 | React 在 `/react/` 下请求 `/logo.svg` 404 | 静态资源使用了根路径 | 使用 `VITE_APP_CONTEXT_PATH` 生成 `/react/logo.svg` |
 | WSL 容器反复重启 | WSL distro 退出导致 Docker daemon 生命周期不稳定 | 部署验证期保持一个 WSL 会话或 keepalive |
 
-当前 Compose 部署不依赖宿主机 JDK/Maven；Java 17 基线由后端 builder 和 runtime 镜像固定。只有手动部署或本机直接 Maven 构建时，才需要在宿主机准备 JDK 17 与 Maven 3.9+。
+当前 Compose 部署不依赖宿主机 JDK/Maven；后端 Dockerfile 使用 Temurin 21 builder 与 Liberica 21 runtime 镜像。只有手动部署或本机直接 Maven 构建时，才需要在宿主机准备 JDK 21 与 Maven 3.9+。
 
 ## 15. 生产化前的最小检查
 

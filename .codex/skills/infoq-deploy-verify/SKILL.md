@@ -13,7 +13,7 @@ description: 在本仓库执行可复现的本地、WSL2、macOS 或 Linux Docke
 2. 写清验收约定：功能范围、非目标、异常处理与 blocker、证据路径、回滚或停止条件。
 3. 只读探测：读取 `doc/devops/*`、`script/bin/infoq.sh`、`script/bin/deploy-frontend.sh`、`script/docker/docker-compose.yml`、目标工作区 `Dockerfile` 和当前容器/端口状态。
 4. 选择运行时：先读取 `references/runtime-matrix.md`，只在 WSL2 内 Docker CE、macOS Colima、原生 Linux Docker CE 三条免费商用路径中选择；如果检测到 Docker Desktop 或其他未确认许可的运行时，先停止并请用户确认是否允许。
-5. 环境预检：确认 Docker daemon、Compose、`docker buildx`、后端 Maven builder 镜像 `maven:3.9.12-eclipse-temurin-17`、后端运行镜像 `bellsoft/liberica-openjdk-rocky:17.0.16-cds`、Node/pnpm 镜像拉取能力、基础端口 `80/443/3306/6379/9000/9001/9090`、`INFOQ_FRONTEND_TARGET` 对应前端直连端口、`INFOQ_DEPLOY_ROOT`，以及安装后 `deploy.env` 中的随机凭据。Docker Compose 部署不要求宿主机安装 JDK 或 Maven。
+5. 环境预检：确认 Docker daemon、Compose、`docker buildx`、后端 Maven builder 镜像 `maven:3.9.12-eclipse-temurin-21`、后端运行镜像 `bellsoft/liberica-openjdk-rocky:21.0.12-cds`、Node/pnpm 镜像拉取能力、基础端口 `80/443/3306/6379/9000/9001/9090`、`INFOQ_FRONTEND_TARGET` 对应前端直连端口、`INFOQ_DEPLOY_ROOT`，以及安装后 `deploy.env` 中的随机凭据。Docker Compose 部署不要求宿主机安装 JDK 或 Maven。
 6. 目录前置提醒：在执行任何 `deploy` 前，先明确提醒并确认服务器已存在 `/tmp/infoq-deploy` 与 `${INFOQ_DEPLOY_ROOT}/server/temp`；WSL2/Linux 默认 `INFOQ_DEPLOY_ROOT=/infoq`，所以必须确认 `/infoq/server/temp`。macOS Colima 默认用 `$HOME/infoq`，除非用户明确配置 `/infoq` 为 Colima 可挂载路径。权限允许时执行 `mkdir -p /tmp/infoq-deploy "${INFOQ_DEPLOY_ROOT}/server/temp"`，权限不足时停止并请用户创建后继续。
 7. 一键部署：优先执行 `deploy/install.sh`，让脚本生成或复用 `deploy.env` 与 `credentials.txt`，并调用后端、前端和 nginx 部署脚本。
 8. 分段部署：仅在排查时直接执行 `script/bin/infoq.sh deploy` 与 `script/bin/deploy-frontend.sh deploy`；必须先加载同一个 `INFOQ_ENV_FILE`。
@@ -108,6 +108,7 @@ sudo env INFOQ_ENV_FILE=/etc/infoq-scaffold-ai/deploy.env bash deploy/uninstall.
 ## 护栏
 
 - 只默认使用免费商用基线运行时：WSL2 内 Docker CE、macOS Colima、原生 Linux Docker CE；检测到 Docker Desktop 时先停下说明其不在默认基线内，不要继续自动部署。
+- Apple `container` 不是默认免费商用基线。仅当用户明确要求时，才走 `deploy/apple-container.sh`。必须使用独立网络 `infoq-apple`、容器名前缀 `infoq-apple-*`、默认宿主机端口 `19090` 和数据目录 `$HOME/infoq-apple`；禁止停止、删除或改写 `sub2api-apple*` 或其他非本栈资源。官方后端 Dockerfile 的 BuildKit cache mount 不作为 Apple 默认构建路径。
 - 不要把 MySQL 数据目录放在 `/mnt/c/...`、`/mnt/d/...` 等 WSL DrvFS 路径；WSL2/Linux 默认用 Linux 文件系统 `/infoq`，macOS Colima 默认用 `$HOME/infoq`。
 - 每次执行部署前都要提醒并确认 `/tmp/infoq-deploy` 和 `${INFOQ_DEPLOY_ROOT}/server/temp` 已创建；WSL2/Linux 默认就是 `/infoq/server/temp`。不能创建时明确请用户在服务器上创建，不要跳过后继续部署。
 - WSL2 验证期间保持一个长生命周期 WSL 进程，避免 distro 自动退出导致 Docker daemon 和容器反复重启。
@@ -117,7 +118,7 @@ sudo env INFOQ_ENV_FILE=/etc/infoq-scaffold-ai/deploy.env bash deploy/uninstall.
 - Redis 容器若反复重启且日志出现 `Fatal error, can't open config file '/redis/config/redis.conf': Permission denied`，优先检查安装入口是否泄漏 `umask 077`，以及 `script/bin/infoq.sh` 渲染后的 `${INFOQ_DEPLOY_ROOT}/redis/conf/redis.conf` 是否对 Redis 容器用户可读；修复后复跑一键部署，不要删除 MySQL 数据目录。
 - 前端 Docker build 统一使用固定 `node:24.18.0` builder；若出现 Corepack/packageManager 激活失败，按工作区 `packageManager` 与 lockfile 定位，不要降回 Node 20/22 标记通过。npm 版本不作为本仓库 Docker 构建基线单独固定。
 - Docker 镜像源 EOF/short read 不是构建成功；可临时直拉 `registry-1.docker.io/...`，再 `docker tag` 为脚本需要的短名。确认短名与长名 `IMAGE ID` 一致且没有容器引用长名后，执行 `docker rmi registry-1.docker.io/...` 删除辅助 tag，并记录为环境风险。
-- Docker Compose 部署不依赖宿主机 JDK/Maven；Debian 13 apt 源是否提供 `openjdk-17-jdk` 不应阻断 Compose 部署。后端 Dockerfile 使用 BuildKit `RUN --mount`，宿主机 Docker CLI 必须支持 `docker buildx`。手动部署或本机 Maven 构建才需要宿主机 JDK 17 与 Maven 3.9+。
+- Docker Compose 部署不依赖宿主机 JDK/Maven；Debian 13 apt 源是否提供 `openjdk-21-jdk` 不应阻断 Compose 部署。后端 Dockerfile 使用 BuildKit `RUN --mount`，宿主机 Docker CLI 必须支持 `docker buildx`。手动部署或本机 Maven 构建才需要宿主机 JDK 21 与 Maven 3.9+。
 - 任何会删除 `/infoq`、Docker volume、容器数据、MySQL 数据或用户手工目录的操作都必须先确认。
 
 ## 参考

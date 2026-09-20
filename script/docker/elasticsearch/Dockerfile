@@ -1,4 +1,4 @@
-FROM maven:3.9.12-eclipse-temurin-17
+FROM maven:3.9.12-eclipse-temurin-21
 
 RUN apt-get update \
     && apt-get install --no-install-recommends -y ca-certificates curl openssl \

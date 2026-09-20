@@ -16,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.redisson.client.codec.StringCodec;
 import org.redisson.codec.CompositeCodec;
 import org.redisson.config.BaseConfig;
+import org.redisson.config.Config;
 import org.redisson.codec.TypedJsonJacksonCodec;
 import org.redisson.spring.starter.RedissonAutoConfigurationCustomizer;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,7 +62,8 @@ public class RedisConfig {
                 .setNettyThreads(redissonProperties.getNettyThreads())
                 // 缓存 Lua 脚本 减少网络传输(redisson 大部分的功能都是基于 Lua 脚本实现)
                 .setUseScriptCache(true)
-                .setCodec(codec);
+                .setCodec(codec)
+                .setNameMapper(new KeyPrefixHandler(redissonProperties.getKeyPrefix()));
             if (SpringUtils.isVirtual()) {
                 config.setNettyExecutor(new VirtualThreadTaskExecutor("redisson-"));
             }
@@ -69,15 +71,13 @@ public class RedisConfig {
             if (ObjectUtil.isNotNull(singleServerConfig)) {
                 // 使用单机模式
                 var singleConfig = config.useSingleServer()
-                    //设置redis key前缀
-                    .setNameMapper(new KeyPrefixHandler(redissonProperties.getKeyPrefix()))
                     .setTimeout(singleServerConfig.getTimeout())
                     .setClientName(singleServerConfig.getClientName())
                     .setIdleConnectionTimeout(singleServerConfig.getIdleConnectionTimeout())
                     .setSubscriptionConnectionPoolSize(singleServerConfig.getSubscriptionConnectionPoolSize())
                     .setConnectionMinimumIdleSize(singleServerConfig.getConnectionMinimumIdleSize())
                     .setConnectionPoolSize(singleServerConfig.getConnectionPoolSize());
-                applyBaseConnectionOptions(singleConfig,
+                applyBaseConnectionOptions(config, singleConfig,
                     singleServerConfig.getConnectTimeout(),
                     singleServerConfig.getPingConnectionInterval(),
                     singleServerConfig.getKeepAlive(),
@@ -87,8 +87,6 @@ public class RedisConfig {
             RedissonProperties.ClusterServersConfig clusterServersConfig = redissonProperties.getClusterServersConfig();
             if (ObjectUtil.isNotNull(clusterServersConfig)) {
                 var clusterConfig = config.useClusterServers()
-                    //设置redis key前缀
-                    .setNameMapper(new KeyPrefixHandler(redissonProperties.getKeyPrefix()))
                     .setTimeout(clusterServersConfig.getTimeout())
                     .setClientName(clusterServersConfig.getClientName())
                     .setIdleConnectionTimeout(clusterServersConfig.getIdleConnectionTimeout())
@@ -99,7 +97,7 @@ public class RedisConfig {
                     .setSlaveConnectionPoolSize(clusterServersConfig.getSlaveConnectionPoolSize())
                     .setReadMode(clusterServersConfig.getReadMode())
                     .setSubscriptionMode(clusterServersConfig.getSubscriptionMode());
-                applyBaseConnectionOptions(clusterConfig,
+                applyBaseConnectionOptions(config, clusterConfig,
                     clusterServersConfig.getConnectTimeout(),
                     clusterServersConfig.getPingConnectionInterval(),
                     clusterServersConfig.getKeepAlive(),
@@ -109,9 +107,9 @@ public class RedisConfig {
         };
     }
 
-    private void applyBaseConnectionOptions(BaseConfig<?> serverConfig, Integer connectTimeout,
-                                            Integer pingConnectionInterval, Boolean keepAlive,
-                                            Boolean tcpNoDelay) {
+    private void applyBaseConnectionOptions(Config config, BaseConfig<?> serverConfig,
+                                            Integer connectTimeout, Integer pingConnectionInterval,
+                                            Boolean keepAlive, Boolean tcpNoDelay) {
         if (ObjectUtil.isNotNull(connectTimeout) && connectTimeout > 0) {
             serverConfig.setConnectTimeout(connectTimeout);
         }
@@ -119,10 +117,10 @@ public class RedisConfig {
             serverConfig.setPingConnectionInterval(pingConnectionInterval);
         }
         if (ObjectUtil.isNotNull(keepAlive)) {
-            serverConfig.setKeepAlive(keepAlive);
+            config.setTcpKeepAlive(keepAlive);
         }
         if (ObjectUtil.isNotNull(tcpNoDelay)) {
-            serverConfig.setTcpNoDelay(tcpNoDelay);
+            config.setTcpNoDelay(tcpNoDelay);
         }
     }
 

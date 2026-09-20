@@ -8,6 +8,7 @@ import cc.infoq.common.security.auth.LoginUserContext;
 import cc.infoq.common.security.auth.SecurityTokenService;
 import cc.infoq.common.utils.MapstructUtils;
 import cc.infoq.common.utils.SpringUtils;
+import cc.infoq.system.TableInfoTestInitializer;
 import cc.infoq.system.domain.bo.SysRoleBo;
 import cc.infoq.system.domain.entity.SysRole;
 import cc.infoq.system.domain.entity.SysUserRole;
@@ -60,6 +61,7 @@ class SysRoleServiceImplTest {
 
     @BeforeEach
     void setUp() {
+        TableInfoTestInitializer.initSystemTableInfo();
         GenericApplicationContext context = new GenericApplicationContext();
         context.registerBean(Converter.class, () -> mock(Converter.class));
         context.refresh();

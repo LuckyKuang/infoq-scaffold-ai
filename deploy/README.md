@@ -1,138 +1,134 @@
-# 部署指南
+# Deployment Guide
 
-本目录包含部署脚本和配置。
+This directory is the operator entry for installation and Compose environment
+templates. Compose files and runtime config still live under `script/docker/`.
 
-## 快速开始
+## Deployment Methods
 
-### Docker Compose 部署
+| Method | Best for | Documentation |
+| --- | --- | --- |
+| Linux install script | Server install, generated secrets | this file |
+| Docker Compose | Local or self-hosted full stack | [DOCKER.md](DOCKER.md) |
+| Apple container | macOS local backend stack | [APPLE_CONTAINER.md](APPLE_CONTAINER.md) |
+| Manual JVM + Nginx | Non-container hosts | [Manual deploy](../doc/devops/manual-deploy.md) |
 
-部署所有管理端（Vue + React）+ Nginx 网关：
+## Files
+
+| File | Description |
+| --- | --- |
+| `install.sh` | One-click Linux installer |
+| `uninstall.sh` | Uninstall helper |
+| `DOCKER.md` | Compose deployment notes |
+| `APPLE_CONTAINER.md` | Apple `container` local stack |
+| `apple-container.sh` | Isolated MySQL, Redis, and backend helper |
+| `.env.example` | Environment template for Compose interpolation |
+| `../script/docker/docker-compose.yml` | Full-stack Compose file |
+| `../script/bin/deploy-frontend.sh` | Frontend / gateway deploy helper |
+| `../script/bin/infoq.sh` | Backend and middleware helper |
+
+## Linux Installer
 
 ```bash
 bash deploy/install.sh
 ```
 
-部署特定管理端：
+The installer expects Docker, Docker Compose, and Buildx. It writes random
+secrets to `/etc/infoq-scaffold-ai/deploy.env` by default and deploys into
+`/opt/infoq-scaffold-ai`. Do not reuse `.env.example` placeholders in a shared
+environment.
+
+Uninstall:
+
+```bash
+bash deploy/uninstall.sh
+```
+
+## Docker Compose
+
+Copy the environment template, then edit secrets:
+
+```bash
+cp deploy/.env.example script/docker/.env
+chmod 600 script/docker/.env
+```
+
+Deploy all admin consoles plus the Nginx gateway:
+
+```bash
+bash script/bin/deploy-frontend.sh deploy all
+```
+
+Target a single console:
 
 ```bash
 bash script/bin/deploy-frontend.sh deploy vue
 bash script/bin/deploy-frontend.sh deploy react
 ```
 
-### 停止服务
+Stop:
 
 ```bash
 bash script/bin/deploy-frontend.sh stop all
 ```
 
-### 卸载
+On macOS Colima set `INFOQ_DEPLOY_ROOT="$HOME/infoq"` before starting.
+
+## Apple Container
+
+For a local Apple `container` backend stack that stays isolated from other
+Apple container projects:
 
 ```bash
-bash deploy/uninstall.sh
+bash deploy/apple-container.sh init
+bash deploy/apple-container.sh up
+curl --noproxy '*' -fsS http://127.0.0.1:19090/monitor/health/readiness
 ```
 
-## 网关路由
+See [APPLE_CONTAINER.md](APPLE_CONTAINER.md). Do not reuse `$HOME/infoq` or
+stop unrelated containers such as `sub2api-apple*`.
 
-部署 `all` 目标时，Nginx 网关提供以下路由：
+## Gateway Routes
 
-- `/vue/` - Vue 管理端
-- `/react/` - React 管理端
-- `/console-oss/` - MinIO 控制台
-- `/oss/` - OSS 文件访问
+The `all` target exposes:
 
-部署单个目标时，管理端挂载到根路径 `/`。
+- `/vue/` Vue admin
+- `/react/` React admin
+- `/prod-api/` backend API
+- `/console-oss/` MinIO console
+- `/oss/` OSS file access
 
-## 配置
+A single-target deploy mounts that admin at `/`.
 
-### 环境变量
+## Verification
 
-复制 `.env.example` 为 `.env` 并修改：
-
-```bash
-cp script/docker/.env.example script/docker/.env
-```
-
-关键配置：
-
-- `MYSQL_ROOT_PASSWORD` - MySQL root 密码
-- `REDIS_PASSWORD` - Redis 密码
-- `MINIO_ROOT_USER` - MinIO 用户名
-- `MINIO_ROOT_PASSWORD` - MinIO 密码
-
-### 后端配置
-
-修改 `script/docker/backend/application-docker.yml`：
-
-```yaml
-spring:
-  datasource:
-    url: jdbc:mysql://mysql:3306/infoq_scaffold?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8
-    username: root
-    password: ${MYSQL_ROOT_PASSWORD}
-  data:
-    redis:
-      host: redis
-      port: 6379
-      password: ${REDIS_PASSWORD}
-```
-
-## 详细文档
-
-完整的部署前置条件、教程和故障排除，请参考：
-
-| 文档 | 说明 |
-| --- | --- |
-| [部署前置条件](../doc/devops/deploy-prerequisites.md) | 环境要求、依赖检查 |
-| [Docker Compose 教程](../doc/devops/docker-compose-tutorial.md) | 容器编排基础 |
-| [Docker Compose 部署](../doc/devops/docker-compose-deploy.md) | 完整部署流程 |
-| [手动部署](../doc/devops/manual-deploy.md) | 非容器化部署 |
-
-## 验证部署
-
-使用 `infoq-deploy-verify` skill：
-
-```bash
-node .codex/skills/infoq-deploy-verify/scripts/verify_docker_compose.mjs
-```
-
-## 故障排除
-
-### 容器启动失败
-
-检查日志：
+Use the `infoq-deploy-verify` skill for a full Compose smoke. A minimal check:
 
 ```bash
 cd script/docker
-docker compose logs backend
+docker compose ps
+curl -fsS http://127.0.0.1:9090/monitor/health/readiness
+curl -fsS http://127.0.0.1/prod-api/monitor/health/readiness
+```
+
+Local `java -jar` with the `local` profile still uses `http://127.0.0.1:8080`.
+
+## Troubleshooting
+
+Container logs:
+
+```bash
+cd script/docker
+docker compose logs infoq-admin
 docker compose logs mysql
 docker compose logs redis
 ```
 
-### 数据库连接失败
+## Detailed Documents
 
-确认 MySQL 容器已启动并完成初始化：
-
-```bash
-docker compose ps mysql
-docker compose logs mysql | grep "ready for connections"
-```
-
-### 前端无法访问后端
-
-确认后端容器运行且端口映射正确：
-
-```bash
-docker compose ps backend
-curl http://localhost:8080/actuator/health
-```
-
-## 生产部署建议
-
-- 更改所有默认密码
-- 使用 HTTPS 和 TLS
-- 配置防火墙规则
-- 限制数据库和 Redis 访问范围
-- 定期备份数据库
-- 监控容器资源使用
-
-详见 [SECURITY.md](../SECURITY.md)
+| Document | Description |
+| --- | --- |
+| [Deploy prerequisites](../doc/devops/deploy-prerequisites.md) | Environment and dependency checks |
+| [Docker Compose tutorial](../doc/devops/docker-compose-tutorial.md) | WSL2 / macOS / Linux container setup |
+| [Docker Compose deploy](../doc/devops/docker-compose-deploy.md) | Scripted deploy flow |
+| [Manual deploy](../doc/devops/manual-deploy.md) | Non-container deploy |
+| [Security policy](../SECURITY.md) | Vulnerability reporting |

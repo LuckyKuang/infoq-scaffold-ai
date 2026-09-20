@@ -1,6 +1,23 @@
-# 文档中心
+# Documentation
 
-InfoQ-Scaffold-AI 的完整文档导航。所有内容基于当前仓库的真实实现，不复述第三方框架的通用说明。
+README files provide the project overview and quick start. Use the documents
+below for detailed configuration and maintenance. All content describes the
+current repository; it does not retell third-party framework tutorials.
+
+根 README 只保留总览。详细操作放在 `doc/` 与 `deploy/`。
+
+<!-- doc-section:root -->
+## Root Documents
+
+| Document | Description |
+| --- | --- |
+| [README](../README.md) | English overview and quick start |
+| [README 中文](../README_CN.md) | 中文总览与快速开始 |
+| [Contributing](../CONTRIBUTING.md) | Toolchain, checks, and PR flow |
+| [Developer guide](../DEV_GUIDE.md) | Local setup and troubleshooting |
+| [Security policy](../SECURITY.md) | Vulnerability reporting |
+| [Deployment](../deploy/README.md) | Installer and Compose entry |
+| [AGENTS.md](../AGENTS.md) | Repository collaboration rules |
 
 <!-- doc-section:reading-paths -->
 ## 推荐阅读路径
@@ -9,10 +26,10 @@ InfoQ-Scaffold-AI 的完整文档导航。所有内容基于当前仓库的真�
 [项目概览](./guide/project-overview.md) → [快速开始](./guide/quick-start.md) → [后端手册](./backend/handbook.md) → [管理端手册](./admin/handbook.md) → [FAQ](./guide/faq.md)
 
 **快速启动**
-[快速开始](./guide/quick-start.md)
+[快速开始](./guide/quick-start.md) · [开发指南](../DEV_GUIDE.md)
 
 **部署上线**
-[部署前置条件](./devops/deploy-prerequisites.md) → [Docker Compose 教程](./devops/docker-compose-tutorial.md) → [Docker Compose 部署](./devops/docker-compose-deploy.md)
+[部署前置条件](./devops/deploy-prerequisites.md) → [Docker Compose](../deploy/DOCKER.md) → [Apple container](../deploy/APPLE_CONTAINER.md) → [Docker Compose 部署](./devops/docker-compose-deploy.md)
 
 **协作规范**
 [开发工作流](./collaboration/development-workflow.md) → [AGENTS 指南](./collaboration/agents-guide.md) → [Skills 指南](./collaboration/skills-guide.md)
@@ -34,12 +51,16 @@ InfoQ-Scaffold-AI 的完整文档导航。所有内容基于当前仓库的真�
 | --- | --- |
 | [后端手册](./backend/handbook.md) | Spring Boot 结构、认证链路、插件配置 |
 | [管理端手册](./admin/handbook.md) | Vue/React 目录、路由、请求封装 |
+| [设计系统](./design/DESIGN.md) | 管理端视觉语言 |
 | [开发工作流](./collaboration/development-workflow.md) | AGENTS、OpenSpec、skills、MCP |
 
 ### 部署运维
 
 | 文档 | 说明 |
 | --- | --- |
+| [部署指南](../deploy/README.md) | 安装脚本与 Compose 入口 |
+| [Docker Compose](../deploy/DOCKER.md) | 容器编排短文档 |
+| [Apple container](../deploy/APPLE_CONTAINER.md) | macOS Apple `container` 本机后端栈 |
 | [部署前置条件](./devops/deploy-prerequisites.md) | 环境检查、依赖验证 |
 | [Docker Compose 教程](./devops/docker-compose-tutorial.md) | WSL2/macOS/Linux 容器部署 |
 | [Docker Compose 部署](./devops/docker-compose-deploy.md) | 脚本化部署流程 |
@@ -62,6 +83,7 @@ InfoQ-Scaffold-AI 的完整文档导航。所有内容基于当前仓库的真�
 | --- | --- |
 | **React 管理端** | [README](../infoq-scaffold-frontend-react/README.md) · [架构](../infoq-scaffold-frontend-react/doc/architecture.md) · [数据流](../infoq-scaffold-frontend-react/doc/data-flow.md) |
 | **Vue 管理端** | [README](../infoq-scaffold-frontend-vue/README.md) · [架构](../infoq-scaffold-frontend-vue/doc/architecture.md) · [数据流](../infoq-scaffold-frontend-vue/doc/data-flow.md) |
+| **Backend** | [README](../infoq-scaffold-backend/README.md) · [架构](../infoq-scaffold-backend/doc/architecture.md) · [数据流](../infoq-scaffold-backend/doc/data-flow.md) |
 
 <!-- doc-section:structure -->
 ## 目录结构
@@ -72,6 +94,7 @@ doc/
 ├── guide/                       # 入门指南
 ├── backend/                     # 后端开发
 ├── admin/                       # 管理端开发
+├── design/                      # 设计系统
 ├── devops/                      # 部署运维
 ├── collaboration/               # AI 协作
 ├── examples/                    # 示例代码
@@ -89,9 +112,10 @@ doc/
 | `infoq-scaffold-backend` | Spring Boot 后端 | JDK 21, Spring Boot 4.1.1 |
 | `infoq-scaffold-frontend-vue` | Vue 管理端 | Vue 3.5, Element Plus 2.14 |
 | `infoq-scaffold-frontend-react` | React 管理端 | React 19.2, Ant Design 6.4 |
-| `openspec` | 规格与变更 | OpenSpec 标准 |
-| `script` | 部署脚本 | Bash, Docker Compose |
+| `openspec` | 规格与变更 | OpenSpec |
+| `script` / `deploy` | 部署脚本与入口 | Bash, Docker Compose |
 | `sql` | 数据库脚本 | MySQL 8 |
+| `tools` | 仓库校验脚本 | Node.js |
 
 <!-- doc-section:scope -->
 ## 文档覆盖范围
@@ -101,8 +125,7 @@ doc/
 - 项目定位、目录结构、技术栈与模块边界
 - 后端 profile、登录授权、动态菜单、插件配置
 - Vue/React 管理端路由、请求封装、构建测试
-- 系统监控（在线用户、任务调度、缓存、连接池）
-- AI 协作资产（AGENTS.md、.codex/skills、OpenSpec、MCP）
+- AI 协作资产（AGENTS.md、`.codex/skills`、OpenSpec、MCP）
 
 本文档不涵盖：
 
@@ -118,12 +141,4 @@ doc/
 - **根 README**：保持总览，不重复展开长篇内容
 - **AGENTS.md**：只保留机器协作约束，不混入用户手册
 - **同步更新**：命令、环境变量、路径变化时及时更新相关文档
-
-<!-- doc-section:related -->
-## 相关文档
-
-- [根 README](../README.md) - 项目总览
-- [贡献指南](../CONTRIBUTING.md) - 参与贡献
-- [开发指南](../DEV_GUIDE.md) - 本地开发
-- [安全策略](../SECURITY.md) - 安全报告
-- [部署指南](../deploy/README.md) - 快速部署
+- **README 对齐**：修改根 README 后运行 `node tools/check_readme_sync.mjs`

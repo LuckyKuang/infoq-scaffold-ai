@@ -13,7 +13,7 @@
 
 ## 3. 核心类 / 文件
 
-- `SysAdminApplication`：`@SpringBootApplication(scanBasePackages = "cc.infoq")`，把 `cc.infoq` 下所有模块统一纳入 Spring 容器。
+- `SysAdminApplication`：`@SpringBootApplication(scanBasePackages = "cc.infoq")`，把 `cc.infoq` 下所有模块统一纳入 Spring 容器，并排除 `UserDetailsServiceAutoConfiguration`，避免 token 鉴权下生成默认内存用户。
 - `application*.yml`：定义 profile 分层、数据源、Redis、Quartz、mail、SSE、WebSocket、Springdoc 等运行开关。
 - `logback-plus.xml`：当前后端日志输出规则，默认把文件日志写到仓库根 `logs/`，容器场景通过 `INFOQ_LOG_PATH` 覆盖。
 - `banner.txt`、`i18n/*.properties`、`ip2region_v4.xdb`：启动展示、多语言消息与 IPv4 归属地内置资源。

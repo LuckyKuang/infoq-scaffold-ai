@@ -171,7 +171,7 @@ SQL、数据库、Redis、数据修复、迁移、测试数据维护和 API/UI/D
 
 说明：
 
-- 冻结初始化 SQL `sql/infoq_scaffold_2.0.0.sql` 永远不要修改。
+- 冻结初始化 SQL `sql/infoq_scaffold_3.0.0.sql` 永远不要修改。
 - 新增、修改、删除表结构或初始化数据，只能新增 `sql/infoq_scaffold_update_YYYYMMDD.sql` 增量脚本。
 - 数据写入前必须先列出环境、目标表/key/ID、筛选条件、影响范围、幂等性、回滚脚本和验证查询。
 - 共享环境默认只读；生产或共享环境数据变更、SQL 迁移和批量修复必须联动 `infoq-delivery-workflow`。

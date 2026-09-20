@@ -124,7 +124,7 @@ spring.servlet.multipart.location: /your/path/server/temp
 首次部署导入初始化 SQL 和当前增量 SQL：
 
 ```bash
-mysql -u root -p < sql/infoq_scaffold_2.0.0.sql
+mysql -u root -p < sql/infoq_scaffold_3.0.0.sql
 for file in sql/infoq_scaffold_update_*.sql; do
   mysql -u root -p infoq < "$file"
 done
@@ -132,7 +132,7 @@ done
 
 SQL 文件：
 
-- [sql/infoq_scaffold_2.0.0.sql](../../sql/infoq_scaffold_2.0.0.sql)
+- [sql/infoq_scaffold_3.0.0.sql](../../sql/infoq_scaffold_3.0.0.sql)
 - `sql/infoq_scaffold_update_*.sql`
 
 如果目标库已经有业务数据，先做备份，不要直接覆盖导入。

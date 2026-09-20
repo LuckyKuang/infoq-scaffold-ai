@@ -10,7 +10,6 @@
 - `FilterConfig`
 - `I18nConfig`
 - `ResourcesConfig`
-- `UndertowConfig`
 
 ## 3. 核心类 / 文件
 

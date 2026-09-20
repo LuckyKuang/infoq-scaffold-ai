@@ -34,7 +34,7 @@
 - `tasks.md` 默认显式评估 `infoq-scaffold-backend`、`infoq-scaffold-frontend-react`、`infoq-scaffold-frontend-vue`、`script / deploy`
 - 每个变更只维护一个验收约定
 - 验证顺序固定为：主流程验证 -> 目标测试 -> lint/build -> 差异评审
-- `sql/infoq_scaffold_2.0.0.sql` 是冻结初始化基线，任何变更不得修改该文件；数据库结构、字典、菜单、配置和初始化数据变化必须新增 `sql/infoq_scaffold_update_YYYYMMDD.sql` 增量脚本承载
+- `sql/infoq_scaffold_3.0.0.sql` 是冻结初始化基线，任何变更不得修改该文件；数据库结构、字典、菜单、配置和初始化数据变化必须新增 `sql/infoq_scaffold_update_YYYYMMDD.sql` 增量脚本承载
 
 ## 文档与工具默认约束
 

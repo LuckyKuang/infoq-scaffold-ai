@@ -33,7 +33,7 @@
 
 ## 6. 公共约束
 
-- `infoq-core/pom.xml` 当前声明 `maven.compiler.source/target = 17`，与 backend 根 `pom.xml` 的 `java.version = 17` 保持一致；项目基线是 JDK 17。
+- `infoq-core/pom.xml` 当前声明 `maven.compiler.source/target = 21`，与 backend 根 `pom.xml` 的 `java.version = 21` 保持一致；项目基线是 JDK 21。
 - `infoq-core` 自己是父模块，不直接对外暴露 HTTP 接口。
 - 叶子模块文档优先于这里的聚合摘要；若描述冲突，以源码为准。
 

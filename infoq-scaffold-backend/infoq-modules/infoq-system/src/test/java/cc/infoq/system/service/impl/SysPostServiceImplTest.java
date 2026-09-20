@@ -5,6 +5,7 @@ import cc.infoq.common.mybatis.core.page.PageQuery;
 import cc.infoq.common.mybatis.core.page.TableDataInfo;
 import cc.infoq.common.utils.MapstructUtils;
 import cc.infoq.common.utils.SpringUtils;
+import cc.infoq.system.TableInfoTestInitializer;
 import cc.infoq.system.domain.bo.SysPostBo;
 import cc.infoq.system.domain.entity.SysPost;
 import cc.infoq.system.domain.entity.SysUserPost;
@@ -47,6 +48,7 @@ class SysPostServiceImplTest {
 
     @BeforeEach
     void setUp() {
+        TableInfoTestInitializer.initSystemTableInfo();
         GenericApplicationContext context = new GenericApplicationContext();
         context.registerBean(Converter.class, () -> mock(Converter.class));
         context.refresh();

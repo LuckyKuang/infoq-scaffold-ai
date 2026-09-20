@@ -18,6 +18,7 @@
 
 - Docker Compose 教程式部署：参考 [docker-compose-tutorial.md](./docker-compose-tutorial.md)
 - Docker Compose / 脚本化部署：参考 [docker-compose-deploy.md](./docker-compose-deploy.md)
+- Apple `container` 本机后端栈：参考 [APPLE_CONTAINER.md](../../deploy/APPLE_CONTAINER.md)。这不是默认免费商用基线，只有用户明确要求时才使用，且必须与其他 Apple 容器栈隔离。
 - 手动部署：参考 [manual-deploy.md](./manual-deploy.md)
 
 如果你还没有准备好数据库、Redis、Nginx、目录权限和证书，不建议直接进入部署步骤。
@@ -29,8 +30,8 @@
 | 组件 | 基线 |
 | --- | --- |
 | Docker / Compose | Docker CE / Moby / Colima + `docker compose` 或 `docker-compose`，并启用 `docker buildx` |
-| 后端构建镜像 | `maven:3.9.12-eclipse-temurin-17` |
-| 后端运行镜像 | `bellsoft/liberica-openjdk-rocky:17.0.16-cds` |
+| 后端构建镜像 | `maven:3.9.12-eclipse-temurin-21` |
+| 后端运行镜像 | `bellsoft/liberica-openjdk-rocky:21.0.12-cds` |
 | 手动部署 JDK | 17 |
 | 手动部署 Maven | 3.9+ |
 | Node.js | 24.18.0 |
@@ -44,9 +45,9 @@
 
 说明：
 
-- Docker Compose / 脚本化部署不要求宿主机安装 JDK 或 Maven；后端 Maven 打包在 Docker builder 镜像 `maven:3.9.12-eclipse-temurin-17` 内完成，最终运行镜像仍是 `bellsoft/liberica-openjdk-rocky:17.0.16-cds`。后端 Dockerfile 使用 BuildKit `RUN --mount`，因此 Docker CLI 必须支持 `docker buildx`：[infoq-scaffold-backend/infoq-admin/Dockerfile](../../infoq-scaffold-backend/infoq-admin/Dockerfile)
-- 手动部署或本机直接执行 Maven 构建时，仍需要宿主机 JDK 17 与 Maven 3.9+。
-- 前端本机开发、CI、docs 站点和 Docker 构建镜像统一固定基于 Node 24.18.0：[infoq-scaffold-frontend-vue/Dockerfile](../../infoq-scaffold-frontend-vue/Dockerfile) [infoq-scaffold-frontend-react/Dockerfile](../../infoq-scaffold-frontend-react/Dockerfile) [infoq-scaffold-frontend-react/Dockerfile](../../infoq-scaffold-frontend-react/Dockerfile)。npm 版本不作为仓库构建基线单独固定，包管理器遵循各工作区 `packageManager` 与 lockfile。
+- Docker Compose / 脚本化部署不要求宿主机安装 JDK 或 Maven；后端 Maven 打包在 Docker builder 镜像 `maven:3.9.12-eclipse-temurin-21` 内完成，最终运行镜像仍是 `bellsoft/liberica-openjdk-rocky:21.0.12-cds`。后端 Dockerfile 使用 BuildKit `RUN --mount`，因此 Docker CLI 必须支持 `docker buildx`：[infoq-scaffold-backend/infoq-admin/Dockerfile](../../infoq-scaffold-backend/infoq-admin/Dockerfile)
+- 手动部署或本机直接执行 Maven 构建时，仍需要宿主机 JDK 21 与 Maven 3.9+。
+- 前端本机开发、CI、docs 站点和 Docker 构建镜像统一固定基于 Node 24.18.0：[infoq-scaffold-frontend-vue/Dockerfile](../../infoq-scaffold-frontend-vue/Dockerfile) [infoq-scaffold-frontend-react/Dockerfile](../../infoq-scaffold-frontend-react/Dockerfile)。npm 版本不作为仓库构建基线单独固定，包管理器遵循各工作区 `packageManager` 与 lockfile。
 - Docker Compose 默认依赖 MySQL 8.0、Redis 7.2、MinIO `RELEASE.2026-06-18T00-00-00Z`、Nginx 1.30：[script/docker/docker-compose.yml](../../script/docker/docker-compose.yml)
 
 ## 3. 端口与网络准备
@@ -220,7 +221,7 @@ WSL2 / 原生 Linux 默认就是 `/infoq/server/temp`；macOS Colima 默认就�
 
 当前仓库默认初始化 SQL 文件为：
 
-- [sql/infoq_scaffold_2.0.0.sql](../../sql/infoq_scaffold_2.0.0.sql)
+- [sql/infoq_scaffold_3.0.0.sql](../../sql/infoq_scaffold_3.0.0.sql)
 
 当前仓库增量 SQL 文件统一匹配：
 

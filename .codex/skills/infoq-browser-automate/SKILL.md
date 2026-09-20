@@ -82,7 +82,7 @@ pnpm --dir .codex/skills/infoq-browser-automate/scripts run chrome-devtools-cli 
 
 - `node` 与 `pnpm` 可用。
 - 若任务依赖本地 admin 栈，先确认 backend / frontend 已启动。
-- backend 构建优先使用 `node .codex/scripts/backend_mvn.mjs -- ...`；若必须直接用 `mvn`，先确认 JDK 17 与 Maven 3.9.x，不要在 JDK 8 shell 中继续执行。
+- backend 构建优先使用 `node .codex/scripts/backend_mvn.mjs -- ...`；若必须直接用 `mvn`，先确认 JDK 21 与 Maven 3.9.x，不要在 JDK 8 shell 中继续执行。
 - 当前路径不依赖 `bash` 或 PowerShell；若 `node` / `pnpm` 不可用，应先修复本机环境后再继续使用跨平台 CLI。
 
 ## 参数约定

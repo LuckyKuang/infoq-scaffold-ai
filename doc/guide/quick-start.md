@@ -6,7 +6,7 @@
 
 | 组件 | 建议版本 |
 | --- | --- |
-| JDK | 17 |
+| JDK | 21 |
 | Maven | 3.9.x |
 | Node.js | 24.18.0 |
 | pnpm | >= 10.0.0 |
@@ -18,7 +18,7 @@
 ## 2. 初始化数据库
 
 1. 创建 MySQL 数据库，例如 `infoq`。
-2. 导入冻结初始化基线：`sql/infoq_scaffold_2.0.0.sql`。
+2. 导入冻结初始化基线：`sql/infoq_scaffold_3.0.0.sql`。
 3. 准备 Redis。
 4. 按使用的 profile 修改后端配置中的数据库和 Redis 连接信息。
 

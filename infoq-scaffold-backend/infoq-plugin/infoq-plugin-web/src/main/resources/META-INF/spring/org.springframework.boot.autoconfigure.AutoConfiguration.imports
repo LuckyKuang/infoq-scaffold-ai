@@ -2,4 +2,3 @@ cc.infoq.common.web.config.CaptchaConfig
 cc.infoq.common.web.config.FilterConfig
 cc.infoq.common.web.config.I18nConfig
 cc.infoq.common.web.config.ResourcesConfig
-cc.infoq.common.web.config.UndertowConfig

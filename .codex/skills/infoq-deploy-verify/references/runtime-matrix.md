@@ -120,3 +120,15 @@ macOS Colima 使用 `sudo` 执行安装脚本时，应把用户态 Colima socket
 export DOCKER_HOST="unix://${HOME}/.colima/default/docker.sock"
 sudo env DOCKER_CONFIG="${DOCKER_CONFIG:-$HOME/.docker}" DOCKER_HOST="${DOCKER_HOST}" INFOQ_SOURCE_DIR="$(pwd)" INFOQ_FRONTEND_TARGET=all INFOQ_PUBLIC_BASE_URL=http://127.0.0.1 INFOQ_DEPLOY_ROOT="${INFOQ_DEPLOY_ROOT}" bash deploy/install.sh
 ```
+
+
+## 非默认额外路径：Apple Container
+
+Apple `container` 不是本 skill 的默认运行时。只有用户明确要求“用 Apple Container 验证”时才允许使用，并且必须满足：
+
+- 使用仓库脚本 `deploy/apple-container.sh`，不要手写一组会和 Compose 默认名冲突的容器名。
+- 网络固定为 `infoq-apple` / `192.168.66.0/24`，容器名前缀固定为 `infoq-apple-`。
+- 默认只发布 `127.0.0.1:19090`，不要占用 `8080`、`9000`、`9001`。
+- 数据目录默认 `$HOME/infoq-apple`，禁止复用 `$HOME/infoq` 或 `/infoq`。
+- 禁止停止、删除、重建或改写 `sub2api-apple*` 及其他未打 `org.infoq.stack=apple-container` 标签的资源。
+- 官方后端 Dockerfile 的 BuildKit cache mount 失败时，记录 blocker 并改走 `deploy/Dockerfile.apple` 运行时镜像，不得伪造成功。

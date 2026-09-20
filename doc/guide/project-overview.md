@@ -17,7 +17,7 @@ infoq-scaffold-ai
 
 | 工作区 | 职责 | 关键入口 |
 | --- | --- | --- |
-| `infoq-scaffold-backend` | Spring Boot 3.5 多模块后端 | `infoq-admin/src/main/java/cc/infoq/admin/SysAdminApplication.java` |
+| `infoq-scaffold-backend` | Spring Boot 4.1 多模块后端 | `infoq-admin/src/main/java/cc/infoq/admin/SysAdminApplication.java` |
 | `infoq-scaffold-frontend-vue` | Vue 3 + Element Plus 管理端 | `src/main.ts`、`src/router/index.ts` |
 | `infoq-scaffold-frontend-react` | React 19 + Ant Design 管理端 | `src/main.tsx`、`src/router/AppRouter.tsx` |
 
@@ -25,7 +25,7 @@ infoq-scaffold-ai
 
 | 层次 | 版本与组件 |
 | --- | --- |
-| 后端 | Spring Boot 3.5.14、JDK 17、MyBatis-Plus 3.5.16、Sa-Token 1.44.0 |
+| 后端 | Spring Boot 4.1.1、JDK 21、MyBatis-Plus 3.5.17、Sa-Token 1.44.0 |
 | Vue 管理端 | Vue 3.5.35、Vite 8.0.16、Element Plus 2.14.1、Pinia、Vitest 4.1.8 |
 | React 管理端 | React 19.2.7、Vite 8.0.16、Ant Design 6.4.3、Zustand、Vitest 4.1.8 |
 | 基础设施 | MySQL 8、Redis 7、MinIO、Nginx |

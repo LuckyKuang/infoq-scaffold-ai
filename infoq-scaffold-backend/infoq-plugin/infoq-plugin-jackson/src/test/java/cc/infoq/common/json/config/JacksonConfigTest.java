@@ -57,6 +57,23 @@ class JacksonConfigTest {
     }
 
     @Test
+    @DisplayName("objectMapper: should expose jackson2 mapper for Spring Boot 4 security startup")
+    void objectMapperShouldExposeJackson2Bean() throws Exception {
+        JacksonConfig config = new JacksonConfig();
+        ObjectMapper mapper = config.objectMapper(config.jackson2ObjectMapperBuilder(), config.registerJavaTimeModule());
+
+        DemoPayload payload = new DemoPayload();
+        payload.setBigId(9007199254740992L);
+        payload.setCreatedAt(LocalDateTime.of(2026, 3, 8, 10, 11, 12));
+
+        String json = mapper.writeValueAsString(payload);
+        assertTrue(json.contains("\"bigId\":\"9007199254740992\""));
+        assertEquals(TimeZone.getDefault(), mapper.getSerializationConfig().getTimeZone());
+        assertThrows(UnrecognizedPropertyException.class,
+            () -> mapper.readValue("{\"bigId\":1,\"extra\":true}", DemoPayload.class));
+    }
+
+    @Test
     @DisplayName("JsonType enum: should expose all constants")
     void jsonTypeEnumShouldExposeAllConstants() {
         assertEquals(3, JsonType.values().length);

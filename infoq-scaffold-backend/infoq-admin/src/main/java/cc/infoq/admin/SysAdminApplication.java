@@ -4,6 +4,7 @@ import cn.hutool.crypto.digest.BCrypt;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoConfiguration;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -12,7 +13,10 @@ import java.nio.charset.StandardCharsets;
  * 启动程序
  */
 @Slf4j
-@SpringBootApplication(scanBasePackages = "cc.infoq")
+@SpringBootApplication(
+    scanBasePackages = "cc.infoq",
+    exclude = UserDetailsServiceAutoConfiguration.class
+)
 public class SysAdminApplication {
 
     private static final String BCRYPT_HASH_STDIN_ARG = "--infoq-bcrypt-hash-stdin";

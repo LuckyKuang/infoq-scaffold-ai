@@ -5,6 +5,7 @@ import cc.infoq.system.domain.entity.SysDept;
 import cc.infoq.system.domain.entity.SysMenu;
 import cc.infoq.system.domain.entity.SysPost;
 import cc.infoq.system.domain.entity.SysRole;
+import cc.infoq.system.domain.entity.SysRoleMenu;
 import cc.infoq.system.domain.entity.SysUser;
 import cc.infoq.system.domain.entity.SysUserRole;
 import cc.infoq.system.domain.vo.SysDeptVo;
@@ -19,6 +20,7 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.apache.ibatis.builder.MapperBuilderAssistant;
 import org.apache.ibatis.session.Configuration;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -42,6 +44,18 @@ import static org.mockito.Answers.CALLS_REAL_METHODS;
 
 @Tag("dev")
 class MapperDefaultMethodTest {
+
+    @BeforeEach
+    void registerTableInfoForLambdaResolution() {
+        // MyBatis-Plus 3.5.17 起，默认方法内的 Lambda 列解析依赖 TableInfo/lambda cache，
+        // 未注册的实体会抛 "can not find lambda cache"，需显式初始化。
+        MapperBuilderAssistant assistant = new MapperBuilderAssistant(new Configuration(), "test");
+        for (Class<?> entityType : List.of(SysMenu.class, SysPost.class, SysRole.class, SysRoleMenu.class,
+            SysUser.class, SysUserRole.class, SysDept.class)) {
+            TableInfoHelper.remove(entityType);
+            TableInfoHelper.initTableInfo(assistant, entityType);
+        }
+    }
 
     @Test
     @DisplayName("SysMenuMapper.selectMenuTreeAll: should delegate to selectList")

@@ -21,21 +21,10 @@
             <artifactId>infoq-plugin-jackson</artifactId>
         </dependency>
 
-        <!-- SpringBoot Web容器 -->
+        <!-- SpringBoot Web容器（使用 Spring Boot 官方默认 tomcat） -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
-            <exclusions>
-                <exclusion>
-                    <artifactId>spring-boot-starter-tomcat</artifactId>
-                    <groupId>org.springframework.boot</groupId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <!-- web 容器使用 jetty (Spring Boot 4.x 不再提供 undertow starter) -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-jetty</artifactId>
         </dependency>
 
         <dependency>

@@ -12,7 +12,7 @@ node .codex/skills/infoq-frontend-verify/scripts/start_admin_dev_stack.mjs --cli
 node .codex/skills/infoq-frontend-verify/scripts/start_admin_dev_stack.mjs --client react --backend-port 8081 --profile local
 ```
 
-若不使用 skill 主入口，可改用工作区原生命令手动启动。backend 构建优先使用 `node .codex/scripts/backend_mvn.mjs -- ...`；直接用 `mvn` 时先确认 JDK 17 与 Maven 3.9.x。
+若不使用 skill 主入口，可改用工作区原生命令手动启动。backend 构建优先使用 `node .codex/scripts/backend_mvn.mjs -- ...`；直接用 `mvn` 时先确认 JDK 21 与 Maven 3.9.x。
 
 Backend：
 

@@ -4,6 +4,7 @@ import cc.infoq.common.log.event.OperLogEvent;
 import cc.infoq.common.utils.MapstructUtils;
 import cc.infoq.common.utils.SpringUtils;
 import cc.infoq.common.utils.ip.AddressUtils;
+import cc.infoq.system.TableInfoTestInitializer;
 import cc.infoq.system.mapper.SysOperLogMapper;
 import cc.infoq.common.mybatis.core.page.PageQuery;
 import cc.infoq.common.mybatis.core.page.TableDataInfo;
@@ -41,6 +42,7 @@ class SysOperLogServiceImplTest {
 
     @BeforeEach
     void setUp() {
+        TableInfoTestInitializer.initSystemTableInfo();
         GenericApplicationContext context = new GenericApplicationContext();
         context.registerBean(Converter.class, () -> mock(Converter.class));
         context.refresh();

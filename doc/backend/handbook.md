@@ -79,7 +79,7 @@
 ### 4.1 菜单真值
 
 - 表：`sys_menu`
-- 初始数据：`sql/infoq_scaffold_2.0.0.sql`
+- 初始数据：`sql/infoq_scaffold_3.0.0.sql`
 - 前端获取接口：`GET /system/menu/getRouters`
 
 ### 4.2 当前核心菜单

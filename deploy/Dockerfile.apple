@@ -1,0 +1,27 @@
+# Apple container runtime image. Package infoq-admin.jar on the host first, then
+# copy it into deploy/.apple-build/app.jar before `container build`.
+FROM bellsoft/liberica-openjdk-rocky:21.0.12-cds
+
+LABEL maintainer="Pontus"
+
+ENV TZ=Asia/Shanghai \
+    SERVER_PORT=8080 \
+    LANG=C.UTF-8 \
+    LC_ALL=C.UTF-8 \
+    INFOQ_LOG_PATH=/infoq/server/logs \
+    JAVA_OPTS=""
+
+RUN mkdir -p /infoq/server/logs \
+    /infoq/server/temp \
+    /infoq/server/config \
+    /infoq/server/ip2region \
+    && ln -snf /usr/share/zoneinfo/${TZ} /etc/localtime \
+    && echo ${TZ} > /etc/timezone
+
+WORKDIR /infoq/server
+
+EXPOSE 8080
+
+COPY app.jar ./app.jar
+
+ENTRYPOINT ["sh", "-c", "exec java -Djava.security.egd=file:/dev/./urandom -Dserver.port=${SERVER_PORT} -XX:+HeapDumpOnOutOfMemoryError -XX:+UseZGC ${JAVA_OPTS} -jar app.jar"]

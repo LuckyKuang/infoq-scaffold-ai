@@ -4,11 +4,12 @@ import cc.infoq.common.mybatis.core.page.PageQuery;
 import cc.infoq.common.mybatis.core.page.TableDataInfo;
 import cc.infoq.common.utils.MapstructUtils;
 import cc.infoq.common.utils.SpringUtils;
+import cc.infoq.system.TableInfoTestInitializer;
 import cc.infoq.system.domain.bo.SysClientBo;
 import cc.infoq.system.domain.entity.SysClient;
 import cc.infoq.system.domain.vo.SysClientVo;
 import cc.infoq.system.mapper.SysClientMapper;
-import com.baomidou.mybatisplus.core.exceptions.MybatisPlusException;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import io.github.linpeilie.Converter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -26,6 +27,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.mockStatic;
@@ -42,6 +44,7 @@ class SysClientServiceImplTest {
 
     @BeforeEach
     void setUp() {
+        TableInfoTestInitializer.initSystemTableInfo();
         GenericApplicationContext context = new GenericApplicationContext();
         context.registerBean(Converter.class, () -> org.mockito.Mockito.mock(Converter.class));
         context.refresh();
@@ -132,9 +135,18 @@ class SysClientServiceImplTest {
     }
 
     @Test
-    @DisplayName("updateClientStatus: should throw in pure unit context without MyBatis lambda cache")
-    void updateClientStatusShouldThrowWithoutMybatisRuntime() {
-        assertThrows(MybatisPlusException.class, () -> sysClientService.updateClientStatus("client-a", "1"));
+    @DisplayName("updateClientStatus: should build status update and return affected rows")
+    void updateClientStatusShouldBuildStatusUpdateAndReturnAffectedRows() {
+        when(sysClientMapper.update(any(), any())).thenReturn(1);
+
+        int rows = sysClientService.updateClientStatus("client-a", "1");
+
+        assertEquals(1, rows);
+        ArgumentCaptor<LambdaUpdateWrapper<SysClient>> wrapperCaptor = ArgumentCaptor.forClass(LambdaUpdateWrapper.class);
+        verify(sysClientMapper).update(isNull(), wrapperCaptor.capture());
+        LambdaUpdateWrapper<SysClient> wrapper = wrapperCaptor.getValue();
+        assertTrue(wrapper.getSqlSet().contains("status"));
+        assertTrue(wrapper.getParamNameValuePairs().containsValue("1"));
     }
 
     @Test

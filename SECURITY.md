@@ -1,83 +1,42 @@
-# 安全策略
+# Security Policy
 
-## 支持版本
+## Supported Versions
 
-除非发布说明另有说明，安全修复针对最新发布的版本。较旧版本可能不再接收修复。
+Unless a release states otherwise, security fixes target the latest published
+version. Older releases may no longer receive fixes.
 
-当前支持版本：**3.0.0**
+Current supported version: **3.0.0**
 
-## 报告漏洞
+## Reporting a Vulnerability
 
-如果您发现安全漏洞，请通过以下方式报告：
+Use the repository's private GitHub vulnerability-reporting feature when it is
+available. Do not open a public issue containing credentials, production data,
+private endpoints, or exploit details.
 
-### GitHub 私有漏洞报告
+If private reporting is unavailable, open a minimal issue requesting a private
+contact channel without including sensitive technical details.
 
-使用仓库的 GitHub 私有漏洞报告功能（如果可用）。不要在公开 issue 中包含凭证、生产数据、私有端点或漏洞利用细节。
+Include the affected version, deployment type, impact, reproduction conditions,
+and any relevant logs with secrets removed. Maintainers will assess scope and
+coordinate disclosure based on severity and available fixes.
 
-### 邮件报告
+## Project Security Baseline
 
-如果私有报告不可用，请发送邮件至项目维护者，说明问题的性质但不包含敏感技术细节。
+- Do not hardcode secrets, tokens, or production configuration in source
+- Validate external input at trust boundaries
+- Use parameterized database access (MyBatis-Plus)
+- Change default deployment passwords before exposing a stack
+- Keep `VITE_APP_ENCRYPT` / `TARO_APP_ENCRYPT=true` builds supplied with the
+  matching RSA key pair
 
-### 报告内容
+The repository only allows Redisson OSS-compatible APIs. Do not introduce or
+keep Redisson PRO-only APIs such as `getLocalCachedMapCache` or rate-limiter
+overloads that depend on `keepAliveTime`. Cache, limiter, auth, or login-path
+changes must include OSS compatibility verification.
 
-请包含：
+## Operational and Upstream Risk
 
-- 受影响版本
-- 部署类型（Docker Compose、手动部署等）
-- 影响范围和潜在危害
-- 复现条件和步骤
-- 相关日志（移除密钥）
-
-维护者将评估范围并根据严重性和可用修复协调披露。
-
-## 安全最佳实践
-
-### 开发环境
-
-- 不要在源码中硬编码密钥、token 或生产配置
-- 使用 `.env` 或配置文件管理敏感信息
-- 确保 `.gitignore` 包含敏感文件模式
-
-### 部署环境
-
-- 更改所有默认密码
-- 使用强密码和密钥
-- 定期更新依赖版本
-- 限制数据库和 Redis 访问范围
-- 配置防火墙规则
-- 使用 HTTPS 和 TLS
-
-### 数据安全
-
-- 数据库访问使用参数化查询（已实现 MyBatis-Plus）
-- 边界处校验外部输入
-- 敏感数据加密存储
-- 实施适当的访问控制
-
-### Redisson OSS 兼容性
-
-仓库全局只允许使用 Redisson 开源版兼容 API。禁止引入、调用或保留 Redisson PRO-only 能力。涉及缓存、限流、鉴权或登录链路改动时，必须补 OSS 兼容性验证。
-
-## 运维和上游风险
-
-提供商服务条款问题、暴露的部署凭证和运维配置错误不自动构成产品漏洞。但如果项目可以改进默认值、验证或文档，仍然欢迎报告。
-
-## 响应时间
-
-- **严重漏洞**（远程代码执行、数据泄露）：1-3 个工作日内响应
-- **高危漏洞**（权限提升、认证绕过）：3-7 个工作日内响应
-- **中低危漏洞**：7-14 个工作日内响应
-
-实际修复时间取决于漏洞复杂性和影响范围。
-
-## 安全更新
-
-安全修复将通过以下方式发布：
-
-- GitHub Release 说明
-- 更新受影响版本的文档
-- 必要时发布补丁版本
-
-## 致谢
-
-我们感谢负责任地披露安全问题的研究者。经同意后，我们会在修复发布时公开致谢。
+Exposed deployment credentials, operator misconfiguration, and unsafe default
+passwords left unchanged are not automatically product vulnerabilities.
+Reports are still welcome when the project can improve defaults, validation,
+or documentation.

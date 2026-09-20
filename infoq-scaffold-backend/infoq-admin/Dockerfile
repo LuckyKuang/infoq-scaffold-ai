@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1.7
 
-# 后端构建阶段：使用 Maven 3.9.12 + Temurin JDK 17 编译打包
-FROM maven:3.9.12-eclipse-temurin-17 AS builder
+# 后端构建阶段：使用 Maven 3.9.12 + Temurin JDK 21 编译打包
+FROM maven:3.9.12-eclipse-temurin-21 AS builder
 
 WORKDIR /workspace
 
@@ -43,8 +43,8 @@ COPY . ./
 RUN --mount=type=cache,target=/root/.m2 \
     mvn -B clean package -P prod -pl infoq-admin -am -DskipTests
 
-# 基础运行时镜像，使用 JDK 17
-FROM bellsoft/liberica-openjdk-rocky:17.0.16-cds
+# 基础运行时镜像，使用 JDK 21
+FROM bellsoft/liberica-openjdk-rocky:21.0.12-cds
 
 LABEL maintainer="Pontus"
 

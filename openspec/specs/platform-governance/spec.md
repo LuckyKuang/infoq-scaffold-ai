@@ -93,13 +93,13 @@ active change 在实现前和交付前都必须通过统一结构校验。
 #### 场景：数据库结构或数据变更
 
 - 当变更涉及表结构、字典、菜单、配置、默认数据或其他数据库内容时
-- 则不得修改 `sql/infoq_scaffold_2.0.0.sql`
+- 则不得修改 `sql/infoq_scaffold_3.0.0.sql`
 - 并且必须通过新增或维护对应日期的 `sql/infoq_scaffold_update_YYYYMMDD.sql` 增量脚本交付
 - 并且交付说明必须写清脚本执行、缓存清理或重启要求，以及回滚影响
 
 #### 场景：发现初始化 SQL 被误改
 
-- 当差异审查发现 `sql/infoq_scaffold_2.0.0.sql` 出现变更时
+- 当差异审查发现 `sql/infoq_scaffold_3.0.0.sql` 出现变更时
 - 则必须先回退该初始化 SQL
 - 并且把必要变更迁移到当前日期增量脚本
 - 并且重新执行相关规约和编码校验

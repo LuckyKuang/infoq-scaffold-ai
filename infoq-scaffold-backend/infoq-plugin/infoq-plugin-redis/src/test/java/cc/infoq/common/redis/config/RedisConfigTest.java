@@ -1,6 +1,7 @@
 package cc.infoq.common.redis.config;
 
 import cc.infoq.common.redis.config.properties.RedissonProperties;
+import cc.infoq.common.redis.handler.KeyPrefixHandler;
 import cc.infoq.common.redis.handler.RedisExceptionHandler;
 import cc.infoq.common.utils.SpringUtils;
 import org.junit.jupiter.api.DisplayName;
@@ -47,9 +48,9 @@ class RedisConfigTest {
         assertEquals(3000, single.getTimeout());
         assertEquals(10000, single.getConnectTimeout());
         assertEquals(30000, single.getPingConnectionInterval());
-        assertEquals(true, single.isKeepAlive());
-        assertEquals(true, single.isTcpNoDelay());
-        assertNotNull(single.getNameMapper());
+        assertInstanceOf(KeyPrefixHandler.class, config.getNameMapper());
+        assertEquals(true, config.isTcpKeepAlive());
+        assertEquals(true, config.isTcpNoDelay());
     }
 
     @Test
@@ -69,8 +70,9 @@ class RedisConfigTest {
         assertEquals("cluster-client", cluster.getClientName());
         assertEquals(9000, cluster.getConnectTimeout());
         assertEquals(35000, cluster.getPingConnectionInterval());
-        assertEquals(true, cluster.isKeepAlive());
-        assertEquals(true, cluster.isTcpNoDelay());
+        assertInstanceOf(KeyPrefixHandler.class, config.getNameMapper());
+        assertEquals(true, config.isTcpKeepAlive());
+        assertEquals(true, config.isTcpNoDelay());
     }
 
     @Test

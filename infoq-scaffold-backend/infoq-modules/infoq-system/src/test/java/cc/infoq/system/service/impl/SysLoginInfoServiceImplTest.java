@@ -8,6 +8,7 @@ import cc.infoq.common.security.auth.SecurityAuthNames;
 import cc.infoq.common.utils.MapstructUtils;
 import cc.infoq.common.utils.SpringUtils;
 import cc.infoq.common.utils.ip.AddressUtils;
+import cc.infoq.system.TableInfoTestInitializer;
 import cc.infoq.system.domain.bo.SysLoginInfoBo;
 import cc.infoq.system.domain.entity.SysLoginInfo;
 import cc.infoq.system.domain.vo.SysClientVo;
@@ -45,6 +46,7 @@ class SysLoginInfoServiceImplTest {
 
     @BeforeEach
     void setUp() {
+        TableInfoTestInitializer.initSystemTableInfo();
         converter = org.mockito.Mockito.mock(Converter.class);
         GenericApplicationContext context = new GenericApplicationContext();
         context.registerBean(Converter.class, () -> converter);

@@ -83,7 +83,7 @@ services:
       - mqtt-it
 
   mqtt-verifier:
-    image: maven:3.9.12-eclipse-temurin-17
+    image: maven:3.9.12-eclipse-temurin-21
     working_dir: /workspace
     command:
       - bash
