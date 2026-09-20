@@ -730,7 +730,7 @@ cmd_build() {
     else
         require_command node
         info "Packaging infoq-admin with host Maven..."
-        node "${REPO_ROOT}/.codex/scripts/backend_mvn.mjs" -- \
+        node "${REPO_ROOT}/tools/backend_mvn.mjs" -- \
             -B -ntp -P prod -pl infoq-admin -am -DskipTests package
     fi
     cp "${jar_file}" "${BUILD_DIR}/app.jar"

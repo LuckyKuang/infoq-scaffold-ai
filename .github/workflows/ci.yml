@@ -35,7 +35,7 @@ jobs:
           node-version-file: .node-version
 
       - name: Validate UTF-8
-        run: node .codex/scripts/validate_utf8.mjs
+        run: node tools/validate_utf8.mjs
 
   backend:
     name: Backend Build
@@ -59,10 +59,10 @@ jobs:
           cache: maven
 
       - name: Resolve Maven environment
-        run: node .codex/scripts/backend_mvn.mjs --dry-run -- -B -ntp -DskipTests=false clean package -P dev
+        run: node tools/backend_mvn.mjs --dry-run -- -B -ntp -DskipTests=false clean package -P dev
 
       - name: Build backend
-        run: node .codex/scripts/backend_mvn.mjs -- -B -ntp -DskipTests=false clean package -P dev
+        run: node tools/backend_mvn.mjs -- -B -ntp -DskipTests=false clean package -P dev
 
   admin-frontend:
     name: Admin Frontend (${{ matrix.name }})

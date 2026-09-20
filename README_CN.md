@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="doc/images/logo.png" width="120" alt="InfoQ-Scaffold-AI Logo" />
+<img src="docs/images/logo.png" width="120" alt="InfoQ-Scaffold-AI Logo" />
 
 # InfoQ-Scaffold-AI
 
@@ -49,7 +49,7 @@
 
 - Spring Boot 4.1 后端，基线为 JDK 21、MyBatis-Plus 和 Spring Security
 - Vue / React 双管理端共享同一套后端 API 契约
-- 分层 [`AGENTS.md`](AGENTS.md)、`.codex/skills` 与 OpenSpec 交付流程
+- 分层 [`AGENTS.md`](AGENTS.md)、`skills` 与 OpenSpec 交付流程
 - 冻结 SQL 基线与按日期增量脚本
 - Docker Compose 部署 MySQL、Redis、MinIO、后端和管理端网关
 - UTF-8、Maven、pnpm 与管理端 E2E 验证入口
@@ -62,7 +62,7 @@
 ### 后端
 
 ```bash
-node .codex/scripts/backend_mvn.mjs -- clean install -DskipTests
+node tools/backend_mvn.mjs -- clean install -DskipTests
 java -jar infoq-scaffold-backend/infoq-admin/target/infoq-admin.jar --spring.profiles.active=local
 ```
 
@@ -90,8 +90,8 @@ pnpm run dev
 使用 skill 启动联调栈或验证码登录：
 
 ```bash
-node .codex/skills/infoq-frontend-verify/scripts/start_admin_dev_stack.mjs --client vue
-node .codex/skills/infoq-admin-e2e/scripts/captcha_login.mjs --backend-url http://127.0.0.1:8080 --print-token
+node skills/infoq-frontend-verify/scripts/start_admin_dev_stack.mjs --client vue
+node skills/infoq-admin-e2e/scripts/captcha_login.mjs --backend-url http://127.0.0.1:8080 --print-token
 ```
 
 <!-- readme-section:deployment -->
@@ -103,8 +103,8 @@ node .codex/skills/infoq-admin-e2e/scripts/captcha_login.mjs --backend-url http:
 | Docker Compose | [Docker 指南](deploy/DOCKER.md) |
 | Apple container | [Apple container](deploy/APPLE_CONTAINER.md) |
 | Compose 环境模板 | [.env.example](deploy/.env.example) |
-| 手动部署 | [手动部署](doc/devops/manual-deploy.md) |
-| 部署前置条件 | [部署前置条件](doc/devops/deploy-prerequisites.md) |
+| 手动部署 | [手动部署](deploy/MANUAL.md) |
+| 部署前置条件 | [部署前置条件](deploy/README.md) |
 
 ```bash
 bash deploy/install.sh
@@ -119,12 +119,12 @@ README 只提供项目总览和快速开始。详细配置与维护请阅读下�
 
 | 文档 | 说明 |
 | --- | --- |
-| [文档中心](doc/README.md) | 用户文档导航 |
+| [文档中心](docs/README.md) | 用户文档导航 |
 | [贡献指南](CONTRIBUTING.md) | 工具链、验证和 PR 流程 |
 | [开发指南](DEV_GUIDE.md) | 本地设置与排障 |
 | [安全策略](SECURITY.md) | 漏洞报告 |
 | [AGENTS.md](AGENTS.md) | 仓库协作规则 |
-| [设计系统](doc/design/DESIGN.md) | 管理端视觉语言 |
+| [设计系统](docs/DESIGN.md) | 管理端视觉语言 |
 
 <!-- readme-section:license -->
 ## 许可证

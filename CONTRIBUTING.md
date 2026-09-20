@@ -25,13 +25,13 @@ the default development path. Containerized full-stack verification uses
 
 ```bash
 # Encoding
-node .codex/scripts/validate_utf8.mjs
+node tools/validate_utf8.mjs
 
 # README structure
 node tools/check_readme_sync.mjs
 
 # Backend, via the repo Maven runner
-node .codex/scripts/backend_mvn.mjs -- test
+node tools/backend_mvn.mjs -- test
 
 # Vue admin
 pnpm --dir infoq-scaffold-frontend-vue run lint:eslint
@@ -95,7 +95,7 @@ Cross-workspace work and high-impact changes use OpenSpec:
 
 When unsure, follow L3. This repository commits durable specs under
 `openspec/specs/` and active work under `openspec/changes/`. Repo-level or
-high-risk governance also keeps a plan in `doc/plan/YYYY-MM-DD-topic-plan.md`.
+high-risk governance also keeps a plan in `docs/plan/YYYY-MM-DD-topic-plan.md`.
 
 ## Pull Requests
 

@@ -1,0 +1,48 @@
+schema: spec-driven
+
+# InfoQ-Scaffold-AI 项目上下文（创建 change 时展示给 AI）
+context: |
+  技术栈与工作区：
+  - infoq-scaffold-backend：Spring Boot 4.1.1 多模块后端（JDK 21、MyBatis-Plus、
+    Spring Security、Redisson、官方默认 Tomcat 容器）
+  - infoq-scaffold-frontend-react：React 19 + Ant Design 管理端
+  - infoq-scaffold-frontend-vue：Vue 3 + Element Plus 管理端
+  - script / deploy：部署、环境与本地辅助脚本；部署文档在 deploy/
+  - sql：冻结初始化 SQL 与版本增量脚本
+  - docs：文档正文真值源；稳定规格真值在 docs/specs/<capability>/spec.md
+
+  架构默认约束：
+  - 后端主链路：Controller -> Service -> Mapper -> Entity
+  - 前端实现必须遵守各工作区本地架构，不得把某一端风格强行套到另一端
+  - 优先显式失败路径，避免静默回退；优先最小改动，避免大范围重写
+
+  交付默认约束：
+  - L3 变更（新功能、API 契约变更、跨工作区交付）在改代码前必须创建或定位
+    openspec/changes/<change-id>/；L2 至少 proposal.md + tasks.md；L1 小修复
+    不建 change 但必须先写验收约定；不确定分级时默认按 L3 执行
+  - openspec/changes/ 是本地计划脚手架：不提交、不进 PR；耐久行为落到 docs/
+    与测试；repo-level 或高风险治理变更另在 docs/plan/YYYY-MM-DD-*.md 留计划
+  - active change 在实现前和交付前都必须通过
+    node skills/infoq-delivery-workflow/scripts/openspec_check.mjs <change-id>
+  - tasks.md 默认显式评估 infoq-scaffold-backend、infoq-scaffold-frontend-react、
+    infoq-scaffold-frontend-vue、docs、script / deploy、skills（受影响时）
+  - 每个变更只维护一个验收约定；验证顺序固定为：主流程验证 -> 目标测试 ->
+    lint/build -> 差异评审
+  - sql/infoq_scaffold_3.0.0.sql 是冻结初始化基线，不得修改；数据库变更只能
+    新增 sql/infoq_scaffold_update_YYYYMMDD.sql 增量脚本
+
+  文档与工具默认约束：
+  - OpenSpec 文档正文默认中文；路径名称、命令、文件名保持英文原样
+  - 临时验证输出统一放 docs/tmp/，不得放在 openspec/ 下规避提交
+  - 前端命令优先使用 pnpm；后端构建与测试使用 mvn
+  - L3/L2 交付优先使用 infoq-delivery-workflow；其主入口是 init_change_dir.mjs
+    与 openspec_check.mjs
+  - 对重复验证流程优先复用仓库技能；仅当用户明确要求子代理或多专家执行时才使用子代理
+
+rules:
+  proposal:
+    - 保持中文正文，路径与命令保留英文原样
+    - 必须包含背景、问题陈述、目标与成功指标、用户故事、范围、非目标、验收约定、延期范围
+  tasks:
+    - 必须包含影响矩阵（逐工作区评估）、实施任务、验证映射、延期范围、阻塞与残余风险
+    - 验证映射固定包含主流程验证、定向测试、lint/build、差异审查四节

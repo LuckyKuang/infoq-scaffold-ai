@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="doc/images/logo.png" width="120" alt="InfoQ-Scaffold-AI Logo" />
+<img src="docs/images/logo.png" width="120" alt="InfoQ-Scaffold-AI Logo" />
 
 # InfoQ-Scaffold-AI
 
@@ -50,7 +50,7 @@ seed changes must use `sql/infoq_scaffold_update_YYYYMMDD.sql`.
 
 - Spring Boot 4.1 backend on JDK 21, MyBatis-Plus, and Spring Security
 - Dual admin consoles that share the same backend API contract
-- Layered [`AGENTS.md`](AGENTS.md), `.codex/skills`, and OpenSpec delivery
+- Layered [`AGENTS.md`](AGENTS.md), `skills`, and OpenSpec delivery
 - Frozen SQL baseline plus dated incremental scripts
 - Docker Compose deployment for MySQL, Redis, MinIO, backend, and admin gateways
 - UTF-8, Maven, pnpm, and admin E2E verification entrypoints
@@ -63,7 +63,7 @@ Import the SQL baseline and start MySQL 8 plus Redis 7 before login.
 ### Backend
 
 ```bash
-node .codex/scripts/backend_mvn.mjs -- clean install -DskipTests
+node tools/backend_mvn.mjs -- clean install -DskipTests
 java -jar infoq-scaffold-backend/infoq-admin/target/infoq-admin.jar --spring.profiles.active=local
 ```
 
@@ -91,8 +91,8 @@ second console. Local setup details are in [`DEV_GUIDE.md`](DEV_GUIDE.md).
 Use skills for a local stack or captcha login:
 
 ```bash
-node .codex/skills/infoq-frontend-verify/scripts/start_admin_dev_stack.mjs --client vue
-node .codex/skills/infoq-admin-e2e/scripts/captcha_login.mjs --backend-url http://127.0.0.1:8080 --print-token
+node skills/infoq-frontend-verify/scripts/start_admin_dev_stack.mjs --client vue
+node skills/infoq-admin-e2e/scripts/captcha_login.mjs --backend-url http://127.0.0.1:8080 --print-token
 ```
 
 <!-- readme-section:deployment -->
@@ -104,8 +104,8 @@ node .codex/skills/infoq-admin-e2e/scripts/captcha_login.mjs --backend-url http:
 | Docker Compose | [Docker guide](deploy/DOCKER.md) |
 | Apple container | [Apple container](deploy/APPLE_CONTAINER.md) |
 | Compose environment template | [.env.example](deploy/.env.example) |
-| Manual deployment | [Manual deploy](doc/devops/manual-deploy.md) |
-| Prerequisites | [Deploy prerequisites](doc/devops/deploy-prerequisites.md) |
+| Manual deployment | [Manual deploy](deploy/MANUAL.md) |
+| Prerequisites | [Deploy prerequisites](deploy/README.md) |
 
 ```bash
 bash deploy/install.sh
@@ -121,12 +121,12 @@ detailed configuration and maintenance.
 
 | Document | Description |
 | --- | --- |
-| [Documentation index](doc/README.md) | User-doc navigation |
+| [Documentation index](docs/README.md) | User-doc navigation |
 | [Contributing](CONTRIBUTING.md) | Toolchain, checks, and PR flow |
 | [Developer guide](DEV_GUIDE.md) | Local setup and troubleshooting |
 | [Security policy](SECURITY.md) | Vulnerability reporting |
 | [AGENTS.md](AGENTS.md) | Repository collaboration rules |
-| [Design system](doc/design/DESIGN.md) | Admin visual language |
+| [Design system](docs/DESIGN.md) | Admin visual language |
 
 <!-- readme-section:license -->
 ## License

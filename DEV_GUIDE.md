@@ -18,8 +18,8 @@ extra policy documents.
 Development requires MySQL 8 and Redis 7. You can use local services or Compose:
 
 ```bash
-cp deploy/.env.example script/docker/.env
-cd script/docker
+cp deploy/.env.example deploy/docker/.env
+cd deploy/docker
 docker compose up -d mysql redis
 ```
 
@@ -38,7 +38,7 @@ comes from that SQL file; do not guess passwords for an existing environment.
 ## Install and Build
 
 ```bash
-node .codex/scripts/backend_mvn.mjs -- clean install -DskipTests
+node tools/backend_mvn.mjs -- clean install -DskipTests
 
 pnpm --dir infoq-scaffold-frontend-vue install
 pnpm --dir infoq-scaffold-frontend-react install
@@ -82,8 +82,8 @@ settings must match, and `clientId` must match initialized `sys_client` data.
 Skill-managed local stack:
 
 ```bash
-node .codex/skills/infoq-frontend-verify/scripts/start_admin_dev_stack.mjs --client vue
-node .codex/skills/infoq-frontend-verify/scripts/start_admin_dev_stack.mjs --client react
+node skills/infoq-frontend-verify/scripts/start_admin_dev_stack.mjs --client vue
+node skills/infoq-frontend-verify/scripts/start_admin_dev_stack.mjs --client react
 ```
 
 ## Verification
@@ -91,8 +91,8 @@ node .codex/skills/infoq-frontend-verify/scripts/start_admin_dev_stack.mjs --cli
 Backend:
 
 ```bash
-node .codex/scripts/backend_mvn.mjs -- test
-node .codex/scripts/backend_mvn.mjs -- -pl infoq-modules/infoq-system -am test
+node tools/backend_mvn.mjs -- test
+node tools/backend_mvn.mjs -- -pl infoq-modules/infoq-system -am test
 ```
 
 Vue:
@@ -114,7 +114,7 @@ pnpm --dir infoq-scaffold-frontend-react run build:prod
 Encoding and README sync:
 
 ```bash
-node .codex/scripts/validate_utf8.mjs
+node tools/validate_utf8.mjs
 node tools/check_readme_sync.mjs
 ```
 
@@ -131,7 +131,7 @@ commit the resulting `pnpm-lock.yaml`. Do not use npm or yarn.
 
 ### Maven runner cannot find JDK or Maven
 
-`node .codex/scripts/backend_mvn.mjs` prefers `.idea` Maven settings, then local
+`node tools/backend_mvn.mjs` prefers `.idea` Maven settings, then local
 candidates. It requires JDK 21 and Maven 3.9.x.
 
 ### UTF-8 encoding
@@ -139,7 +139,7 @@ candidates. It requires JDK 21 and Maven 3.9.x.
 Repository text files must be UTF-8 without BOM:
 
 ```bash
-node .codex/scripts/validate_utf8.mjs
+node tools/validate_utf8.mjs
 ```
 
 On Windows PowerShell 5.1, `Get-Content` / `Select-String` must pass
@@ -178,20 +178,20 @@ infoq-scaffold-ai/
 ├── infoq-scaffold-backend/       Spring Boot backend
 ├── infoq-scaffold-frontend-vue/  Vue 3 admin
 ├── infoq-scaffold-frontend-react/ React 19 admin
-├── script/                       Compose files and deploy helpers
-├── deploy/                       Installer and deployment guides
+├── deploy/                       Installer, Compose assets, and deployment guides
 ├── sql/                          Frozen baseline and incremental scripts
-├── doc/                          User documentation
-├── openspec/                     Specs and active changes
-├── tools/                        Repository validation scripts
-└── .codex/                       Skills, MCP config, and helper scripts
+├── docs/                         User documentation and spec truth
+├── openspec/                     Change templates and local change plans
+├── skills/                       Agent Skills SOP library (all agents)
+├── tools/                        Repository validation and MCP helper scripts
+└── .codex/                       Codex-specific config and custom agents
 ```
 
 ## Related Documents
 
 - [Contributing](CONTRIBUTING.md)
-- [Documentation index](doc/README.md)
+- [Documentation index](docs/README.md)
 - [Deployment guide](deploy/README.md)
 - [Apple container](deploy/APPLE_CONTAINER.md)
 - [AGENTS.md](AGENTS.md)
-- [FAQ](doc/guide/faq.md)
+- [FAQ](docs/FAQ.md)

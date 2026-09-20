@@ -15,7 +15,7 @@ const EXPECTED_SECTIONS = [
   'license',
 ];
 const REQUIRED_LINKS = [
-  'doc/README.md',
+  'docs/README.md',
   'deploy/README.md',
   'deploy/DOCKER.md',
   'deploy/APPLE_CONTAINER.md',
@@ -25,7 +25,7 @@ const REQUIRED_LINKS = [
   'SECURITY.md',
   'AGENTS.md',
   'LICENSE',
-  'doc/design/DESIGN.md',
+  'docs/DESIGN.md',
   'sql/infoq_scaffold_3.0.0.sql',
 ];
 const SECTION_RE = /<!--\s*readme-section:([a-z0-9-]+)\s*-->/g;

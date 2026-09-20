@@ -1,0 +1,156 @@
+# InfoQ 项目参考
+
+## 目录
+
+- 项目范围
+- 后端参考
+- 管理端前端参考
+  - React Admin
+  - Vue Admin
+- 基础设施与运维
+- 约定
+- 命令
+  - Backend
+  - React Admin
+  - Vue Admin
+- 验证与交付
+
+## 项目范围
+
+- 项目根目录：`./`
+- 活跃工作区：
+  - `infoq-scaffold-backend`
+  - `infoq-scaffold-frontend-react`
+  - `infoq-scaffold-frontend-vue`
+  - `openspec`
+  - `script`
+  - `sql`
+  - `doc`
+- 工作区指令文件：
+  - `AGENTS.md`
+  - `infoq-scaffold-backend/AGENTS.md`
+  - `infoq-scaffold-frontend-react/AGENTS.md`
+  - `infoq-scaffold-frontend-vue/AGENTS.md`
+
+## 后端参考
+
+- 后端模块：
+  - `infoq-core`: `infoq-core-bom`, `infoq-core-common`, `infoq-core-data`
+  - `infoq-plugin`: `encrypt`, `excel`, `jackson`, `log`, `mail`, `mybatis`, `oss`, `redis`, `satoken`, `security`, `sensitive`, `sse`, `translation`, `web`, `websocket`, `doc`
+  - `infoq-modules`: `system`
+  - `infoq-admin`
+- 后端入口：`infoq-scaffold-backend/infoq-admin/src/main/java/cc/infoq/admin/SysAdminApplication.java`
+- 后端配置文件：
+  - `infoq-scaffold-backend/infoq-admin/src/main/resources/application.yml`
+  - `infoq-scaffold-backend/infoq-admin/src/main/resources/application-dev.yml`
+  - `infoq-scaffold-backend/infoq-admin/src/main/resources/application-local.yml`
+  - `infoq-scaffold-backend/infoq-admin/src/main/resources/application-prod.yml`
+  - `infoq-scaffold-backend/infoq-admin/src/main/resources/logback-plus.xml`
+
+## 管理端前端参考
+
+### React Admin
+
+- 关键目录：
+  - `infoq-scaffold-frontend-react/src/pages`
+  - `infoq-scaffold-frontend-react/src/components`
+  - `infoq-scaffold-frontend-react/src/api`
+  - `infoq-scaffold-frontend-react/src/store`
+  - `infoq-scaffold-frontend-react/src/router`
+  - `infoq-scaffold-frontend-react/src/utils`
+  - `infoq-scaffold-frontend-react/tests`
+- 关键文件：
+  - `infoq-scaffold-frontend-react/package.json`
+  - `infoq-scaffold-frontend-react/vite.config.ts`
+  - `infoq-scaffold-frontend-react/eslint.config.js`
+  - `infoq-scaffold-frontend-react/tests/setup.ts`
+  - `infoq-scaffold-frontend-react/.env.development`
+- 构建与分包真值：
+  - `infoq-scaffold-frontend-react/vite.config.ts` 中的 `build.rollupOptions.output.manualChunks` 是 React admin 当前分包真值。
+  - 当前策略优先稳定 vendor 分组与路由级懒加载：`vendor-react`、`vendor-shared`、`vendor-media`、`vendor-echarts`，以及 `vendor-antd-infra`、`vendor-rc-table`、`vendor-rc-picker`、`vendor-rc-form`、`vendor-rc-tree`、`vendor-rc-overlay`。
+  - `src/router/AppRouter.tsx` 中的 `AuthGuard`、`MainLayout`、`BackendRouteView`、`login`、`register`、`401`、`redirect` 已改为 `lazy()`；入口首包优化依赖这些真实路由边界。
+  - 处理 chunk warning 时，优先保留“按路由边界拆 + 按 rc 重模块拆”的思路，不要回到按 `antd/es/*` 或 `antd/lib/*` 细粒度手工拆包；旧策略容易触发 circular chunk warning。
+  - 验证标准以 `pnpm run build:prod` 输出为准：既要避免 circular chunk warning，也要避免 `Some chunks are larger than 500 kB after minification`。
+
+### Vue Admin
+
+- 关键目录：
+  - `infoq-scaffold-frontend-vue/src/views`
+  - `infoq-scaffold-frontend-vue/src/components`
+  - `infoq-scaffold-frontend-vue/src/api`
+  - `infoq-scaffold-frontend-vue/src/store`
+  - `infoq-scaffold-frontend-vue/src/router`
+  - `infoq-scaffold-frontend-vue/src/utils`
+  - `infoq-scaffold-frontend-vue/src/plugins`
+  - `infoq-scaffold-frontend-vue/tests`
+- 关键文件：
+  - `infoq-scaffold-frontend-vue/package.json`
+  - `infoq-scaffold-frontend-vue/vite.config.ts`
+  - `infoq-scaffold-frontend-vue/eslint.config.ts`
+  - `infoq-scaffold-frontend-vue/.env.development`
+  - `infoq-scaffold-frontend-vue/tests/setup.ts`
+
+## 基础设施与运维
+
+- 脚本：
+  - `script/generate-app-icon.js`
+  - `script/build-open-wechat-devtools.mjs`
+  - `deploy/bin/infoq.sh`
+  - `deploy/bin/deploy-frontend.sh`
+- Compose 与网关：
+  - `deploy/docker/docker-compose.yml`
+  - `deploy/docker/nginx/conf/nginx.conf`
+  - `deploy/docker/redis/conf/redis.conf`
+- SQL 初始化文件：
+  - `sql/infoq_scaffold_2.0.0.sql`
+
+## 约定
+
+- 架构：`Controller -> Service -> Mapper -> Entity`
+- Java 包命名约定：`cc.infoq.{module}.{layer}`
+- Java 实体与 mapper 通常使用 `Sys*`
+- Vue 与 React 组件使用 PascalCase
+- TypeScript utils 与 hooks 使用 camelCase
+- 项目文本文件统一 UTF-8，写入使用 UTF-8 without BOM
+- Windows PowerShell 5.1 是默认 shell 基线；读取源码、配置、文档时，`Get-Content`/`Select-String` 必须显式指定 `-Encoding UTF8`
+- Windows PowerShell 5.1 禁止用 `>`、`>>`、`Out-File`、`Set-Content`、`Add-Content` 写入仓库文本文件；写入使用明确 UTF-8 without BOM 的方式
+- 提交或构建前执行仓库专用 UTF-8 校验命令：`node tools/validate_utf8.mjs`；可追加路径参数做定向校验
+- 后端 `.editorconfig` 使用 4 空格；前端使用 2 空格
+- 前端包管理策略：优先 `pnpm`，不可用时回退等价 `npm` 命令
+
+## 命令
+
+### Backend
+
+- 构建：`node tools/backend_mvn.mjs -- clean package -P dev`
+- 运行：`node tools/backend_mvn.mjs -- clean install -DskipTests && java -jar infoq-scaffold-backend/infoq-admin/target/infoq-admin.jar --spring.profiles.active=local`
+- 定向测试：`node tools/backend_mvn.mjs -- -pl infoq-modules/infoq-system -am -DskipTests=false test`
+
+### React Admin
+
+- 安装：`cd infoq-scaffold-frontend-react && pnpm install`
+- 开发：`cd infoq-scaffold-frontend-react && pnpm run dev`
+- 测试：`cd infoq-scaffold-frontend-react && pnpm run test`
+- 覆盖率：`cd infoq-scaffold-frontend-react && pnpm run test:coverage`
+- Lint：`cd infoq-scaffold-frontend-react && pnpm run lint`
+- 构建：`cd infoq-scaffold-frontend-react && pnpm run build:prod`
+
+### Vue Admin
+
+- 安装：`cd infoq-scaffold-frontend-vue && pnpm install`
+- 开发：`cd infoq-scaffold-frontend-vue && pnpm run dev`
+- 测试：`cd infoq-scaffold-frontend-vue && pnpm run test:unit`
+- 覆盖率：`cd infoq-scaffold-frontend-vue && pnpm run test:unit:coverage`
+- Lint：`cd infoq-scaffold-frontend-vue && pnpm run lint:eslint`
+- 构建：`cd infoq-scaffold-frontend-vue && pnpm run build:prod`
+
+## 验证与交付
+
+- 默认执行闭环：`main-flow verification -> targeted tests -> lint/build -> diff review`
+- 交付规划应定义 acceptance contract，覆盖功能范围、非目标、异常处理、所需日志/可观测性、回滚条件
+- 可发布变更在部署前必须验证环境/配置前置条件与外部依赖
+- 影响共享环境、数据或部署状态的破坏性/高风险操作必须显式确认
+- SQL、数据库、Redis、数据修复、迁移、测试数据维护和 API/UI/DB 一致性验证归属 `infoq-data-ops`
+- 后端运行时、登录、smoke 与单测验证归属 `infoq-backend-verify`
+- React/Vue admin 运行态、单测、coverage、lint/build 归属 `infoq-frontend-verify`
+- 管理端真实验证码登录、动态路由 smoke、测试矩阵与 CRUD E2E 模式归属 `infoq-admin-e2e`

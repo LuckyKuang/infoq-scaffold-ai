@@ -1,7 +1,11 @@
 # Deployment Guide
 
-This directory is the operator entry for installation and Compose environment
-templates. Compose files and runtime config still live under `script/docker/`.
+This directory is the operator entry for installation, environment templates, and
+deployment guides. Compose files and runtime config still live under
+`deploy/docker/`.
+
+本目录是运维入口：安装脚本、环境模板与部署文档都在这里。Compose 文件与运行
+配置仍在 `deploy/docker/`。
 
 ## Deployment Methods
 
@@ -10,7 +14,7 @@ templates. Compose files and runtime config still live under `script/docker/`.
 | Linux install script | Server install, generated secrets | this file |
 | Docker Compose | Local or self-hosted full stack | [DOCKER.md](DOCKER.md) |
 | Apple container | macOS local backend stack | [APPLE_CONTAINER.md](APPLE_CONTAINER.md) |
-| Manual JVM + Nginx | Non-container hosts | [Manual deploy](../doc/devops/manual-deploy.md) |
+| Manual JVM + Nginx | Non-container hosts | [MANUAL.md](MANUAL.md) |
 
 ## Files
 
@@ -18,15 +22,138 @@ templates. Compose files and runtime config still live under `script/docker/`.
 | --- | --- |
 | `install.sh` | One-click Linux installer |
 | `uninstall.sh` | Uninstall helper |
-| `DOCKER.md` | Compose deployment notes |
-| `APPLE_CONTAINER.md` | Apple `container` local stack |
-| `apple-container.sh` | Isolated MySQL, Redis, and backend helper |
 | `.env.example` | Environment template for Compose interpolation |
-| `../script/docker/docker-compose.yml` | Full-stack Compose file |
-| `../script/bin/deploy-frontend.sh` | Frontend / gateway deploy helper |
-| `../script/bin/infoq.sh` | Backend and middleware helper |
+| `DOCKER.md` | Docker Compose 全栈部署（教程 + 脚本化流程） |
+| `APPLE_CONTAINER.md` | Apple `container` local stack |
+| `MANUAL.md` | 非容器化 JVM + Nginx 部署 |
+| `Dockerfile.apple` | Apple container runtime image |
+| `apple-container.sh` | Isolated MySQL, Redis, and backend helper |
+| `examples/nginx/` | HTTP / HTTPS Nginx 配置示例 |
+| `examples/systemd/` | systemd 服务单元示例 |
+| `../deploy/docker/docker-compose.yml` | Full-stack Compose file |
+| `../deploy/bin/infoq.sh` | Backend and middleware helper |
+| `../deploy/bin/deploy-frontend.sh` | Frontend / gateway deploy helper |
 
-## Linux Installer
+## 1. 前置条件
+
+### 1.1 软件与版本基线
+
+| 组件 | 基线 |
+| --- | --- |
+| Docker / Compose | Docker CE / Moby / Colima + `docker compose` 或 `docker-compose`，并启用 `docker buildx` |
+| 后端构建镜像 | `maven:3.9.12-eclipse-temurin-21` |
+| 后端运行镜像 | `bellsoft/liberica-openjdk-rocky:21.0.12-cds` |
+| 手动部署 JDK | 21 |
+| 手动部署 Maven | 3.9+ |
+| Node.js | 24.18.0 |
+| pnpm | >= 10.0.0 |
+| MySQL | 8.x |
+| Redis | 7.x |
+| Nginx | 1.30.x |
+| MQTT（可选） | EMQX 社区版 5.8.9 |
+| Elasticsearch（可选） | 8.18.8 |
+
+说明：
+
+- Docker Compose / 脚本化部署不要求宿主机安装 JDK 或 Maven；后端 Maven 打包在 Docker builder 镜像 `maven:3.9.12-eclipse-temurin-21` 内完成，最终运行镜像仍是 `bellsoft/liberica-openjdk-rocky:21.0.12-cds`。后端 Dockerfile 使用 BuildKit `RUN --mount`，因此 Docker CLI 必须支持 `docker buildx`：[`infoq-scaffold-backend/infoq-admin/Dockerfile`](../infoq-scaffold-backend/infoq-admin/Dockerfile)
+- 手动部署或本机直接执行 Maven 构建时，仍需要宿主机 JDK 21 与 Maven 3.9+。
+- 前端本机开发、CI、docs 站点和 Docker 构建镜像统一固定基于 Node 24.18.0：[`infoq-scaffold-frontend-vue/Dockerfile`](../infoq-scaffold-frontend-vue/Dockerfile) [`infoq-scaffold-frontend-react/Dockerfile`](../infoq-scaffold-frontend-react/Dockerfile)。npm 版本不作为仓库构建基线单独固定，包管理器遵循各工作区 `packageManager` 与 lockfile。
+- Docker Compose 默认依赖 MySQL 8.0、Redis 7.2、MinIO `RELEASE.2026-06-18T00-00-00Z`、Nginx 1.30：[`deploy/docker/docker-compose.yml`](../deploy/docker/docker-compose.yml)
+
+### 1.2 端口与网络准备
+
+默认会占用以下端口。基础服务端口始终需要空闲；前端直连端口按 `INFOQ_FRONTEND_TARGET` 决定，`all` 才需要两个前端端口都空闲。
+
+| 服务 | 默认端口 |
+| --- | --- |
+| nginx 网关 | 80 / 443 |
+| 后端 `infoq-admin` | 9090 |
+| Vue 前端直连 | 9091 |
+| React 前端直连 | 9092 |
+| MySQL | 3306 |
+| Redis | 6379 |
+| MinIO API | 9000 |
+| MinIO Console | 9001 |
+| MQTT TLS（可选） | single / cluster 均默认节点一 `127.0.0.1:8883` |
+| Elasticsearch HTTPS（可选） | single / cluster 均默认节点一 `127.0.0.1:9200` |
+
+前端目标与直连端口关系：
+
+- `INFOQ_FRONTEND_TARGET=vue`：只需要 `9091`
+- `INFOQ_FRONTEND_TARGET=react`：只需要 `9092`
+- `INFOQ_FRONTEND_TARGET=all`：需要 `9091`、`9092`
+
+默认对外用户入口优先走 Nginx：MinIO Console `http://SERVER_IP/console-oss/`、MinIO OSS `http://SERVER_IP/oss/`。
+
+部署前至少确认：
+
+- 基础服务端口和目标前端直连端口未被其他进程占用
+- 服务器安全组、防火墙、反向代理策略允许目标端口访问
+- 如需公网 HTTPS，证书和域名已准备完成
+- 如启用可选 MQTT / Elasticsearch，已通过 `deploy-middleware.sh` 选择 `single` 或 `cluster`，并按 [DOCKER.md](DOCKER.md) 的可选中间件章节准备 `deploy.env` 变量；不得使用 `*-it` 测试材料
+- 选择 Elasticsearch cluster 时，宿主机 `vm.max_map_count` 至少为 `262144`
+- 首次安装会生成 `/etc/infoq-scaffold-ai/deploy.env` 和 `/etc/infoq-scaffold-ai/credentials.txt`，两个文件必须保留且权限为 `600`
+
+### 1.3 目录与权限准备
+
+WSL2 / 原生 Linux 部署根目录建议统一为 `/infoq`；macOS Colima 建议使用 `$HOME/infoq`。执行部署前，必须先确认以下目录存在：
+
+```text
+/tmp/infoq-deploy
+${INFOQ_DEPLOY_ROOT}/server/temp
+```
+
+脚本约定的宿主机目录还包括：
+
+```text
+${INFOQ_DEPLOY_ROOT}/mysql/data
+${INFOQ_DEPLOY_ROOT}/mysql/conf
+${INFOQ_DEPLOY_ROOT}/redis/conf
+${INFOQ_DEPLOY_ROOT}/redis/data
+${INFOQ_DEPLOY_ROOT}/minio/data
+${INFOQ_DEPLOY_ROOT}/server/config
+${INFOQ_DEPLOY_ROOT}/server/logs
+${INFOQ_DEPLOY_ROOT}/server/temp
+${INFOQ_DEPLOY_ROOT}/server/ip2region
+${INFOQ_DEPLOY_ROOT}/nginx/cert
+${INFOQ_DEPLOY_ROOT}/nginx/conf
+${INFOQ_DEPLOY_ROOT}/nginx/log
+${INFOQ_DEPLOY_ROOT}/vue/logs        # INFOQ_FRONTEND_TARGET=vue 或 all
+${INFOQ_DEPLOY_ROOT}/react/logs      # INFOQ_FRONTEND_TARGET=react 或 all
+```
+
+部署账号需要对这些目录具备读写权限，尤其是后端日志目录、临时文件目录、IPv6 地址库目录、Nginx 静态资源目录和日志目录。
+
+### 1.4 配置检查项
+
+后端重点检查：数据库地址/账号/密码、Redis 地址/端口/密码、`spring.servlet.multipart.location`、`security.token.secret`（推荐通过 `SECURITY_TOKEN_SECRET` 提供）、`api-decrypt` 公私钥、`DEPLOY_ID`、IPv6 地址库外置路径、邮件/OSS 等插件配置。
+
+主要配置来源：
+
+- 默认生产配置：[`infoq-scaffold-backend/infoq-admin/src/main/resources/application-prod.yml`](../infoq-scaffold-backend/infoq-admin/src/main/resources/application-prod.yml)
+- 通用配置：[`infoq-scaffold-backend/infoq-admin/src/main/resources/application.yml`](../infoq-scaffold-backend/infoq-admin/src/main/resources/application.yml)
+- Compose 覆盖模板：[`deploy/docker/server/application-prod.yml`](../deploy/docker/server/application-prod.yml)
+
+生产环境不要直接保留仓库内默认密钥、默认数据库密码和示例邮箱配置。生产 `prod` profile 开启 Quartz bootstrap guard 时，`DEPLOY_ID` 不能为空；同一批滚动发布的所有 backend 节点必须使用同一个 `DEPLOY_ID`，新批次发布必须换新值。
+
+多节点部署前，至少逐项核对：所有节点 `SECURITY_TOKEN_SECRET` 完全一致；`api-decrypt.enabled` 与公私钥和前端加密配置匹配；所有节点连接同一组 MySQL、Redis/Redisson 与 OSS 配置，`redisson.keyPrefix` 不因节点隔离 token、缓存、Quartz marker、WebSocket/SSE 注册表；共享同一个 `DEPLOY_ID`。
+
+前端重点检查：`VITE_APP_CONTEXT_PATH`、`VITE_APP_BASE_API`、`VITE_APP_ENCRYPT`、RSA 公私钥、`VITE_APP_CLIENT_ID`。配置入口为 `infoq-scaffold-frontend-vue/.env.production` 与 `infoq-scaffold-frontend-react/.env.production`。
+
+网关确认：`INFOQ_FRONTEND_TARGET=all` 时 `/vue/`、`/react/` 分别指向 Vue、React 静态资源；单目标时 `/` 指向被选中的前端；`/prod-api/` 反代到后端 `9090`；HTTPS 证书路径和域名配置正确。基线配置见 [`deploy/docker/nginx/conf/nginx.conf`](../deploy/docker/nginx/conf/nginx.conf)，运维示例见 `examples/nginx/` 与 `examples/systemd/`。
+
+### 1.5 数据初始化准备
+
+- 冻结初始化基线：[`sql/infoq_scaffold_3.0.0.sql`](../sql/infoq_scaffold_3.0.0.sql)
+- 增量脚本：`sql/infoq_scaffold_update_*.sql`
+
+部署前确认：目标数据库字符集支持 `utf8mb4`；目标库名是否使用 `infoq`；已有库是否允许导入；非首次部署是否有可用备份与回滚点；多节点滚动发布前数据库增量必须先完成。当前部署完成后应能查到 `sys_job`、`QRTZ_LOCKS`、`sys_oauth_provider`、`sys_oauth_identity`，且 `sys_client` 的 `e5cd7e4891bf95d1d19206ce24a7b32e` 客户端包含 `oauth` 授权类型。
+
+### 1.6 构建产物准备
+
+Compose / 脚本化部署不需要提前在宿主机准备 jar；`infoq-admin` 镜像会在 Docker builder 阶段执行 Maven prod 打包。手动部署时，构建后 jar 产物路径为 `infoq-scaffold-backend/infoq-admin/target/infoq-admin.jar`。Vue 与 React 生产构建后产出各自工作区的 `dist/` 目录。
+
+## 2. Linux Installer
 
 ```bash
 bash deploy/install.sh
@@ -43,37 +170,39 @@ Uninstall:
 bash deploy/uninstall.sh
 ```
 
-## Docker Compose
+## 3. Docker Compose
 
 Copy the environment template, then edit secrets:
 
 ```bash
-cp deploy/.env.example script/docker/.env
-chmod 600 script/docker/.env
+cp deploy/.env.example deploy/docker/.env
+chmod 600 deploy/docker/.env
 ```
 
 Deploy all admin consoles plus the Nginx gateway:
 
 ```bash
-bash script/bin/deploy-frontend.sh deploy all
+bash deploy/bin/deploy-frontend.sh deploy all
 ```
 
 Target a single console:
 
 ```bash
-bash script/bin/deploy-frontend.sh deploy vue
-bash script/bin/deploy-frontend.sh deploy react
+bash deploy/bin/deploy-frontend.sh deploy vue
+bash deploy/bin/deploy-frontend.sh deploy react
 ```
 
 Stop:
 
 ```bash
-bash script/bin/deploy-frontend.sh stop all
+bash deploy/bin/deploy-frontend.sh stop all
 ```
 
-On macOS Colima set `INFOQ_DEPLOY_ROOT="$HOME/infoq"` before starting.
+On macOS Colima set `INFOQ_DEPLOY_ROOT="$HOME/infoq"` before starting. Full
+tutorial, scripted flow, and optional MQTT / Elasticsearch overlays are in
+[DOCKER.md](DOCKER.md).
 
-## Apple Container
+## 4. Apple Container
 
 For a local Apple `container` backend stack that stays isolated from other
 Apple container projects:
@@ -87,7 +216,12 @@ curl --noproxy '*' -fsS http://127.0.0.1:19090/monitor/health/readiness
 See [APPLE_CONTAINER.md](APPLE_CONTAINER.md). Do not reuse `$HOME/infoq` or
 stop unrelated containers such as `sub2api-apple*`.
 
-## Gateway Routes
+## 5. Manual Deploy
+
+Non-container JVM + Nginx deployment is documented in [MANUAL.md](MANUAL.md),
+including systemd and nginx examples under `examples/`.
+
+## 6. Gateway Routes
 
 The `all` target exposes:
 
@@ -99,12 +233,12 @@ The `all` target exposes:
 
 A single-target deploy mounts that admin at `/`.
 
-## Verification
+## 7. Verification
 
 Use the `infoq-deploy-verify` skill for a full Compose smoke. A minimal check:
 
 ```bash
-cd script/docker
+cd deploy/docker
 docker compose ps
 curl -fsS http://127.0.0.1:9090/monitor/health/readiness
 curl -fsS http://127.0.0.1/prod-api/monitor/health/readiness
@@ -112,23 +246,42 @@ curl -fsS http://127.0.0.1/prod-api/monitor/health/readiness
 
 Local `java -jar` with the `local` profile still uses `http://127.0.0.1:8080`.
 
-## Troubleshooting
+## 8. 发布前最小验收清单
+
+进入正式部署前，至少确认以下项目：
+
+- 外部依赖已就绪：MySQL、Redis、Nginx、可选 MinIO
+- 部署目录与权限已确认
+- 生产配置已替换默认值
+- 证书、域名、端口策略已确认
+- 初始化 SQL 使用策略已确认
+- `DEPLOY_ID`、`SECURITY_TOKEN_SECRET`、`api-decrypt` keys、Redis/Redisson 配置一致性已确认
+- `/monitor/health/readiness` 在待接流量节点上返回 2xx，DB/Redis 不可用时能返回失败
+- 滚动更新顺序已确认：先摘流量，再确认负载均衡不再转发到旧节点或连接排空，再停止旧节点
+- 回滚方案已准备：上一个 jar、上一个前端静态包、数据库备份
+- 日志查看路径已明确
+
+如果以上任一项不明确，不建议直接执行上线部署。
+
+## 9. Troubleshooting
 
 Container logs:
 
 ```bash
-cd script/docker
+cd deploy/docker
 docker compose logs infoq-admin
 docker compose logs mysql
 docker compose logs redis
 ```
 
-## Detailed Documents
+更多排障（镜像 tag 收口、Docker credential helper、WSL2 keepalive、Corepack
+激活失败等）见 [DOCKER.md](DOCKER.md) 的排障章节。
+
+## 10. Detailed Documents
 
 | Document | Description |
 | --- | --- |
-| [Deploy prerequisites](../doc/devops/deploy-prerequisites.md) | Environment and dependency checks |
-| [Docker Compose tutorial](../doc/devops/docker-compose-tutorial.md) | WSL2 / macOS / Linux container setup |
-| [Docker Compose deploy](../doc/devops/docker-compose-deploy.md) | Scripted deploy flow |
-| [Manual deploy](../doc/devops/manual-deploy.md) | Non-container deploy |
+| [DOCKER.md](DOCKER.md) | WSL2 / macOS / Linux 容器部署全流程 |
+| [APPLE_CONTAINER.md](APPLE_CONTAINER.md) | macOS Apple `container` 本机后端栈 |
+| [MANUAL.md](MANUAL.md) | 非容器化部署 |
 | [Security policy](../SECURITY.md) | Vulnerability reporting |

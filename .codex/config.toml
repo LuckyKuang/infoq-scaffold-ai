@@ -7,7 +7,7 @@ max_depth = 1
 
 [mcp_servers.playwright]
 command = "node"
-args = [".codex/scripts/start_playwright_mcp.mjs"]
+args = ["tools/mcp/start_playwright_mcp.mjs"]
 enabled = true
 startup_timeout_sec = 20
 tool_timeout_sec = 120
@@ -44,7 +44,7 @@ approval_mode = "approve"
 
 [mcp_servers.mysql]
 command = "node"
-args = [".codex/scripts/start_mysql_mcp.mjs"]
+args = ["tools/mcp/start_mysql_mcp.mjs"]
 enabled_tools = [
   "show_databases",
   "list_tables",
@@ -96,7 +96,7 @@ approval_mode = "approve"
 
 [mcp_servers.redis]
 command = "node"
-args = [".codex/scripts/start_redis_mcp.mjs"]
+args = ["tools/mcp/start_redis_mcp.mjs"]
 enabled_tools = [
   "ping",
   "info",

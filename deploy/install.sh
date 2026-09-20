@@ -312,7 +312,7 @@ resolve_local_source() {
 
   if [[ -n "${script_path}" && -f "${script_path}" ]]; then
     candidate="$(cd "$(dirname "${script_path}")/.." && pwd)"
-    if [[ -f "${candidate}/script/bin/infoq.sh" && -f "${candidate}/script/docker/docker-compose.yml" ]]; then
+    if [[ -f "${candidate}/deploy/bin/infoq.sh" && -f "${candidate}/deploy/docker/docker-compose.yml" ]]; then
       SOURCE_DIR="${candidate}"
       return
     fi
@@ -420,9 +420,9 @@ main() {
   prepare_credentials
 
   log "启动后端与依赖服务"
-  (cd "${SOURCE_DIR}" && INFOQ_ENV_FILE="${INFOQ_ENV_FILE}" INFOQ_RESET_ADMIN="${INFOQ_RESET_ADMIN}" INFOQ_RESET_OSS="${INFOQ_RESET_OSS}" bash script/bin/infoq.sh deploy)
+  (cd "${SOURCE_DIR}" && INFOQ_ENV_FILE="${INFOQ_ENV_FILE}" INFOQ_RESET_ADMIN="${INFOQ_RESET_ADMIN}" INFOQ_RESET_OSS="${INFOQ_RESET_OSS}" bash deploy/bin/infoq.sh deploy)
   log "启动前端与 nginx"
-  (cd "${SOURCE_DIR}" && INFOQ_ENV_FILE="${INFOQ_ENV_FILE}" bash script/bin/deploy-frontend.sh deploy "${INFOQ_FRONTEND_TARGET}")
+  (cd "${SOURCE_DIR}" && INFOQ_ENV_FILE="${INFOQ_ENV_FILE}" bash deploy/bin/deploy-frontend.sh deploy "${INFOQ_FRONTEND_TARGET}")
   print_summary
 }
 
