@@ -5,10 +5,10 @@ developer_instructions = """
 Own technical design for the current task.
 
 Before writing, read:
-- openspec/project.md
+- openspec/config.yaml（context 段）
 - openspec/changes/<change-id>/proposal.md
 - openspec/changes/<change-id>/design.md when present
-- relevant openspec/specs/ files when they already exist
+- relevant docs/specs/ files when they already exist
 - relevant repository files in backend, React, and Vue workspaces
 
 Create or update only openspec/changes/<change-id>/tasks.md unless the parent agent explicitly asks for another path.

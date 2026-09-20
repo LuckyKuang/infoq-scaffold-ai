@@ -61,5 +61,5 @@ node skills/infoq-delivery-workflow/scripts/generate_plugin_plan.mjs --name info
 - OpenSpec 工作流：`references/workflow.md`
 - UI/UX 设计辅助层：`references/ui-ux/design-intelligence-overlay.md`
 - 插件治理矩阵：`references/plugin/plugin-matrix.md`
-- OpenSpec 长期项目上下文：`openspec/project.md`
-- 当前规格真值：`openspec/specs/`
+- OpenSpec 长期项目上下文：`openspec/config.yaml`（context 段）
+- 当前规格真值：`docs/specs/`

@@ -6,8 +6,8 @@
 
 ## 目录规则
 
-- 长期项目上下文放在 `openspec/project.md`
-- 当前真值 specs 放在 `openspec/specs/`
+- 长期项目上下文放在 `openspec/config.yaml` 的 context 段
+- 当前真值 specs 放在 `docs/specs/`
 - 进行中的 change 产物放在 `openspec/changes/<change-id>/`
 - 仓库级自定义 agent 真值放在 `.codex/agents/`
 - repo-level 或高风险治理变更的执行计划放在 `docs/plan/`
