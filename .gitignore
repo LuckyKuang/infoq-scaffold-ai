@@ -86,21 +86,9 @@ test-results/
 .pnpm-store/
 .swc/
 
-# 忽略 docs/tmp/、未归属的历史计划与 OpenSpec 本地 change；当前治理计划显式纳入版本控制。
-docs/tmp/
-tools/tmp/
+# 忽略 tmp/、未归属的历史计划与 OpenSpec 本地 change；当前治理计划显式纳入版本控制。
+tmp/
 openspec/changes/
-# 治理 change 的执行计划纳入版本控制，其他历史计划仍保持忽略。
-!docs/plan/
-docs/plan/*
-!docs/plan/2026-09-16-consolidate-supported-workspaces-plan.md
-!docs/plan/2026-09-19-docs-align-sub2api.md
-!docs/plan/2026-09-19-align-jdk21-runtime.md
-!docs/plan/2026-09-19-align-deploy-hub.md
-!docs/plan/2026-09-19-align-apple-container.md
-!docs/plan/2026-09-20-align-redisson-boot4.md
-!docs/plan/2026-09-20-align-mybatis-boot4.md
-!docs/plan/2026-09-20-align-docs-openspec-sub2api.md
 
 settings.local.json
 
