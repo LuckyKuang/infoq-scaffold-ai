@@ -4,8 +4,8 @@ import {
     ensureDir,
     fetchJson,
     markRunState,
-    resolveDocTmpPath,
     resolvePackageManager,
+    resolveTmpPath,
     runCommandChecked,
     runCommandStreaming,
     timestampSlug
@@ -141,7 +141,7 @@ function resolveLogPath(repoRoot, stateSlug) {
   if (customPath) {
     return path.isAbsolute(customPath) ? customPath : path.resolve(repoRoot, customPath);
   }
-  return resolveDocTmpPath(repoRoot, stateSlug, `weapp-smoke-run-${timestampSlug()}.log`);
+  return resolveTmpPath(repoRoot, stateSlug, `weapp-smoke-run-${timestampSlug()}.log`);
 }
 
 function buildRunnerArgs(options) {
@@ -186,7 +186,7 @@ export async function runWeappSmoke(config, argv) {
     throw new Error(`[${config.label}] Invalid suite: ${options.suite}. Supported: smoke|core|full`);
   }
 
-  const stateFile = resolveDocTmpPath(config.repoRoot, config.stateSlug, 'state.json');
+  const stateFile = resolveTmpPath(config.repoRoot, config.stateSlug, 'state.json');
   const writeState = (patch) => markRunState(stateFile, patch);
   const handleInterrupt = (signal) => {
     writeState({
@@ -269,7 +269,7 @@ export async function runWeappSmoke(config, argv) {
     if (shouldProbeBackend) {
       const probeBaseUrl = options.healthUrl || options.baseUrl || 'http://127.0.0.1:8080';
       const probeEndpoint = `${probeBaseUrl.replace(/\/$/, '')}/auth/code`;
-      const probeOutput = resolveDocTmpPath(config.repoRoot, config.stateSlug, 'weapp-smoke-auth-code.json');
+      const probeOutput = resolveTmpPath(config.repoRoot, config.stateSlug, 'weapp-smoke-auth-code.json');
       const {response, body} = await fetchJson(probeEndpoint, {headers: {'Content-Type': 'application/json'}});
       if (!response.ok) {
         throw new Error(`[${config.label}] Backend health probe failed: ${probeEndpoint}`);

@@ -13,7 +13,7 @@
 3. `skills` 下不保留共享底座型、README-only、helper-only 或已被新工作域覆盖的旧 skill 目录。
 4. React / Vue 管理端差异通过目标 skill 的 `references/*` 或 `--client react|vue` 参数区分，不再按技术栈碎片化拆 skill。
 5. skill 的主执行入口必须兼容 Windows / macOS / Linux；统一使用 repo-owned Node CLI 或 `.mjs`，不再保留 `.sh` / `.ps1` / `.cmd` 作为 skill 入口。若内部仍需 Python 等实现，必须由跨平台 Node 入口调度。
-6. 仓库级 skill 默认是领域型可执行 SOP：判定范围 -> 只读探测 / dry-run -> 目标与影响枚举 -> 写入或危险动作门禁 -> 执行验证 -> `docs/tmp/` 证据留存与显式失败。
+6. 仓库级 skill 默认是领域型可执行 SOP：判定范围 -> 只读探测 / dry-run -> 目标与影响枚举 -> 写入或危险动作门禁 -> 执行验证 -> `tmp/` 证据留存与显式失败。
 7. 优先破坏性重构现有领域 skill；只有出现无法归入现有 skill 的新工作域时，才新增 `infoq-*` skill。
 
 ## 2. 一个 skill 通常包含什么
@@ -81,7 +81,7 @@
 3. 如果 skill 依赖仓库级 MCP，`.codex/config.toml` 与 `docs/MCP-SERVERS.md` 是否仍然一致。
 4. 若变更了命令、环境变量、入口路径或默认行为，是否已执行 docs 站点同步。
 5. `agents/openai.yaml` 的 `default_prompt` 是否显式包含 `$skill-name`，且 `display_name`、`short_description` 是否仍与 `SKILL.md` 一致。
-6. 若 skill 会启动 backend、frontend dev server、浏览器 runner 或其他长生命周期进程，是否已写入 `docs/tmp/` 状态文件并覆盖端口收口。
+6. 若 skill 会启动 backend、frontend dev server、浏览器 runner 或其他长生命周期进程，是否已写入 `tmp/` 状态文件并覆盖端口收口。
 
 `infoq-delivery-workflow` 当前最小 OpenSpec 命令集合是：
 
@@ -96,14 +96,14 @@ node skills/infoq-delivery-workflow/scripts/openspec_check.mjs <change-id>
 
 | 路径 | 当前职责 | 当前主要消费者 |
 | --- | --- | --- |
-| `tools/lib/skill_runtime.mjs` | repo root 解析、`docs/tmp/` 路径、命令执行、进程管理、HTTP/文件辅助等通用运行时能力 | 多数 repo-level skills 与脚本 |
+| `tools/lib/skill_runtime.mjs` | repo root 解析、`tmp/` 路径、命令执行、进程管理、HTTP/文件辅助等通用运行时能力 | 多数 repo-level skills 与脚本 |
 | `tools/lib/admin_dev_stack.mjs` | 本地 admin backend + frontend 栈的启动、停止、状态文件、日志与端口收口管理 | `infoq-frontend-verify` 的 `start_admin_dev_stack.mjs` / `stop_admin_dev_stack.mjs`、`infoq-admin-e2e` |
 
 维护约束：
 
 - 修改 `tools/lib/*` 的 CLI 参数、默认端口、日志落点或 env 语义时，必须同步检查对应 skill 的 `SKILL.md`、`references/*.md`、`README.md` 与相关 `docs/*.md`。
 - `tools/lib` 只沉淀跨 skill 复用的运行时能力，不把单个 skill 的私有流程提前抽成共享层。
-- 共享 helper 产生的状态文件、日志和一次性产物仍统一落在 `docs/tmp/`。
+- 共享 helper 产生的状态文件、日志和一次性产物仍统一落在 `tmp/`。
 - 任何启动长生命周期进程的 helper 都必须记录 pid、port、log、owned/reused 关系和 `starting/running/passed/failed/interrupted/stopped` 状态；验证完成、失败或中断时关闭 owned 进程，下一次运行前清理 `running` 或 `interrupted` 的旧状态。
 
 ## 8. 各域 skill 速查
@@ -129,11 +129,11 @@ node skills/infoq-admin-e2e/scripts/run_admin_crud_e2e.mjs --client react
 - 真实验证码 E2E 默认不关闭验证码，必须通过 `/auth/code`、OCR 和 `/auth/login` 获取真实 token。
 - `captcha_login.mjs` 是共享验证码登录入口，`run_admin_e2e.mjs` 和 `admin-route-probe` 的验证码 fallback 都复用它。
 - 首次运行 OCR 场景需要本机 Python 环境可 import `ddddocr`，浏览器依赖仍复用 `infoq-browser-automate`。
-- 证据默认写入 `docs/tmp/infoq-admin-e2e/<run-id>/`。
+- 证据默认写入 `tmp/infoq-admin-e2e/<run-id>/`。
 - `run_admin_e2e.mjs` 默认在完成、失败或中断后停止本次 skill 启动的栈；只有成功且需要保留联调进程时显式传 `--keep-stack-after`，失败或中断仍会关闭 owned 进程。
 - `run_notice_crud_e2e.mjs` 仅用于已授权的 `application-local.yml` 测试数据库，执行公告 UI 新增/查询/编辑/删除，并用 API 与 MySQL 直连只读查询做分步一致性核对；cleanup 只处理当前精确 `e2e_` 标题。
 - `run_admin_crud_e2e.mjs` 仅用于已授权的 `application-local.yml` 测试数据库，默认覆盖 `role,user,menu,dept,post,dict,config,notice,client,invite,ossConfig,job,online`，执行 UI 新增/查询/编辑/删除或模块可用的选择删除/行删除入口；`online` 会创建当前 run 专属 `e2e_` 用户会话并只强退该会话；cleanup 只处理当前 run 的精确 `e2e_` 数据。
-- 管理端 E2E 栈状态按 client 稳定写入 `docs/tmp/infoq-admin-e2e/stack/<vue|react>/state.json`，断开后下一次运行会先清理未标记 `keepAlive` 的旧状态。
+- 管理端 E2E 栈状态按 client 稳定写入 `tmp/infoq-admin-e2e/stack/<vue|react>/state.json`，断开后下一次运行会先清理未标记 `keepAlive` 的旧状态。
 - 写入型 CRUD、导出、批量操作和权限矩阵必须先定义测试数据、cleanup 和危险动作门禁。
 
 ### 8.2 前端验证（infoq-frontend-verify）
@@ -145,7 +145,7 @@ node skills/infoq-frontend-verify/scripts/start_admin_dev_stack.mjs --client vue
 node skills/infoq-frontend-verify/scripts/start_admin_dev_stack.mjs --client react
 ```
 
-真实验证码登录、OCR 和动态路由 smoke 交给 `infoq-admin-e2e`；`infoq-frontend-verify` 只保留快速登录态诊断和前端运行态验证。`start_admin_dev_stack.mjs` 状态文件写入 `docs/tmp/infoq-frontend-verify/<client>/state.json`；运行态验证完成或中断后必须执行对应 `stop_admin_dev_stack.mjs` 收口。
+真实验证码登录、OCR 和动态路由 smoke 交给 `infoq-admin-e2e`；`infoq-frontend-verify` 只保留快速登录态诊断和前端运行态验证。`start_admin_dev_stack.mjs` 状态文件写入 `tmp/infoq-frontend-verify/<client>/state.json`；运行态验证完成或中断后必须执行对应 `stop_admin_dev_stack.mjs` 收口。
 
 ### 8.3 数据运维（infoq-data-ops）
 
@@ -167,7 +167,7 @@ node skills/infoq-backend-verify/scripts/run_smoke.mjs
 node skills/infoq-backend-verify/scripts/run_cluster_smoke.mjs
 ```
 
-这些脚本启动临时后端时会在 `docs/tmp/infoq-backend-verify/` 写入 `*.state.json`。默认在成功、失败或中断后关闭自己启动的端口；显式 keep 参数只用于临时诊断，必须依赖状态文件后续清理。
+这些脚本启动临时后端时会在 `tmp/infoq-backend-verify/` 写入 `*.state.json`。默认在成功、失败或中断后关闭自己启动的端口；显式 keep 参数只用于临时诊断，必须依赖状态文件后续清理。
 
 ### 8.5 部署验证（infoq-deploy-verify）
 
@@ -181,7 +181,7 @@ node skills/infoq-backend-verify/scripts/run_cluster_smoke.mjs
 - 默认把 WSL2/Linux 部署根目录放在 Linux 文件系统 `/infoq`，macOS Colima 默认使用 `$HOME/infoq`。
 - 执行 deploy 前提醒并确认 `/tmp/infoq-deploy` 与 `${INFOQ_DEPLOY_ROOT}/server/temp` 已存在。
 - 使用 `curl --noproxy '*'` 验证 backend readiness、`/prod-api`、`/vue/`、`/react/` 和 `9091/9092`。
-- 证据写入 `docs/tmp/deploy-wsl2/` 或 `docs/tmp/infoq-deploy-verify/<run-id>/`。
+- 证据写入 `tmp/deploy-wsl2/` 或 `tmp/infoq-deploy-verify/<run-id>/`。
 
 `infoq-deploy-verify` 不负责版本升级；发布版本同步仍使用 `infoq-release-ops`。它也不替代后端单测、前端 lint/build 或写入型数据运维。
 

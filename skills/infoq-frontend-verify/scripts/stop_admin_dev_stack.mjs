@@ -2,7 +2,7 @@
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {stopAdminDevStackState} from '../../../tools/lib/admin_dev_stack.mjs';
-import {normalizeForwardedArgs, resolveDocTmpPath, resolveRepoRoot} from '../../../tools/lib/skill_runtime.mjs';
+import {normalizeForwardedArgs, resolveRepoRoot, resolveTmpPath} from '../../../tools/lib/skill_runtime.mjs';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolveRepoRoot(scriptDir);
@@ -51,7 +51,7 @@ const stateSlug = `infoq-frontend-verify/${client}`;
 
 stopAdminDevStackState({
   ...CLIENTS[client],
-  stateFile: resolveDocTmpPath(repoRoot, stateSlug, 'state.json')
+  stateFile: resolveTmpPath(repoRoot, stateSlug, 'state.json')
 }).catch((error) => {
   console.error(error.message || error);
   process.exit(1);

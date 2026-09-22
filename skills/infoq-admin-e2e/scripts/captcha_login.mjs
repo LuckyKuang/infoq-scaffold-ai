@@ -7,9 +7,9 @@ import {
     ensureDir,
     fetchJson,
     normalizeForwardedArgs,
-    resolveDocTmpPath,
     resolvePythonLaunchSpec,
     resolveRepoRoot,
+    resolveTmpPath,
     runCommandChecked,
     timestampSlug
 } from '../../../tools/lib/skill_runtime.mjs';
@@ -43,7 +43,7 @@ Options:
   --login-candidates <csv>        Candidate accounts. Default: ${DEFAULT_CAPTCHA_LOGIN_OPTIONS.loginCandidates}
   --rsa-public-key <base64>       Request encryption public key.
   --max-captcha-attempts <n>      Captcha attempts per account. Default: ${DEFAULT_CAPTCHA_LOGIN_OPTIONS.maxCaptchaAttempts}
-  --run-id <slug>                 Evidence run id under docs/tmp/infoq-admin-e2e/captcha-login/.
+  --run-id <slug>                 Evidence run id under tmp/infoq-admin-e2e/captcha-login/.
   --run-dir <path>                Explicit evidence directory.
   --print-token                   Print TOKEN=<token> for script consumers.
   --json                          Print machine-readable JSON summary.
@@ -400,7 +400,7 @@ function resolveRunDir(options) {
     return path.isAbsolute(options.runDir) ? options.runDir : path.join(repoRoot, options.runDir);
   }
   const runId = options.runId || `captcha-login-${timestampSlug()}`;
-  return resolveDocTmpPath(repoRoot, 'infoq-admin-e2e', 'captcha-login', runId);
+  return resolveTmpPath(repoRoot, 'infoq-admin-e2e', 'captcha-login', runId);
 }
 
 async function main() {

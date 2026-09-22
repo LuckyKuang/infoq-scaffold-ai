@@ -23,7 +23,7 @@ resolve_paths() {
   [ -n "${run_id}" ] || usage
   secret_dir="${state_root}/mqtt-it/secrets/${run_id}"
   env_file="${secret_dir}/compose.env"
-  evidence_dir="${repository_root}/docs/tmp/mqtt-wsl2/${run_id}"
+  evidence_dir="${repository_root}/tmp/mqtt-wsl2/${run_id}"
   [ -f "${env_file}" ] || { echo "Unknown MQTT run: ${run_id}" >&2; exit 66; }
 }
 
@@ -126,7 +126,7 @@ prepare() {
   local created_run_id="${run_id:-$(date -u +%Y%m%d%H%M%S)-$(od -An -N4 -tx1 /dev/urandom | tr -d ' \n')}"
   run_id="${created_run_id}"
   secret_dir="${state_root}/mqtt-it/secrets/${run_id}"
-  evidence_dir="${repository_root}/docs/tmp/mqtt-wsl2/${run_id}"
+  evidence_dir="${repository_root}/tmp/mqtt-wsl2/${run_id}"
   [ ! -e "${secret_dir}" ] || { echo "Run already exists: ${run_id}" >&2; exit 73; }
   [ -d "${maven_repo}" ] || { echo "Maven repository is unavailable: ${maven_repo}" >&2; exit 78; }
   mkdir -p "${secret_dir}" "${evidence_dir}" "${state_root}/mqtt-it/${run_id}/config" "${state_root}/mqtt-it/${run_id}/data" \

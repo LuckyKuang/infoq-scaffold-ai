@@ -40,7 +40,7 @@ React Admin：
 node skills/infoq-frontend-verify/scripts/stop_admin_dev_stack.mjs --client react
 ```
 
-状态文件为 `docs/tmp/infoq-frontend-verify/react/state.json`，记录 backend/frontend 的 pid、port 与日志。验证完成、失败或中断后必须执行 stop 命令；stop 只关闭本 skill 启动或状态文件记录为 owned 的进程，不强杀外部已有服务。
+状态文件为 `tmp/infoq-frontend-verify/react/state.json`，记录 backend/frontend 的 pid、port 与日志。验证完成、失败或中断后必须执行 stop 命令；stop 只关闭本 skill 启动或状态文件记录为 owned 的进程，不强杀外部已有服务。
 
 ## 打印 Token 注入片段
 
@@ -86,7 +86,7 @@ pnpm --dir skills/infoq-browser-automate/scripts run playwright-cli admin-route-
 当验收目标是 Docker 部署产物时，使用仓库统一部署脚本，不要改用 `pnpm run dev` 或 `5174` 端口替代。
 
 ```bash
-export INFOQ_DEPLOY_ROOT="$(pwd)/docs/tmp/infoq-deploy"
+export INFOQ_DEPLOY_ROOT="$(pwd)/tmp/infoq-deploy"
 export SECURITY_TOKEN_SECRET=replace-with-at-least-32-chars-secret
 bash deploy/bin/deploy-frontend.sh deploy
 ```

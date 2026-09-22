@@ -3,7 +3,7 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {resolveBackendConfigSelection} from '../../../scripts/resolve_backend_local_mcp_env.mjs';
 import {runAdminDevStack} from '../../../tools/lib/admin_dev_stack.mjs';
-import {normalizeForwardedArgs, resolveDocTmpPath, resolveRepoRoot} from '../../../tools/lib/skill_runtime.mjs';
+import {normalizeForwardedArgs, resolveRepoRoot, resolveTmpPath} from '../../../tools/lib/skill_runtime.mjs';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolveRepoRoot(scriptDir);
@@ -96,7 +96,7 @@ runAdminDevStack(
     defaultProfile,
     scriptPath: 'skills/infoq-frontend-verify/scripts/start_admin_dev_stack.mjs',
     stateSlug,
-    stateFile: resolveDocTmpPath(repoRoot, stateSlug, 'state.json')
+    stateFile: resolveTmpPath(repoRoot, stateSlug, 'state.json')
   },
   forwarded
 ).catch((error) => {

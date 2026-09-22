@@ -9,8 +9,8 @@ import {
     markRunState,
     normalizeForwardedArgs,
     readJsonFile,
-    resolveDocTmpPath,
     resolveRepoRoot,
+    resolveTmpPath,
     runBackendMavenChecked,
     runCommand,
     spawnDetachedProcess,
@@ -223,7 +223,7 @@ for (const [flag, value] of [
 const backendDir = path.join(repoRoot, 'infoq-scaffold-backend');
 const jarPath = path.join(repoRoot, config.jarRelPath);
 const pyScriptPath = path.join(scriptDir, 'websocket_cluster_smoke.py');
-stateFile = resolveDocTmpPath(repoRoot, 'infoq-backend-verify', `run-cluster-smoke-${config.portA}-${config.portB}.state.json`);
+stateFile = resolveTmpPath(repoRoot, 'infoq-backend-verify', `run-cluster-smoke-${config.portA}-${config.portB}.state.json`);
 
 async function isServerReady(baseUrl) {
   try {
@@ -377,8 +377,8 @@ async function main() {
     throw new Error(`[cluster-smoke] jar not found: ${jarPath}`);
   }
 
-  logA = resolveDocTmpPath(repoRoot, 'infoq-backend-verify', `infoq-cluster-smoke-${config.nodeIdA}.log`);
-  logB = resolveDocTmpPath(repoRoot, 'infoq-backend-verify', `infoq-cluster-smoke-${config.nodeIdB}.log`);
+  logA = resolveTmpPath(repoRoot, 'infoq-backend-verify', `infoq-cluster-smoke-${config.nodeIdA}.log`);
+  logB = resolveTmpPath(repoRoot, 'infoq-backend-verify', `infoq-cluster-smoke-${config.nodeIdB}.log`);
   writeState({
     schemaVersion: 1,
     skill: 'infoq-backend-verify',

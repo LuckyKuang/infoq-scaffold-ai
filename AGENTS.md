@@ -7,7 +7,7 @@
 |Package Manager:前端默认使用 pnpm 执行 install/dev/lint/test/build；仅在 pnpm 不可用时退回 npm。
 |Frontend Node Baseline:前端本机开发、CI、docs 站点和 Docker builder 的 Node.js 统一固定为 `24.18.0`；根目录 `.node-version` 与 `.nvmrc` 必须保持 `24.18.0`。|Dockerfile 不使用旧 Node 20/22 builder 或 `node:24`、`node:lts`、`latest` 等浮动 tag。|npm 版本不作为仓库构建基线单独固定；前端包管理器遵循各工作区 `packageManager` 与 lockfile。
 |Backend Maven Runner:后端 Maven 命令优先使用 `node tools/backend_mvn.mjs -- ...`；入口优先读取 `.idea`，要求 JDK 21 与 Maven 3.9.x，配置不可用时再搜索本机候选。
-|Temporary Artifacts:仓库内工具、skill、脚本、验证过程新增的临时文件、临时目录、调试输出与一次性运行产物统一放在 `docs/tmp/` 下；除非外部工具强制要求其他位置。|禁止把临时产物散落到仓库其他路径，便于后续统一清理。
+|Temporary Artifacts:仓库内工具、skill、脚本、验证过程新增的临时文件、临时目录、调试输出与一次性运行产物统一放在 `tmp/` 下；除非外部工具强制要求其他位置。|禁止把临时产物散落到仓库其他路径，便于后续统一清理。
 |Failure Policy:产品代码优先显式失败，不接受静默 fallback、吞错或假成功；确需 fallback 时必须显式、可说明、易关闭，并经过用户批准。
 |Engineering Baseline:保持抽象务实；遵守 DRY/YAGNI/关注点分离；命名清晰、注释只写关键意图；优先直接修复，不保留无必要兼容层；兼容性不是明确要求时，删除死代码和过时分支。
 |Abstraction Guardrails:简单判断、空值处理、失败返回、字段赋值、字符串拼接、集合遍历、Map/List 聚合、分页包装、VO/DTO 组装和仅服务单一主流程的局部逻辑默认内联；仅当具备独立业务语义、可复用复杂流程边界、事务/并发边界、独立算法责任、复杂对象构建责任，或显著降低主流程认知复杂度时才抽离；抽象必须带来真实语义收益，禁止为拆行、藏细节或形式整洁制造 helper/适配层。
@@ -27,8 +27,8 @@
 |Instruction Layering:根 `AGENTS.md` 只保留跨仓规则。|backend、Vue admin、React admin 使用更近的 `AGENTS.md` 或 `AGENTS.override.md` 写栈内细则。|当更近文件与根规则冲突时，以更近文件为准。
 |Workspace AGENTS:infoq-scaffold-backend/AGENTS.md|infoq-scaffold-frontend-vue/AGENTS.md|infoq-scaffold-frontend-react/AGENTS.md
 |Repo Skill Policy:每个 skill 只解决一个工作域。|仓库级 skill 统一使用 `infoq-` 前缀；创建或更新 skill 使用系统级 `skill-creator`，仓库内不保留 `skill-creator` 副本。|每个 skill 目录必须包含 `SKILL.md`。|所有仓库级 skill 默认维护 `agents/openai.yaml`，更新 `SKILL.md` 时必须同步校验 UI metadata 是否 stale。|`agents/openai.yaml` 的 `default_prompt` 必须显式包含 `$skill-name`。|`skills` 下不保留共享底座型、仅 README 型、helper-only 或已被新工作域覆盖的旧 skill 目录。|React 与 Vue admin 差异通过目标 skill 的 `references/*` 或 `--client` 参数区分。
-|Skill SOP Pattern:仓库级 skill 默认是领域型可执行 SOP。|优先破坏性重构现有领域 skill，只有出现无法归入现有 skill 的新工作域时才新增 skill。|标准执行顺序为判定范围 -> 只读探测/预览 -> 目标与影响枚举 -> 写入或危险动作门禁 -> 执行验证 -> `docs/tmp/` 证据留存与显式失败。|禁止新增职责模糊的泛化 skill 来绕开现有边界。
-|Skill Runtime Policy:仓库级 skill 的主执行入口必须兼容 Windows/macOS/Linux。|统一使用 repo-owned Node CLI 或 `.mjs` 入口；不再保留 `.sh`/`.ps1`/`.cmd` 作为 skill 入口。|若内部仍需 Python 等实现，必须由跨平台 Node 入口调度。|凡启动 backend、frontend dev server、浏览器 runner 或其他长生命周期进程的 skill，必须在 `docs/tmp/` 记录状态文件，包含 pid、port、log、`starting/running/passed/failed/interrupted/stopped`，并在验证完成、失败或中断时关闭本 skill 启动或状态文件记录为 owned 的端口。|新增或更新 skill 时，同时检查脚本帮助文案、默认命令、状态文件、端口收口和临时产物路径是否与该规则一致。
+|Skill SOP Pattern:仓库级 skill 默认是领域型可执行 SOP。|优先破坏性重构现有领域 skill，只有出现无法归入现有 skill 的新工作域时才新增 skill。|标准执行顺序为判定范围 -> 只读探测/预览 -> 目标与影响枚举 -> 写入或危险动作门禁 -> 执行验证 -> `tmp/` 证据留存与显式失败。|禁止新增职责模糊的泛化 skill 来绕开现有边界。
+|Skill Runtime Policy:仓库级 skill 的主执行入口必须兼容 Windows/macOS/Linux。|统一使用 repo-owned Node CLI 或 `.mjs` 入口；不再保留 `.sh`/`.ps1`/`.cmd` 作为 skill 入口。|若内部仍需 Python 等实现，必须由跨平台 Node 入口调度。|凡启动 backend、frontend dev server、浏览器 runner 或其他长生命周期进程的 skill，必须在 `tmp/` 记录状态文件，包含 pid、port、log、`starting/running/passed/failed/interrupted/stopped`，并在验证完成、失败或中断时关闭本 skill 启动或状态文件记录为 owned 的端口。|新增或更新 skill 时，同时检查脚本帮助文案、默认命令、状态文件、端口收口和临时产物路径是否与该规则一致。
 |Skill Docs Localization:仓库级 skill（`skills`）的描述性文档默认中文优先（含 `SKILL.md`、`references/*.md`、`agents/openai.yaml` 的说明字段）。|翻译仅覆盖说明性自然语言；命令、路径、环境变量、标识符、代码块、API 参数、组件名与版本号保持原文。|新增或更新 skill 时必须同步执行中文化与术语一致性检查，避免文档中英混杂与语义漂移。
 |Repo Skill Location:仓库级 skills 统一放在 `skills`。|相关 references、helper scripts 和发现逻辑保持与该路径一致。
 |Docs Sync:变更 skill 名称、命令、env 前置条件、工作区入口路径、`.codex/config.toml` 中的 MCP server/工具白名单/审批模式/超时设置后，必须同步更新 `/AGENTS.md`、更近 `AGENTS.md`、`README.md` 与相关 `docs/**/*.md`，禁止出现文档和 skill 实际行为漂移。

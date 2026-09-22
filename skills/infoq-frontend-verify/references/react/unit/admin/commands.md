@@ -68,7 +68,7 @@ node skills/infoq-frontend-verify/scripts/fetch_admin_routes_with_token.mjs
 node skills/infoq-frontend-verify/scripts/stop_admin_dev_stack.mjs --client react
 ```
 
-`start_admin_dev_stack.mjs` 会把运行态状态写入 `docs/tmp/infoq-frontend-verify/react/state.json`。验证完成、失败或中断后必须执行 stop 命令，按状态文件关闭本 skill 启动的 backend/frontend 端口。
+`start_admin_dev_stack.mjs` 会把运行态状态写入 `tmp/infoq-frontend-verify/react/state.json`。验证完成、失败或中断后必须执行 stop 命令，按状态文件关闭本 skill 启动的 backend/frontend 端口。
 
 ## 全量质量门禁
 

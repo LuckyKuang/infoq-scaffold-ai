@@ -93,9 +93,8 @@ Cross-workspace work and high-impact changes use OpenSpec:
 - **L1 (optional)**: small single-workspace fix, no contract change, default
   <= 3 files. Write an acceptance contract first.
 
-When unsure, follow L3. This repository commits durable specs under
-`openspec/specs/` and active work under `openspec/changes/`. Repo-level or
-high-risk governance also keeps a plan in `docs/plan/YYYY-MM-DD-topic-plan.md`.
+When unsure, follow L3. Durable specs live under `docs/specs/`; active change
+artifacts stay local under `openspec/changes/` and are not committed.
 
 ## Pull Requests
 

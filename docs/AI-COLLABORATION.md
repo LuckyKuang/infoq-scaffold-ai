@@ -50,11 +50,11 @@
 - skill 命名与路由真相
 - skill 元数据约束真相
 - `OpenSpec` 分级路由
-- `openspec-check` 与 `docs/plan/` 的治理要求
+- `openspec-check` 的治理要求
 - 文档同步约束
 - 临时产物目录约束
 
-其中仓库内工具、skill、脚本、验证过程新增的临时文件、临时目录、调试输出和一次性运行产物，默认统一放在 `docs/tmp/` 下，便于后续集中清理。只有在外部工具强制要求其他位置时才允许例外，并且需要显式说明原因。
+其中仓库内工具、skill、脚本、验证过程新增的临时文件、临时目录、调试输出和一次性运行产物，默认统一放在 `tmp/` 下，便于后续集中清理。只有在外部工具强制要求其他位置时才允许例外，并且需要显式说明原因。
 
 另一个约束是：仓库级 skill 的主执行入口必须兼容 Windows / macOS / Linux。统一使用 repo-owned Node CLI 或 `.mjs` 入口；不再保留 `.sh` / `.ps1` / `.cmd` 作为 skill 入口。若内部仍需 Python 等实现，必须由跨平台 Node 入口调度。
 
@@ -149,9 +149,7 @@ repo 级 custom agents 的真值不写在 `AGENTS.md` 之外的任意散落文�
 `openspec/changes/` 是本地计划脚手架：不提交、不进 PR；耐久行为必须落到
 `docs/`（规格真值在 `docs/specs/`）与自动化测试。规格真值位于
 `docs/specs/<capability>/spec.md`；`openspec/config.yaml` 提供 schema 与项目
-上下文；`openspec/examples/demo-change/` 是 change 模板。repo-level 或高风险
-治理变更，除 active change 外，还应在 `docs/plan/YYYY-MM-DD-topic-plan.md`
-中保留执行计划（该目录纳入版本控制）。
+上下文；`openspec/examples/demo-change/` 是 change 模板。
 
 ### 2.3 默认执行顺序
 
@@ -160,8 +158,7 @@ repo 级 custom agents 的真值不写在 `AGENTS.md` 之外的任意散落文�
 1. 读取相关工作区规则和仓库文件。
 2. 明确 acceptance contract。
 3. 若本次使用 active change，先补 `proposal.md` / `tasks.md` 并执行 `openspec-check`。
-4. repo-level 或高风险治理变更，补 `docs/plan/` 计划文档。
-5. 不靠记忆假设项目结构、脚本名或环境。
+4. 不靠记忆假设项目结构、脚本名或环境。
 
 修改中：
 
@@ -191,7 +188,7 @@ backend 工作区基线是 JDK 21 与 Maven 3.9.x。
 
 `skills` 负责把高频任务沉淀成仓库内 SOP；`MCP` 负责补充交互探索或深度诊断能力。
 
-仓库级 skill 默认是领域型可执行 SOP。维护时优先重构现有领域 skill，不新增职责模糊的泛化 skill；只有出现无法归入现有 skill 的新工作域时才新增。标准执行顺序是：判定范围 -> 只读探测/预览 -> 目标与影响枚举 -> 写入或危险动作门禁 -> 执行验证 -> `docs/tmp/` 证据留存与显式失败。
+仓库级 skill 默认是领域型可执行 SOP。维护时优先重构现有领域 skill，不新增职责模糊的泛化 skill；只有出现无法归入现有 skill 的新工作域时才新增。标准执行顺序是：判定范围 -> 只读探测/预览 -> 目标与影响枚举 -> 写入或危险动作门禁 -> 执行验证 -> `tmp/` 证据留存与显式失败。
 
 当前默认组合：
 

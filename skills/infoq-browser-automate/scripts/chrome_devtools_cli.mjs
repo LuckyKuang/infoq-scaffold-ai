@@ -19,7 +19,7 @@ Examples:
 
 Notes:
   - Requires local dependencies under skills/infoq-browser-automate/scripts.
-  - Writes local MCP storage under docs/tmp/chrome-devtools-mcp/.`);
+  - Writes local MCP storage under tmp/chrome-devtools-mcp/.`);
 }
 
 if (forwardedArgs.includes('-h') || forwardedArgs.includes('--help')) {

@@ -18,7 +18,6 @@
 ### 规格与方案
 
 - [ ] 完成 `proposal.md`、`tasks.md` 与 spec delta；需要时补 `design.md`
-- [ ] repo-level 或高风险治理变更记录 `docs/plan/YYYY-MM-DD-topic-plan.md`
 
 ### 实现
 

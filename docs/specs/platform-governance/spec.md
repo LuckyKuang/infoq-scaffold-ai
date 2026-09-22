@@ -30,14 +30,6 @@
 - 并且必须在任务上下文先写验收约定
 - 并且若分级不确定，默认提升到 L3 执行
 
-### 要求：repo-level 计划文档
-仓库级治理或高风险重构必须保留执行计划。
-
-#### 场景：repo-level 或高风险治理变更
-
-- 当变更会重构 skill、文档、AGENTS、OpenSpec 真值或其他跨仓治理资产时
-- 则除 active change 外，还必须在 `docs/plan/YYYY-MM-DD-topic-plan.md` 中保留执行计划
-
 ### 要求：统一影响矩阵
 每个 change 都必须显式评估统一工作区或交付面，而不是只写当前编辑目录。
 
@@ -82,7 +74,7 @@ active change 在实现前和交付前都必须通过统一结构校验。
 #### 场景：skill 启动长生命周期运行态
 
 - 当仓库级 skill 启动 backend、frontend dev server、浏览器 runner、WeChat DevTools runner 或其他长生命周期进程时
-- 则必须在 `docs/tmp/<skill-name>/` 或其子目录写入状态文件
+- 则必须在 `tmp/<skill-name>/` 或其子目录写入状态文件
 - 并且状态文件必须至少记录 pid、端口、日志路径、启动时间、更新时间、拥有关系，以及 `starting`、`running`、`passed`、`failed`、`interrupted`、`stopped` 中的状态
 - 并且验证完成、失败、阻塞中断或收到 `SIGINT`/`SIGTERM`/`SIGHUP` 时，必须关闭本 skill 启动或状态文件标记为 owned 的端口
 - 并且下一次运行前必须先清理仍标记为 `running` 或 `interrupted` 的旧状态，避免上次断开留下端口占用

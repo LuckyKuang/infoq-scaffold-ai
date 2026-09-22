@@ -164,7 +164,7 @@ function acquireToken({
       `Fast login output:\n${fastOutput}\n\nCaptcha login output:\n${captchaOutput}`
     );
   }
-  console.log(`[admin-probe] OCR captcha login evidence: docs/tmp/infoq-admin-e2e/captcha-login/${runId}/`);
+  console.log(`[admin-probe] OCR captcha login evidence: tmp/infoq-admin-e2e/captcha-login/${runId}/`);
   return parseTokenOutput(captchaOutput, 'Captcha login');
 }
 

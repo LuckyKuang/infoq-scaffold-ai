@@ -23,12 +23,12 @@ description: 管理本仓库后台运营与维护操作 SOP，覆盖用户、角
 3. 目标枚举：列出目标记录名称、ID、所属模块、影响用户、关联角色、上下游数据和预期结果。
 4. 门禁确认：删除、批量更新、启停任务、权限变更、测试数据清理和导出都必须先明确风险、cleanup、回滚条件和验证命令；数据库侧修复转交 `infoq-data-ops`。
 5. 执行验证：操作后用列表/详情/API 或必要的 `infoq-data-ops` 数据侧核对结果，并保留证据路径。
-6. 收口记录：把临时 payload、导出、截图、日志和检查结果放入 `docs/tmp/infoq-admin-ops/`。
+6. 收口记录：把临时 payload、导出、截图、日志和检查结果放入 `tmp/infoq-admin-ops/`。
 
 ## 默认证据目录
 
 ```text
-docs/tmp/infoq-admin-ops/
+tmp/infoq-admin-ops/
 ```
 
 ## 护栏

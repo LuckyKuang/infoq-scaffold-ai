@@ -55,4 +55,4 @@ node tools/backend_mvn.mjs -- -pl infoq-modules/infoq-system -am clean package -
 node skills/infoq-backend-verify/scripts/run_smoke.mjs
 ```
 
-`run_smoke.mjs` 会将运行态状态写入 `docs/tmp/infoq-backend-verify/run-smoke-<port>.state.json`。验证完成、失败或中断时默认关闭本脚本启动的后端端口；下一次运行前会先清理仍标记为 `running` 或 `interrupted` 的旧状态。
+`run_smoke.mjs` 会将运行态状态写入 `tmp/infoq-backend-verify/run-smoke-<port>.state.json`。验证完成、失败或中断时默认关闭本脚本启动的后端端口；下一次运行前会先清理仍标记为 `running` 或 `interrupted` 的旧状态。

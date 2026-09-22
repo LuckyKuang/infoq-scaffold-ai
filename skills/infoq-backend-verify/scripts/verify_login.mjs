@@ -9,8 +9,8 @@ import {
     markRunState,
     normalizeForwardedArgs,
     readJsonFile,
-    resolveDocTmpPath,
     resolveRepoRoot,
+    resolveTmpPath,
     spawnDetachedProcess,
     stopRecordedRunState,
     waitFor
@@ -120,7 +120,7 @@ for (let index = 0; index < args.length; index += 1) {
   }
 }
 
-stateFile = resolveDocTmpPath(repoRoot, 'infoq-backend-verify', `verify-login-${config.tempPort}.state.json`);
+stateFile = resolveTmpPath(repoRoot, 'infoq-backend-verify', `verify-login-${config.tempPort}.state.json`);
 
 function captchaGuidance(baseUrl) {
   return [
@@ -260,7 +260,7 @@ async function startTempBackend() {
     return;
   }
 
-  tempLog = resolveDocTmpPath(repoRoot, 'infoq-backend-verify', `verify-login-${config.tempPort}.log`);
+  tempLog = resolveTmpPath(repoRoot, 'infoq-backend-verify', `verify-login-${config.tempPort}.log`);
   writeState({
     schemaVersion: 1,
     skill: 'infoq-backend-verify',

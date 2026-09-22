@@ -11,8 +11,8 @@ import {
     markRunState,
     normalizeForwardedArgs,
     readJsonFile,
-    resolveDocTmpPath,
     resolveRepoRoot,
+    resolveTmpPath,
     runCommandChecked,
     timestampSlug
 } from '../../../tools/lib/skill_runtime.mjs';
@@ -281,7 +281,7 @@ function parseArgs(argv) {
 
 function buildStackConfig(options, runDir) {
   const clientConfig = CLIENTS[options.client];
-  const stateDir = resolveDocTmpPath(repoRoot, 'infoq-admin-e2e', 'stack', options.client);
+  const stateDir = resolveTmpPath(repoRoot, 'infoq-admin-e2e', 'stack', options.client);
   return {
     ...clientConfig,
     repoRoot,
@@ -1668,7 +1668,7 @@ async function main() {
   const options = parseArgs(normalizeForwardedArgs(process.argv.slice(2)));
   const clientConfig = CLIENTS[options.client];
   const runId = options.runId || `admin-crud-${options.client}-${timestampSlug()}`;
-  const runDir = resolveDocTmpPath(repoRoot, 'infoq-admin-e2e', runId);
+  const runDir = resolveTmpPath(repoRoot, 'infoq-admin-e2e', runId);
   ensureDir(runDir);
   options.backendUrl = options.backendUrl.replace(/\/+$/, '');
   if (options.backendUrl === DEFAULTS.backendUrl && options.backendPort !== DEFAULTS.backendPort) options.backendUrl = `http://127.0.0.1:${options.backendPort}`;

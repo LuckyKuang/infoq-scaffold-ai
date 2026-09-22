@@ -138,12 +138,12 @@ export function resolveRepoRoot(scriptDir) {
   }
 }
 
-export function resolveDocTmpDir(repoRoot) {
-  return ensureDir(path.join(repoRoot, 'docs', 'tmp'));
+export function resolveTmpDir(repoRoot) {
+  return ensureDir(path.join(repoRoot, 'tmp'));
 }
 
-export function resolveDocTmpPath(repoRoot, ...parts) {
-  return path.join(resolveDocTmpDir(repoRoot), ...parts);
+export function resolveTmpPath(repoRoot, ...parts) {
+  return path.join(resolveTmpDir(repoRoot), ...parts);
 }
 
 export function normalizeForwardedArgs(argv) {

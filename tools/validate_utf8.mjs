@@ -34,7 +34,7 @@ const skippedDirectoryNames = new Set([
 ]);
 
 const skippedRelativeDirectories = new Set([
-  'docs/tmp'
+  'tmp'
 ]);
 
 const skippedEntryNames = new Set([

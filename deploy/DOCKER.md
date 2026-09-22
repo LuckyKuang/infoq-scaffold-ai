@@ -105,7 +105,7 @@ grep -nE '"credsStore"|"credHelpers"' "${DOCKER_CONFIG:-$HOME/.docker}/config.js
 当后续 Docker/Compose 拉取 public image 时出现 `error getting credentials`，并提示 `docker-credential-desktop` 不存在，说明当前 Docker config 仍引用 Docker Desktop helper。一次性本地验证可使用临时 Docker config 继续走 Colima：
 
 ```bash
-export INFOQ_TEMP_DOCKER_CONFIG="$(pwd)/docs/tmp/infoq-deploy-verify/docker-config"
+export INFOQ_TEMP_DOCKER_CONFIG="$(pwd)/tmp/infoq-deploy-verify/docker-config"
 mkdir -p "${INFOQ_TEMP_DOCKER_CONFIG}"
 printf '{"auths":{}}\n' > "${INFOQ_TEMP_DOCKER_CONFIG}/config.json"
 export DOCKER_CONFIG="${INFOQ_TEMP_DOCKER_CONFIG}"
@@ -280,7 +280,7 @@ set +a
 如果只是一次性本地验证，并且确认该路径能被当前 Docker runtime 稳定挂载，也可以显式设置独立临时目录（WSL2 不要把 MySQL 数据目录放在 DrvFS 路径下）：
 
 ```bash
-export INFOQ_DEPLOY_ROOT="$(pwd)/docs/tmp/infoq-deploy"
+export INFOQ_DEPLOY_ROOT="$(pwd)/tmp/infoq-deploy"
 ```
 
 ## 7. 脚本化部署流程
@@ -473,11 +473,11 @@ bash deploy/bin/deploy-frontend.sh status "${INFOQ_FRONTEND_TARGET}"
 bash deploy/bin/deploy-frontend.sh logs all
 ```
 
-macOS Colima 把 `INFOQ_DEPLOY_ROOT` 改成 `$HOME/infoq`。排查时建议把关键输出保存到 `docs/tmp/`，例如：
+macOS Colima 把 `INFOQ_DEPLOY_ROOT` 改成 `$HOME/infoq`。排查时建议把关键输出保存到 `tmp/`，例如：
 
 ```bash
-mkdir -p docs/tmp/infoq-deploy-verify
-docker ps -a --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}' > docs/tmp/infoq-deploy-verify/docker-ps.log
+mkdir -p tmp/infoq-deploy-verify
+docker ps -a --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}' > tmp/infoq-deploy-verify/docker-ps.log
 ```
 
 升级镜像或配置后的重建，例如升级 MinIO、Nginx 或前端运行时镜像后，优先继续使用仓库脚本重建。脚本会读取 `INFOQ_FRONTEND_TARGET`，只重建并启动当前目标前端：
@@ -525,7 +525,7 @@ INFOQ_DEPLOY_ROOT
 ES_BOOTSTRAP_PASSWORD
 ```
 
-生产安全材料由运维/组织 PKI 提供，不能复用 `docs/tmp/`、`${INFOQ_DEPLOY_ROOT}/mqtt-it/` 或 `${INFOQ_DEPLOY_ROOT}/elasticsearch-it/` 的测试 run 材料。私钥应只允许最小必要的容器用户读取；ES 数据目录必须允许容器用户 `1000:0` 写入。选择脚本只会在 root 身份下创建缺失数据目录并设置为 `1000:0`、`0750`；非 root 必须由运维先创建，已有目录绝不自动修改 owner 或权限。脚本绝不生成证书、账户、ACL 或私钥。
+生产安全材料由运维/组织 PKI 提供，不能复用 `tmp/`、`${INFOQ_DEPLOY_ROOT}/mqtt-it/` 或 `${INFOQ_DEPLOY_ROOT}/elasticsearch-it/` 的测试 run 材料。私钥应只允许最小必要的容器用户读取；ES 数据目录必须允许容器用户 `1000:0` 写入。选择脚本只会在 root 身份下创建缺失数据目录并设置为 `1000:0`、`0750`；非 root 必须由运维先创建，已有目录绝不自动修改 owner 或权限。脚本绝不生成证书、账户、ACL 或私钥。
 
 单节点所需路径：`${INFOQ_DEPLOY_ROOT}/mqtt/certs/{ca,tls}.crt`、`tls.key`、`data`，以及 `${INFOQ_DEPLOY_ROOT}/elasticsearch/certs/{ca,tls}.crt`、`tls.key`、`data`。
 

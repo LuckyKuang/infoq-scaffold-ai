@@ -9,8 +9,8 @@ import {
     markRunState,
     normalizeForwardedArgs,
     readJsonFile,
-    resolveDocTmpPath,
     resolveRepoRoot,
+    resolveTmpPath,
     runBackendMavenChecked,
     runCommandChecked,
     spawnDetachedProcess,
@@ -138,7 +138,7 @@ config.springProfile ||= backendConfigSelection.profile;
 const backendDir = path.join(repoRoot, 'infoq-scaffold-backend');
 const jarPath = path.join(repoRoot, config.jarRelPath);
 const baseUrl = `http://${config.host}:${config.port}`;
-stateFile = resolveDocTmpPath(repoRoot, 'infoq-backend-verify', `run-smoke-${config.port}.state.json`);
+stateFile = resolveTmpPath(repoRoot, 'infoq-backend-verify', `run-smoke-${config.port}.state.json`);
 
 async function isServerReady() {
   try {
@@ -231,7 +231,7 @@ async function main() {
     throw new Error(`[smoke] jar not found: ${jarPath}`);
   }
 
-  logFile = resolveDocTmpPath(repoRoot, 'infoq-backend-verify', `infoq-smoke-${config.port}.log`);
+  logFile = resolveTmpPath(repoRoot, 'infoq-backend-verify', `infoq-smoke-${config.port}.log`);
   writeState({
     schemaVersion: 1,
     skill: 'infoq-backend-verify',

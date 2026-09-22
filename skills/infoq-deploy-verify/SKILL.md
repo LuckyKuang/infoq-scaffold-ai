@@ -18,7 +18,7 @@ description: 在本仓库执行可复现的本地、WSL2、macOS 或 Linux Docke
 7. 一键部署：优先执行 `deploy/install.sh`，让脚本生成或复用 `deploy.env` 与 `credentials.txt`，并调用后端、前端和 nginx 部署脚本。
 8. 分段部署：仅在排查时直接执行 `deploy/bin/infoq.sh deploy` 与 `deploy/bin/deploy-frontend.sh deploy`；必须先加载同一个 `INFOQ_ENV_FILE`。
 9. smoke 验证：检查容器状态、backend readiness/liveness、nginx `/prod-api` 反代、`INFOQ_FRONTEND_TARGET=all` 的 `/vue/`、`/react/` 或单前端目标的 `/`、`/console-oss/`、`/oss/minio/health/live`、目标直连端口、MySQL 初始化数据、OSS/管理员数据库同步和 Redis。
-10. 证据收口：日志、curl 输出、Docker 状态和 blocker 都写入 `docs/tmp/deploy-wsl2/` 或更具体的 `docs/tmp/infoq-deploy-verify/<run-id>/`。
+10. 证据收口：日志、curl 输出、Docker 状态和 blocker 都写入 `tmp/deploy-wsl2/` 或更具体的 `tmp/infoq-deploy-verify/<run-id>/`。
 11. 卸载验证：如任务涉及清理本地栈，优先执行 `deploy/uninstall.sh --dry-run` 验证计划；只有用户明确确认后才执行实际卸载，且 MySQL/Redis/MinIO 每项必须独立确认删除容器和数据目录。
 12. 差异审查：若修复脚本或 Dockerfile，执行 UTF-8 校验、`git diff --check`、必要的 OpenSpec/文档同步，再汇总 residual risk。
 
@@ -114,7 +114,7 @@ sudo env INFOQ_ENV_FILE=/etc/infoq-scaffold-ai/deploy.env bash deploy/uninstall.
 - WSL2 验证期间保持一个长生命周期 WSL 进程，避免 distro 自动退出导致 Docker daemon 和容器反复重启。
 - localhost curl 在代理环境中必须加 `--noproxy '*'`，否则可能被 HTTP proxy 返回伪 502。
 - 发现 shell 脚本 CRLF 时，修复为 LF 并用 `.gitattributes` 固化 `*.sh text eol=lf`；不要只在当前 WSL 会话里临时 `dos2unix`。
-- macOS Colima 若 Docker/Compose 报 `error getting credentials` 且缺少 `docker-credential-desktop`，说明 `~/.docker/config.json` 残留 Docker Desktop credential helper；不要切到 Docker Desktop。验证时可在 `docs/tmp/` 下创建只含 `{"auths":{}}` 的临时 `DOCKER_CONFIG`，并显式设置 `DOCKER_HOST=unix://${HOME}/.colima/default/docker.sock` 后重试；长期应清理失效的 `credsStore`/`credHelpers` 或安装匹配 helper。
+- macOS Colima 若 Docker/Compose 报 `error getting credentials` 且缺少 `docker-credential-desktop`，说明 `~/.docker/config.json` 残留 Docker Desktop credential helper；不要切到 Docker Desktop。验证时可在 `tmp/` 下创建只含 `{"auths":{}}` 的临时 `DOCKER_CONFIG`，并显式设置 `DOCKER_HOST=unix://${HOME}/.colima/default/docker.sock` 后重试；长期应清理失效的 `credsStore`/`credHelpers` 或安装匹配 helper。
 - Redis 容器若反复重启且日志出现 `Fatal error, can't open config file '/redis/config/redis.conf': Permission denied`，优先检查安装入口是否泄漏 `umask 077`，以及 `deploy/bin/infoq.sh` 渲染后的 `${INFOQ_DEPLOY_ROOT}/redis/conf/redis.conf` 是否对 Redis 容器用户可读；修复后复跑一键部署，不要删除 MySQL 数据目录。
 - 前端 Docker build 统一使用固定 `node:24.18.0` builder；若出现 Corepack/packageManager 激活失败，按工作区 `packageManager` 与 lockfile 定位，不要降回 Node 20/22 标记通过。npm 版本不作为本仓库 Docker 构建基线单独固定。
 - Docker 镜像源 EOF/short read 不是构建成功；可临时直拉 `registry-1.docker.io/...`，再 `docker tag` 为脚本需要的短名。确认短名与长名 `IMAGE ID` 一致且没有容器引用长名后，执行 `docker rmi registry-1.docker.io/...` 删除辅助 tag，并记录为环境风险。

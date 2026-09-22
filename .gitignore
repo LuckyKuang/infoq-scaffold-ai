@@ -86,7 +86,7 @@ test-results/
 .pnpm-store/
 .swc/
 
-# 忽略 tmp/、未归属的历史计划与 OpenSpec 本地 change；当前治理计划显式纳入版本控制。
+# 忽略根级 tmp/（运行时证据与临时产物）与 OpenSpec 本地 change（本地脚手架，不提交）。
 tmp/
 openspec/changes/
 

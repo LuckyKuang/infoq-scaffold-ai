@@ -24,12 +24,12 @@ description: 管理本仓库数据运维与数据治理 SOP，覆盖 SQL 增量�
 4. 方案设计：写清 SQL 或 Redis 操作的幂等性、重复执行行为、事务边界、锁/性能影响、回滚脚本和验证查询。
 5. 门禁确认：共享环境、生产数据、批量更新、删除、权限、菜单、任务、字典和参数变更必须先确认风险和 rollback。
 6. 执行验证：执行后用只读 SQL/API/UI 或 Redis 查询核对结果，并保留证据路径。
-7. 收口记录：把临时 SQL、查询结果、导出、日志和检查结果放入 `docs/tmp/infoq-data-ops/`。
+7. 收口记录：把临时 SQL、查询结果、导出、日志和检查结果放入 `tmp/infoq-data-ops/`。
 
 ## 默认证据目录
 
 ```text
-docs/tmp/infoq-data-ops/
+tmp/infoq-data-ops/
 ```
 
 ## SQL migration 规则

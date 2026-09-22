@@ -39,7 +39,7 @@ node skills/infoq-frontend-verify/scripts/stop_admin_dev_stack.mjs --client vue
 node skills/infoq-frontend-verify/scripts/stop_admin_dev_stack.mjs --client react
 ```
 
-本地栈状态文件固定写入 `docs/tmp/infoq-frontend-verify/<client>/state.json`，必须记录 backend/frontend 的 pid、port、log、`running`/`stopped`/`failed`/`interrupted` 状态。运行态验证完成或被中断后，必须执行对应 `stop_admin_dev_stack.mjs`，只关闭本 skill 启动或状态文件记录的进程。
+本地栈状态文件固定写入 `tmp/infoq-frontend-verify/<client>/state.json`，必须记录 backend/frontend 的 pid、port、log、`running`/`stopped`/`failed`/`interrupted` 状态。运行态验证完成或被中断后，必须执行对应 `stop_admin_dev_stack.mjs`，只关闭本 skill 启动或状态文件记录的进程。
 
 快速诊断登录注入片段或动态路由：
 
@@ -79,7 +79,7 @@ pnpm run build:prod
 - 不用运行态 smoke 替代缺失的单测覆盖。
 - 禁止通过弱化断言、放宽 mock、伪造成功路径来硬凑覆盖率。
 - 涉及环境文件、AppID、端口、构建产物或测试数据的写入必须先明确目标和恢复方式。
-- 任何会启动 backend、admin dev server 或其他长生命周期进程的验证，必须把状态和日志落在 `docs/tmp/infoq-frontend-verify/`；状态缺失时不得声称端口已清理。
+- 任何会启动 backend、admin dev server 或其他长生命周期进程的验证，必须把状态和日志落在 `tmp/infoq-frontend-verify/`；状态缺失时不得声称端口已清理。
 
 ## 参考
 

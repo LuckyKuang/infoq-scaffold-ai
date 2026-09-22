@@ -58,7 +58,7 @@ node skills/infoq-backend-verify/scripts/run_cluster_smoke.mjs
 - 后端 Maven 命令优先使用 `node tools/backend_mvn.mjs -- ...`。
 - 任何写入数据库、Redis、文件导出或批量状态变更的诊断必须先明确目标和 cleanup。
 - 不把后端 smoke 或单测通过当成数据修复完成；数据侧修复、迁移和一致性核对使用 `infoq-data-ops`。
-- 任何由本 skill 启动的后端运行态必须写入 `docs/tmp/infoq-backend-verify/*.state.json`，状态至少覆盖 `starting`、`running`、`passed`、`failed`、`interrupted`、`stopped`。
+- 任何由本 skill 启动的后端运行态必须写入 `tmp/infoq-backend-verify/*.state.json`，状态至少覆盖 `starting`、`running`、`passed`、`failed`、`interrupted`、`stopped`。
 - `run_smoke.mjs`、`run_cluster_smoke.mjs` 和 `verify_login.mjs --allow-captcha-disabled` 在验证完成、失败或收到 `SIGINT`/`SIGTERM`/`SIGHUP` 时必须关闭自己启动的端口；下一次运行前必须先清理仍为 `running`/`interrupted` 的旧状态。
 - 只有显式 `--keep-server` / `--keep-servers` 才允许保留后端进程，且状态文件必须保留 `running` 与 pid/port/log，便于后续清理。
 

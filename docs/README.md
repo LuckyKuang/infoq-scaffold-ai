@@ -128,7 +128,7 @@ docs/
 
 - **用户手册**：真值源放在 `docs/` 的主题文档与 `deploy/`
 - **规格真值**：放在 `docs/specs/<capability>/spec.md`
-- **OpenSpec change**：本地计划脚手架，不提交；耐久沉淀在 `docs/plan/`
+- **OpenSpec change**：本地计划脚手架，不提交；耐久沉淀在 `docs/` 与提交信息
 - **根 README**：保持总览，不重复展开长篇内容
 - **AGENTS.md**：只保留机器协作约束，不混入用户手册
 - **同步更新**：命令、环境变量、路径变化时及时更新相关文档

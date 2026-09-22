@@ -21,7 +21,7 @@ context: |
     openspec/changes/<change-id>/；L2 至少 proposal.md + tasks.md；L1 小修复
     不建 change 但必须先写验收约定；不确定分级时默认按 L3 执行
   - openspec/changes/ 是本地计划脚手架：不提交、不进 PR；耐久行为落到 docs/
-    与测试；repo-level 或高风险治理变更另在 docs/plan/YYYY-MM-DD-*.md 留计划
+    与测试与提交信息
   - active change 在实现前和交付前都必须通过
     node skills/infoq-delivery-workflow/scripts/openspec_check.mjs <change-id>
   - tasks.md 默认显式评估 infoq-scaffold-backend、infoq-scaffold-frontend-react、
@@ -33,7 +33,7 @@ context: |
 
   文档与工具默认约束：
   - OpenSpec 文档正文默认中文；路径名称、命令、文件名保持英文原样
-  - 临时验证输出统一放 docs/tmp/，不得放在 openspec/ 下规避提交
+  - 临时验证输出统一放 tmp/，不得放在 openspec/ 下规避提交
   - 前端命令优先使用 pnpm；后端构建与测试使用 mvn
   - L3/L2 交付优先使用 infoq-delivery-workflow；其主入口是 init_change_dir.mjs
     与 openspec_check.mjs

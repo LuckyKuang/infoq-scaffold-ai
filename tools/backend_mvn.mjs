@@ -482,7 +482,7 @@ function resolveManagedUserHome(args) {
     return null;
   }
   return {
-    path: path.join(repoRoot, 'docs', 'tmp', 'backend-mvn-home'),
+    path: path.join(repoRoot, 'tmp', 'backend-mvn-home'),
     source: 'mapstruct-plus incrementMark write guard'
   };
 }

@@ -2,12 +2,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {resolveDocTmpPath, resolveRepoRoot, runCommandChecked, timestampSlug} from '../../../tools/lib/skill_runtime.mjs';
+import {resolveRepoRoot, resolveTmpPath, runCommandChecked, timestampSlug} from '../../../tools/lib/skill_runtime.mjs';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolveRepoRoot(scriptDir);
-const fixtureRoot = resolveDocTmpPath(repoRoot, 'infoq-release-ops', `fixture-${timestampSlug()}`, 'repo');
-const logFile = resolveDocTmpPath(repoRoot, 'infoq-release-ops', `test-${timestampSlug()}.log`);
+const fixtureRoot = resolveTmpPath(repoRoot, 'infoq-release-ops', `fixture-${timestampSlug()}`, 'repo');
+const logFile = resolveTmpPath(repoRoot, 'infoq-release-ops', `test-${timestampSlug()}.log`);
 
 const files = [
   'README.md',

@@ -6,8 +6,8 @@ import {
     isProcessAlive,
     markRunState,
     readJsonFile,
-    resolveDocTmpPath,
     resolvePackageManager,
+    resolveTmpPath,
     runBackendMavenChecked,
     spawnDetachedProcess,
     stopRecordedRunState,
@@ -166,7 +166,7 @@ export async function runAdminDevStack(config, argv) {
   const backendDir = path.join(config.repoRoot, 'infoq-scaffold-backend');
   const frontendDir = path.join(config.repoRoot, config.frontendDirName);
   const backendJar = path.join(backendDir, 'infoq-admin', 'target', 'infoq-admin.jar');
-  const logDir = resolveDocTmpPath(config.repoRoot, config.stateSlug);
+  const logDir = resolveTmpPath(config.repoRoot, config.stateSlug);
   const backendLog = path.join(logDir, `backend-${options.backendPort}.log`);
   const frontendLog = path.join(logDir, `${config.frontendLogPrefix}-${options.frontendPort}.log`);
 

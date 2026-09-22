@@ -13,7 +13,7 @@ description: 本仓库通用浏览器自动化技能。凡涉及网页交互、�
 
 这两个 CLI 在 Windows / macOS / Linux 下都应通过 `pnpm --dir skills/infoq-browser-automate/scripts run <cli-name> ...` 调用。
 为兼容不同平台和 `pnpm` 参数透传差异，也接受 `run <cli-name> -- ...` 形式，但文档默认推荐无 `--` 写法。
-未显式传入 `--screenshot-path` / `--console-log-path` 时，`playwright-cli` 的截图与 console 证据默认写入 `docs/tmp/infoq-browser-automate/<flow|admin-route-probe>/`。
+未显式传入 `--screenshot-path` / `--console-log-path` 时，`playwright-cli` 的截图与 console 证据默认写入 `tmp/infoq-browser-automate/<flow|admin-route-probe>/`。
 本技能不再维护 `.sh` / `.ps1` 包装器，主文档入口始终是跨平台 `pnpm --dir ... run ...`。
 
 ## 执行顺序
@@ -64,7 +64,7 @@ pnpm --dir skills/infoq-browser-automate/scripts run playwright-cli admin-route-
 该命令会：
 
 1. 通过 `skills/infoq-backend-verify/scripts/login_check.mjs` 获取 backend token。
-2. 若检测到 `captchaEnabled=true`，自动调用 `skills/infoq-admin-e2e/scripts/captcha_login.mjs --print-token` 获取真实验证码 token，并把证据写入 `docs/tmp/infoq-admin-e2e/captcha-login/`。
+2. 若检测到 `captchaEnabled=true`，自动调用 `skills/infoq-admin-e2e/scripts/captcha_login.mjs --print-token` 获取真实验证码 token，并把证据写入 `tmp/infoq-admin-e2e/captcha-login/`。
 3. 在页面加载前写入 `Admin-Token`。
 4. 打开目标前端路由。
 5. 输出截图与 console 日志路径。

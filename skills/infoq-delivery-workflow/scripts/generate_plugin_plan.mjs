@@ -2,11 +2,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {normalizeForwardedArgs, resolveDocTmpDir, resolveRepoRoot} from '../../../tools/lib/skill_runtime.mjs';
+import {normalizeForwardedArgs, resolveRepoRoot, resolveTmpDir} from '../../../tools/lib/skill_runtime.mjs';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolveRepoRoot(scriptDir);
-const docTmpDir = resolveDocTmpDir(repoRoot);
+const docTmpDir = resolveTmpDir(repoRoot);
 const args = normalizeForwardedArgs(process.argv.slice(2));
 
 let pluginName = '';
@@ -20,7 +20,7 @@ function usage() {
 
 Examples:
   node skills/infoq-delivery-workflow/scripts/generate_plugin_plan.mjs --name infoq-plugin-audit --class reusable
-  node skills/infoq-delivery-workflow/scripts/generate_plugin_plan.mjs --name infoq-plugin-sse --class toggle --frontend both --out docs/tmp/plugin-plan.md
+  node skills/infoq-delivery-workflow/scripts/generate_plugin_plan.mjs --name infoq-plugin-sse --class toggle --frontend both --out tmp/plugin-plan.md
 `);
 }
 

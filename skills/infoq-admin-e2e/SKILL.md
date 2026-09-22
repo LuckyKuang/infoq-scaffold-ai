@@ -21,7 +21,7 @@ description: 维护并执行本仓库 React/Vue 管理端 E2E 自动化，覆盖
 3. 目标枚举：涉及 CRUD、批量、删除、导出、权限按钮或 cleanup 时，先列出模块、目标数据、账号角色、影响范围和回滚/清理方式。
 4. 门禁确认：共享环境默认禁止写入型 E2E；确需写入时必须有测试数据隔离、cleanup 策略和危险动作门禁。
 5. 执行验证：运行后检查退出码、截图、console/pageerror、路由结果和状态文件，不用口头判断代替证据。
-6. 收口：完成、失败或中断后关闭本 skill 启动的栈，并保留 `docs/tmp/infoq-admin-e2e/` 证据。
+6. 收口：完成、失败或中断后关闭本 skill 启动的栈，并保留 `tmp/infoq-admin-e2e/` 证据。
 
 ## 默认命令
 
@@ -61,13 +61,13 @@ node skills/infoq-admin-e2e/scripts/run_admin_crud_e2e.mjs --client react
 node skills/infoq-admin-e2e/scripts/captcha_login.mjs --backend-url http://127.0.0.1:8080 --print-token
 ```
 
-`captcha_login.mjs` 是 `/auth/code` + `ddddocr` + 算术验证码归一化 + 加密 `/auth/login` 的共享入口，`run_admin_e2e.mjs` 与 `infoq-browser-automate` 的 `admin-route-probe` 验证码 fallback 都复用它。证据默认写入 `docs/tmp/infoq-admin-e2e/captcha-login/<run-id>/`。
+`captcha_login.mjs` 是 `/auth/code` + `ddddocr` + 算术验证码归一化 + 加密 `/auth/login` 的共享入口，`run_admin_e2e.mjs` 与 `infoq-browser-automate` 的 `admin-route-probe` 验证码 fallback 都复用它。证据默认写入 `tmp/infoq-admin-e2e/captcha-login/<run-id>/`。
 
 `run_admin_e2e.mjs` 默认只使用有管理端动态菜单的 route smoke 候选账号（`admin`、`dept`）；`captcha_login.mjs` 可继续通过 `--login-candidates` 做独立账号登录诊断。不要把无动态路由权限的账号作为 route smoke 默认候选，否则会出现登录成功但无路由可巡检的假失败。
 
-`run_admin_e2e.mjs` 默认会在完成、失败或中断后停止本 skill 启动的 backend/admin dev server；只有成功且显式传 `--keep-stack-after` 才保留联调栈，失败或中断仍必须收口。栈状态按 client 稳定记录在 `docs/tmp/infoq-admin-e2e/stack/<vue|react>/state.json`，必须包含 pid、port、log、owned/reused 和 `running`/`stopped`/`failed`/`interrupted` 状态。
+`run_admin_e2e.mjs` 默认会在完成、失败或中断后停止本 skill 启动的 backend/admin dev server；只有成功且显式传 `--keep-stack-after` 才保留联调栈，失败或中断仍必须收口。栈状态按 client 稳定记录在 `tmp/infoq-admin-e2e/stack/<vue|react>/state.json`，必须包含 pid、port、log、owned/reused 和 `running`/`stopped`/`failed`/`interrupted` 状态。
 
-`run_notice_crud_e2e.mjs` 会启动或复用 backend + 指定管理端、通过真实验证码登录、在 `/system/notice` 执行 UI 新增/查询/编辑/删除，并用 API 与 MySQL 直连只读查询核对每一步；失败时先尝试 API cleanup，必要时仅对当前精确 `e2e_` 标题执行 DB fallback cleanup。报告、截图、console、DB target、Java DB helper 和 cleanup 结果写入 `docs/tmp/infoq-admin-e2e/<run-id>/`。
+`run_notice_crud_e2e.mjs` 会启动或复用 backend + 指定管理端、通过真实验证码登录、在 `/system/notice` 执行 UI 新增/查询/编辑/删除，并用 API 与 MySQL 直连只读查询核对每一步；失败时先尝试 API cleanup，必要时仅对当前精确 `e2e_` 标题执行 DB fallback cleanup。报告、截图、console、DB target、Java DB helper 和 cleanup 结果写入 `tmp/infoq-admin-e2e/<run-id>/`。
 
 `run_admin_crud_e2e.mjs` 会启动或复用 backend + 指定管理端、通过真实验证码登录，按安全模块顺序执行 UI 新增/查询/编辑/删除或模块可用的行删除/选择删除入口，并用 API 与 MySQL 直连只读查询核对 create/edit/delete；在线用户模块会创建本轮专属 `e2e_` 用户、真实登录生成会话，只强退该会话后清理用户。它只清理当前 run 创建的精确 `e2e_` 数据，不删除内置 admin、默认角色、默认菜单、默认部门、默认配置或非本轮数据；失败、中断和完成后都会收口 owned 栈并保留 `report.md`、`report.json`、`module-matrix.json`、截图、console 和 cleanup 结果。
 
@@ -82,7 +82,7 @@ node skills/infoq-admin-e2e/scripts/run_admin_e2e.mjs --client vue --route-limit
 默认写入：
 
 ```text
-docs/tmp/infoq-admin-e2e/<run-id>/
+tmp/infoq-admin-e2e/<run-id>/
 ```
 
 ## 护栏
