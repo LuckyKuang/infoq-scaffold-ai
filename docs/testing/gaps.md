@@ -1,10 +1,11 @@
 # 管理端 Web 自动化缺口报告
 
-生成时间：2026-07-05T18:42:05.020Z
+生成时间：2026-09-22T21:44:03.807Z
 
-缺口总数：0
+缺口总数：2
 
-未发现结构性缺口。
+- [react-page-without-menu] message-center/index: React 页面未直接匹配菜单组件
+- [vue-view-without-menu] message-center/index: Vue 页面未直接匹配菜单组件
 
 ## 安全门禁
 

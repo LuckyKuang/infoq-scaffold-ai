@@ -2,7 +2,7 @@
 
 ## 目标
 
-本文件定义 `react`、`react`、`vue` 三个 PC 管理端共用的浏览器自动化用例。三端必须复用同一业务用例、同一路由来源和同一断言语义；框架与组件库导致的 DOM、布局或视觉细节差异允许存在，但不能改变业务步骤、权限判断、数据策略和失败门禁。
+本文件定义 `vue`、`react` 两个 PC 管理端共用的浏览器自动化用例。两端必须复用同一业务用例、同一路由来源和同一断言语义；框架与组件库导致的 DOM、布局或视觉细节差异允许存在，但不能改变业务步骤、权限判断、数据策略和失败门禁。
 
 ## 执行入口
 
@@ -10,22 +10,12 @@
 
 ```bash
 node skills/infoq-admin-e2e/scripts/run_admin_e2e.mjs --client react --route-limit 1
-node skills/infoq-admin-e2e/scripts/run_admin_e2e.mjs --client react --route-limit 1
 node skills/infoq-admin-e2e/scripts/run_admin_e2e.mjs --client vue --route-limit 1
 ```
 
-已授权测试数据库上的公告 CRUD 使用写入型 runner：
+已授权测试数据库上的全模块 CRUD（可用 `--modules` 子集，如仅公告 `--modules notice`）使用写入型 runner；其中 `job` 和 `ossConfig` 覆盖可隔离的任务/OSS 配置新增、编辑、删除和选择型删除入口，`online` 只强退当前 run 创建的 `e2e_` 用户会话：
 
 ```bash
-node skills/infoq-admin-e2e/scripts/run_notice_crud_e2e.mjs --client react
-node skills/infoq-admin-e2e/scripts/run_notice_crud_e2e.mjs --client react
-node skills/infoq-admin-e2e/scripts/run_notice_crud_e2e.mjs --client vue
-```
-
-已授权测试数据库上的全模块 CRUD 使用写入型 runner；其中 `job` 和 `ossConfig` 覆盖可隔离的任务/OSS 配置新增、编辑、删除和选择型删除入口，`online` 只强退当前 run 创建的 `e2e_` 用户会话：
-
-```bash
-node skills/infoq-admin-e2e/scripts/run_admin_crud_e2e.mjs --client react
 node skills/infoq-admin-e2e/scripts/run_admin_crud_e2e.mjs --client react
 node skills/infoq-admin-e2e/scripts/run_admin_crud_e2e.mjs --client vue
 ```

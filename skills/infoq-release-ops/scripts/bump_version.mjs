@@ -69,11 +69,11 @@ const bomPom = path.join(repoRoot, 'infoq-scaffold-backend', 'infoq-core', 'info
 const reactPackage = path.join(repoRoot, 'infoq-scaffold-frontend-react', 'package.json');
 const vuePackage = path.join(repoRoot, 'infoq-scaffold-frontend-vue', 'package.json');
 const readmeFile = path.join(repoRoot, 'README.md');
-const deployDoc = path.join(repoRoot, 'doc', 'devops', 'docker-compose-deploy.md');
-const manualDeployDoc = path.join(repoRoot, 'doc', 'devops', 'manual-deploy.md');
-const systemdExample = path.join(repoRoot, 'doc', 'examples', 'systemd', 'infoq-admin.service');
-const composeFile = path.join(repoRoot, 'script', 'docker', 'docker-compose.yml');
-const backendDeployScript = path.join(repoRoot, 'script', 'bin', 'infoq.sh');
+const deployDoc = path.join(repoRoot, 'deploy', 'DOCKER.md');
+const manualDeployDoc = path.join(repoRoot, 'deploy', 'MANUAL.md');
+const systemdExample = path.join(repoRoot, 'deploy', 'examples', 'systemd', 'infoq-admin.service');
+const composeFile = path.join(repoRoot, 'deploy', 'docker', 'docker-compose.yml');
+const backendDeployScript = path.join(repoRoot, 'deploy', 'bin', 'infoq.sh');
 const appYaml = path.join(repoRoot, 'infoq-scaffold-backend', 'infoq-admin', 'src', 'main', 'resources', 'application.yml');
 const appProdYaml = path.join(
   repoRoot,
@@ -86,7 +86,6 @@ const appProdYaml = path.join(
 );
 const projectReferenceFile = path.join(
   repoRoot,
-  '.codex',
   'skills',
   'infoq-project-reference',
   'references',

@@ -845,13 +845,19 @@ function main() {
   const reactTestsDir = path.join(repoRoot, 'infoq-scaffold-frontend-react', 'tests');
   const vueTestsDir = path.join(repoRoot, 'infoq-scaffold-frontend-vue', 'tests');
 
-  const sqlFiles = listFiles(sqlDir, (file) => /infoq_scaffold(_update_\d{8}|_2\.0\.0)\.sql$/u.test(path.basename(file)));
+  const sqlFiles = listFiles(sqlDir, (file) => /infoq_scaffold(_update_\d{8}|_\d+\.\d+\.\d+)\.sql$/u.test(path.basename(file)));
+  if (sqlFiles.length === 0) {
+    throw new Error('no sql/infoq_scaffold_*.sql sources matched; refusing to generate a matrix without menu sources');
+  }
   const reactPages = listFiles(reactPagesDir, (file) => file.endsWith('.tsx') || file.endsWith('.ts'));
   const vueViews = listFiles(vueViewsDir, (file) => file.endsWith('.vue') || file.endsWith('.ts'));
   const reactTests = listFiles(reactTestsDir, (file) => /\.(test|spec)\.(ts|tsx|js|jsx)$/u.test(file));
   const vueTests = listFiles(vueTestsDir, (file) => /\.(test|spec)\.(ts|tsx|js|jsx)$/u.test(file));
 
   const menus = readMenuRows(sqlFiles);
+  if (menus.length === 0) {
+    throw new Error('no sys_menu rows parsed from sql sources; refusing to generate an empty-menu matrix');
+  }
   const menuCases = buildMenuCases({menus, reactPagesDir, vueViewsDir, reactTests, vueTests});
   const fixedCases = buildFixedRouteCases(reactPagesDir, vueViewsDir, reactTests, vueTests);
   const cases = uniqueById([...fixedCases, ...menuCases]);

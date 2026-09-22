@@ -2,7 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {resolveBackendConfigSelection, resolveRedisEnv} from '../../../scripts/resolve_backend_local_mcp_env.mjs';
+import {resolveBackendConfigSelection, resolveRedisEnv} from '../../../tools/resolve_backend_local_mcp_env.mjs';
 import {
     canConnect,
     fetchText,

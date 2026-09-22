@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {resolveBackendConfigSelection} from '../../../scripts/resolve_backend_local_mcp_env.mjs';
+import {resolveBackendConfigSelection} from '../../../tools/resolve_backend_local_mcp_env.mjs';
 import {runAdminDevStack} from '../../../tools/lib/admin_dev_stack.mjs';
 import {normalizeForwardedArgs, resolveRepoRoot, resolveTmpPath} from '../../../tools/lib/skill_runtime.mjs';
 

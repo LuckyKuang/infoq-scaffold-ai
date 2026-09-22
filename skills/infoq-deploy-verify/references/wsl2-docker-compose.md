@@ -25,7 +25,7 @@ nohup bash -c 'while true; do sleep 3600; done' >/tmp/infoq-wsl-keepalive.log 2>
 从 Windows 侧执行：
 
 ```powershell
-wsl.exe -d Debian -- bash -lc 'cd /mnt/c/DevTools/code/github/infoq-scaffold-ai && mkdir -p tmp/deploy-wsl2 /tmp/infoq-deploy /infoq/server/temp && export INFOQ_DEPLOY_ROOT=/infoq && sudo env INFOQ_SOURCE_DIR="$(pwd)" INFOQ_FRONTEND_TARGET=all INFOQ_PUBLIC_BASE_URL=http://127.0.0.1 INFOQ_DEPLOY_ROOT="${INFOQ_DEPLOY_ROOT}" bash deploy/install.sh > tmp/deploy-wsl2/install.log 2>&1; status=$?; echo $status > tmp/deploy-wsl2/install.exit; tail -n 120 tmp/deploy-wsl2/install.log; exit $status'
+wsl.exe -d Debian -- bash -lc 'cd /mnt/c/DevTools/code/github/infoq-scaffold-ai && mkdir -p tmp/infoq-deploy-verify/wsl2-run /tmp/infoq-deploy /infoq/server/temp && export INFOQ_DEPLOY_ROOT=/infoq && sudo env INFOQ_SOURCE_DIR="$(pwd)" INFOQ_FRONTEND_TARGET=all INFOQ_PUBLIC_BASE_URL=http://127.0.0.1 INFOQ_DEPLOY_ROOT="${INFOQ_DEPLOY_ROOT}" bash deploy/install.sh > tmp/infoq-deploy-verify/wsl2-run/install.log 2>&1; status=$?; echo $status > tmp/infoq-deploy-verify/wsl2-run/install.exit; tail -n 120 tmp/infoq-deploy-verify/wsl2-run/install.log; exit $status'
 ```
 
 成功后验证：
@@ -85,7 +85,7 @@ readiness 需要返回 `200 OK`，body 中 `database.status` 和 `redis.status` 
   docker exec mysql mysql -uroot -p"${MYSQL_ROOT_PASSWORD}" -Nse "SELECT COUNT(*) FROM infoq.sys_user WHERE user_id=1 AND user_name='${INFOQ_ADMIN_USERNAME}' AND status='0' AND del_flag='0';"
   echo '# redis ping'
   docker exec redis redis-cli -a "${REDIS_PASSWORD}" ping
-} > tmp/deploy-wsl2/smoke-verify.log 2>&1
+} > tmp/infoq-deploy-verify/wsl2-run/smoke-verify.log 2>&1
 ```
 
 Windows 主机侧也要验证 `localhost`，因为用户通常从 Windows 浏览器访问：

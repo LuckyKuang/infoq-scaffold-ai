@@ -2,9 +2,10 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {spawnSync} from 'node:child_process';
 import {runPlaywrightFlow} from './playwright_core.mjs';
+import {resolveRepoRoot} from '../../../tools/lib/skill_runtime.mjs';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
-const repoRoot = path.resolve(scriptDir, '..', '..', '..', '..');
+const repoRoot = resolveRepoRoot(scriptDir);
 const loginScript = path.join(repoRoot, 'skills', 'infoq-backend-verify', 'scripts', 'login_check.mjs');
 const captchaLoginScript = path.join(repoRoot, 'skills', 'infoq-admin-e2e', 'scripts', 'captcha_login.mjs');
 
@@ -50,7 +51,7 @@ function getRouteList(nodes, prefix = '') {
 
 function buildDefaultEvidencePath(route, extension) {
   const normalizedRoute = route === '/' ? 'root' : route.replace(/^\/+/, '').replace(/\//g, '_');
-  return path.join(repoRoot, 'doc', 'tmp', 'infoq-browser-automate', 'admin-route-probe', `${normalizedRoute}.${formatTimestamp()}.${extension}`);
+  return path.join(repoRoot, 'tmp', 'infoq-browser-automate', 'admin-route-probe', `${normalizedRoute}.${formatTimestamp()}.${extension}`);
 }
 
 function collectProcessOutput(result) {

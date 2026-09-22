@@ -3,9 +3,10 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {runPlaywrightFlow} from './playwright_core.mjs';
 import {runAdminRouteProbe} from './admin_route_probe.mjs';
+import {resolveRepoRoot} from '../../../tools/lib/skill_runtime.mjs';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
-const repoRoot = path.resolve(scriptDir, '..', '..', '..', '..');
+const repoRoot = resolveRepoRoot(scriptDir);
 
 function formatTimestamp(date = new Date()) {
   const pad = (value) => String(value).padStart(2, '0');
@@ -24,7 +25,7 @@ function resolveEvidencePath(value) {
 }
 
 function buildDefaultFlowEvidencePath(extension) {
-  return path.join(repoRoot, 'doc', 'tmp', 'infoq-browser-automate', 'flow', `${formatTimestamp()}.${extension}`);
+  return path.join(repoRoot, 'tmp', 'infoq-browser-automate', 'flow', `${formatTimestamp()}.${extension}`);
 }
 
 function normalizeCommandArgs(rawArgs) {

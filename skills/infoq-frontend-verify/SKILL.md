@@ -83,6 +83,7 @@ pnpm run build:prod
 
 ## 参考
 
+- 运行态命令（双端共用）：`references/runtime/admin-commands.md`
 - React 参考：`references/react/`
 - Vue 参考：`references/vue/`
 - 共享运行时：`tools/lib/admin_dev_stack.mjs`

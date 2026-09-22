@@ -3,11 +3,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {spawn} from 'node:child_process';
+import {resolveRepoRoot} from '../../../tools/lib/skill_runtime.mjs';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
-const repoRoot = path.resolve(scriptDir, '..', '..', '..', '..');
+const repoRoot = resolveRepoRoot(scriptDir);
 const entryPath = path.join(scriptDir, 'node_modules', 'chrome-devtools-mcp', 'build', 'src', 'bin', 'chrome-devtools-mcp.js');
-const localStoragePath = path.join(repoRoot, 'doc', 'tmp', 'chrome-devtools-mcp', 'localstorage');
+const localStoragePath = path.join(repoRoot, 'tmp', 'chrome-devtools-mcp', 'localstorage');
 const forwardedArgs = process.argv[2] === '--' ? process.argv.slice(3) : process.argv.slice(2);
 
 function printHelp() {

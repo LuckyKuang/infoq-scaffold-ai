@@ -14,7 +14,7 @@ e2e_<module>_<timestamp>_<short-random>
 
 - 优先通过 UI 创建真实数据。
 - 需要 seed 时必须显式标记为测试 fixture。
-- 不得修改 `sql/infoq_scaffold_2.0.0.sql`。
+- 不得修改 `sql/` 下的冻结初始化基线（唯一的 `infoq_scaffold_x.y.z.sql`）。
 - 不得依赖生产默认口令或示例密钥作为新增测试数据。
 
 ## 数据隔离

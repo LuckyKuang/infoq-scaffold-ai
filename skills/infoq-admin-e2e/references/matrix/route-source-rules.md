@@ -4,7 +4,7 @@
 
 后端 `sys_menu` 是动态管理页的主真值。生成器应读取：
 
-- `sql/infoq_scaffold_2.0.0.sql`
+- `sql/infoq_scaffold_x.y.z.sql`（冻结初始化基线，当前为 `sql/infoq_scaffold_3.0.0.sql`）
 - `sql/infoq_scaffold_update_*.sql`
 
 ## 前端页面校验

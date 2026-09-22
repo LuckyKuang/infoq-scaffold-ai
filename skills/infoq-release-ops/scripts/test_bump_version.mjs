@@ -9,11 +9,24 @@ const repoRoot = resolveRepoRoot(scriptDir);
 const fixtureRoot = resolveTmpPath(repoRoot, 'infoq-release-ops', `fixture-${timestampSlug()}`, 'repo');
 const logFile = resolveTmpPath(repoRoot, 'infoq-release-ops', `test-${timestampSlug()}.log`);
 
+const sqlDir = path.join(repoRoot, 'sql');
+const initSqlCandidates = fs
+  .readdirSync(sqlDir, {withFileTypes: true})
+  .filter((entry) => entry.isFile() && /^infoq_scaffold_\d+\.\d+\.\d+\.sql$/.test(entry.name))
+  .map((entry) => `sql/${entry.name}`)
+  .sort();
+
+if (initSqlCandidates.length !== 1) {
+  throw new Error(`[version-bump-test] expected exactly one sql/infoq_scaffold_x.y.z.sql, found ${initSqlCandidates.length}`);
+}
+
+const [initSqlRelPath] = initSqlCandidates;
+
 const files = [
   'README.md',
   'deploy/DOCKER.md',
   'deploy/MANUAL.md',
-  'doc/examples/systemd/infoq-admin.service',
+  'deploy/examples/systemd/infoq-admin.service',
   'deploy/bin/infoq.sh',
   'deploy/docker/docker-compose.yml',
   'skills/infoq-project-reference/references/project-reference.md',
@@ -27,8 +40,7 @@ const files = [
   'infoq-scaffold-backend/infoq-modules/infoq-system/src/test/java/cc/infoq/system/runner/QuartzBootstrapCoordinatorTest.java',
   'infoq-scaffold-frontend-react/package.json',
   'infoq-scaffold-frontend-vue/package.json',
-  'sql/infoq_scaffold_2.0.0.sql',
-  'sql/infoq_scaffold_update_20260425.sql'
+  initSqlRelPath
 ];
 
 for (const relPath of files) {
@@ -58,9 +70,12 @@ assertContains('README.md', 'Version-9.9.9-');
 assertContains('deploy/docker/docker-compose.yml', 'image: infoq/infoq-admin:9.9.9');
 assertContains('deploy/docker/docker-compose.yml', 'image: infoq/infoq-frontend-vue:9.9.9');
 assertContains('deploy/docker/docker-compose.yml', 'image: infoq/infoq-frontend-react:9.9.9');
-assertContains('README.md', 'sql/infoq_scaffold_2.0.0.sql');
-assertContains('deploy/bin/infoq.sh', 'sql/infoq_scaffold_2.0.0.sql');
-assertContains('deploy/docker/docker-compose.yml', 'sql/infoq_scaffold_2.0.0.sql');
+assertContains('README.md', initSqlRelPath);
+assertContains('deploy/DOCKER.md', initSqlRelPath);
+assertContains('deploy/DOCKER.md', '当前文档对应项目基线版本为 `9.9.9`。');
+assertContains('deploy/bin/infoq.sh', initSqlRelPath);
+assertContains('deploy/docker/docker-compose.yml', initSqlRelPath);
+assertContains('skills/infoq-project-reference/references/project-reference.md', initSqlRelPath);
 
 console.log('[version-bump-test] pass');
 console.log(`[version-bump-test] fixture root: ${fixtureRoot}`);

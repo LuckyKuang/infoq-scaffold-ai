@@ -23,9 +23,11 @@
   - `infoq-scaffold-frontend-react`
   - `infoq-scaffold-frontend-vue`
   - `openspec`
-  - `script`
+  - `skills`
+  - `tools`
+  - `deploy`
+  - `docs`
   - `sql`
-  - `doc`
 - 工作区指令文件：
   - `AGENTS.md`
   - `infoq-scaffold-backend/AGENTS.md`
@@ -93,8 +95,6 @@
 ## 基础设施与运维
 
 - 脚本：
-  - `script/generate-app-icon.js`
-  - `script/build-open-wechat-devtools.mjs`
   - `deploy/bin/infoq.sh`
   - `deploy/bin/deploy-frontend.sh`
 - Compose 与网关：
@@ -102,7 +102,8 @@
   - `deploy/docker/nginx/conf/nginx.conf`
   - `deploy/docker/redis/conf/redis.conf`
 - SQL 初始化文件：
-  - `sql/infoq_scaffold_2.0.0.sql`
+  - `sql/infoq_scaffold_3.0.0.sql`（冻结初始化基线）
+  - `sql/infoq_scaffold_update_YYYYMMDD.sql`（新增变更的唯一承载方式）
 
 ## 约定
 

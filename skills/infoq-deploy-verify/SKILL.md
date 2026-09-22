@@ -18,7 +18,7 @@ description: 在本仓库执行可复现的本地、WSL2、macOS 或 Linux Docke
 7. 一键部署：优先执行 `deploy/install.sh`，让脚本生成或复用 `deploy.env` 与 `credentials.txt`，并调用后端、前端和 nginx 部署脚本。
 8. 分段部署：仅在排查时直接执行 `deploy/bin/infoq.sh deploy` 与 `deploy/bin/deploy-frontend.sh deploy`；必须先加载同一个 `INFOQ_ENV_FILE`。
 9. smoke 验证：检查容器状态、backend readiness/liveness、nginx `/prod-api` 反代、`INFOQ_FRONTEND_TARGET=all` 的 `/vue/`、`/react/` 或单前端目标的 `/`、`/console-oss/`、`/oss/minio/health/live`、目标直连端口、MySQL 初始化数据、OSS/管理员数据库同步和 Redis。
-10. 证据收口：日志、curl 输出、Docker 状态和 blocker 都写入 `tmp/deploy-wsl2/` 或更具体的 `tmp/infoq-deploy-verify/<run-id>/`。
+10. 证据收口：日志、curl 输出、Docker 状态和 blocker 都写入 `tmp/infoq-deploy-verify/<run-id>/`。
 11. 卸载验证：如任务涉及清理本地栈，优先执行 `deploy/uninstall.sh --dry-run` 验证计划；只有用户明确确认后才执行实际卸载，且 MySQL/Redis/MinIO 每项必须独立确认删除容器和数据目录。
 12. 差异审查：若修复脚本或 Dockerfile，执行 UTF-8 校验、`git diff --check`、必要的 OpenSpec/文档同步，再汇总 residual risk。
 

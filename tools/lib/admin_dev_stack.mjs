@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import {resolveBackendConfigSelection} from '../scripts/resolve_backend_local_mcp_env.mjs';
+import {resolveBackendConfigSelection} from '../resolve_backend_local_mcp_env.mjs';
 import {
     fetchText,
     isProcessAlive,

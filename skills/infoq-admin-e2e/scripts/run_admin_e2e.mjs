@@ -2,7 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath, pathToFileURL} from 'node:url';
-import {resolveBackendConfigSelection} from '../../../scripts/resolve_backend_local_mcp_env.mjs';
+import {resolveBackendConfigSelection} from '../../../tools/resolve_backend_local_mcp_env.mjs';
 import {
     ensureDir,
     fetchJson,
