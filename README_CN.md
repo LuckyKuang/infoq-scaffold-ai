@@ -87,11 +87,11 @@ pnpm run dev
 两个管理端默认端口都是 `80`。同时启动时先为其中一个设置 `VITE_APP_PORT`。本地
 开发细节见 [`DEV_GUIDE.md`](DEV_GUIDE.md)。
 
-使用 skill 启动联调栈或验证码登录：
+使用 skill 跑管理端路由 smoke 或验证码登录：
 
 ```bash
-node skills/infoq-frontend-verify/scripts/start_admin_dev_stack.mjs --client vue
-node skills/infoq-admin-e2e/scripts/captcha_login.mjs --backend-url http://127.0.0.1:8080 --print-token
+node skills/infoq-test/scripts/run_admin_e2e.mjs --client vue --route-limit 1
+node skills/infoq-test/scripts/captcha_login.mjs --backend-url http://127.0.0.1:8080 --print-token
 ```
 
 <!-- readme-section:deployment -->

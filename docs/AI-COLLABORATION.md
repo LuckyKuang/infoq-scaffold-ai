@@ -98,7 +98,7 @@ repo 级 custom agents 的真值不写在 `AGENTS.md` 之外的任意散落文�
 
 以下职责默认回到主线程，而不是继续保留独立 custom agent：
 
-- `design.md`：按需维护；重大 UI/UX 任务优先走 `infoq-delivery-workflow` 的四阶段 UI 门禁
+- `design.md`：按需维护；重大 UI/UX 任务优先走 `docs/DELIVERY-WORKFLOW.md` 的四阶段 UI 门禁
 - `materials.md`：确有 copy、mock data、图标建议价值时再写
 - 最终验收与 blocker 总结：主线程基于真实验证证据完成，必要时再写 `review.md`
 
@@ -129,7 +129,7 @@ repo 级 custom agents 的真值不写在 `AGENTS.md` 之外的任意散落文�
 | 主题 | 真值文件 |
 | --- | --- |
 | 协作规则 | `AGENTS.md` 与更近工作区 `AGENTS.md` |
-| 仓库级技能 | `skills/*/SKILL.md` |
+| 仓库级 skill | `skills/*/SKILL.md` |
 | 规格与变更 | `openspec/config.yaml`、`docs/specs/`、`openspec/changes/`（本地） |
 | MCP 配置 | `.codex/config.toml` |
 | 项目文档 | `README.md` 与 `docs/*.md` |
@@ -188,24 +188,25 @@ backend 工作区基线是 JDK 21 与 Maven 3.9.x。
 
 `skills` 负责把高频任务沉淀成仓库内 SOP；`MCP` 负责补充交互探索或深度诊断能力。
 
-仓库级 skill 默认是领域型可执行 SOP。维护时优先重构现有领域 skill，不新增职责模糊的泛化 skill；只有出现无法归入现有 skill 的新工作域时才新增。标准执行顺序是：判定范围 -> 只读探测/预览 -> 目标与影响枚举 -> 写入或危险动作门禁 -> 执行验证 -> `tmp/` 证据留存与显式失败。
+仓库级 skill 是 CLI 型可执行 SOP：只保留 4 个工作域（`infoq-test`、`infoq-compress`、`infoq-push`、`infoq-release`），域内用子命令或 mode 表达子场景。维护时优先重构现有 skill，不为域外能力新增 skill。标准执行顺序是：判定范围 -> 只读探测/预览 -> 目标与影响枚举 -> 写入或危险动作门禁 -> 执行验证 -> `tmp/` 证据留存与显式失败。
 
 当前默认组合：
 
-- 浏览器主流程：`infoq-browser-automate` + repo-owned `playwright-cli`
-- 真实验证码 admin E2E、测试矩阵和 CRUD E2E 模式：`infoq-admin-e2e`
-- 真实管理端页面运营维护、权限巡检和危险动作门禁：`infoq-admin-ops`
-- SQL、数据库、Redis、数据修复、迁移和一致性核对：`infoq-data-ops`
-- React/Vue 管理端 单测、构建和运行态：`infoq-frontend-verify`
-- 后端登录、smoke 和单测验证：`infoq-backend-verify`
-- 本地 / WSL2 / macOS Colima / Linux Docker Compose 部署验证：`infoq-deploy-verify`
+- Web 测试、浏览器自动化、管理端 E2E、前端单测/构建/运行态：`infoq-test`
+- 推送、PR 创建/复用、校验回流与受控合并：`infoq-push`
+- 版本核对、tag 与 GitHub Release：`infoq-release`
+- AGENTS.md 压缩与路由一致性校验：`infoq-compress`
+- 后端登录、smoke、集群与单测验证：`tools/verify/`（SOP 见 `tools/verify/README.md`）
+- SQL、数据库、Redis、数据修复、迁移和一致性核对：`docs/DATA-OPS.md`
+- 交付门禁、OpenSpec 与插件治理：`docs/DELIVERY-WORKFLOW.md`；容器部署验证：`deploy/VERIFICATION.md`
+- 组件选型与组件 API 核验：`docs/DESIGN.md`「组件选型与 API 核验」
 - OpenAI / Codex / AGENTS / MCP 问题：`openai-docs`（本机/系统 skill，不作为项目级 MCP 固定配置）
 - 前端深度调试：`chrome-devtools`
 
 说明：
 
-- `playwright-cli` 与 `chrome-devtools-cli` 是仓库内跨平台 CLI，位于 `skills/infoq-browser-automate/scripts/`。
-- `playwright-cli admin-route-probe` 遇到后端 `captchaEnabled=true` 时，会自动调用 `infoq-admin-e2e/scripts/captcha_login.mjs` 识别验证码并获取真实 token。
+- `playwright-cli` 与 `chrome-devtools-cli` 是仓库内跨平台 CLI，位于 `skills/infoq-test/scripts/`。
+- `playwright-cli admin-route-probe` 遇到后端 `captchaEnabled=true` 时，会自动调用 `skills/infoq-test/scripts/captcha_login.mjs` 识别验证码并获取真实 token。
 - `playwright` MCP 用于临时交互探索。
 - `chrome-devtools` MCP 用于 Network / Console / Performance 深度诊断。
 - 不要回退到任何历史浏览器入口。
@@ -248,6 +249,25 @@ rg -n '\]\([^)]*infoq-scaffold-' README.md docs
 - evidence-based verification：用命令输出、截图、日志和构建结果说话
 - docs as delivery asset：文档是交付物的一部分，不是附属品
 
+### 2.8 工程标准与代码度量
+
+根 `AGENTS.md` 已压缩承载失败策略、工程基线、acceptance contract、安全、测试、执行流程与发布护栏；本节补充仓库内没有其他落点的度量与解耦标准，其余条款不在 `docs/` 重复第二份。
+
+代码度量（建议值，超出时先确认是否有明确业务理由）：
+
+- 函数长度：非空行建议不超过 50，超出时拆分辅助函数。
+- 文件规模：建议不超过 300 行，超出时按职责拆分。
+- 嵌套深度：建议不超过 3 层，优先 guard clause / early return 拉平控制流。
+- 位置参数：建议不超过 3 个，超过时使用 options 对象。
+- 圈复杂度：单函数建议不超过 10，超出时拆分分支逻辑。
+- 禁止魔法数字：对非显然常量提取具名常量。
+
+解耦与状态：
+
+- 业务逻辑优先依赖注入；参数、接口、适配器能提升可测性与可演进性时，避免硬绑定具体实现。
+- 在可行场景优先不可变：使用 `const`、`readonly`、不可变结构与拷贝返回，避免修改入参或共享全局状态。
+- 除非修改入参是显式 API 契约，否则禁止修改函数参数。
+
 ## 3. Subagents 使用指南
 
 ### 3.1 什么是 Subagents
@@ -267,7 +287,7 @@ multi-agent 的价值不是"多开几个 agent"，而是把高噪声、边界清
 - 项目级上下文：`openspec/config.yaml` 的 context
 - 规格真值：`docs/specs/`
 - 活跃变更目录：`openspec/changes/<change-id>/`（本地，不提交）
-- 统一入口 skill：`skills/infoq-delivery-workflow/`
+- 统一入口文档：`docs/DELIVERY-WORKFLOW.md` 与 `docs/OPENSPEC-WORKFLOW.md`
 - repo 级 custom agents 真值：`.codex/agents/`
 
 ### 3.3 当前可用的专家
@@ -284,20 +304,20 @@ multi-agent 的价值不是"多开几个 agent"，而是把高噪声、边界清
 change id 推荐格式为 `verb-noun`，例如 `enhance-user-import`。
 
 ```bash
-node skills/infoq-delivery-workflow/scripts/init_change_dir.mjs enhance-user-import
-node skills/infoq-delivery-workflow/scripts/openspec_check.mjs enhance-user-import
+node tools/init_change_dir.mjs enhance-user-import
+node tools/openspec_check.mjs enhance-user-import
 ```
 
 推荐提示词：
 
 ```text
-请使用 infoq-delivery-workflow 工作流处理这个需求。
+请使用 docs/DELIVERY-WORKFLOW.md 工作流处理这个需求。
 change id: enhance-user-import
 
 要求：
 1. spawn requirements_expert 生成 proposal.md 和 spec deltas
 2. spawn technical_designer 生成 tasks.md
-3. 如涉及明显 UI/交互决策，主线程先补 design.md，或改走 infoq-delivery-workflow 的四阶段 UI 门禁
+3. 如涉及明显 UI/交互决策，主线程先补 design.md，或改走 docs/DELIVERY-WORKFLOW.md 的四阶段 UI 门禁
 4. spawn code_implementer 按计划实现 backend、React/Vue admin、docs 和 script/deploy 需要改动的部分
 5. spawn auto_fixer 跑相关验证并修复真实问题
 6. 主线程基于验证证据做最终验收；必要时写 review.md 记录 blocker

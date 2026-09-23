@@ -275,6 +275,15 @@ Vue 与 React 管理端共享同一套后端、同一套菜单权限和大部分
 
 `src/utils/request.ts` 的整体能力和 Vue 基本一致：自动带 token、`clientid`；重复提交防抖；可选加密；401 弹窗重登录；统一错误提示；文件下载。
 
+### 12.5 构建与分包真值
+
+React admin 的分包真值在 `infoq-scaffold-frontend-react/vite.config.ts` 的 `build.rollupOptions.output.manualChunks`：
+
+- 当前策略优先稳定 vendor 分组与路由级懒加载：`vendor-react`、`vendor-shared`、`vendor-media`、`vendor-echarts`，以及 `vendor-antd-infra`、`vendor-rc-table`、`vendor-rc-picker`、`vendor-rc-form`、`vendor-rc-tree`、`vendor-rc-overlay`。
+- `src/router/AppRouter.tsx` 中的 `AuthGuard`、`MainLayout`、`BackendRouteView`、`login`、`register`、`401`、`redirect` 已改为 `lazy()`；入口首包优化依赖这些真实路由边界。
+- 处理 chunk warning 时保留「按路由边界拆 + 按 rc 重模块拆」的思路，不要回到按 `antd/es/*` 或 `antd/lib/*` 细粒度手工拆包；旧策略容易触发 circular chunk warning。
+- 验收标准以 `pnpm run build:prod` 输出为准：既要避免 circular chunk warning，也要避免 `Some chunks are larger than 500 kB after minification`。
+
 ## 13. 如何新增一个后台页面
 
 建议按这个顺序做：

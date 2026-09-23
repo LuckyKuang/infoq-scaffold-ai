@@ -235,7 +235,7 @@ A single-target deploy mounts that admin at `/`.
 
 ## 7. Verification
 
-Use the `infoq-deploy-verify` skill for a full Compose smoke. A minimal check:
+Use [`deploy/VERIFICATION.md`](./VERIFICATION.md) for a full Compose smoke. A minimal check:
 
 ```bash
 cd deploy/docker

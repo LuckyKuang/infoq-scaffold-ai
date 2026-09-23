@@ -39,7 +39,8 @@ current repository; it does not retell third-party framework tutorials.
 | 文档 | 说明 |
 | --- | --- |
 | [架构总览](./ARCHITECTURE.md) | 工作区、技术基线、后端模块、登录与菜单链路、双管理端结构 |
-| [设计系统](./DESIGN.md) | 管理端视觉语言 |
+| [设计系统](./DESIGN.md) | 管理端视觉语言与组件选型 |
+| [数据运维](./DATA-OPS.md) | SQL 增量脚本、冻结基线保护、数据修复、迁移与一致性核对 |
 | [FAQ](./FAQ.md) | 常见问题和排障 |
 
 ### 部署运维
@@ -48,6 +49,9 @@ current repository; it does not retell third-party framework tutorials.
 | --- | --- |
 | [部署指南](../deploy/README.md) | 部署方式、前置条件、端口与目录准备、发布前检查 |
 | [Docker Compose](../deploy/DOCKER.md) | WSL2 / macOS Colima / Linux 全栈 Compose 与脚本化部署 |
+| [部署验证 SOP](../deploy/VERIFICATION.md) | 免费商用容器运行时、smoke 清单与阻断收口 |
+| [运行时矩阵](../deploy/runtime-matrix.md) | 运行时选择流程与必须停止询问的情况 |
+| [WSL2 全流程](../deploy/wsl2-docker-compose.md) | WSL2 Debian 内 Docker CE 的完整步骤 |
 | [Apple container](../deploy/APPLE_CONTAINER.md) | macOS Apple `container` 本机后端栈 |
 | [手动部署](../deploy/MANUAL.md) | 非容器化 JVM + Nginx 部署 |
 
@@ -56,7 +60,10 @@ current repository; it does not retell third-party framework tutorials.
 | 文档 | 说明 |
 | --- | --- |
 | [AI 协作规范](./AI-COLLABORATION.md) | AGENTS 分层、subagents、研发工作流、模块文档治理 |
-| [Skills 与插件](./SKILLS.md) | 仓库级 skills 使用与后端插件开关矩阵 |
+| [Skills 与插件](./SKILLS.md) | 4 个仓库级 skill 的使用与后端插件开关矩阵 |
+| [交付工作流](./DELIVERY-WORKFLOW.md) | Acceptance Contract、OpenSpec 门禁、UI 四阶段与插件治理 |
+| [OpenSpec 流程](./OPENSPEC-WORKFLOW.md) | change 生命周期与结构校验 |
+| [UI 工作流](./UI-WORKFLOW.md) | 重大 UI/UX 四阶段设计辅助层 |
 | [MCP Servers](./MCP-SERVERS.md) | MCP server 配置与只读边界 |
 
 ### 测试与规格
@@ -83,10 +90,14 @@ docs/
 ├── ARCHITECTURE.md      # 架构与开发总览
 ├── AI-COLLABORATION.md  # AI 协作规范
 ├── SKILLS.md            # skills 与插件治理
+├── DELIVERY-WORKFLOW.md # 交付门禁与工作流
+├── OPENSPEC-WORKFLOW.md # OpenSpec 流程
+├── UI-WORKFLOW.md       # UI 四阶段设计辅助层
+├── DATA-OPS.md          # 数据运维与 SQL 迁移
 ├── MCP-SERVERS.md       # MCP 配置说明
 ├── TESTING.md           # 管理端 E2E 测试
 ├── FAQ.md               # 常见问题
-├── DESIGN.md            # 设计系统
+├── DESIGN.md            # 设计系统与组件选型
 ├── specs/               # 规格真值（capability 需求）
 ├── testing/             # E2E case 集合
 ├── plan/                # 治理执行计划

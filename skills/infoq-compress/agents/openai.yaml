@@ -1,0 +1,4 @@
+interface:
+  display_name: "InfoQ AGENTS 压缩"
+  short_description: "压缩根 AGENTS.md 并校验路由、引用与受保护规则"
+  default_prompt: "使用 $infoq-compress 更新或校验仓库根 AGENTS.md：保持 `|Category:value` 管道索引格式与唯一类别，验证被引用的 tools/docs/skills 路径真实存在，校验 Local Skills、skills/ 目录与 docs/SKILLS.md 路由一致，并在安全、失败策略、SQL 迁移、发布护栏、Redisson OSS 等受保护类别缺失或被弱化时失败关闭。"

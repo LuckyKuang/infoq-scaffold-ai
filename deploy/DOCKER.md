@@ -107,7 +107,7 @@ grep -nE '"credsStore"|"credHelpers"' "${DOCKER_CONFIG:-$HOME/.docker}/config.js
 当后续 Docker/Compose 拉取 public image 时出现 `error getting credentials`，并提示 `docker-credential-desktop` 不存在，说明当前 Docker config 仍引用 Docker Desktop helper。一次性本地验证可使用临时 Docker config 继续走 Colima：
 
 ```bash
-export INFOQ_TEMP_DOCKER_CONFIG="$(pwd)/tmp/infoq-deploy-verify/docker-config"
+export INFOQ_TEMP_DOCKER_CONFIG="$(pwd)/tmp/deploy-verify/docker-config"
 mkdir -p "${INFOQ_TEMP_DOCKER_CONFIG}"
 printf '{"auths":{}}\n' > "${INFOQ_TEMP_DOCKER_CONFIG}/config.json"
 export DOCKER_CONFIG="${INFOQ_TEMP_DOCKER_CONFIG}"
@@ -478,8 +478,8 @@ bash deploy/bin/deploy-frontend.sh logs all
 macOS Colima 把 `INFOQ_DEPLOY_ROOT` 改成 `$HOME/infoq`。排查时建议把关键输出保存到 `tmp/`，例如：
 
 ```bash
-mkdir -p tmp/infoq-deploy-verify
-docker ps -a --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}' > tmp/infoq-deploy-verify/docker-ps.log
+mkdir -p tmp/deploy-verify
+docker ps -a --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}' > tmp/deploy-verify/docker-ps.log
 ```
 
 升级镜像或配置后的重建，例如升级 MinIO、Nginx 或前端运行时镜像后，优先继续使用仓库脚本重建。脚本会读取 `INFOQ_FRONTEND_TARGET`，只重建并启动当前目标前端：

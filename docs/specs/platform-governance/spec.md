@@ -2,7 +2,7 @@
 
 ## 目标
 
-定义仓库默认 AI 交付流程、统一影响矩阵、active change 结构校验、稳定规格回填纪律，以及 OpenSpec 文档语言规范。
+定义仓库默认 AI 交付流程、统一影响矩阵、active change 结构校验、稳定规格回填纪律、仓库级 skill 收敛与域外能力归属，以及 OpenSpec 文档语言规范。
 
 ## 要求
 
@@ -45,7 +45,7 @@ active change 在实现前和交付前都必须通过统一结构校验。
 #### 场景：校验 active change
 
 - 当维护者准备进入实现或结束交付时
-- 则必须执行 `node skills/infoq-delivery-workflow/scripts/openspec_check.mjs <change-id>`
+- 则必须执行 `node tools/openspec_check.mjs <change-id>`
 - 并且缺少关键章节、影响矩阵或验证映射时必须显式失败
 
 ### 要求：稳定规格回填
@@ -68,16 +68,47 @@ active change 在实现前和交付前都必须通过统一结构校验。
 #### 场景：使用 `application-local.yml`
 
 - 当维护者需要验证 `application-local.yml` 时
-- 则必须显式传 `--spring.profiles.active=local` 或 runtime skill `--profile local`
+- 则必须显式传 `--spring.profiles.active=local` 或运行态脚本的 `--profile local`（`skills/infoq-test/scripts/run_admin_e2e.mjs`、`run_admin_crud_e2e.mjs`）
 - 并且排障时必须先区分 profile 未切换、端口错配、外部依赖不可达 三类问题
 
-#### 场景：skill 启动长生命周期运行态
+#### 场景：运行态脚本或 skill 启动长生命周期进程
 
-- 当仓库级 skill 启动 backend、frontend dev server、浏览器 runner、WeChat DevTools runner 或其他长生命周期进程时
-- 则必须在 `tmp/<skill-name>/` 或其子目录写入状态文件
+- 当仓库级 skill 或 `tools/` 运行态脚本启动 backend、frontend dev server、浏览器 runner、WeChat DevTools runner 或其他长生命周期进程时
+- 则必须在 `tmp/<owner>/`（skill 名或工具命令组名）或其子目录写入状态文件
 - 并且状态文件必须至少记录 pid、端口、日志路径、启动时间、更新时间、拥有关系，以及 `starting`、`running`、`passed`、`failed`、`interrupted`、`stopped` 中的状态
-- 并且验证完成、失败、阻塞中断或收到 `SIGINT`/`SIGTERM`/`SIGHUP` 时，必须关闭本 skill 启动或状态文件标记为 owned 的端口
+- 并且验证完成、失败、阻塞中断或收到 `SIGINT`/`SIGTERM`/`SIGHUP` 时，必须关闭本次启动或状态文件标记为 owned 的端口
 - 并且下一次运行前必须先清理仍标记为 `running` 或 `interrupted` 的旧状态，避免上次断开留下端口占用
+
+### 要求：仓库级 skill 收敛与域外能力归属
+
+仓库级 skill 必须保持 4 个 CLI 型工作域，域外验证与运维能力不得新增 skill。
+
+#### 场景：新增或调整仓库级 skill
+
+- 当需要新增 skill 或调整现有 skill 职责时
+- 则只能归入 `infoq-compress`、`infoq-push`、`infoq-release`、`infoq-test` 四个工作域
+- 并且每个 skill 目录必须包含 `SKILL.md` 与 `agents/openai.yaml`，且 `default_prompt` 显式包含 `$<skill-name>`
+- 并且标准执行顺序为判定范围 -> 只读探测/预览 -> 目标与影响枚举 -> 写入或危险动作门禁 -> 执行验证 -> `tmp/` 证据留存与显式失败
+
+#### 场景：域外验证与运维能力
+
+- 当出现无法归入上述 4 个域的能力时
+- 则后端验证与 OpenSpec 校验放入 `tools/`
+- 并且数据运维与交付工作流放入 `docs/`，部署验证放入 `deploy/`
+- 并且不得为此新增 skill，也不得在 `skills/` 下保留 shared/README-only/helper-only 目录
+
+#### 场景：AGENTS.md 压缩与路由校验
+
+- 当创建、压缩或更新根 `AGENTS.md` 时
+- 则必须执行 `node skills/infoq-compress/scripts/agents_check.mjs check`
+- 并且校验必须覆盖格式与唯一类别、受保护类别完整性、Local Skills ↔ `skills/` 目录 ↔ `docs/SKILLS.md` ↔ Skill Trigger 引用一致性，以及被引用路径是否存在
+- 并且校验失败必须显式失败，禁止把失败当作环境噪声
+
+#### 场景：远程写操作
+
+- 当任务涉及推送分支、创建或合并 PR、创建 tag 或发布 GitHub Release 时
+- 则默认必须 dry-run，且只有显式确认参数才执行远程写操作
+- 并且禁止直推默认分支、禁止 `--force`/`--all`/`--tags`，禁止用 `--admin` 绕过分支保护
 
 ### 要求：SQL 初始化基线冻结
 仓库初始化 SQL 必须保持冻结，数据库变更必须通过增量脚本交付。

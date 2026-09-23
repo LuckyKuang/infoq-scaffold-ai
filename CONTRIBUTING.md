@@ -21,7 +21,7 @@ POMs; do not invent extra lockfiles.
 
 Run the repository commands from the root. Host-side Maven and pnpm checks are
 the default development path. Containerized full-stack verification uses
-`infoq-deploy-verify`.
+`deploy/VERIFICATION.md`.
 
 ```bash
 # Encoding
@@ -58,14 +58,14 @@ changed path plus the encoding gate. Backend unit tests must stay within 60
 seconds. Do not weaken assertions, mocks, or coverage thresholds to make a
 check pass.
 
-Use these skills for the matching work:
+Use these entry points for the matching work:
 
-- Backend tests, login, and API smoke: `infoq-backend-verify`
-- Frontend unit/lint/build and local admin stack: `infoq-frontend-verify`
-- Captcha login and admin E2E: `infoq-admin-e2e`
-- SQL, Redis, and data repair: `infoq-data-ops`
-- OpenSpec and high-impact delivery: `infoq-delivery-workflow`
-- Docker Compose deploy verification: `infoq-deploy-verify`
+- Backend tests, login, and API smoke: `tools/verify`
+- Frontend unit/lint/build and local admin stack: `infoq-test`
+- Captcha login and admin E2E: `infoq-test`
+- SQL, Redis, and data repair: `docs/DATA-OPS.md`
+- OpenSpec and high-impact delivery: `docs/DELIVERY-WORKFLOW.md`
+- Docker Compose deploy verification: `deploy/VERIFICATION.md`
 
 ## Database Changes
 

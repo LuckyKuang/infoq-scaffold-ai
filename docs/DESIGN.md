@@ -129,3 +129,64 @@ font-family: Helvetica Neue, Helvetica, PingFang SC, Hiragino Sans GB, Microsoft
 
 - **桌面端**: 侧边栏支持折叠，在不同分辨率下自动调整内容宽度。
 - **移动端**: 自动切换为抽屉式导航，卡片布局由多列转为单列，优化触控热区。
+
+## 10. 组件选型与 API 核验 (Component Selection)
+
+本仓库两个管理端分别使用 Ant Design（React admin）与 Element Plus（Vue admin）。本节是组件选型、API 核验与版本兼容的唯一入口；组件库版本以各工作区 `package.json` 与 lockfile 为准，本文不写死版本号。
+
+### 10.1 选型流程
+
+1. 按 UI 需求分类组件（数据录入、数据展示、反馈、导航、布局）。
+2. 从官方组件总览选择候选组件：Ant Design `https://ant.design/components/overview-cn/`、Element Plus `https://element-plus.org/zh-CN/component/overview`。
+3. 编码前核对官方 API 与本地实际版本兼容性。
+4. 验证加载态、空态、错误态、禁用态和破坏性操作态。
+5. 优先复用组件库能力，减少自定义 CSS 覆盖。
+
+### 10.2 需求到组件映射
+
+| 需求 | React（Ant Design） | Vue（Element Plus） |
+| --- | --- | --- |
+| CRUD 管理页 | `Table` + `Pagination` + `Form` + `Modal`/`Drawer` + `message` + `Popconfirm` | `el-table` + `el-pagination` + `el-form` + `el-dialog`/`el-drawer` + `ElMessage` + `el-popconfirm` |
+| 设置 / 偏好页 | `Form` + `Input`/`Select`/`Switch` + `Card` + `Divider` | `el-form` + `el-input`/`el-select`/`el-switch` + `el-card` + `el-divider` |
+| 向导 / 步骤流 | `Steps` + `Form` + `Button`，完成态用 `Result` | `el-steps` + `el-form` + `el-button`，完成态用 `el-result` |
+| 数据看板 | `Card` + `Statistic` + `Progress` + `Table`/`Descriptions`，加载态 `Skeleton`，空态 `Empty` | `el-card` + `el-statistic` + `el-progress` + `el-table`/`el-descriptions`，加载态 `el-skeleton`，空态 `el-empty` |
+| 侧边栏编辑 | `Drawer` + `Form`；仅在需要严格阻塞焦点时用 `Modal` | `el-drawer` + `el-form`；仅在需要严格阻塞焦点时用 `el-dialog` |
+| 搜索 / 筛选工具栏 | `Form` (inline) + `Input` + `Select` + `DatePicker`，活跃筛选用 `Tag` | `el-form` (inline) + `el-input` + `el-select` + `el-date-picker`，活跃筛选用 `el-tag` |
+
+### 10.3 决策启发
+
+- 需要严格表单校验：使用 `Form` 校验规则与官方状态反馈模式，不要手写错误态。
+- 需要破坏性操作保护：行内操作使用 `Popconfirm` / `el-popconfirm`，阻塞确认使用 `Modal.confirm` / `ElMessageBox.confirm`。
+- 需要异步调用后的全局反馈：短成功 / 失败用 `message` / `ElMessage`，较长通知用 `notification` / `ElNotification`。
+- 需要超大列表性能：优先使用 `Table`、`Tree`、`TreeSelect`、`Select` 的内建虚拟滚动模式。
+- 需要列表流式 UI：新需求优先 `Table` / `Card` 组合；Ant Design 中 `List` 已标记 deprecated。
+- 需要全局主题或国际化行为：在应用边界使用 `ConfigProvider` / `el-config-provider`。
+- 需要高级图表、地图或 AI UI：直接转向重型组件生态（Ant Design Charts、AntV L7 / G2 / S2、Ant Design X），不要强塞核心组件。
+
+### 10.4 编码检查清单
+
+编码前：
+
+- 确认官方文档存在该组件。
+- 确认本地组件库版本支持所选组件与特性。
+
+编码中：
+
+- 优先使用官方 token / theme API，避免深层样式覆盖。
+- 自定义 CSS 保持最小且局部。
+- 保持 `Modal` / `Drawer` / `el-dialog` / `el-drawer` 的焦点与键盘行为完整。
+- 覆盖加载态、空态、错误态、禁用态与破坏性操作态。
+
+最终回复前：
+
+- 给出组件列表与关键 API 选择。
+- 说明版本假设。
+
+### 10.5 版本与 API 核验
+
+```bash
+rg '"antd"|@ant-design' infoq-scaffold-frontend-react/package.json infoq-scaffold-frontend-react/pnpm-lock.yaml
+rg '"element-plus"' infoq-scaffold-frontend-vue/package.json infoq-scaffold-frontend-vue/pnpm-lock.yaml
+```
+
+若 lock 文件中无结果，检查当前使用的包管理器，并同时检查工作区根目录与应用子目录。涉及构建体积、chunk warning 或分包策略时，以 `docs/ARCHITECTURE.md` 的 React 构建与分包真值为准。

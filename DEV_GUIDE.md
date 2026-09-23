@@ -79,11 +79,11 @@ Both admin apps default to port `80` and proxy `/dev-api` to
 `VITE_APP_PROXY_TARGET`. `VITE_APP_ENCRYPT`, RSA keys, and backend decrypt
 settings must match, and `clientId` must match initialized `sys_client` data.
 
-Skill-managed local stack:
+Admin E2E scripts manage their own local stack (start, verify, then close owned ports):
 
 ```bash
-node skills/infoq-frontend-verify/scripts/start_admin_dev_stack.mjs --client vue
-node skills/infoq-frontend-verify/scripts/start_admin_dev_stack.mjs --client react
+node skills/infoq-test/scripts/run_admin_e2e.mjs --client vue --route-limit 1
+node skills/infoq-test/scripts/run_admin_e2e.mjs --client react --route-limit 1
 ```
 
 ## Verification
@@ -120,7 +120,7 @@ node tools/check_readme_sync.mjs
 
 GitHub `CI Build` runs the encoding gate, backend package, and admin frontend
 checks on pull requests and pushes. Deployment scripts are verified with
-`infoq-deploy-verify`.
+`deploy/VERIFICATION.md`.
 
 ## Common Problems
 

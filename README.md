@@ -88,11 +88,11 @@ pnpm run dev
 Both admin apps default to port `80`. Set `VITE_APP_PORT` before starting a
 second console. Local setup details are in [`DEV_GUIDE.md`](DEV_GUIDE.md).
 
-Use skills for a local stack or captcha login:
+Use skills for admin route smoke or captcha login:
 
 ```bash
-node skills/infoq-frontend-verify/scripts/start_admin_dev_stack.mjs --client vue
-node skills/infoq-admin-e2e/scripts/captcha_login.mjs --backend-url http://127.0.0.1:8080 --print-token
+node skills/infoq-test/scripts/run_admin_e2e.mjs --client vue --route-limit 1
+node skills/infoq-test/scripts/captcha_login.mjs --backend-url http://127.0.0.1:8080 --print-token
 ```
 
 <!-- readme-section:deployment -->
