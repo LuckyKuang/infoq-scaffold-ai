@@ -1,1 +1,2 @@
 cc.infoq.common.json.config.JacksonConfig
+cc.infoq.common.json.config.Jackson3Customizer
