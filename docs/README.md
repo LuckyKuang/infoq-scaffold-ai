@@ -13,6 +13,8 @@ current repository; it does not retell third-party framework tutorials.
 | --- | --- |
 | [README](../README.md) | English overview and quick start |
 | [README 中文](../README_CN.md) | 中文总览与快速开始 |
+| [README 繁體中文](../README_ZH_TW.md) | 繁體中文總覽與快速開始 |
+| [README 日本語](../README_JA.md) | 日本語概要とクイックスタート |
 | [Contributing](../CONTRIBUTING.md) | Toolchain, checks, and PR flow |
 | [Developer guide](../DEV_GUIDE.md) | Local setup and troubleshooting |
 | [Security policy](../SECURITY.md) | Vulnerability reporting |

@@ -1,0 +1,170 @@
+<div align="center">
+
+<img src="assets/logo.png" width="120" alt="InfoQ-Scaffold-AI Logo" />
+
+# InfoQ-Scaffold-AI
+
+[![CI](https://github.com/LuckyKuang/infoq-scaffold-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/LuckyKuang/infoq-scaffold-ai/actions/workflows/ci.yml)
+![Version](https://img.shields.io/badge/Version-3.0.0-f66a39)
+![JDK](https://img.shields.io/badge/JDK-21-1677FF)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1.1-6DB33F)
+![Vue](https://img.shields.io/badge/Vue-3.5.35-42B883)
+![React](https://img.shields.io/badge/React-19.2.7-61DAFB)
+[![License](https://img.shields.io/badge/License-MIT-F7C948)](LICENSE)
+
+**AI コラボレーション向けフルスタック・エンジニアリング・スキャフォールド**
+
+[English](README.md) | [簡体字中国語](README_CN.md) | [繁體中文](README_ZH_TW.md) | 日本語
+
+</div>
+
+<!-- readme-section:notice -->
+## 重要なお知らせ
+
+本プロジェクトは技術学習、調査、テストを目的としています。利用前に非本番環境で
+十分なテスト、検証、セキュリティ評価を行い、MIT ライセンスに従って使用、変更、
+配布してください。本プロジェクトの利用に伴うリスク、データ損失、サービス停止は
+利用者自身の責任で評価・負担してください。
+
+<!-- readme-section:overview -->
+## 概要
+
+`infoq-scaffold-ai` は、AI コラボレーションのルール、実行可能な skill、OpenSpec、
+アプリケーションコード、検証、デリバリー証跡を 1 つのリポジトリにまとめ、実行可能な
+Spring Boot バックエンドと Vue / React の管理コンソールを提供します。
+
+現在は 3 つのワークスペースを維持しています。
+
+- `backend`：Spring Boot 4.1 マルチモジュール・バックエンド
+- `frontend-vue`：Vue 3 + Element Plus 管理コンソール
+- `frontend-react`：React 19 + Ant Design 管理コンソール
+
+初期データベースには凍結ベースライン
+[`sql/infoq_scaffold_3.0.0.sql`](sql/infoq_scaffold_3.0.0.sql) を使用します。以降の
+スキーマまたはシードデータの変更は
+`sql/infoq_scaffold_update_YYYYMMDD.sql` の増分スクリプトでのみ行ってください。
+
+<!-- readme-section:features -->
+## 主な機能
+
+- JDK 21、MyBatis-Plus、Spring Security を基盤とする Spring Boot 4.1 バックエンド
+- 同一のバックエンド API 契約を共有する 2 つの管理コンソール
+- [`AGENTS.md`](AGENTS.md)、`skills`、OpenSpec による階層化されたデリバリーフロー
+- 凍結 SQL ベースラインと日付別の増分スクリプト
+- MySQL、Redis、MinIO、バックエンド、管理コンソールゲートウェイを Docker Compose でデプロイ
+- Apple container、WSL2 Docker、Linux Docker の smoke チェックに対応するクロスプラットフォーム `deploy-cli`
+- UTF-8、Maven、pnpm、管理コンソール E2E の検証入口
+
+<!-- readme-section:quick-start -->
+## クイックスタート
+
+ログイン前に SQL ベースラインをインポートし、MySQL 8 と Redis 7 を起動してください。
+
+### バックエンド
+
+```bash
+node tools/backend_mvn.mjs -- clean install -DskipTests
+java -jar backend/infoq-admin/target/infoq-admin.jar --spring.profiles.active=local
+```
+
+既定の URL：`http://127.0.0.1:8080`。CAPTCHA：`http://127.0.0.1:8080/auth/code`。
+
+### Vue 管理コンソール
+
+```bash
+cd frontend-vue
+pnpm install
+pnpm run dev
+```
+
+### React 管理コンソール
+
+```bash
+cd frontend-react
+pnpm install
+pnpm run dev
+```
+
+両方の管理コンソールは既定でポート `80` を使用します。同時に起動する場合は、
+どちらかの `VITE_APP_PORT` を変更してください。ローカル開発の詳細は
+[`DEV_GUIDE.md`](DEV_GUIDE.md) を参照してください。
+
+管理コンソールのルート smoke または CAPTCHA ログインには skill を使用します。
+
+```bash
+# CAPTCHA E2E はシード回答をバックエンドの Redis に書き込みます。
+# 先に INFOQ_TEST_REDIS_HOST/PORT/DATABASE/PASSWORD（必要に応じて TLS）を設定してください。
+node skills/test-cli/scripts/run_admin_e2e.mjs --client vue --route-limit 1
+node skills/test-cli/scripts/captcha_login.mjs --backend-url http://127.0.0.1:8080 --print-token
+
+# ローカルデプロイ smoke（Apple container / WSL2 Docker / Linux Docker）
+node skills/deploy-cli/scripts/deploy_cli.mjs status
+```
+
+<!-- readme-section:deployment -->
+## デプロイ方法
+
+| 方法 | ドキュメント |
+| --- | --- |
+| Linux インストールスクリプト | [デプロイガイド](deploy/README.md) |
+| Docker Compose | [Docker ガイド](deploy/DOCKER.md) |
+| Apple container | [Apple container](deploy/APPLE_CONTAINER.md) |
+| デプロイライフサイクル | [デプロイライフサイクル](deploy/DEPLOYMENT_LIFECYCLE.md) |
+| Compose 環境テンプレート | [.env.example](deploy/.env.example) |
+| 手動デプロイ | [手動デプロイ](deploy/MANUAL.md) |
+| デプロイ前提条件 | [デプロイ前提条件](deploy/README.md) |
+
+| プラットフォーム | フルスタック | 推奨方法 |
+| --- | --- | --- |
+| Linux | はい | Docker インストールスクリプト |
+| Windows | はい | WSL2 Debian/Ubuntu + Docker CE |
+| macOS | はい | Colima + Docker |
+| macOS | いいえ、バックエンドのみ | Apple container |
+| macOS | いいえ、バックエンド + 管理コンソール dev server | Apple container + `pnpm run dev` |
+
+イメージはターゲットホスト上でソースからビルドされます。リポジトリはビルド済みの
+アプリケーションイメージを公開していません。Docker パスではイメージ内でバックエンド
+jar と管理コンソールの成果物をビルドし、Apple container パスではホスト上で jar を
+作成してから、MySQL、Redis、バックエンド API のみを含むスタックを起動します
+（Vue/React と Nginx ゲートウェイは含みません）。Release の成果物は jar と管理
+コンソールの `dist` アーカイブであり、コンテナイメージではありません。
+
+```bash
+# Linux / WSL2 フルスタック：リモートインストーラー（本番環境では tag を固定）
+curl -sSL https://raw.githubusercontent.com/LuckyKuang/infoq-scaffold-ai/main/deploy/install.sh \
+  | sudo env INFOQ_FRONTEND_TARGET=all INFOQ_PUBLIC_BASE_URL=http://SERVER_IP bash
+
+# またはローカルソースからデプロイ
+sudo env INFOQ_SOURCE_DIR="$(pwd)" INFOQ_FRONTEND_TARGET=all \
+  INFOQ_PUBLIC_BASE_URL=http://SERVER_IP bash deploy/install.sh
+```
+
+`INFOQ_FRONTEND_TARGET` は必須です：`all`、`vue`、`react` のいずれかを指定します。
+`all` ターゲットの Nginx ルート：`/vue/`、`/react/`、`/console-oss/`、`/oss/`。
+
+<!-- readme-section:documentation -->
+## ドキュメント
+
+README はプロジェクト概要とクイックスタートのみを提供します。詳細な設定と保守は
+以下のドキュメントを参照してください。
+
+| ドキュメント | 説明 |
+| --- | --- |
+| [ドキュメントセンター](docs/README.md) | ユーザードキュメントのナビゲーション |
+| [コントリビューションガイド](CONTRIBUTING.md) | ツールチェーン、検証、PR フロー |
+| [開発ガイド](DEV_GUIDE.md) | ローカル設定とトラブルシューティング |
+| [セキュリティポリシー](SECURITY.md) | 脆弱性の報告 |
+| [AGENTS.md](AGENTS.md) | リポジトリのコラボレーションルール |
+| [デザインシステム](docs/DESIGN.md) | 管理コンソールのビジュアル言語 |
+| [リリースプロセス](docs/RELEASING.md) | バージョン、tag、Release workflow、ロールバック |
+| [CI 検証](docs/CI_VALIDATION.md) | ワークフローの範囲、ローカルゲート、セキュリティスキャン |
+
+## コミュニティ
+
+[Linux DO](https://linux.do) コミュニティで infoq-scaffold-ai についてアイデアを
+共有し、議論しましょう。
+
+<!-- readme-section:license -->
+## ライセンス
+
+[MIT License](LICENSE)

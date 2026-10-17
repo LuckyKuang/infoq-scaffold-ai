@@ -4,7 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const READMES = ['README.md', 'README_CN.md'];
+const READMES = ['README.md', 'README_CN.md', 'README_ZH_TW.md', 'README_JA.md'];
 const EXPECTED_SECTIONS = [
   'notice',
   'overview',

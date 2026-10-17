@@ -14,9 +14,7 @@
 
 **AI-collaboration full-stack engineering scaffold**
 
-English | [中文](README_CN.md)
-
-Community: [Linux DO](https://linux.do)
+English | [简体中文](README_CN.md) | [繁體中文](README_ZH_TW.md) | [日本語](README_JA.md)
 
 </div>
 
@@ -152,6 +150,10 @@ detailed configuration and maintenance.
 | [Design system](docs/DESIGN.md) | Admin visual language |
 | [Release process](docs/RELEASING.md) | Version, tag, release workflow, and rollback |
 | [CI validation](docs/CI_VALIDATION.md) | Workflow coverage, local gates, and security scans |
+
+## Community
+
+Share ideas and discuss infoq-scaffold-ai with the [Linux DO](https://linux.do) community.
 
 <!-- readme-section:license -->
 ## License

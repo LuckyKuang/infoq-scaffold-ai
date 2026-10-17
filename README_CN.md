@@ -14,9 +14,7 @@
 
 **面向 AI 协作的全栈工程脚手架**
 
-[English](README.md) | 中文
-
-社区：[Linux DO](https://linux.do)
+[English](README.md) | 简体中文 | [繁體中文](README_ZH_TW.md) | [日本語](README_JA.md)
 
 </div>
 
@@ -150,6 +148,10 @@ README 只提供项目总览和快速开始。详细配置与维护请阅读下�
 | [设计系统](docs/DESIGN.md) | 管理端视觉语言 |
 | [发布流程](docs/RELEASING.md) | 版本、tag、Release workflow 与回滚 |
 | [CI 验证](docs/CI_VALIDATION.md) | 工作流覆盖、本地门禁与安全扫描 |
+
+## 社区
+
+欢迎在 [Linux DO](https://linux.do) 社区分享想法、讨论 infoq-scaffold-ai。
 
 <!-- readme-section:license -->
 ## 许可证
