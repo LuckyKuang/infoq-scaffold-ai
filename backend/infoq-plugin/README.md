@@ -22,7 +22,7 @@
 | [`infoq-plugin-websocket`](./infoq-plugin-websocket/README.md) | 自动装配 | WebSocket 端点、会话管理、集群广播 |
 | [`infoq-plugin-push`](./infoq-plugin-push/README.md) | 条件自动装配 | 关闭态默认的实时 Push 契约、通道选择和提交后提醒 |
 | [`infoq-plugin-mqtt`](./infoq-plugin-mqtt/README.md) | 条件自动装配 | 默认关闭的 MQTT 3.1.1/MQTT 5 中性发布、订阅与状态管理 |
-| [`infoq-plugin-jackson`](./infoq-plugin-jackson/README.md) | 自动装配 | Jackson 序列化与 JSON 校验 |
+| [`infoq-plugin-jackson`](./infoq-plugin-jackson/README.md) | 自动装配 | Jackson 3 MVC 定制、Jackson 2 兼容层与 JSON 校验 |
 | [`infoq-plugin-translation`](./infoq-plugin-translation/README.md) | 自动装配 | 返回值翻译与字典/用户/部门/OSS 名称补全 |
 | [`infoq-plugin-oss`](./infoq-plugin-oss/README.md) | 库模块 | OSS 客户端与工厂 |
 | [`infoq-plugin-excel`](./infoq-plugin-excel/README.md) | 库模块 | Excel 导入导出注解、监听器、转换器、工具 |

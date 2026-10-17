@@ -130,13 +130,13 @@ export default defineConfig(({ mode, command }) => {
     // 部署生产环境和开发环境下的URL。
     // 默认情况下，vite 会假设你的应用是被部署在一个域名的根路径上
     // 例如 https://www.baidu.com/。如果应用被部署在一个子路径上，你就需要用这个选项指定这个子路径。例如，如果你的应用被部署在 https://www.baidu.com/admin/，则设置 baseUrl 为 /admin/。
-    base: env.VITE_APP_CONTEXT_PATH,
+    base: env.VITE_APP_CONTEXT_PATH || '/',
     resolve: sharedResolve,
     // https://cn.vitejs.dev/config/#resolve-extensions
     plugins: createPlugins(env, command === 'build'),
     server: {
       host: '0.0.0.0',
-      port: Number(env.VITE_APP_PORT),
+      port: Number(env.VITE_APP_PORT || 80),
       open: true,
       proxy: {
         [env.VITE_APP_BASE_API]: {

@@ -39,8 +39,8 @@ spring:
           # jdbc 所有参数配置参考 https://lionli.blog.csdn.net/article/details/122018562
           # rewriteBatchedStatements=true 批处理优化 大幅提升批量插入更新删除性能(对数据库有性能损耗 使用批量操作应考虑性能问题)
           url: jdbc:mysql://localhost:3306/infoq?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8&autoReconnect=true&rewriteBatchedStatements=true&allowPublicKeyRetrieval=true&nullCatalogMeansCurrent=true&connectTimeout=10000&socketTimeout=30000&tcpKeepAlive=true
-          username: root
-          password: '123456'
+          username: ${INFOQ_DB_USERNAME:}
+          password: ${INFOQ_DB_PASSWORD:}
 #        # 从库数据源
 #        slave:
 #          lazy: true
@@ -71,17 +71,17 @@ spring:
 spring.data:
   redis:
     # 地址
-    host: localhost
+    host: ${REDIS_HOST:localhost}
     # 端口，默认为6379
-    port: 6379
+    port: ${REDIS_PORT:6379}
     # 数据库索引
-    database: 0
-    # redis 密码必须配置
-    password: '123456'
+    database: ${REDIS_DATABASE:0}
+    # redis 密码必须通过环境变量注入
+    password: ${REDIS_PASSWORD:}
     # 连接超时时间
     timeout: 10s
     # 是否开启ssl
-    ssl.enabled: false
+    ssl.enabled: ${REDIS_SSL_ENABLED:false}
 
 # redisson 配置
 redisson:

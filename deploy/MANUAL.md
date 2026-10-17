@@ -109,6 +109,8 @@ chmod 644 /infoq/server/ip2region/ip2region_v6.xdb
 - 如启用邮件、OSS、SSE、WebSocket，对应配置也要同步确认
 - `DEPLOY_ID` 是否已设置为当前发布批次值
 
+仓库内 `application-prod.yml` 不再内置数据库或 Redis 默认密码；使用该文件时通过 `INFOQ_DB_USERNAME`、`INFOQ_DB_PASSWORD`、`REDIS_HOST`、`REDIS_PORT`、`REDIS_DATABASE`、`REDIS_PASSWORD`、`REDIS_SSL_ENABLED` 注入，或使用外部配置文件覆盖。
+
 如果服务器目录不是 `/infoq/server/temp`，同步修改：
 
 ```yaml

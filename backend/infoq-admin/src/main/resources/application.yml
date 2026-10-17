@@ -1,10 +1,7 @@
-# 开发环境配置
+# 通用运行配置
 server:
   # 服务器的HTTP端口，默认为8080
   port: 8080
-  servlet:
-    # 应用的访问路径
-    context-path: /
   # tomcat 配置（Spring Boot 官方默认 web 容器；Boot 4.x 已无 undertow starter）
   tomcat:
     # HTTP post 内容的最大大小。-1 表示不限制
@@ -69,16 +66,11 @@ spring:
             useProperties: false
             misfireThreshold: 60000
             tablePrefix: QRTZ_
-  threads:
-    # 开启虚拟线程 仅jdk21可用
-    virtual:
-      enabled: false
   task:
     execution:
-      # 从 springboot 3.5 开始 spring自带线程池
-      # 不再需要 AsyncConfig与ThreadPoolConfig 可直接注入线程池使用
+      # Spring Boot 自带任务线程池；这里统一线程名前缀并强制创建执行器
       thread-name-prefix: async-
-      # 由spring自己初始化线程池
+      # 由 Spring 初始化任务线程池
       mode: force
   # 资源信息
   messages:
@@ -102,8 +94,6 @@ spring:
     # 日期格式化
     date-format: yyyy-MM-dd HH:mm:ss
     serialization:
-      # 格式化输出
-      indent_output: false
       # 忽略无法转换的对象
       fail_on_empty_beans: false
     deserialization:

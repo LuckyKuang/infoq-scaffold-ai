@@ -24,7 +24,7 @@
         <!-- SpringBoot Web容器（使用 Spring Boot 官方默认 tomcat） -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
+            <artifactId>spring-boot-starter-webmvc</artifactId>
         </dependency>
 
         <dependency>

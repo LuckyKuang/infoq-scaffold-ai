@@ -2,11 +2,13 @@
 
 ## 1. 模块职责
 
-统一 backend 的 Jackson 序列化、时间反序列化、大数值处理和 JSON 模式校验。
+统一 backend 的 Jackson 3（Spring Boot 4 MVC 默认 JsonMapper）与 Jackson 2 兼容层的序列化、时间反序列化、大数值处理和 JSON 模式校验。
 
 ## 2. 关键入口
 
-- [`JacksonConfig`](./src/main/java/cc/infoq/common/json/config/JacksonConfig.java)
+- [`JacksonConfig`](./src/main/java/cc/infoq/common/json/config/JacksonConfig.java)（Jackson 2 业务 ObjectMapper）
+- [`Jackson3Customizer`](./src/main/java/cc/infoq/common/json/config/Jackson3Customizer.java)（Jackson 3 MVC 定制）
+- [`Jackson3BigNumberSerializer`](./src/main/java/cc/infoq/common/json/handler/Jackson3BigNumberSerializer.java)
 - [`JsonUtils`](./src/main/java/cc/infoq/common/json/utils/JsonUtils.java)
 - [`BigNumberSerializer`](./src/main/java/cc/infoq/common/json/handler/BigNumberSerializer.java)
 - [`CustomDateDeserializer`](./src/main/java/cc/infoq/common/json/handler/CustomDateDeserializer.java)
@@ -33,9 +35,9 @@
 
 ## 7. 关键数据流
 
-1. Spring Boot 启动时装配自定义 ObjectMapper 行为。
-2. 请求体解析、响应序列化、Redis JSON 编码等链路共用这些规则。
-3. 大数值和时间类型按模块定义输出或解析。
+1. Spring Boot 4 MVC 使用 Jackson 3 `JsonMapper`，`Jackson3Customizer` 负责 MVC 侧的大数值序列化保护。
+2. 业务代码使用 Jackson 2 `ObjectMapper` 兼容层（`JacksonConfig`）；Redis codec 由 `RedisConfig` 单独创建 Jackson 2 `ObjectMapper`。
+3. 请求体解析、响应序列化和 Redis JSON 编码分别走上述两套 mapper；修改全局序列化规则时必须同时评估两侧。
 
 ## 8. 扩展点
 
@@ -49,4 +51,5 @@
 ## 10. 已知边界
 
 - 只处理 JSON 相关语义，不处理权限、缓存或业务逻辑。
+- Jackson 3 MVC 配置与 Jackson 2 业务/Redis 配置来源不同，不能假设一侧的定制会自动传递到另一侧。
 
