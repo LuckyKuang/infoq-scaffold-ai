@@ -11,7 +11,7 @@ extra policy documents.
 
 - JDK 21 and Maven 3.9.x: `backend/pom.xml`
 - Node.js `24.18.0`: `.node-version` and `.nvmrc`
-- pnpm: frontend workspace `packageManager`
+- pnpm `10.34.1`: root `package.json` `packageManager`, mirrored by each workspace
 
 ## Local Services
 

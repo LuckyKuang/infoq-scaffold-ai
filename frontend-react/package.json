@@ -61,12 +61,16 @@
     "vitest": "^4.1.8"
   },
   "pnpm": {
+    "onlyBuiltDependencies": [
+      "@parcel/watcher",
+      "esbuild"
+    ],
     "overrides": {
       "flatted": "3.4.2"
     }
   },
   "engines": {
     "node": "24.18.0",
-    "pnpm": ">=10.0.0"
+    "pnpm": ">=10.34.1 <11"
   }
 }

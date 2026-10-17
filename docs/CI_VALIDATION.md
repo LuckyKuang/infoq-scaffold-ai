@@ -33,7 +33,8 @@ node tools/backend_mvn.mjs -- -B -ntp -DskipTests=false clean package -P dev
 | `frontend-react` | `pnpm run test`、`pnpm run lint`、`pnpm run build:prod` |
 
 依赖安装统一 `pnpm install --frozen-lockfile`，Node 由 `.node-version` 固定为
-`24.18.0`，pnpm 由 `PNPM_VERSION` 与各工作区 `packageManager` 固定为 `10.34.1`。
+`24.18.0`，pnpm 由根 `package.json` 的 `packageManager` 固定为 `10.34.1`；
+CI 通过 `pnpm/action-setup` 的 `package_json_file` 直接读取该字段。
 
 ## 3. 本地等价入口
 

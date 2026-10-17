@@ -82,6 +82,9 @@
     "vitest": "^4.1.8"
   },
   "pnpm": {
+    "onlyBuiltDependencies": [
+      "@parcel/watcher"
+    ],
     "overrides": {
       "quill": "2.0.2",
       "typescript-eslint": "8.60.1",
@@ -102,7 +105,7 @@
   },
   "engines": {
     "node": "24.18.0",
-    "pnpm": ">=10.0.0"
+    "pnpm": ">=10.34.1 <11"
   },
   "browserslist": [
     "Chrome >= 87",

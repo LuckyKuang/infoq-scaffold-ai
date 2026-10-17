@@ -11,14 +11,16 @@ Use the versions declared by the repository:
 - JDK: `backend/pom.xml` (`java.version`, currently 21)
 - Maven: 3.9.x
 - Node.js: `.node-version` / `.nvmrc` (`24.18.0`)
-- pnpm: each frontend workspace `packageManager` and `engines`
+- pnpm `10.34.1`: root `package.json` `packageManager`, mirrored by each workspace
 
 Install frontend dependencies with pnpm only and synchronize the workspace
-`pnpm-lock.yaml` when they change. The repository pins pnpm `10.34.1`; if the
-local shim is older, activate it with
-`corepack prepare pnpm@10.34.1 --activate` or run `corepack pnpm` from the
-workspace directory. Backend dependency changes belong in Maven
-POMs; do not invent extra lockfiles.
+`pnpm-lock.yaml` when they change. The repository pins pnpm `10.34.1` at the
+root. If the local shim is older, activate it with
+`corepack prepare pnpm@10.34.1 --activate`, then verify `pnpm -v` before
+installing. Run `corepack pnpm` when the shell shim has not yet been refreshed.
+pnpm 10 blocks dependency build scripts by default; the workspaces allowlist
+only `@parcel/watcher` and `esbuild`. Backend dependency changes belong in
+Maven POMs; do not invent extra lockfiles.
 
 ## Development Checks
 

@@ -18,7 +18,6 @@ concurrency:
 
 env:
   CI: true
-  PNPM_VERSION: 10.34.1
 
 jobs:
   repository-gates:
@@ -101,7 +100,7 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v6
         with:
-          version: ${{ env.PNPM_VERSION }}
+          package_json_file: package.json
           run_install: false
 
       - name: Setup Node.js
