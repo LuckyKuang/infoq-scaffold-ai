@@ -114,11 +114,19 @@ node skills/deploy-cli/scripts/deploy_cli.mjs status
 | Manual deployment | [Manual deploy](deploy/MANUAL.md) |
 | Prerequisites | [Deploy prerequisites](deploy/README.md) |
 
+Images are built from source on the target host. The repository does not publish prebuilt application images: Docker builds the backend jar and admin bundles inside their images, while the Apple container path builds the jar on the host and starts a backend-only stack (MySQL, Redis, admin API; no Vue/React or Nginx gateway). Release artifacts are the jar and admin `dist` tarballs, not container images.
+
 ```bash
-bash deploy/install.sh
+# Linux / WSL2 full stack: remote installer (pin a tag for production)
+curl -sSL https://raw.githubusercontent.com/LuckyKuang/infoq-scaffold-ai/main/deploy/install.sh \
+  | sudo env INFOQ_FRONTEND_TARGET=all INFOQ_PUBLIC_BASE_URL=http://SERVER_IP bash
+
+# Or deploy from a local checkout
+sudo env INFOQ_SOURCE_DIR="$(pwd)" INFOQ_FRONTEND_TARGET=all \
+  INFOQ_PUBLIC_BASE_URL=http://SERVER_IP bash deploy/install.sh
 ```
 
-Nginx routes for the `all` target: `/vue/`, `/react/`, `/console-oss/`, `/oss/`.
+`INFOQ_FRONTEND_TARGET` is required: `all`, `vue`, or `react`. Nginx routes for the `all` target: `/vue/`, `/react/`, `/console-oss/`, `/oss/`.
 
 <!-- readme-section:documentation -->
 ## Documentation

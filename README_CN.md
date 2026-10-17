@@ -113,11 +113,19 @@ node skills/deploy-cli/scripts/deploy_cli.mjs status
 | 手动部署 | [手动部署](deploy/MANUAL.md) |
 | 部署前置条件 | [部署前置条件](deploy/README.md) |
 
+镜像在目标主机上从源码构建，仓库不发布预构建应用镜像：Docker 路径在镜像内构建后端 jar 和前端产物；Apple container 路径先在宿主机打 jar，再启动仅包含 MySQL、Redis 和后端 API 的栈（不含 Vue/React 和 Nginx 网关）。Release 产物是 jar 与管理端 `dist` 压缩包，不是容器镜像。
+
 ```bash
-bash deploy/install.sh
+# Linux / WSL2 全栈：远程安装脚本（生产环境请固定 tag）
+curl -sSL https://raw.githubusercontent.com/LuckyKuang/infoq-scaffold-ai/main/deploy/install.sh \
+  | sudo env INFOQ_FRONTEND_TARGET=all INFOQ_PUBLIC_BASE_URL=http://SERVER_IP bash
+
+# 或从本地源码部署
+sudo env INFOQ_SOURCE_DIR="$(pwd)" INFOQ_FRONTEND_TARGET=all \
+  INFOQ_PUBLIC_BASE_URL=http://SERVER_IP bash deploy/install.sh
 ```
 
-`all` 目标的 Nginx 路由：`/vue/`、`/react/`、`/console-oss/`、`/oss/`。
+`INFOQ_FRONTEND_TARGET` 必填：`all`、`vue` 或 `react`。`all` 目标的 Nginx 路由：`/vue/`、`/react/`、`/console-oss/`、`/oss/`。
 
 <!-- readme-section:documentation -->
 ## 文档

@@ -41,6 +41,8 @@ Install, upgrade, rollback, stop, and data-retention boundaries are documented i
 
 ## 1. 前置条件
 
+部署产物说明：仓库不发布预构建应用镜像。Docker 路径在 `infoq-admin` 镜像的 builder 阶段编译 jar，并在前端镜像中构建 `dist`；Apple container 路径先在宿主机打包 jar，再复制到仅包含 MySQL、Redis 和后端 API 的运行时镜像。Release 产物是 `infoq-admin.jar` 与管理端 `dist` 压缩包，不是容器镜像。
+
 ### 1.1 软件与版本基线
 
 | 组件 | 基线 |
@@ -160,12 +162,23 @@ Compose / 脚本化部署不需要提前在宿主机准备 jar；`infoq-admin` �
 
 ## 2. Linux Installer
 
+Remote install (pin a tag for production):
+
 ```bash
-bash deploy/install.sh
+curl -sSL https://raw.githubusercontent.com/LuckyKuang/infoq-scaffold-ai/main/deploy/install.sh \
+  | sudo env INFOQ_FRONTEND_TARGET=all INFOQ_PUBLIC_BASE_URL=http://SERVER_IP bash
 ```
 
-The installer expects Docker, Docker Compose, and Buildx. It writes random
-secrets to `/etc/infoq-scaffold-ai/deploy.env` by default and deploys into
+From a local checkout:
+
+```bash
+sudo env INFOQ_SOURCE_DIR="$(pwd)" INFOQ_FRONTEND_TARGET=all \
+  INFOQ_PUBLIC_BASE_URL=http://SERVER_IP INFOQ_DEPLOY_ROOT=/infoq bash deploy/install.sh
+```
+
+`INFOQ_FRONTEND_TARGET` is required (`all`, `vue`, or `react`). The installer
+expects Docker, Docker Compose, and Buildx. It writes random secrets to
+`/etc/infoq-scaffold-ai/deploy.env` by default and deploys into
 `/opt/infoq-scaffold-ai`. Do not reuse `.env.example` placeholders in a shared
 environment.
 
@@ -210,7 +223,8 @@ tutorial, scripted flow, and optional MQTT / Elasticsearch overlays are in
 ## 4. Apple Container
 
 For a local Apple `container` backend stack that stays isolated from other
-Apple container projects:
+Apple container projects. This path starts MySQL, Redis, and the backend only;
+it does not build or serve the Vue/React admins or the Nginx gateway.
 
 ```bash
 node skills/deploy-cli/scripts/deploy_cli.mjs init

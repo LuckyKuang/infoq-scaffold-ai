@@ -170,7 +170,7 @@ mkdir -p /tmp/infoq-deploy "${INFOQ_DEPLOY_ROOT}/server/temp"
 
 ## 4. 一键安装入口
 
-首次部署推荐使用 `deploy/install.sh`，它会生成并持久化 MySQL、Redis、MinIO、后端安全密钥和默认管理员账号密码，随后调用后端、前端和 Nginx 部署脚本：
+仓库不发布预构建应用镜像；`deploy/install.sh` 会在目标主机上用 Docker builder 构建后端 jar 与前端镜像。首次部署推荐使用 `deploy/install.sh`，它会生成并持久化 MySQL、Redis、MinIO、后端安全密钥和默认管理员账号密码，随后调用后端、前端和 Nginx 部署脚本：
 
 ```bash
 curl -sSL https://raw.githubusercontent.com/LuckyKuang/infoq-scaffold-ai/main/deploy/install.sh | sudo env INFOQ_FRONTEND_TARGET=all bash

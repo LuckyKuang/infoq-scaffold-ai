@@ -15,6 +15,8 @@ workload health scheduling, a Docker API socket, or full Compose orchestration.
 `apple-container.sh` supplies ordered startup and readiness checks when you
 invoke it.
 
+This path is backend-only: it starts MySQL, Redis, and `infoq-admin`, and does not build or serve the Vue/React admins or an Nginx gateway. Use the Docker Compose path for a full frontend stack.
+
 This stack is isolated from other Apple container projects. Default names use
 the `infoq-apple` prefix and network `192.168.66.0/24`. The script refuses to
 manage any resource that is not labeled
