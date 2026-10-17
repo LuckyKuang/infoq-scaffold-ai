@@ -12,8 +12,8 @@
 - `src/store/modules/tagsView.ts`
 - `src/router/AuthGuard.tsx`
 - `src/router/BackendRouteView.tsx`
-- `src/router/pathToComponent.ts`
-- `src/router/routeTransform.tsx`
+- `src/router/path-to-component.ts`
+- `src/router/route-transform.ts`
 
 ## P1
 

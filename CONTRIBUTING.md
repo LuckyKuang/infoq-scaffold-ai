@@ -86,7 +86,7 @@ mistake, revert it and move the change into a dated incremental script.
 ## Documentation and Locales
 
 - Keep English and Chinese README section IDs aligned
-- Put detailed operations in `doc/` or `deploy/`
+- Put detailed operations in `docs/` or `deploy/`
 - Update `deploy/` examples when configuration changes
 - After README edits, run `node tools/check_readme_sync.mjs`
 

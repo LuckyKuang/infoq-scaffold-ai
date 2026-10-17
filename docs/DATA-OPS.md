@@ -9,8 +9,8 @@
 1. SQL 增量脚本、表结构或初始化数据变更规划，使用本文件。
 2. 数据修复、批量更新、测试数据清理、字典/参数/菜单/权限基础数据数据库侧核对，使用本文件。
 3. MySQL / Redis 只读诊断、数据一致性排查、API/UI/DB 三方核对，使用本文件。
-4. 管理端页面上的用户、角色、菜单、字典、公告、OSS、定时任务等真实操作，改用 `test-cli` 的页面运维门禁（`references/ops/page-ops-guardrails.md`）。
-5. 后端接口、登录、Mapper XML、Redisson OSS 或运行态 smoke 验证，改用 `tools/verify`。
+4. 管理端页面上的用户、角色、菜单、字典、公告、OSS、定时任务等真实操作，改用 `test-cli` 的页面运维门禁（`skills/test-cli/references/ops/page-ops-guardrails.md`）。
+5. 后端接口、Mapper XML、Redisson OSS 或运行态 smoke 验证改用 `tools/verify`；登录/鉴权验证改用 `test-cli` 的验证码种子登录。
 6. 生产或共享环境数据变更、SQL 迁移、批量修复，必须联动 `docs/DELIVERY-WORKFLOW.md`。
 
 ## 执行顺序

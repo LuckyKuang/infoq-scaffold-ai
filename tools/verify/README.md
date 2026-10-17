@@ -8,7 +8,7 @@
 
 1. 单测、覆盖率、Mapper XML、回归补测或 test-first backend fix，读取 `references/unit/*`。
 2. HTTP API smoke、导出、菜单、受保护接口、运行态验证，使用 smoke 脚本并读取 `references/smoke/endpoints.md`。
-3. WebSocket 集群、双节点路由或异常退出验证，使用 `scripts/run_cluster_smoke.mjs`。
+3. WebSocket 集群、双节点路由或异常退出验证，使用 `run_cluster_smoke.mjs`。
 4. SQL、数据库、Redis、数据修复、迁移、测试数据维护或 API/UI/DB 一致性验证，改用 `docs/DATA-OPS.md`。
 5. 登录/鉴权验证改用 `test-cli` 的 `captcha_login.mjs`（Redis 种子答案）；本命令组不再维护独立登录脚本。
 

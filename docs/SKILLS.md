@@ -53,7 +53,7 @@
 - 这两个 CLI 是 repo-owned 入口，适用于 Windows / macOS / Linux。
 - 为兼容不同平台和 `pnpm` 参数透传差异，也接受 `run <cli-name> -- ...` 形式，但默认推荐无 `--` 写法。
 - 不再维护平台包装脚本，直接调用仓库内 CLI。
-- `playwright-cli admin-route-probe` 先走快速 token 获取；若后端明确返回 `captchaEnabled=true`，会自动调用 `test-cli/scripts/captcha_login.mjs` 写入种子答案并获取真实 token。
+- `playwright-cli admin-route-probe` 直接调用 `test-cli/scripts/captcha_login.mjs`，写入 Redis 种子答案并获取真实 token。
 - `playwright` MCP 只用于临时交互探索。
 - `chrome-devtools` MCP 只用于深度诊断。
 
@@ -123,14 +123,14 @@ node skills/test-cli/scripts/run_admin_crud_e2e.mjs --client react
 说明：
 
 - 验证码 E2E 默认不关闭验证码，必须通过 `/auth/code`、Redis 种子答案和 `/auth/login` 获取真实 token。
-- `captcha_login.mjs` 是共享验证码登录入口，`run_admin_e2e.mjs` 和 `admin-route-probe` 的验证码 fallback 都复用它。
+- `captcha_login.mjs` 是共享验证码登录入口，`run_admin_e2e.mjs` 和 `admin-route-probe` 都直接复用它。
 - 种子模式要求测试进程与后端使用同一个 Redis 实例/DB；通过 `INFOQ_TEST_REDIS_*` 或 `--redis-*` 提供连接，禁止指向生产 Redis。浏览器依赖仍复用 `test-cli`。
 - 证据默认写入 `tmp/test-cli/e2e/<run-id>/`。
 - `run_admin_e2e.mjs` 默认在完成、失败或中断后停止本次 skill 启动的栈；只有成功且需要保留联调进程时显式传 `--keep-stack-after`，失败或中断仍会关闭 owned 进程。
 - `run_admin_crud_e2e.mjs` 仅用于已授权的 `application-local.yml` 测试数据库，默认覆盖 `role,user,menu,dept,post,dict,config,notice,client,invite,ossConfig,job,online`，执行 UI 新增/查询/编辑/删除或模块可用的选择删除/行删除入口；`online` 会创建当前 run 专属 `e2e_` 用户会话并只强退该会话；cleanup 只处理当前 run 的精确 `e2e_` 数据。
 - 管理端 E2E 栈状态按 client 稳定写入 `tmp/test-cli/e2e/stack/<vue|react>/state.json`，断开后下一次运行会先清理未标记 `keepAlive` 的旧状态。
 - 写入型 CRUD、导出、批量操作和权限矩阵必须先定义测试数据、cleanup 和危险动作门禁。
-- 真实管理端页面运营维护、权限巡检和写入型操作门禁见 `references/ops/page-ops-guardrails.md`；页面运维证据写入 `tmp/test-cli/e2e/page-ops/`。
+- 真实管理端页面运营维护、权限巡检和写入型操作门禁见 `skills/test-cli/references/ops/page-ops-guardrails.md`；页面运维证据写入 `tmp/test-cli/e2e/page-ops/`。
 
 ### 8.2 前端验证（test-cli，mode: frontend）
 
@@ -141,7 +141,7 @@ node skills/test-cli/scripts/run_admin_e2e.mjs --client vue --route-limit 1
 node skills/test-cli/scripts/run_admin_e2e.mjs --client react --route-limit 1
 ```
 
-验证码种子登录和动态路由 smoke 见 `references/modes/e2e.md`。本地栈由 `run_admin_e2e.mjs` 自管，状态写入 `tmp/test-cli/e2e/stack/<client>/state.json`，完成、失败或中断后按状态文件收口 owned 端口；纯单测 / 构建迭代可手动启动，命令见 `references/runtime/admin-commands.md`。
+验证码种子登录和动态路由 smoke 见 `skills/test-cli/references/modes/e2e.md`。本地栈由 `run_admin_e2e.mjs` 自管，状态写入 `tmp/test-cli/e2e/stack/<client>/state.json`，完成、失败或中断后按状态文件收口 owned 端口；纯单测 / 构建迭代可手动启动，命令见 `skills/test-cli/references/runtime/admin-commands.md`。
 
 ### 8.3 数据运维（docs/DATA-OPS.md）
 
@@ -151,7 +151,7 @@ SQL、数据库、Redis、数据修复、迁移、测试数据维护和 API/UI/D
 - 新增、修改、删除表结构或初始化数据，只能新增 `sql/infoq_scaffold_update_YYYYMMDD.sql` 增量脚本。
 - 数据写入前必须先列出环境、目标表/key/ID、筛选条件、影响范围、幂等性、回滚脚本和验证查询。
 - 共享环境默认只读；生产或共享环境数据变更、SQL 迁移和批量修复必须联动 `docs/DELIVERY-WORKFLOW.md`。
-- 管理端页面操作与权限巡检归 `test-cli` 的页面运维门禁（`references/ops/page-ops-guardrails.md`）；后端接口与运行态验证归 `tools/verify`，登录/鉴权验证归 `test-cli`。
+- 管理端页面操作与权限巡检归 `test-cli` 的页面运维门禁（`skills/test-cli/references/ops/page-ops-guardrails.md`）；后端接口与运行态验证归 `tools/verify`，登录/鉴权验证归 `test-cli`。
 
 ### 8.4 后端验证（tools/verify）
 
@@ -222,7 +222,7 @@ node skills/push-cli/scripts/push_cli.mjs merge --pr <number> --yes
 - 默认分支（`master`）禁止直推；在本分支上执行 `submit-pr` 时会自动 `git fetch` 最新默认分支并创建 `auto/<yyyymmdd-hhmmss>` 工作分支。
 - `submit-pr` = 本地校验矩阵 -> 提交 -> 推送 -> 创建或复用 PR -> 自动 `watch`；失败时输出失败 check 与失败日志摘要，修复后重跑即复用同一 PR。
 - `merge` 需要全绿 + 显式 `--yes`；禁止 `--admin` 绕过保护。
-- 校验矩阵：`docs`（UTF-8、README 同步、AGENTS 校验、active change 的 OpenSpec 校验）、`ci`（对齐 `.github/workflows/ci.yml` 的双管理端 lint/test/build）、`full`（追加 backend 测试）。
+- 校验矩阵：`docs`（UTF-8、README 同步、版本一致性、文档链接、AGENTS 校验、active change 的 OpenSpec 校验）、`ci`（对齐 `.github/workflows/ci.yml` 的双管理端 lint/test/build）、`full`（追加 backend 测试）。
 - 证据写入 `tmp/push-cli/<run-id>/`。
 
 ### 8.8 版本与 Release（release-cli）
@@ -352,7 +352,7 @@ node skills/release-cli/scripts/test_bump_version.mjs
 node tools/backend_mvn.mjs -- clean package -P dev -pl infoq-admin -am
 ```
 
-后端运行示例：
+后端运行示例（仅用于插件/API 诊断；登录与路由验收使用 `captcha_login` 的种子登录）：
 
 ```bash
 java -jar backend/infoq-admin/target/infoq-admin.jar \

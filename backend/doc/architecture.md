@@ -129,7 +129,7 @@ flowchart TB
 
 [application.yml](../infoq-admin/src/main/resources/application.yml) 承载通用运行时行为配置，当前明确表达了这些关键事实：
 
-- Web 容器使用 Undertow。
+- Web 容器使用 Tomcat（Spring Boot 4.x 默认，配置在 `application.yml`）。
 - 默认开启验证码校验（`captcha.enable=true`）。
 - `spring.profiles.active=@profiles.active@`，实际激活值由 Maven profile 注入。
 - `spring.jackson.deserialization.fail_on_unknown_properties=true`，请求字段不匹配时显式失败。

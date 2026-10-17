@@ -36,7 +36,7 @@ class MapperDefaultMethodTest {
 - 不写单测：
   - 无方法体（`abstract`）且仅承载 SQL 契约的接口方法。
   - 依赖 MyBatis 运行时缓存、在纯 Mockito 场景下不稳定的方法。
-  - 纯 SQL 契约改用 `references/mapper-integration-pattern.md`。
+  - 纯 SQL 契约改用 `mapper-integration-pattern.md`。
 
 ## 项目特定说明
 

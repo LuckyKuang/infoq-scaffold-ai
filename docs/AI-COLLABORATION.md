@@ -164,7 +164,7 @@ repo 级 custom agents 的真值不写在 `AGENTS.md` 之外的任意散落文�
 
 1. 一次只改一类问题。
 2. 优先最小闭环，不绑无关重构。
-3. `tasks.md` 默认显式评估 backend、React admin、Vue admin、docs、script/deploy。
+3. `tasks.md` 默认显式评估 backend、React admin、Vue admin、docs、deploy。
 4. 任何命令、环境变量、skill 入口或 MCP 配置变更，都要同步更新 `README.md` 与 `docs/*.md`。
 
 修改后，验证顺序固定为：
@@ -207,7 +207,7 @@ backend 工作区基线是 JDK 21 与 Maven 3.9.x。
 说明：
 
 - `playwright-cli` 与 `chrome-devtools-cli` 是仓库内跨平台 CLI，位于 `skills/test-cli/scripts/`。
-- `playwright-cli admin-route-probe` 遇到后端 `captchaEnabled=true` 时，会自动调用 `skills/test-cli/scripts/captcha_login.mjs` 写入种子答案并获取真实 token。
+- `playwright-cli admin-route-probe` 直接调用 `skills/test-cli/scripts/captcha_login.mjs`，写入 Redis 种子答案并获取真实 token。
 - `playwright` MCP 用于临时交互探索。
 - `chrome-devtools` MCP 用于 Network / Console / Performance 深度诊断。
 - 不要回退到任何历史浏览器入口。
@@ -296,7 +296,7 @@ multi-agent 的价值不是"多开几个 agent"，而是把高噪声、边界清
 | Agent | 责任 |
 | --- | --- |
 | `requirements_expert` | 分析需求，输出 `proposal.md` 和 spec delta |
-| `technical_designer` | 输出 `tasks.md`，明确 backend/admin、docs 和 script/deploy 实现矩阵和验证命令 |
+| `technical_designer` | 输出 `tasks.md`，明确 backend/admin、docs 和 deploy 实现矩阵和验证命令 |
 | `code_implementer` | 依据 `proposal.md`、`design.md`、`tasks.md` 和 spec delta 落代码 |
 | `auto_fixer` | 运行验证并修复真实错误 |
 
@@ -319,7 +319,7 @@ change id: enhance-user-import
 1. spawn requirements_expert 生成 proposal.md 和 spec deltas
 2. spawn technical_designer 生成 tasks.md
 3. 如涉及明显 UI/交互决策，主线程先补 design.md，或改走 docs/DELIVERY-WORKFLOW.md 的四阶段 UI 门禁
-4. spawn code_implementer 按计划实现 backend、React/Vue admin、docs 和 script/deploy 需要改动的部分
+4. spawn code_implementer 按计划实现 backend、React/Vue admin、docs 和 deploy 需要改动的部分
 5. spawn auto_fixer 跑相关验证并修复真实问题
 6. 主线程基于验证证据做最终验收；必要时写 review.md 记录 blocker
 ```
@@ -338,9 +338,9 @@ requirements_expert
 
 `proposal.md` 必须说清楚：背景与问题陈述、核心业务目标与成功指标、用户角色与场景、本次范围与非目标、约束与延期范围、验收契约、风险与阻塞与待确认问题。
 
-`design.md` 只在需要时创建，必须说清楚：页面或交互入口、布局结构、用户操作流程、加载/空态/错误态/无权限态、对 backend、React/Vue admin、docs 和 script/deploy 的设计约束。
+`design.md` 只在需要时创建，必须说清楚：页面或交互入口、布局结构、用户操作流程、加载/空态/错误态/无权限态、对 backend、React/Vue admin、docs 和 deploy 的设计约束。
 
-`tasks.md` 必须说清楚：backend、React admin、Vue admin、docs、script/deploy 的实现矩阵；哪些端不改以及原因；验证命令；观测点、日志与回滚条件。
+`tasks.md` 必须说清楚：backend、React admin、Vue admin、docs、deploy 的实现矩阵；哪些端不改以及原因；验证命令；观测点、日志与回滚条件。
 
 spec delta 放在 `openspec/changes/<change-id>/specs/<capability>/spec.md`；变更交付时应用到 `docs/specs/<capability>/spec.md`。
 
@@ -352,7 +352,7 @@ spec delta 放在 `openspec/changes/<change-id>/specs/<capability>/spec.md`；�
 - `frontend-react`
 - `frontend-vue`
 - `docs`
-- `script / deploy`
+- `deploy`
 - `skills`（受影响时）
 
 这不代表每个需求都必须同时改完所有交付面，而是：

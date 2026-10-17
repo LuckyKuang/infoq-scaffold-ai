@@ -13,7 +13,7 @@
 
 ## 2. 两个管理端为什么不能同时启动
 
-Vue 和 React 管理端的 `.env.development` 默认都把 `VITE_APP_PORT` 设成 `80`。需要同时启动时，先为其中一个配置不同端口。
+Vue 和 React 管理端的 `.env.development` 默认都把 `VITE_APP_PORT` 设成 `80`。手动同时启动时，先为其中一个配置不同端口；E2E 自管栈使用 `5173` / `5174`，不冲突。
 
 ## 3. 管理端页面能打开，但接口全是 404 或网络错误
 
@@ -36,7 +36,7 @@ java -jar backend/infoq-admin/target/infoq-admin.jar --spring.profiles.active=lo
 本地临时端口也必须显式传入，并同步前端代理：
 
 ```bash
-java -jar backend/infoq-admin/target/infoq-admin.jar --spring.profiles.active=local --server.port=8081 --captcha.enable=false
+java -jar backend/infoq-admin/target/infoq-admin.jar --spring.profiles.active=local --server.port=8081
 ```
 
 ## 5. 初始化 SQL 里有 `admin` 用户，为什么文档不直接写默认密码

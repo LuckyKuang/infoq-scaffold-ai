@@ -9,7 +9,7 @@
 1. 判定范围：确认目标是全新环境部署验证、已有容器复核、部署失败诊断，还是停止/清理本地部署栈。
 2. 写清验收约定：功能范围、非目标、异常处理与 blocker、证据路径、回滚或停止条件。
 3. 只读探测：读取 `deploy/`、`deploy/bin/infoq.sh`、`deploy/bin/deploy-frontend.sh`、`deploy/docker/docker-compose.yml`、目标工作区 `Dockerfile` 和当前容器/端口状态。
-4. 选择运行时：先读取 `references/runtime-matrix.md`，只在 WSL2 内 Docker CE、macOS Colima、原生 Linux Docker CE 三条免费商用路径中选择；如果检测到 Docker Desktop 或其他未确认许可的运行时，先停止并请用户确认是否允许。
+4. 选择运行时：先读取 `runtime-matrix.md`，只在 WSL2 内 Docker CE、macOS Colima、原生 Linux Docker CE 三条免费商用路径中选择；如果检测到 Docker Desktop 或其他未确认许可的运行时，先停止并请用户确认是否允许。
 5. 环境预检：确认 Docker daemon、Compose、`docker buildx`、后端 Maven builder 镜像 `maven:3.9.12-eclipse-temurin-21`、后端运行镜像 `bellsoft/liberica-openjdk-rocky:21.0.12-cds`、Node/pnpm 镜像拉取能力、基础端口 `80/443/3306/6379/9000/9001/9090`、`INFOQ_FRONTEND_TARGET` 对应前端直连端口、`INFOQ_DEPLOY_ROOT`，以及安装后 `deploy.env` 中的随机凭据。Docker Compose 部署不要求宿主机安装 JDK 或 Maven。
 6. 目录前置提醒：在执行任何 `deploy` 前，先明确提醒并确认服务器已存在 `/tmp/infoq-deploy` 与 `${INFOQ_DEPLOY_ROOT}/server/temp`；WSL2/Linux 默认 `INFOQ_DEPLOY_ROOT=/infoq`，所以必须确认 `/infoq/server/temp`。macOS Colima 默认用 `$HOME/infoq`，除非用户明确配置 `/infoq` 为 Colima 可挂载路径。权限允许时执行 `mkdir -p /tmp/infoq-deploy "${INFOQ_DEPLOY_ROOT}/server/temp"`，权限不足时停止并请用户创建后继续。
 7. 一键部署：优先执行 `deploy/install.sh`，让脚本生成或复用 `deploy.env` 与 `credentials.txt`，并调用后端、前端和 nginx 部署脚本。
@@ -120,5 +120,5 @@ sudo env INFOQ_ENV_FILE=/etc/infoq-scaffold-ai/deploy.env bash deploy/uninstall.
 
 ## 参考
 
-- 运行时矩阵与免费商用边界：`references/runtime-matrix.md`
-- WSL2/Debian 完整流程：`references/wsl2-docker-compose.md`
+- 运行时矩阵与免费商用边界：`runtime-matrix.md`
+- WSL2/Debian 完整流程：`wsl2-docker-compose.md`

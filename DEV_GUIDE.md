@@ -119,8 +119,8 @@ node tools/check_readme_sync.mjs
 ```
 
 GitHub `CI Build` runs the repository gates (UTF-8, README structure, release
-version), backend package, and admin frontend checks on pull requests and
-pushes. Security Scan adds CodeQL and dependency review. Deployment runtime
+version, documentation links), backend package, and admin frontend checks on
+pull requests and pushes. Security Scan adds CodeQL and dependency review. Deployment runtime
 verification uses `deploy-cli`; Docker-specific steps are in
 `deploy/VERIFICATION.md`.
 

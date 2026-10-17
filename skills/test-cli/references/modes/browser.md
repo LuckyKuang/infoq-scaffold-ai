@@ -58,6 +58,8 @@ pnpm --dir skills/test-cli/scripts run playwright-cli admin-route-probe --backen
 pnpm --dir skills/test-cli/scripts run playwright-cli admin-route-probe --frontend-origin "http://127.0.0.1:5174" --route "/index"
 ```
 
+示例使用 React E2E 自管栈端口 `5174`；手动 `pnpm run dev` 默认端口是 `80`，请按实际 origin 调整。
+
 该命令会：
 
 1. 直接调用 `skills/test-cli/scripts/captcha_login.mjs --print-token`，通过 Redis 种子答案获取真实 token，并把证据写入 `tmp/test-cli/e2e/captcha-login/`。
@@ -98,7 +100,7 @@ pnpm --dir skills/test-cli/scripts run chrome-devtools-cli --help
 
 `playwright-cli admin-route-probe` 额外参数：
 
-- `--frontend-origin`：管理端站点 origin，例如 `http://127.0.0.1:5174`。
+- `--frontend-origin`：管理端站点 origin，例如 E2E 自管栈的 `http://127.0.0.1:5174`；手动 dev 默认 `http://127.0.0.1`。
 - `--route`：目标受保护路由，默认 `/index`。
 - `--backend-url`：后端地址，默认 `http://127.0.0.1:8080`。
 - `--client-id`：登录 client id。

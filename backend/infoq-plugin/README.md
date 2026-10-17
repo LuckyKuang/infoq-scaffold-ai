@@ -8,7 +8,7 @@
 
 | 子模块 | 形态 | 主要职责 |
 | --- | --- | --- |
-| [`infoq-plugin-web`](./infoq-plugin-web/README.md) | 自动装配 | Web 基础配置、异常处理、XSS、验证码、静态资源、Undertow |
+| [`infoq-plugin-web`](./infoq-plugin-web/README.md) | 自动装配 | Web 基础配置、异常处理、XSS、验证码、静态资源 |
 | [`infoq-plugin-security`](./infoq-plugin-security/README.md) | 自动装配 | Spring Security 鉴权、JWT token、在线会话与健康检查路径放行 |
 | [`infoq-plugin-redis`](./infoq-plugin-redis/README.md) | 自动装配 | Redisson、缓存、防重、限流、序列号 |
 | [`infoq-plugin-mybatis`](./infoq-plugin-mybatis/README.md) | 自动装配 | MyBatis-Plus、多数据源、分页、数据权限、审计元字段 |

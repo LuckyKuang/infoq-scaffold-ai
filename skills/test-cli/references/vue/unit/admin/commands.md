@@ -71,6 +71,8 @@ node skills/test-cli/scripts/captcha_login.mjs --backend-url http://127.0.0.1:80
 node skills/test-cli/scripts/playwright_cli.mjs admin-route-probe --list-routes
 ```
 
+`captcha_login.mjs` 需配置 `INFOQ_TEST_REDIS_*` 或 `--redis-*`，并与后端使用同一 Redis。
+
 `run_admin_e2e.mjs` 自管本地栈，状态写入 `tmp/test-cli/e2e/stack/vue/state.json`，完成、失败或中断后按状态文件收口 owned 端口；手动启动的进程由开发者自行收口。详见 `references/runtime/admin-commands.md`。
 
 ## 全量质量门禁

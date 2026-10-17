@@ -7,17 +7,18 @@
 
 | 工作流 | 触发 | 作用 |
 | --- | --- | --- |
-| `.github/workflows/ci.yml` | push / PR / 手动 | UTF-8、README 同步、版本一致性、后端构建与单测、双管理端 lint/test/build |
+| `.github/workflows/ci.yml` | push / PR / 手动 | UTF-8、README 同步、版本一致性、文档链接、后端构建与单测、双管理端 lint/test/build |
 | `.github/workflows/security-scan.yml` | push 默认分支 / PR / 每周 | CodeQL（Java、JavaScript/TypeScript）与依赖审查 |
 | `.github/workflows/release.yml` | `v*` tag | 版本门禁、后端与双管理端产物、GitHub Release |
 
 ## 2. 维护检查
 
-`ci.yml` 的 `encoding` job 是所有构建 job 的前置门禁：
+`ci.yml` 的 `repository-gates` job 是所有构建 job 的前置门禁：
 
 - `node tools/validate_utf8.mjs`
 - `node tools/check_readme_sync.mjs`
 - `node tools/check_release_version.mjs`
+- `node tools/check_doc_links.mjs`
 
 后端 job：
 
@@ -43,12 +44,12 @@ CI 通过 `pnpm/action-setup` 的 `package_json_file` 直接读取该字段。
 | UTF-8 | `node tools/validate_utf8.mjs` |
 | README 结构 | `node tools/check_readme_sync.mjs` |
 | 版本一致性 | `node tools/check_release_version.mjs` |
+| 文档链接 | `node tools/check_doc_links.mjs` |
 | 后端单测 | `node tools/backend_mvn.mjs -- -DskipTests=false test` |
 | Vue | `pnpm --dir frontend-vue run lint:eslint && pnpm --dir frontend-vue run test:unit && pnpm --dir frontend-vue run build:prod` |
 | React | `pnpm --dir frontend-react run lint && pnpm --dir frontend-react run test && pnpm --dir frontend-react run build:prod` |
-| 部署 smoke | `node skills/deploy-cli/scripts/deploy_cli.mjs smoke` |
 
-`Makefile` 的 `test-docs`、`test-backend`、`test-vue`、`test-react` 与上表一一对应。
+`Makefile` 的 `test-docs` 覆盖上表的 UTF-8、README、版本与文档链接检查；`test-backend`、`test-vue`、`test-react` 对应各自矩阵。部署 smoke 不在 CI 中执行，需按部署验证 SOP 单独运行。
 
 ## 4. 平台覆盖
 

@@ -36,7 +36,9 @@ UI 密集型改动应使用 `docs/DELIVERY-WORKFLOW.md` 的四阶段 UI 门禁�
 - `backend`
 - `frontend-react`
 - `frontend-vue`
-- `script / deploy`
+- `docs`
+- `deploy`
+- `skills`
 
 若某个工作区或交付面不受影响，必须在 `tasks.md` 中写明原因。
 

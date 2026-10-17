@@ -33,7 +33,7 @@
 ## 6. 关键配置
 
 - Mapper XML 真值位于 `src/main/resources/mapper/system/*Mapper.xml`。
-- `mapper/package-info.md` 说明 Mapper 资源按当前模块维护。
+- `src/main/resources/mapper/package-info.md` 说明 Mapper 资源按当前模块维护。
 
 ## 7. 关键数据流
 

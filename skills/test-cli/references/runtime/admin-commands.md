@@ -5,7 +5,8 @@
 | 项 | Vue | React |
 | --- | --- | --- |
 | `--client` | `vue` | `react` |
-| dev 默认端口 | `5173` | `5174` |
+| 手动 dev 默认端口（`pnpm run dev`） | `80` | `80` |
+| E2E 自管栈端口 | `5173` | `5174` |
 | E2E 自管栈状态 | `tmp/test-cli/e2e/stack/vue/state.json` | `tmp/test-cli/e2e/stack/react/state.json` |
 | Docker 网关路径 | `http://127.0.0.1/vue/` | `http://127.0.0.1/react/` |
 | Docker 直连端口 | `http://127.0.0.1:9091/` | `http://127.0.0.1:9092/` |
@@ -25,17 +26,11 @@ node tools/backend_mvn.mjs -- clean install -DskipTests
 java -jar infoq-admin/target/infoq-admin.jar --spring.profiles.active=local --server.port=8080
 ```
 
-仅在快速 token 注入或路由探测诊断时，才显式关闭验证码：
-
-```bash
-java -jar infoq-admin/target/infoq-admin.jar --spring.profiles.active=local --server.port=8080 --captcha.enable=false
-```
-
 验证码种子登录和动态路由 smoke 使用 `run_admin_e2e.mjs` / `captcha_login.mjs`，不要用关闭验证码的诊断后端替代验收。
 
 Admin（Vue `frontend-vue` / React `frontend-react`）：手动启动时不要依赖 `pnpm run dev -- --port ...` 覆盖 `.env.development` 的 `VITE_APP_PORT=80`；先显式设置 `VITE_APP_PORT` 与 `VITE_APP_PROXY_TARGET`，再执行 `pnpm run dev`。
 
-共享默认口径保持为 backend `8080` + Vue admin `5173` / React admin `5174`；本机临时改端口只允许显式 override，不得回写成共享默认配置。E2E 自管栈的状态写入 `tmp/test-cli/e2e/stack/<client>/state.json`，完成、失败或中断后按状态文件关闭 owned 端口。
+共享默认口径为 backend `8080`；手动 `pnpm run dev` 默认 `80`；E2E 自管栈使用 Vue `5173` / React `5174`。本机临时改端口只允许显式 override，不得回写成共享默认配置。E2E 自管栈的状态写入 `tmp/test-cli/e2e/stack/<client>/state.json`，完成、失败或中断后按状态文件关闭 owned 端口。
 
 ## 受保护路由与登录态
 
@@ -51,20 +46,27 @@ node skills/test-cli/scripts/run_admin_e2e.mjs --client vue --route-limit 1
 
 ## 默认 Admin URL
 
+手动 `pnpm run dev`：
+
+- Vue / React：登录页 `http://127.0.0.1/login`，首页壳 `http://127.0.0.1/index`
+
+E2E 自管栈：
+
 - Vue：登录页 `http://127.0.0.1:5173/login`，首页壳 `http://127.0.0.1:5173/index`
 - React：登录页 `http://127.0.0.1:5174/login`，首页壳 `http://127.0.0.1:5174/index`
-- 后端验证码探针：`http://127.0.0.1:8080/auth/code`
+
+后端验证码探针：`http://127.0.0.1:8080/auth/code`。
 
 ## 浏览器验证模式
 
-1. 启动本地栈，或至少确保 backend `http://127.0.0.1:8080` 与对应 admin（Vue `5173` / React `5174`）已可访问。若本地临时把 backend 改到了其他端口，先通过 `--backend-port <port>` 或 `VITE_APP_PROXY_TARGET` 显式对齐。
+1. 启动本地栈，或至少确保 backend `http://127.0.0.1:8080` 与对应 admin 已可访问（E2E 自管栈为 Vue `5173` / React `5174`；手动 dev 默认 `80`）。若本地临时把 backend 改到了其他端口，先通过 `--backend-port <port>` 或 `VITE_APP_PROXY_TARGET` 显式对齐。
 2. 若只需要快速查看后端返回的受保护路由列表，执行：
 
 ```bash
 pnpm --dir skills/test-cli/scripts run playwright-cli admin-route-probe --backend-url "http://127.0.0.1:8080" --list-routes
 ```
 
-3. 对目标受保护路由执行 CLI-first 浏览器探测（Vue 用 `5173`，React 用 `5174`）：
+3. 对目标受保护路由执行 CLI-first 浏览器探测（以下用 E2E 自管栈端口；手动 dev 默认 `80`）：
 
 ```bash
 pnpm --dir skills/test-cli/scripts run playwright-cli admin-route-probe --frontend-origin "http://127.0.0.1:5173" --route "/index"

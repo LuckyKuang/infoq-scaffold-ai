@@ -40,7 +40,7 @@ ensure -> check(可选) -> [默认分支? 新建工作分支] -> commit -> push 
 - 标题：取 `--message` 首行；未提供时使用最近一次提交主题。
 - 正文必须包含：变更摘要、跑过的校验命令、影响面（docs/SQL/dependency/rollback）、是否包含破坏性操作。
 - 复用规则：同一 head 分支只允许一个 open PR；存在多个或 head/base 不匹配时必须失败退出，不猜测。
-- 校验状态来源：GitHub required checks（含 CI Build 的 encoding / backend / admin-frontend 三个 job）。
+- 校验状态来源：GitHub required checks（含 CI Build 的 repository-gates / backend / admin-frontend 三个 job）。
 
 ## 5. 失败回流
 

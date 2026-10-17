@@ -36,7 +36,7 @@
 #### 场景：维护 `tasks.md`
 
 - 当维护者编写或更新 `tasks.md` 时
-- 则必须显式评估 `backend`、`frontend-react`、`frontend-vue`、`script / deploy`
+- 则必须显式评估 `backend`、`frontend-react`、`frontend-vue`、`docs`、`deploy`、`skills`
 - 并且对不受影响项必须给出原因
 
 ### 要求：active change 结构校验

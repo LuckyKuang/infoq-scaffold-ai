@@ -52,7 +52,7 @@ node skills/test-cli/scripts/run_admin_crud_e2e.mjs --client react
 node skills/test-cli/scripts/captcha_login.mjs --backend-url http://127.0.0.1:8080 --print-token
 ```
 
-`captcha_login.mjs` 是 `/auth/code` + Redis 种子答案 + 加密 `/auth/login` 的共享入口，`run_admin_e2e.mjs` 与 `test-cli` 的 `admin-route-probe` 验证码 fallback 都复用它。种子模式要求测试进程与后端使用同一个 Redis 实例/DB，通过 `INFOQ_TEST_REDIS_HOST`、`INFOQ_TEST_REDIS_PORT`、`INFOQ_TEST_REDIS_DATABASE`、`INFOQ_TEST_REDIS_PASSWORD` 或对应 `--redis-*` 参数提供连接；禁止指向生产 Redis。证据默认写入 `tmp/test-cli/e2e/captcha-login/<run-id>/`。
+`captcha_login.mjs` 是 `/auth/code` + Redis 种子答案 + 加密 `/auth/login` 的共享入口，`run_admin_e2e.mjs` 与 `test-cli` 的 `admin-route-probe` 都直接复用它。种子模式要求测试进程与后端使用同一个 Redis 实例/DB，通过 `INFOQ_TEST_REDIS_HOST`、`INFOQ_TEST_REDIS_PORT`、`INFOQ_TEST_REDIS_DATABASE`、`INFOQ_TEST_REDIS_PASSWORD` 或对应 `--redis-*` 参数提供连接；禁止指向生产 Redis。证据默认写入 `tmp/test-cli/e2e/captcha-login/<run-id>/`。
 
 `run_admin_e2e.mjs` 默认只使用有管理端动态菜单的 route smoke 候选账号（`admin`、`dept`）；`captcha_login.mjs` 可继续通过 `--login-candidates` 做独立账号登录诊断。不要把无动态路由权限的账号作为 route smoke 默认候选，否则会出现登录成功但无路由可巡检的假失败。
 
