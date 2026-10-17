@@ -39,7 +39,7 @@ node skills/test-cli/scripts/captcha_login.mjs --backend-url http://127.0.0.1:80
 node skills/test-cli/scripts/playwright_cli.mjs admin-route-probe --list-routes
 ```
 
-真实验证码、OCR、登录态和动态路由 smoke 以 `run_admin_e2e.mjs` / `captcha_login.mjs` 为准，不要用关闭验证码的诊断后端替代验收。
+验证码种子登录、登录态和动态路由 smoke 以 `run_admin_e2e.mjs` / `captcha_login.mjs` 为准，不要用关闭验证码的诊断后端替代验收。
 
 ## 单测和构建
 

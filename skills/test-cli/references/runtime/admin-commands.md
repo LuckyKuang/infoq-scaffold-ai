@@ -46,7 +46,7 @@ node skills/test-cli/scripts/run_admin_e2e.mjs --client vue --route-limit 1
 ```
 
 - `admin-route-probe --list-routes` 只列后端真实返回的路由，不启动浏览器。
-- `captcha_login.mjs --print-token` 输出真实 token（`TOKEN=...`），供脚本或人工核对使用。
+- `captcha_login.mjs --print-token` 输出真实 token（`TOKEN=...`），供脚本或人工核对使用；种子模式需配置 `INFOQ_TEST_REDIS_*` 或 `--redis-*`，且与后端使用同一 Redis。
 - 需要逐路由截图、console 门禁与报告时使用 `run_admin_e2e.mjs`。
 
 ## 默认 Admin URL
@@ -71,7 +71,7 @@ pnpm --dir skills/test-cli/scripts run playwright-cli admin-route-probe --fronte
 pnpm --dir skills/test-cli/scripts run playwright-cli admin-route-probe --frontend-origin "http://127.0.0.1:5174" --route "/index"
 ```
 
-4. `admin-route-probe` 会先走快速 token 获取；若后端返回 `captchaEnabled=true`，会自动调用 `test-cli/scripts/captcha_login.mjs` 识别验证码并获取 token。若要覆盖完整真实验证码路由矩阵，请改用 `test-cli`。
+4. `admin-route-probe` 会先走快速 token 获取；若后端返回 `captchaEnabled=true`，会自动调用 `test-cli/scripts/captcha_login.mjs` 写入种子答案并获取 token。若要覆盖完整真实验证码路由矩阵，请改用 `test-cli`。
 5. 只有在需要临时交互探索或定位器发现时，才改用 Playwright MCP。
 
 ## Docker 部署验证模式

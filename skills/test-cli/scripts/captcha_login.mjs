@@ -6,36 +6,15 @@ import {
     ensureDir,
     fetchJson,
     normalizeForwardedArgs,
-    resolvePythonLaunchSpec,
     resolveRepoRoot,
     resolveTmpPath,
-    runCommandChecked,
     timestampSlug
 } from '../../../tools/lib/skill_runtime.mjs';
 import {encryptHeaderKey, encryptWithAesEcbPkcs7, randomAesKey} from '../../../tools/lib/backend_login.mjs';
+import {DEFAULT_CAPTCHA_KEY_PREFIX, DEFAULT_CAPTCHA_TTL_MS, seedCaptchaAnswer} from './redis_captcha_seed.mjs';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolveRepoRoot(scriptDir);
-
-// ddddocr 只有 Python 实现：OCR 逻辑内联在本文件，由 Node 入口调度，不再维护独立的 .py 脚本。
-const OCR_INLINE_SOURCE = [
-  'import json, re, sys',
-  'def fail(message):',
-  '    print(json.dumps({"error": str(message)}, ensure_ascii=False), file=sys.stderr)',
-  '    sys.exit(1)',
-  'try:',
-  '    import ddddocr',
-  'except Exception:',
-  '    fail("Python package ddddocr is required. Install it with: python3 -m pip install ddddocr")',
-  'try:',
-  '    with open(sys.argv[1], "rb") as file:',
-  '        image_bytes = file.read()',
-  '    ocr = ddddocr.DdddOcr(show_ad=False)',
-  '    raw_text = ocr.classification(image_bytes)',
-  '    print(json.dumps({"raw": raw_text, "text": re.sub(r"\\s+", "", str(raw_text or ""))}, ensure_ascii=False))',
-  'except Exception as exc:',
-  '    fail(exc)'
-].join('\n');
 
 export const DEFAULT_CAPTCHA_LOGIN_OPTIONS = {
   backendUrl: 'http://127.0.0.1:8080',
@@ -47,7 +26,16 @@ export const DEFAULT_CAPTCHA_LOGIN_OPTIONS = {
   captchaFetchRetries: 4,
   captchaFetchRetryDelayMs: 16000,
   rsaPublicKey: 'MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAKoR8mX0rGKLqzcWmOzbfj64K8ZIgOdHnzkXSOVOZbFu/TJhZ7rFAN+eaGkl3C4buccQd/EjEsj9ir7ijT7h96MCAwEAAQ==',
-  logPrefix: 'admin-e2e'
+  logPrefix: 'admin-e2e',
+  captchaAnswer: '2468',
+  captchaTtlMs: DEFAULT_CAPTCHA_TTL_MS,
+  redisHost: process.env.INFOQ_TEST_REDIS_HOST || process.env.REDIS_HOST || '127.0.0.1',
+  redisPort: Number(process.env.INFOQ_TEST_REDIS_PORT || process.env.REDIS_PORT || 6379),
+  redisUsername: process.env.INFOQ_TEST_REDIS_USERNAME || process.env.REDIS_USERNAME || '',
+  redisPassword: process.env.INFOQ_TEST_REDIS_PASSWORD || process.env.REDIS_PASSWORD || '',
+  redisDatabase: Number(process.env.INFOQ_TEST_REDIS_DATABASE || process.env.REDIS_DATABASE || 0),
+  redisTls: String(process.env.INFOQ_TEST_REDIS_TLS || '').toLowerCase() === 'true',
+  redisKeyPrefix: process.env.INFOQ_TEST_REDIS_KEY_PREFIX || DEFAULT_CAPTCHA_KEY_PREFIX
 };
 
 function printHelp() {
@@ -62,6 +50,15 @@ Options:
   --login-candidates <csv>        Candidate accounts. Default: ${DEFAULT_CAPTCHA_LOGIN_OPTIONS.loginCandidates}
   --rsa-public-key <base64>       Request encryption public key.
   --max-captcha-attempts <n>      Captcha attempts per account. Default: ${DEFAULT_CAPTCHA_LOGIN_OPTIONS.maxCaptchaAttempts}
+  --captcha-answer <code>         Answer seeded into Redis. Default: ${DEFAULT_CAPTCHA_LOGIN_OPTIONS.captchaAnswer}
+  --captcha-ttl-ms <ms>           Seeded captcha TTL in milliseconds. Default: ${DEFAULT_CAPTCHA_LOGIN_OPTIONS.captchaTtlMs}
+  --redis-host <host>             Redis host for the seeded captcha. Default: ${DEFAULT_CAPTCHA_LOGIN_OPTIONS.redisHost}
+  --redis-port <port>             Redis port for the seeded captcha. Default: ${DEFAULT_CAPTCHA_LOGIN_OPTIONS.redisPort}
+  --redis-username <name>         Redis ACL username.
+  --redis-password <pwd>          Redis password. Default: INFOQ_TEST_REDIS_PASSWORD or REDIS_PASSWORD
+  --redis-database <n>            Redis database. Default: ${DEFAULT_CAPTCHA_LOGIN_OPTIONS.redisDatabase}
+  --redis-tls                     Connect to Redis with TLS.
+  --redis-key-prefix <prefix>     Captcha key prefix. Default: ${DEFAULT_CAPTCHA_LOGIN_OPTIONS.redisKeyPrefix}
   --run-id <slug>                 Evidence run id under tmp/test-cli/e2e/captcha-login/.
   --run-dir <path>                Explicit evidence directory.
   --print-token                   Print TOKEN=<token> for script consumers.
@@ -123,6 +120,41 @@ function parseArgs(argv) {
         options.maxCaptchaAttempts = Number(readValue(argv, index, arg));
         index += 1;
         break;
+      case '--captcha-answer':
+        options.captchaAnswer = readValue(argv, index, arg);
+        index += 1;
+        break;
+      case '--captcha-ttl-ms':
+        options.captchaTtlMs = Number(readValue(argv, index, arg));
+        index += 1;
+        break;
+      case '--redis-host':
+        options.redisHost = readValue(argv, index, arg);
+        index += 1;
+        break;
+      case '--redis-port':
+        options.redisPort = Number(readValue(argv, index, arg));
+        index += 1;
+        break;
+      case '--redis-username':
+        options.redisUsername = readValue(argv, index, arg);
+        index += 1;
+        break;
+      case '--redis-password':
+        options.redisPassword = readValue(argv, index, arg);
+        index += 1;
+        break;
+      case '--redis-database':
+        options.redisDatabase = Number(readValue(argv, index, arg));
+        index += 1;
+        break;
+      case '--redis-tls':
+        options.redisTls = true;
+        break;
+      case '--redis-key-prefix':
+        options.redisKeyPrefix = readValue(argv, index, arg);
+        index += 1;
+        break;
       case '--run-id':
         options.runId = readValue(argv, index, arg);
         index += 1;
@@ -147,11 +179,29 @@ function parseArgs(argv) {
     }
   }
 
+  validateCaptchaOptions(options);
+  return options;
+}
+
+function validateCaptchaOptions(options) {
   if (!Number.isInteger(options.maxCaptchaAttempts) || options.maxCaptchaAttempts <= 0) {
     throw new Error('--max-captcha-attempts must be a positive integer.');
   }
-
-  return options;
+  if (!String(options.captchaAnswer || '').trim()) {
+    throw new Error('--captcha-answer must not be empty.');
+  }
+  if (!Number.isInteger(options.redisPort) || options.redisPort <= 0 || options.redisPort > 65535) {
+    throw new Error('--redis-port must be a valid TCP port.');
+  }
+  if (!Number.isInteger(options.redisDatabase) || options.redisDatabase < 0) {
+    throw new Error('--redis-database must be a non-negative integer.');
+  }
+  if (!Number.isInteger(options.captchaTtlMs) || options.captchaTtlMs <= 0) {
+    throw new Error('--captcha-ttl-ms must be a positive integer.');
+  }
+  if (!String(options.redisKeyPrefix || '').trim()) {
+    throw new Error('--redis-key-prefix must not be empty.');
+  }
 }
 
 function writeJson(filePath, data) {
@@ -188,69 +238,6 @@ function buildCaptchaLoginCandidates(options) {
   return list;
 }
 
-function normalizeOcrToCaptcha(rawText) {
-  const cleaned = String(rawText || '')
-    .trim()
-    .replace(/\s+/g, '')
-    .replace(/[oO]/g, '0')
-    .replace(/[lI]/g, '1')
-    .replace(/[×xX*]/g, '*')
-    .replace(/[÷]/g, '/')
-    .replace(/[=？?]+$/g, '');
-
-  if (!cleaned) {
-    return '';
-  }
-
-  if (/^\d+[+\-*/]\d+$/u.test(cleaned)) {
-    const [, left, op, right] = cleaned.match(/^(\d+)([+\-*/])(\d+)$/u);
-    const a = Number(left);
-    const b = Number(right);
-    switch (op) {
-      case '+':
-        return String(a + b);
-      case '-':
-        return String(a - b);
-      case '*':
-        return String(a * b);
-      case '/':
-        return b === 0 ? '' : String(Math.trunc(a / b));
-      default:
-        return cleaned;
-    }
-  }
-
-  return cleaned.replace(/[^a-zA-Z0-9]/g, '');
-}
-
-async function recognizeCaptcha(imagePath) {
-  const python = resolvePythonLaunchSpec();
-  const ocrResult = await runCommandChecked(python.command, [...python.args, '-B', '-c', OCR_INLINE_SOURCE, imagePath], {
-    cwd: repoRoot,
-    env: {
-      ...process.env,
-      PYTHONDONTWRITEBYTECODE: '1'
-    },
-    captureOutput: true
-  }).catch((error) => {
-    throw new Error(`Captcha OCR failed. Ensure ddddocr is installed with: python3 -m pip install ddddocr\n${error.message || error}`);
-  });
-
-  const output = ocrResult.stdout.trim().split(/\r?\n/).at(-1) || '';
-  try {
-    const parsed = JSON.parse(output);
-    if (parsed.error) {
-      throw new Error(parsed.error);
-    }
-    return {
-      raw: String(parsed.raw || parsed.text || ''),
-      text: String(parsed.text || parsed.raw || '')
-    };
-  } catch (error) {
-    throw new Error(`Failed to parse OCR output: ${output}\n${error.message || error}`);
-  }
-}
-
 async function fetchCaptcha(options, runDir, sequence) {
   let lastResponse;
   let lastBody;
@@ -266,7 +253,7 @@ async function fetchCaptcha(options, runDir, sequence) {
     if (response.status === 200 && body.code === 200) {
       const data = body.data || {};
       if (data.captchaEnabled !== true) {
-        throw new Error('GET /auth/code returned captchaEnabled=false. Captcha login requires real captcha verification.');
+        throw new Error('GET /auth/code returned captchaEnabled=false. Captcha login requires captchaEnabled=true; the test seeds the expected answer in Redis.');
       }
       if (!data.img || !data.uuid) {
         throw new Error('GET /auth/code did not return img and uuid.');
@@ -333,6 +320,7 @@ export async function loginWithRealCaptcha(inputOptions = {}, inputRunDir = '') 
     ...inputOptions,
     backendUrl: (inputOptions.backendUrl || DEFAULT_CAPTCHA_LOGIN_OPTIONS.backendUrl).replace(/\/+$/, '')
   };
+  validateCaptchaOptions(options);
   const runDir = inputRunDir || resolveRunDir(options);
   ensureDir(runDir);
   const candidates = buildCaptchaLoginCandidates(options);
@@ -343,26 +331,36 @@ export async function loginWithRealCaptcha(inputOptions = {}, inputRunDir = '') 
     for (let attempt = 1; attempt <= options.maxCaptchaAttempts; attempt += 1) {
       sequence += 1;
       const captcha = await fetchCaptcha(options, runDir, sequence);
-      const ocr = await recognizeCaptcha(captcha.imagePath);
-      const captchaCode = normalizeOcrToCaptcha(ocr.text || ocr.raw);
+      let seed;
+      try {
+        seed = await seedCaptchaAnswer({
+          uuid: captcha.uuid,
+          answer: options.captchaAnswer,
+          host: options.redisHost,
+          port: options.redisPort,
+          username: options.redisUsername,
+          password: options.redisPassword,
+          database: options.redisDatabase,
+          tls: options.redisTls,
+          keyPrefix: options.redisKeyPrefix,
+          ttlMs: options.captchaTtlMs
+        });
+      } catch (error) {
+        throw new Error(
+          `Failed to seed captcha answer in Redis at ${options.redisHost}:${options.redisPort}/${options.redisDatabase}: ${error.message}`
+        );
+      }
+      const captchaCode = String(options.captchaAnswer);
       const attemptRecord = {
         sequence,
         username: account.username,
         attempt,
         uuid: captcha.uuid,
         imagePath: captcha.imagePath,
-        ocrRaw: ocr.raw,
-        ocrText: ocr.text,
+        seedKey: seed.key,
         captchaCode,
         status: 'pending'
       };
-
-      if (!captchaCode) {
-        attemptRecord.status = 'ocr-empty';
-        attempts.push(attemptRecord);
-        writeJson(captcha.metaPath, attemptRecord);
-        continue;
-      }
 
       const loginResult = await loginEncrypted(options, account, captchaCode, captcha.uuid);
       const token = loginResult.body?.data?.access_token || loginResult.body?.data?.accessToken;
@@ -404,13 +402,12 @@ async function main() {
     backendUrl: options.backendUrl,
     username: login.username,
     tokenPresent: Boolean(login.token),
-    attempts: login.attempts.map(({sequence, username, attempt, imagePath, ocrRaw, ocrText, captchaCode, status, httpStatus, responseCode, responseMsg}) => ({
+    attempts: login.attempts.map(({sequence, username, attempt, imagePath, seedKey, captchaCode, status, httpStatus, responseCode, responseMsg}) => ({
       sequence,
       username,
       attempt,
       imagePath,
-      ocrRaw,
-      ocrText,
+      seedKey,
       captchaCode,
       status,
       httpStatus,

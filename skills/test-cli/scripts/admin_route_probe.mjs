@@ -156,16 +156,16 @@ function acquireToken({
     );
   }
 
-  console.log('[admin-probe] fast login check reported captchaEnabled=true; falling back to OCR captcha login.');
+  console.log('[admin-probe] fast login check reported captchaEnabled=true; falling back to Redis-seeded captcha login.');
   const {result: captchaResult, runId} = runCaptchaLogin({backendUrl, clientId, username, password});
   const captchaOutput = collectProcessOutput(captchaResult);
   if (captchaResult.status !== 0) {
     throw new Error(
-      `Failed to acquire admin token from ${backendUrl} with OCR captcha login. Evidence run id: ${runId}\n` +
+      `Failed to acquire admin token from ${backendUrl} with Redis-seeded captcha login. Evidence run id: ${runId}\n` +
       `Fast login output:\n${fastOutput}\n\nCaptcha login output:\n${captchaOutput}`
     );
   }
-  console.log(`[admin-probe] OCR captcha login evidence: tmp/test-cli/e2e/captcha-login/${runId}/`);
+  console.log(`[admin-probe] Seeded captcha login evidence: tmp/test-cli/e2e/captcha-login/${runId}/`);
   return parseTokenOutput(captchaOutput, 'Captcha login');
 }
 

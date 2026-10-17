@@ -23,7 +23,7 @@ docs/testing/gaps.md
 | 层级 | 场景 | 验收方式 |
 | --- | --- | --- |
 | 后端验证码 | `GET /auth/code` | 返回 `captchaEnabled=true` 时必须包含 `img` 和 `uuid`，图片落盘 |
-| OCR | `ddddocr` 识别图片 | 识别结果非空，并保存 OCR 记录 |
+| 验证码种子 | 读取 `/auth/code` 的 `uuid` 后向 Redis 写入已知答案 | 写入成功，后续登录使用同一答案 |
 | 后端登录 | `POST /auth/login` | 请求包含 `clientId`、`grantType=password`、`username`、`password`、`code`、`uuid`，成功返回 token |
 | 会话信息 | `/system/user/getInfo` | token 可访问，返回用户信息 |
 | 动态路由 | `/system/menu/getRouters` | token 可访问，返回路由树 |

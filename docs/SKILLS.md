@@ -53,7 +53,7 @@
 - 这两个 CLI 是 repo-owned 入口，适用于 Windows / macOS / Linux。
 - 为兼容不同平台和 `pnpm` 参数透传差异，也接受 `run <cli-name> -- ...` 形式，但默认推荐无 `--` 写法。
 - 不再维护平台包装脚本，直接调用仓库内 CLI。
-- `playwright-cli admin-route-probe` 先走快速 token 获取；若后端明确返回 `captchaEnabled=true`，会自动调用 `test-cli/scripts/captcha_login.mjs` 识别验证码并获取真实 token。
+- `playwright-cli admin-route-probe` 先走快速 token 获取；若后端明确返回 `captchaEnabled=true`，会自动调用 `test-cli/scripts/captcha_login.mjs` 写入种子答案并获取真实 token。
 - `playwright` MCP 只用于临时交互探索。
 - `chrome-devtools` MCP 只用于深度诊断。
 
@@ -107,11 +107,12 @@ node tools/openspec_check.mjs <change-id>
 
 ### 8.1 Web 测试与运行态（test-cli）
 
-当任务要求"不要跳过验证码""用 OCR 跑完整登录""启动后端和前端后逐模块 smoke""生成管理端测试矩阵"或"设计 CRUD 浏览器自动化模式"时使用。测试政策与 case 集合见 [TESTING.md](./TESTING.md) 与 `docs/testing/`。
+当任务要求"不要跳过验证码""用 Redis 种子答案跑完整登录""启动后端和前端后逐模块 smoke""生成管理端测试矩阵"或"设计 CRUD 浏览器自动化模式"时使用。测试政策与 case 集合见 [TESTING.md](./TESTING.md) 与 `docs/testing/`。
 
 ```bash
 node skills/test-cli/scripts/generate-case-matrix.mjs
 node skills/test-cli/scripts/validate-case-matrix.mjs docs/testing/case-matrix.json
+# 先配置 INFOQ_TEST_REDIS_* 或 --redis-*，且与后端使用同一 Redis
 node skills/test-cli/scripts/captcha_login.mjs --backend-url http://127.0.0.1:8080 --print-token
 node skills/test-cli/scripts/run_admin_e2e.mjs --client vue
 node skills/test-cli/scripts/run_admin_e2e.mjs --client react
@@ -121,9 +122,9 @@ node skills/test-cli/scripts/run_admin_crud_e2e.mjs --client react
 
 说明：
 
-- 真实验证码 E2E 默认不关闭验证码，必须通过 `/auth/code`、OCR 和 `/auth/login` 获取真实 token。
+- 验证码 E2E 默认不关闭验证码，必须通过 `/auth/code`、Redis 种子答案和 `/auth/login` 获取真实 token。
 - `captcha_login.mjs` 是共享验证码登录入口，`run_admin_e2e.mjs` 和 `admin-route-probe` 的验证码 fallback 都复用它。
-- 首次运行 OCR 场景需要本机 Python 环境可 import `ddddocr`，浏览器依赖仍复用 `test-cli`。
+- 种子模式要求测试进程与后端使用同一个 Redis 实例/DB；通过 `INFOQ_TEST_REDIS_*` 或 `--redis-*` 提供连接，禁止指向生产 Redis。浏览器依赖仍复用 `test-cli`。
 - 证据默认写入 `tmp/test-cli/e2e/<run-id>/`。
 - `run_admin_e2e.mjs` 默认在完成、失败或中断后停止本次 skill 启动的栈；只有成功且需要保留联调进程时显式传 `--keep-stack-after`，失败或中断仍会关闭 owned 进程。
 - `run_admin_crud_e2e.mjs` 仅用于已授权的 `application-local.yml` 测试数据库，默认覆盖 `role,user,menu,dept,post,dict,config,notice,client,invite,ossConfig,job,online`，执行 UI 新增/查询/编辑/删除或模块可用的选择删除/行删除入口；`online` 会创建当前 run 专属 `e2e_` 用户会话并只强退该会话；cleanup 只处理当前 run 的精确 `e2e_` 数据。
@@ -140,7 +141,7 @@ node skills/test-cli/scripts/run_admin_e2e.mjs --client vue --route-limit 1
 node skills/test-cli/scripts/run_admin_e2e.mjs --client react --route-limit 1
 ```
 
-真实验证码登录、OCR 和动态路由 smoke 见 `references/modes/e2e.md`。本地栈由 `run_admin_e2e.mjs` 自管，状态写入 `tmp/test-cli/e2e/stack/<client>/state.json`，完成、失败或中断后按状态文件收口 owned 端口；纯单测 / 构建迭代可手动启动，命令见 `references/runtime/admin-commands.md`。
+验证码种子登录和动态路由 smoke 见 `references/modes/e2e.md`。本地栈由 `run_admin_e2e.mjs` 自管，状态写入 `tmp/test-cli/e2e/stack/<client>/state.json`，完成、失败或中断后按状态文件收口 owned 端口；纯单测 / 构建迭代可手动启动，命令见 `references/runtime/admin-commands.md`。
 
 ### 8.3 数据运维（docs/DATA-OPS.md）
 

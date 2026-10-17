@@ -84,3 +84,24 @@ cleanup 失败不得被静默忽略。报告必须包含模块名、测试数据
 ### 4.4 禁止行为
 
 不得删除非 `e2e_` 数据，不得批量清空表，不得修改冻结初始化 SQL，不得为了清理方便修改产品删除逻辑。
+
+## 5. 验证码自动化
+
+管理端 E2E 使用 Redis 种子答案，不依赖图片识别工具。`captcha_login.mjs` 先请求 `/auth/code` 获取 `uuid`，再向**后端正在使用的 Redis**写入同一 `uuid` 的已知答案，最后正常提交 `/auth/login`。验证码图片和登录校验仍走真实后端逻辑。
+
+```bash
+INFOQ_TEST_REDIS_HOST=127.0.0.1 \
+INFOQ_TEST_REDIS_PORT=6379 \
+INFOQ_TEST_REDIS_DATABASE=0 \
+INFOQ_TEST_REDIS_PASSWORD="$REDIS_PASSWORD" \
+node skills/test-cli/scripts/captcha_login.mjs --backend-url http://127.0.0.1:8080 --print-token
+```
+
+也支持 `--redis-host`、`--redis-port`、`--redis-database`、`--redis-username`、`--redis-password`、`--redis-tls`、`--redis-key-prefix`。答案默认 `2468`，可用 `--captcha-answer` 覆盖。
+
+约束：
+
+- 测试进程与后端必须使用同一个 Redis 实例和 DB。
+- 如果后端配置了 `redisson.keyPrefix`，`--redis-key-prefix` 必须包含相同前缀。
+- 该模式只允许在已授权的测试环境使用，禁止指向生产 Redis。
+- 种子 key 与后端校验一致，TTL 默认 120 秒，只能消费一次。

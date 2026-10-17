@@ -25,13 +25,14 @@ description: 本仓库 Web 侧自动化测试与前端运行态验证的统一 s
 3. 最小闭环：先跑单一路由 / 单客户端 / 单模块，再扩展到完整矩阵。
 4. 写入门禁：涉及 `.env`、AppID、测试数据、导出、端口或共享环境写入时，先列出目标、影响范围、cleanup 与回滚。
 5. 执行验证：检查退出码、截图、console/pageerror、状态文件与 owned 端口收口。
-6. 失败处理：浏览器缺失、后端不可达、验证码 OCR 失败、AppID 缺失、console error 与 pageerror 都必须显式失败，禁止伪造通过。
+6. 失败处理：浏览器缺失、后端不可达、验证码种子写入失败（Redis 不可达或与后端实例/DB 不一致）、AppID 缺失、console error 与 pageerror 都必须显式失败，禁止伪造通过。
 
 ## 默认命令
 
 ```bash
 node skills/test-cli/scripts/playwright_cli.mjs flow --url "https://example.com" --wait-for-text "Example Domain"
 node skills/test-cli/scripts/playwright_cli.mjs admin-route-probe --list-routes
+# 验证码登录使用 Redis 种子答案；先配置 INFOQ_TEST_REDIS_* 或 --redis-*
 node skills/test-cli/scripts/captcha_login.mjs --backend-url http://127.0.0.1:8080 --print-token
 node skills/test-cli/scripts/run_admin_e2e.mjs --client vue --route-limit 1
 node skills/test-cli/scripts/run_admin_crud_e2e.mjs --client vue --modules notice

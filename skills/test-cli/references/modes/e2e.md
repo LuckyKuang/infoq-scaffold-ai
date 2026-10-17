@@ -7,7 +7,7 @@
 ## 模式选择
 
 1. 生成或校验管理端 Web 自动化测试矩阵，使用 `generate-case-matrix.mjs` 和 `validate-case-matrix.mjs`。
-2. 不关闭验证码、通过 `/auth/code` + OCR + `/auth/login` 获取真实 token，使用共享入口 `captcha_login.mjs`；需要继续巡检动态路由时使用 `run_admin_e2e.mjs`。
+2. 不关闭验证码、通过 `/auth/code` + Redis 种子答案 + `/auth/login` 获取真实 token，使用共享入口 `captcha_login.mjs`；需要继续巡检动态路由时使用 `run_admin_e2e.mjs`。
 3. 执行公告等写入型 CRUD E2E 时，读取 `references/crud/*` 并使用 `run_admin_crud_e2e.mjs`（可用 `--modules notice` 等参数缩小模块范围）。
 4. 通用浏览器执行器仍使用 `test-cli`；本 skill 负责业务范围和管理端专属流程。
 5. 用户、角色、菜单、部门、岗位、字典、参数、公告、OSS、定时任务等后台模块的真实页面运营维护、权限按钮巡检和写入型操作门禁，读取 `references/ops/page-ops-guardrails.md`；数据库侧修复转交 `docs/DATA-OPS.md`，后端接口验证转交 `tools/verify`。
@@ -52,7 +52,7 @@ node skills/test-cli/scripts/run_admin_crud_e2e.mjs --client react
 node skills/test-cli/scripts/captcha_login.mjs --backend-url http://127.0.0.1:8080 --print-token
 ```
 
-`captcha_login.mjs` 是 `/auth/code` + `ddddocr` + 算术验证码归一化 + 加密 `/auth/login` 的共享入口，`run_admin_e2e.mjs` 与 `test-cli` 的 `admin-route-probe` 验证码 fallback 都复用它。证据默认写入 `tmp/test-cli/e2e/captcha-login/<run-id>/`。
+`captcha_login.mjs` 是 `/auth/code` + Redis 种子答案 + 加密 `/auth/login` 的共享入口，`run_admin_e2e.mjs` 与 `test-cli` 的 `admin-route-probe` 验证码 fallback 都复用它。种子模式要求测试进程与后端使用同一个 Redis 实例/DB，通过 `INFOQ_TEST_REDIS_HOST`、`INFOQ_TEST_REDIS_PORT`、`INFOQ_TEST_REDIS_DATABASE`、`INFOQ_TEST_REDIS_PASSWORD` 或对应 `--redis-*` 参数提供连接；禁止指向生产 Redis。证据默认写入 `tmp/test-cli/e2e/captcha-login/<run-id>/`。
 
 `run_admin_e2e.mjs` 默认只使用有管理端动态菜单的 route smoke 候选账号（`admin`、`dept`）；`captcha_login.mjs` 可继续通过 `--login-candidates` 做独立账号登录诊断。不要把无动态路由权限的账号作为 route smoke 默认候选，否则会出现登录成功但无路由可巡检的假失败。
 

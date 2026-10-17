@@ -91,6 +91,8 @@ pnpm run dev
 使用 skill 跑管理端路由 smoke 或验证码登录：
 
 ```bash
+# 验证码 E2E 会向后端 Redis 写入种子答案。
+# 先设置 INFOQ_TEST_REDIS_HOST/PORT/DATABASE/PASSWORD（以及可选的 TLS）。
 node skills/test-cli/scripts/run_admin_e2e.mjs --client vue --route-limit 1
 node skills/test-cli/scripts/captcha_login.mjs --backend-url http://127.0.0.1:8080 --print-token
 

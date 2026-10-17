@@ -76,7 +76,7 @@ function printAdminProbeHelp() {
 Behavior:
   First tries the fast backend login check. If the backend reports
   captchaEnabled=true, automatically falls back to
-  test-cli/scripts/captcha_login.mjs for OCR captcha login.
+  test-cli/scripts/captcha_login.mjs for Redis-seeded captcha login.
 
 Options:
   --frontend-origin <origin>

@@ -92,6 +92,8 @@ second console. Local setup details are in [`DEV_GUIDE.md`](DEV_GUIDE.md).
 Use skills for admin route smoke or captcha login:
 
 ```bash
+# Captcha-based E2E seeds the answer into the backend Redis.
+# Set INFOQ_TEST_REDIS_HOST/PORT/DATABASE/PASSWORD (and optional TLS) first.
 node skills/test-cli/scripts/run_admin_e2e.mjs --client vue --route-limit 1
 node skills/test-cli/scripts/captcha_login.mjs --backend-url http://127.0.0.1:8080 --print-token
 

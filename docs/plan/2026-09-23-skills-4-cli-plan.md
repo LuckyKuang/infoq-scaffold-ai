@@ -19,7 +19,7 @@
 | 原位置 | 去向 |
 | --- | --- |
 | `infoq-browser-automate/scripts/*`（playwright / chrome-devtools / route-probe + pnpm 工程） | `skills/test-cli/scripts/` |
-| `infoq-admin-e2e/scripts/*`（captcha / matrix / run_admin_e2e / run_admin_crud_e2e / ocr） | `skills/test-cli/scripts/` |
+| `infoq-admin-e2e/scripts/*`（captcha / matrix / run_admin_e2e / run_admin_crud_e2e） | `skills/test-cli/scripts/` |
 | `infoq-frontend-verify/scripts/*`（admin 栈启停 / token 片段 / 路由抓取） | `skills/test-cli/scripts/` |
 | 三者 `references/*` | `skills/test-cli/references/`（matrix / captcha / crud / ops / react / vue / runtime） |
 | 三者 `SKILL.md` | `skills/test-cli/references/modes/{browser,e2e,frontend}.md` |
@@ -49,14 +49,14 @@
 
 ## 5. 后续裁剪（2026-09-23，用户确认）
 
-删除 4 个低价值入口脚本并合并 OCR 实现，`test-cli/scripts/` 从 15 个脚本降为 11 个：
+删除 4 个低价值入口脚本并合并验证码登录实现，`test-cli/scripts/` 从 15 个脚本降为 11 个：
 
 | 处置 | 对象 | 替代路径 |
 | --- | --- | --- |
 | 删除 | `start_admin_dev_stack.mjs`、`stop_admin_dev_stack.mjs` | 本地栈由 `run_admin_e2e.mjs` / `run_admin_crud_e2e.mjs` 自管（启动 → 验证 → 按 `tmp/test-cli/e2e/stack/<client>/state.json` 收口）；纯单测迭代按 `references/runtime/admin-commands.md` 手动启动 |
 | 删除 | `print_admin_login_inject_snippet.mjs` | `captcha_login.mjs --print-token` 输出真实 token |
 | 删除 | `fetch_admin_routes_with_token.mjs` | `playwright_cli.mjs admin-route-probe --list-routes` |
-| 合并 | `ocr_captcha.py` | ddddocr 逻辑内联进 `captcha_login.mjs`（`python3 -c` 由 Node 入口调度），不再维护独立 `.py` |
+| 合并 | 独立验证码脚本 | 验证码登录逻辑内联进 `captcha_login.mjs`；后续自动化改为 Redis 种子答案，不再依赖图片识别 |
 
 保留：`tools/lib/admin_dev_stack.mjs`（仍被两个 E2E 脚本 import）。
 

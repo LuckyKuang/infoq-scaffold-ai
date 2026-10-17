@@ -44,7 +44,7 @@ pnpm --dir skills/test-cli/scripts run playwright-cli flow --url "https://exampl
 
 ### 3. 管理端受保护路由验证
 
-该命令是快速路由探测。它会先通过 `tools/verify` 的无验证码快路径获取 token；如果后端明确返回 `captchaEnabled=true`，会自动调用 `test-cli/scripts/captcha_login.mjs` 走 `/auth/code` + OCR + `/auth/login` 获取真实 token。完整真实验证码路由矩阵和 CRUD E2E 仍使用 `test-cli`。
+该命令是快速路由探测。它会先通过 `tools/verify` 的无验证码快路径获取 token；如果后端明确返回 `captchaEnabled=true`，会自动调用 `test-cli/scripts/captcha_login.mjs` 走 `/auth/code` + Redis 种子答案 + `/auth/login` 获取真实 token。完整真实验证码路由矩阵和 CRUD E2E 仍使用 `test-cli`。
 
 先只列出后端真实返回路由：
 
@@ -120,7 +120,7 @@ pnpm --dir skills/test-cli/scripts run chrome-devtools-cli --help
 
 - 默认优先复跑 CLI，不要先上 MCP。
 - CLI 失败时必须保留失败命令、错误摘要与证据路径，禁止静默切走 MCP。
-- backend 未运行、验证码 OCR 登录失败、或前端站点不可达时，必须显式失败。
+- backend 未运行、验证码种子登录失败、或前端站点不可达时，必须显式失败。
 - 不要把 `admin-route-probe` 当成完整真实验证码 E2E 验收；真实验证码路由矩阵和写入型链路使用 `test-cli`。
 - 批量截图、路由矩阵和登录态注入必须先列出目标路由、storage key、输出目录和失败条件。
 - `console error`、`pageerror`、等待条件超时、截图为空白或证据路径缺失时，不能标记浏览器验证通过。

@@ -57,7 +57,16 @@ const DEFAULTS = {
   loginCandidates: DEFAULT_CRUD_LOGIN_CANDIDATES,
   maxCaptchaAttempts: DEFAULT_CAPTCHA_LOGIN_OPTIONS.maxCaptchaAttempts,
   timeoutMs: 60000,
-  rsaPublicKey: DEFAULT_CAPTCHA_LOGIN_OPTIONS.rsaPublicKey
+  rsaPublicKey: DEFAULT_CAPTCHA_LOGIN_OPTIONS.rsaPublicKey,
+  captchaAnswer: DEFAULT_CAPTCHA_LOGIN_OPTIONS.captchaAnswer,
+  captchaTtlMs: DEFAULT_CAPTCHA_LOGIN_OPTIONS.captchaTtlMs,
+  redisHost: DEFAULT_CAPTCHA_LOGIN_OPTIONS.redisHost,
+  redisPort: DEFAULT_CAPTCHA_LOGIN_OPTIONS.redisPort,
+  redisUsername: DEFAULT_CAPTCHA_LOGIN_OPTIONS.redisUsername,
+  redisPassword: DEFAULT_CAPTCHA_LOGIN_OPTIONS.redisPassword,
+  redisDatabase: DEFAULT_CAPTCHA_LOGIN_OPTIONS.redisDatabase,
+  redisTls: DEFAULT_CAPTCHA_LOGIN_OPTIONS.redisTls,
+  redisKeyPrefix: DEFAULT_CAPTCHA_LOGIN_OPTIONS.redisKeyPrefix
 };
 
 const SAFE_MODULE_ORDER = ['role', 'user', 'menu', 'dept', 'post', 'dict', 'config', 'notice', 'client', 'invite', 'ossConfig', 'job', 'online'];
@@ -128,6 +137,15 @@ Options:
   --client-id <id>                  Login client id. Default: ${DEFAULTS.clientId}
   --rsa-public-key <base64>         Request encryption public key.
   --max-captcha-attempts <n>        Captcha attempts per account. Default: ${DEFAULTS.maxCaptchaAttempts}
+  --captcha-answer <code>           Answer seeded into Redis. Default: ${DEFAULTS.captchaAnswer}
+  --captcha-ttl-ms <ms>             Seeded captcha TTL in milliseconds. Default: ${DEFAULTS.captchaTtlMs}
+  --redis-host <host>               Redis host for the seeded captcha. Default: ${DEFAULTS.redisHost}
+  --redis-port <port>               Redis port for the seeded captcha. Default: ${DEFAULTS.redisPort}
+  --redis-username <name>           Redis ACL username.
+  --redis-password <pwd>            Redis password. Default: INFOQ_TEST_REDIS_PASSWORD or REDIS_PASSWORD
+  --redis-database <n>              Redis database. Default: ${DEFAULTS.redisDatabase}
+  --redis-tls                       Connect to Redis with TLS.
+  --redis-key-prefix <prefix>       Captcha key prefix. Default: ${DEFAULTS.redisKeyPrefix}
   --timeout-ms <ms>                 UI timeout. Default: ${DEFAULTS.timeoutMs}
   --headed                          Show browser.
   --allow-console-errors            Do not fail CRUD run on console errors.
@@ -161,6 +179,15 @@ function parseArgs(argv) {
     clientId: process.env.CLIENT_ID || DEFAULTS.clientId,
     rsaPublicKey: process.env.RSA_PUBLIC_KEY || DEFAULTS.rsaPublicKey,
     maxCaptchaAttempts: DEFAULTS.maxCaptchaAttempts,
+    captchaAnswer: DEFAULTS.captchaAnswer,
+    captchaTtlMs: DEFAULTS.captchaTtlMs,
+    redisHost: DEFAULTS.redisHost,
+    redisPort: DEFAULTS.redisPort,
+    redisUsername: DEFAULTS.redisUsername,
+    redisPassword: DEFAULTS.redisPassword,
+    redisDatabase: DEFAULTS.redisDatabase,
+    redisTls: DEFAULTS.redisTls,
+    redisKeyPrefix: DEFAULTS.redisKeyPrefix,
     timeoutMs: DEFAULTS.timeoutMs,
     headed: false,
     allowConsoleErrors: false,
@@ -234,6 +261,41 @@ function parseArgs(argv) {
         break;
       case '--max-captcha-attempts':
         options.maxCaptchaAttempts = Number(readValue(argv, index, arg));
+        index += 1;
+        break;
+      case '--captcha-answer':
+        options.captchaAnswer = readValue(argv, index, arg);
+        index += 1;
+        break;
+      case '--captcha-ttl-ms':
+        options.captchaTtlMs = Number(readValue(argv, index, arg));
+        index += 1;
+        break;
+      case '--redis-host':
+        options.redisHost = readValue(argv, index, arg);
+        index += 1;
+        break;
+      case '--redis-port':
+        options.redisPort = Number(readValue(argv, index, arg));
+        index += 1;
+        break;
+      case '--redis-username':
+        options.redisUsername = readValue(argv, index, arg);
+        index += 1;
+        break;
+      case '--redis-password':
+        options.redisPassword = readValue(argv, index, arg);
+        index += 1;
+        break;
+      case '--redis-database':
+        options.redisDatabase = Number(readValue(argv, index, arg));
+        index += 1;
+        break;
+      case '--redis-tls':
+        options.redisTls = true;
+        break;
+      case '--redis-key-prefix':
+        options.redisKeyPrefix = readValue(argv, index, arg);
         index += 1;
         break;
       case '--timeout-ms':
