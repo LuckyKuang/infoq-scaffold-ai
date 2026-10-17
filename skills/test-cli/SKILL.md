@@ -11,7 +11,7 @@ description: 本仓库 Web 侧自动化测试与前端运行态验证的统一 s
 
 1. 通用页面流程、截图、console/pageerror 采集：`references/modes/browser.md`，入口 `scripts/playwright_cli.mjs`。
 2. DevTools 深度诊断（Network / Console / Performance）：`scripts/chrome_devtools_cli.mjs`。
-3. 受保护管理端路由快速探测：`scripts/admin_route_probe.mjs`；遇到 `captchaEnabled=true` 自动回落 `scripts/captcha_login.mjs`。
+3. 受保护管理端路由快速探测：`scripts/admin_route_probe.mjs`；直接使用 `scripts/captcha_login.mjs` 的 Redis 种子验证码登录。
 4. 真实验证码登录与动态路由矩阵：`scripts/run_admin_e2e.mjs`；矩阵生成与校验用 `scripts/generate-case-matrix.mjs`、`scripts/validate-case-matrix.mjs`。
 5. 写入型 CRUD E2E：`scripts/run_admin_crud_e2e.mjs`（`--modules` 缩小范围）。
 6. 真实页面运营维护、权限巡检与写入型操作门禁：`references/ops/page-ops-guardrails.md`。

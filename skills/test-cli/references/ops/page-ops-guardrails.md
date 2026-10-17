@@ -14,7 +14,7 @@
 - 需要通用浏览器执行、截图或 console/pageerror 证据：使用 `test-cli`。
 - 需要真实验证码登录、动态路由 smoke 或 CRUD E2E 自动化：使用本 skill 的 `run_admin_e2e.mjs` / `run_admin_crud_e2e.mjs`。
 - SQL、数据库、Redis、数据修复、迁移、幂等或 API/UI/DB 一致性核对：改用 `docs/DATA-OPS.md`。
-- 后端接口、登录链路或运行态验证：改用 `tools/verify`。
+- 后端接口或运行态验证：改用 `tools/verify`；登录链路：使用本 skill 的 `captcha_login.mjs`。
 
 ## 2. 执行顺序
 

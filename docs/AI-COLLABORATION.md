@@ -197,7 +197,7 @@ backend 工作区基线是 JDK 21 与 Maven 3.9.x。
 - 版本核对、tag 与 GitHub Release：`release-cli`
 - AGENTS.md 压缩与路由一致性校验：`compress-cli`
 - 本机部署、Apple container / WSL2 Docker / Linux Docker 运行态与 smoke：`deploy-cli`
-- 后端登录、smoke、集群与单测验证：`tools/verify/`（SOP 见 `tools/verify/README.md`）
+- 后端 smoke、集群与单测验证：`tools/verify/`（SOP 见 `tools/verify/README.md`）；登录/鉴权验证：`test-cli` 的验证码种子登录
 - SQL、数据库、Redis、数据修复、迁移和一致性核对：`docs/DATA-OPS.md`
 - 交付门禁、OpenSpec 与插件治理：`docs/DELIVERY-WORKFLOW.md`；部署脚本与运行时矩阵：`deploy/VERIFICATION.md`、`deploy/runtime-matrix.md`
 - 组件选型与组件 API 核验：`docs/DESIGN.md`「组件选型与 API 核验」

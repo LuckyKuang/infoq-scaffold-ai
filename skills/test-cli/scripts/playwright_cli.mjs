@@ -74,9 +74,8 @@ function printAdminProbeHelp() {
   pnpm --dir skills/test-cli/scripts run playwright-cli admin-route-probe [options]
 
 Behavior:
-  First tries the fast backend login check. If the backend reports
-  captchaEnabled=true, automatically falls back to
-  test-cli/scripts/captcha_login.mjs for Redis-seeded captcha login.
+  Uses Redis-seeded captcha login via test-cli/scripts/captcha_login.mjs
+  to acquire a real backend token before probing protected routes.
 
 Options:
   --frontend-origin <origin>

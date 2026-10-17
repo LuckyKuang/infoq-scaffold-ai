@@ -68,7 +68,7 @@ check pass.
 
 Use these entry points for the matching work:
 
-- Backend tests, login, and API smoke: `tools/verify`
+- Backend tests and API smoke: `tools/verify`
 - Local deployment and readiness smoke: `deploy-cli` (`skills/deploy-cli/`)
 - Frontend unit/lint/build and local admin stack: `test-cli`
 - Captcha login and admin E2E: `test-cli`

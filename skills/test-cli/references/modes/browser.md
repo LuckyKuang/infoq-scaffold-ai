@@ -44,7 +44,7 @@ pnpm --dir skills/test-cli/scripts run playwright-cli flow --url "https://exampl
 
 ### 3. 管理端受保护路由验证
 
-该命令是快速路由探测。它会先通过 `tools/verify` 的无验证码快路径获取 token；如果后端明确返回 `captchaEnabled=true`，会自动调用 `test-cli/scripts/captcha_login.mjs` 走 `/auth/code` + Redis 种子答案 + `/auth/login` 获取真实 token。完整真实验证码路由矩阵和 CRUD E2E 仍使用 `test-cli`。
+该命令是快速路由探测。它直接调用 `test-cli/scripts/captcha_login.mjs`，走 `/auth/code` + Redis 种子答案 + `/auth/login` 获取真实 token。完整验证码路由矩阵和 CRUD E2E 仍使用 `test-cli`。
 
 先只列出后端真实返回路由：
 
@@ -60,8 +60,7 @@ pnpm --dir skills/test-cli/scripts run playwright-cli admin-route-probe --fronte
 
 该命令会：
 
-1. 通过 `tools/verify/login_check.mjs` 获取 backend token。
-2. 若检测到 `captchaEnabled=true`，自动调用 `skills/test-cli/scripts/captcha_login.mjs --print-token` 获取真实验证码 token，并把证据写入 `tmp/test-cli/e2e/captcha-login/`。
+1. 直接调用 `skills/test-cli/scripts/captcha_login.mjs --print-token`，通过 Redis 种子答案获取真实 token，并把证据写入 `tmp/test-cli/e2e/captcha-login/`。
 3. 在页面加载前写入 `Admin-Token`。
 4. 打开目标前端路由。
 5. 输出截图与 console 日志路径。

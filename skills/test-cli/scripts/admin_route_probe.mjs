@@ -6,7 +6,6 @@ import {resolveRepoRoot} from '../../../tools/lib/skill_runtime.mjs';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolveRepoRoot(scriptDir);
-const loginScript = path.join(repoRoot, 'skills', 'tools/verify', 'scripts', 'login_check.mjs');
 const captchaLoginScript = path.join(repoRoot, 'skills', 'test-cli', 'scripts', 'captcha_login.mjs');
 
 function formatTimestamp(date = new Date()) {
@@ -81,32 +80,6 @@ function parseTokenOutput(output, label) {
   return token;
 }
 
-function isCaptchaEnabledFailure(output) {
-  const normalized = String(output || '').toLowerCase();
-  return (
-    output.includes('captchaEnabled=true') ||
-    output.includes('captchaEnabled = true') ||
-    normalized.includes('captcha enabled') ||
-    normalized.includes('real captcha login') ||
-    normalized.includes('use test-cli')
-  );
-}
-
-function runFastLoginCheck({backendUrl, clientId, username, password}) {
-  return spawnSync(process.execPath, [loginScript], {
-    cwd: repoRoot,
-    env: {
-      ...process.env,
-      BASE_URL: backendUrl,
-      CLIENT_ID: clientId,
-      USERNAME: username,
-      PASSWORD: password,
-      PRINT_TOKEN: '1'
-    },
-    encoding: 'utf8'
-  });
-}
-
 function runCaptchaLogin({backendUrl, clientId, username, password}) {
   const runId = `admin-route-probe-${formatTimestamp()}-${process.pid}`;
   const args = [
@@ -143,30 +116,17 @@ function acquireToken({
   username = '',
   password = ''
 }) {
-  const fastResult = runFastLoginCheck({backendUrl, clientId, username, password});
-  const fastOutput = collectProcessOutput(fastResult);
-
-  if (fastResult.status === 0) {
-    return parseTokenOutput(fastOutput, 'Login check');
-  }
-
-  if (!isCaptchaEnabledFailure(fastOutput)) {
-    throw new Error(
-      `Failed to acquire admin token from ${backendUrl}. Ensure backend is reachable and credentials are valid.\n${fastOutput}`
-    );
-  }
-
-  console.log('[admin-probe] fast login check reported captchaEnabled=true; falling back to Redis-seeded captcha login.');
-  const {result: captchaResult, runId} = runCaptchaLogin({backendUrl, clientId, username, password});
-  const captchaOutput = collectProcessOutput(captchaResult);
-  if (captchaResult.status !== 0) {
+  console.log('[admin-probe] acquiring admin token with Redis-seeded captcha login.');
+  const {result, runId} = runCaptchaLogin({backendUrl, clientId, username, password});
+  const output = collectProcessOutput(result);
+  if (result.status !== 0) {
     throw new Error(
       `Failed to acquire admin token from ${backendUrl} with Redis-seeded captcha login. Evidence run id: ${runId}\n` +
-      `Fast login output:\n${fastOutput}\n\nCaptcha login output:\n${captchaOutput}`
+      `Captcha login output:\n${output}`
     );
   }
-  console.log(`[admin-probe] Seeded captcha login evidence: tmp/test-cli/e2e/captcha-login/${runId}/`);
-  return parseTokenOutput(captchaOutput, 'Captcha login');
+  console.log(`[admin-probe] seeded captcha login evidence: tmp/test-cli/e2e/captcha-login/${runId}/`);
+  return parseTokenOutput(output, 'Captcha login');
 }
 
 async function fetchRoutes(backendUrl, clientId, token) {

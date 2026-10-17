@@ -71,7 +71,7 @@ pnpm --dir skills/test-cli/scripts run playwright-cli admin-route-probe --fronte
 pnpm --dir skills/test-cli/scripts run playwright-cli admin-route-probe --frontend-origin "http://127.0.0.1:5174" --route "/index"
 ```
 
-4. `admin-route-probe` 会先走快速 token 获取；若后端返回 `captchaEnabled=true`，会自动调用 `test-cli/scripts/captcha_login.mjs` 写入种子答案并获取 token。若要覆盖完整真实验证码路由矩阵，请改用 `test-cli`。
+4. `admin-route-probe` 直接调用 `test-cli/scripts/captcha_login.mjs`，通过 Redis 种子答案获取 token。若要覆盖完整验证码路由矩阵，请改用 `test-cli`。
 5. 只有在需要临时交互探索或定位器发现时，才改用 Playwright MCP。
 
 ## Docker 部署验证模式

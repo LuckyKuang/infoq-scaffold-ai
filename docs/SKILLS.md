@@ -151,14 +151,13 @@ SQL、数据库、Redis、数据修复、迁移、测试数据维护和 API/UI/D
 - 新增、修改、删除表结构或初始化数据，只能新增 `sql/infoq_scaffold_update_YYYYMMDD.sql` 增量脚本。
 - 数据写入前必须先列出环境、目标表/key/ID、筛选条件、影响范围、幂等性、回滚脚本和验证查询。
 - 共享环境默认只读；生产或共享环境数据变更、SQL 迁移和批量修复必须联动 `docs/DELIVERY-WORKFLOW.md`。
-- 管理端页面操作与权限巡检归 `test-cli` 的页面运维门禁（`references/ops/page-ops-guardrails.md`）；后端接口、登录和运行态验证归 `tools/verify`。
+- 管理端页面操作与权限巡检归 `test-cli` 的页面运维门禁（`references/ops/page-ops-guardrails.md`）；后端接口与运行态验证归 `tools/verify`，登录/鉴权验证归 `test-cli`。
 
 ### 8.4 后端验证（tools/verify）
 
-后端单测、Mapper XML、登录链路、HTTP smoke、WebSocket cluster smoke 统一使用 `tools/verify`。
+后端单测、Mapper XML、HTTP smoke、WebSocket cluster smoke 统一使用 `tools/verify`；登录/鉴权验证统一使用 `test-cli` 的 `captcha_login.mjs`（Redis 种子答案），不再维护独立登录脚本。
 
 ```bash
-node tools/verify/verify_login.mjs
 node tools/verify/run_smoke.mjs
 node tools/verify/run_cluster_smoke.mjs
 ```
@@ -249,7 +248,8 @@ node skills/release-cli/scripts/test_bump_version.mjs
 
 | 域 | 入口 | SOP |
 | --- | --- | --- |
-| backend 单测 / 登录 / smoke / 集群 | `tools/verify/*.mjs` | `tools/verify/README.md` |
+| backend 单测 / smoke / 集群 | `tools/verify/*.mjs` | `tools/verify/README.md` |
+| backend 登录 / 鉴权 | `skills/test-cli/scripts/captcha_login.mjs` | `docs/TESTING.md` 第 5 节 |
 | OpenSpec 结构校验与 change 初始化 | `tools/openspec_check.mjs`、`tools/init_change_dir.mjs` | `docs/OPENSPEC-WORKFLOW.md` |
 | SQL / 数据修复 / 迁移 / 一致性核对 | 无脚本（只读 MCP + SQL 增量脚本） | `docs/DATA-OPS.md` |
 | 交付门禁 / Acceptance Contract / UI 四阶段 / 插件治理 | `tools/generate_plugin_plan.mjs` | `docs/DELIVERY-WORKFLOW.md`、`docs/UI-WORKFLOW.md`、`docs/SKILLS.md` §9 |
