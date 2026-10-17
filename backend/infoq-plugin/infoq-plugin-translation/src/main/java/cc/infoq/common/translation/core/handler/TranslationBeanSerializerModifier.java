@@ -1,29 +1,29 @@
 package cc.infoq.common.translation.core.handler;
 
-import com.fasterxml.jackson.databind.BeanDescription;
-import com.fasterxml.jackson.databind.SerializationConfig;
-import com.fasterxml.jackson.databind.ser.BeanPropertyWriter;
-import com.fasterxml.jackson.databind.ser.BeanSerializerModifier;
+import tools.jackson.databind.BeanDescription;
+import tools.jackson.databind.SerializationConfig;
+import tools.jackson.databind.ValueSerializer;
+import tools.jackson.databind.ser.BeanPropertyWriter;
+import tools.jackson.databind.ser.ValueSerializerModifier;
 
 import java.util.List;
 
 /**
- * Bean 序列化修改器 解决 Null 被单独处理问题
+ * Bean 序列化修改器，解决 Translation 字段的 null 值单独处理问题。
  *
  * @author Pontus
  */
-public class TranslationBeanSerializerModifier extends BeanSerializerModifier {
+public class TranslationBeanSerializerModifier extends ValueSerializerModifier {
 
     @Override
-    public List<BeanPropertyWriter> changeProperties(SerializationConfig config, BeanDescription beanDesc,
+    public List<BeanPropertyWriter> changeProperties(SerializationConfig config, BeanDescription.Supplier beanDesc,
                                                      List<BeanPropertyWriter> beanProperties) {
         for (BeanPropertyWriter writer : beanProperties) {
-            // 如果序列化器为 TranslationHandler 的话 将 Null 值也交给他处理
-            if (writer.getSerializer() instanceof TranslationHandler serializer) {
-                writer.assignNullSerializer(serializer);
+            ValueSerializer<Object> serializer = writer.getSerializer();
+            if (serializer instanceof TranslationHandler translationHandler) {
+                writer.assignNullSerializer(translationHandler);
             }
         }
         return beanProperties;
     }
-
 }

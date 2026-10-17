@@ -27,7 +27,7 @@ infoq-scaffold-ai
 
 | 层次 | 版本与组件 |
 | --- | --- |
-| 后端 | Spring Boot 4.1.1、JDK 21、MyBatis-Plus 3.5.17、Spring Security、Redisson、Jackson 3（MVC）与 Jackson 2 兼容层 |
+| 后端 | Spring Boot 4.1.1、JDK 21、MyBatis-Plus 3.5.17、Spring Security、Redisson、Jackson 3 |
 | Web 容器 | Spring Boot 官方默认 Tomcat |
 | Vue 管理端 | Vue 3.5.35、Vite 8.0.16、Element Plus 2.14.1、Pinia、Vitest 4.1.8 |
 | React 管理端 | React 19.2.7、Vite 8.0.16、Ant Design 6.4.3、Zustand、Vitest 4.1.8 |
@@ -150,11 +150,13 @@ profile 约定：
 
 插件治理的详细矩阵见 [Skills 与插件](./SKILLS.md) 的插件目录章节。
 
+> Springdoc/Swagger 的 `swagger-core` 仍传递 Jackson 2，仅用于 OpenAPI 文档生成；业务 JSON、Redis 和 MVC 统一使用 Jackson 3。
+
 ## 8. 当前默认的基础安全与校验策略
 
 从 `application.yml` 和公共代码可确认：
 
-- `spring.jackson.deserialization.fail_on_unknown_properties = true`，MVC Jackson 3 遇到未知字段会显式失败；业务 Jackson 2 兼容层由 `infoq-plugin-jackson` 单独配置。
+- `spring.jackson.deserialization.fail_on_unknown_properties = true`，Jackson 3 遇到未知字段会显式失败，统一规则由 `infoq-plugin-jackson` 配置。
 - `xss.enabled = true`，默认启用 XSS 过滤。
 - `captcha.enable = true`，默认开启验证码。
 - `api-decrypt.enabled = true`，默认开启接口加密。

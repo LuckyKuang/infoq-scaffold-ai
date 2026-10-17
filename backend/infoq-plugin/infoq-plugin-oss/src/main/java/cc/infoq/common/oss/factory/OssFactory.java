@@ -9,11 +9,11 @@ import cc.infoq.common.oss.properties.OssProperties;
 import cc.infoq.common.redis.utils.CacheUtils;
 import cc.infoq.common.redis.utils.RedisUtils;
 import cc.infoq.common.utils.StringUtils;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -87,7 +87,7 @@ public class OssFactory {
             ObjectNode objectNode = (ObjectNode) rootNode;
             objectNode.remove(LEGACY_CONFIG_FIELDS);
             return objectNode.toString();
-        } catch (IOException e) {
+        } catch (JacksonException e) {
             throw new RuntimeException(e);
         }
     }

@@ -1,6 +1,6 @@
 package cc.infoq.common.elasticsearch.config;
 
-import co.elastic.clients.json.jackson.JacksonJsonpMapper;
+import co.elastic.clients.json.jackson.Jackson3JsonpMapper;
 import co.elastic.clients.transport.rest_client.RestClientTransport;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
@@ -30,7 +30,7 @@ final class ElasticsearchClientFactory {
             builder.setHttpClientConfigCallback(httpClient -> httpClient
                 .setDefaultCredentialsProvider(credentials(properties)));
         }
-        RestClientTransport transport = new RestClientTransport(builder.build(), new JacksonJsonpMapper());
+        RestClientTransport transport = new RestClientTransport(builder.build(), new Jackson3JsonpMapper());
         return new ElasticsearchClientResources(transport);
     }
 

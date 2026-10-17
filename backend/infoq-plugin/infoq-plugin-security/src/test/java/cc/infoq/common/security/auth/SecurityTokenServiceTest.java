@@ -2,7 +2,7 @@ package cc.infoq.common.security.auth;
 
 import cc.infoq.common.domain.dto.RoleDTO;
 import cc.infoq.common.domain.model.LoginUser;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;

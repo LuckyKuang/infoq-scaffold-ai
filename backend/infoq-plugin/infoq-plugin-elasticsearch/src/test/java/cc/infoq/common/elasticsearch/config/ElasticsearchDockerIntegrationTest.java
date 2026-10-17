@@ -5,8 +5,8 @@ import cc.infoq.common.elasticsearch.ElasticsearchIndexDefinition;
 import cc.infoq.common.elasticsearch.ElasticsearchOperationException;
 import cc.infoq.common.elasticsearch.ElasticsearchUnavailableException;
 import cc.infoq.common.elasticsearch.service.ElasticsearchPluginMonitor;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Tag;
@@ -173,7 +173,7 @@ class ElasticsearchDockerIntegrationTest {
             "Single-node Elasticsearch health must be yellow or green");
         JsonNode nodes = get(rest, "/_nodes/stats/jvm,fs").path("nodes");
         assertFalse(nodes.isEmpty(), "Elasticsearch node stats must contain the running node");
-        JsonNode node = nodes.elements().next();
+        JsonNode node = nodes.values().iterator().next();
         assertTrue(node.path("jvm").path("mem").path("heap_max_in_bytes").asLong() >= 1024L * 1024 * 1024,
             "Elasticsearch must expose the configured 1 GiB heap");
         assertTrue(node.path("fs").path("total").path("available_in_bytes").asLong() >= 5L * 1024 * 1024 * 1024,

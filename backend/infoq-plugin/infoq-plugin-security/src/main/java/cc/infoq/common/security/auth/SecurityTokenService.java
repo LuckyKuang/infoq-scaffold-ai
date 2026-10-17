@@ -2,13 +2,12 @@ package cc.infoq.common.security.auth;
 
 import cc.infoq.common.domain.model.LoginUser;
 import cc.infoq.common.utils.StringUtils;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -242,7 +241,7 @@ public class SecurityTokenService {
     private String writeJson(Map<String, Object> value) {
         try {
             return objectMapper.writeValueAsString(value);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new SecurityAuthenticationException("JWT JSON serialization failed", e);
         }
     }
@@ -252,7 +251,7 @@ public class SecurityTokenService {
             byte[] decoded = Base64.getUrlDecoder().decode(encoded);
             return objectMapper.readValue(decoded, new TypeReference<>() {
             });
-        } catch (IllegalArgumentException | IOException e) {
+        } catch (IllegalArgumentException | JacksonException e) {
             throw new SecurityAuthenticationException("JWT JSON parsing failed", e);
         }
     }

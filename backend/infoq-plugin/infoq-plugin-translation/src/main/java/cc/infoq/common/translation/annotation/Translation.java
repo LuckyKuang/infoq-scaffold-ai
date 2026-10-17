@@ -2,7 +2,7 @@ package cc.infoq.common.translation.annotation;
 
 import cc.infoq.common.translation.core.handler.TranslationHandler;
 import com.fasterxml.jackson.annotation.JacksonAnnotationsInside;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import tools.jackson.databind.annotation.JsonSerialize;
 
 import java.lang.annotation.*;
 

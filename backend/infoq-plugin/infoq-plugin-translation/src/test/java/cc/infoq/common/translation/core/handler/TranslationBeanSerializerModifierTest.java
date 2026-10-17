@@ -1,9 +1,9 @@
 package cc.infoq.common.translation.core.handler;
 
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.ser.BeanPropertyWriter;
-import com.fasterxml.jackson.core.JsonGenerator;
+import tools.jackson.databind.ValueSerializer;
+import tools.jackson.databind.SerializationContext;
+import tools.jackson.databind.ser.BeanPropertyWriter;
+import tools.jackson.core.JsonGenerator;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -29,9 +29,9 @@ class TranslationBeanSerializerModifierTest {
 
         BeanPropertyWriter translationWriter = mock(BeanPropertyWriter.class);
         BeanPropertyWriter normalWriter = mock(BeanPropertyWriter.class);
-        JsonSerializer<Object> normalSerializer = new JsonSerializer<>() {
+        ValueSerializer<Object> normalSerializer = new ValueSerializer<>() {
             @Override
-            public void serialize(Object value, JsonGenerator gen, SerializerProvider serializers) {
+            public void serialize(Object value, JsonGenerator gen, SerializationContext context) {
                 // no-op serializer for testing wiring behavior only
             }
         };

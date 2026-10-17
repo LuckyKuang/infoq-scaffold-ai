@@ -49,3 +49,8 @@
 
 - 只提供文档能力，不负责鉴权、业务路由或接口实现。
 
+
+## 依赖边界
+
+- Springdoc/Swagger `swagger-core` 仍传递 Jackson 2，仅用于 OpenAPI 文档生成。
+- 业务 JSON、Redis 和 Spring MVC 统一使用 Jackson 3；不要在本模块外新增 Jackson 2 业务依赖。

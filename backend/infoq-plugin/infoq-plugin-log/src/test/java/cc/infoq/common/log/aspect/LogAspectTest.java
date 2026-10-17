@@ -7,7 +7,7 @@ import cc.infoq.common.log.event.OperLogEvent;
 import cc.infoq.common.security.auth.LoginUserContext;
 import cc.infoq.common.utils.ServletUtils;
 import cc.infoq.common.utils.SpringUtils;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.aspectj.lang.JoinPoint;

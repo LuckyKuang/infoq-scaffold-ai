@@ -15,7 +15,7 @@ import cc.infoq.system.domain.vo.SysConfigVo;
 import cc.infoq.system.mapper.SysConfigMapper;
 import cn.hutool.core.lang.Dict;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import io.github.linpeilie.Converter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

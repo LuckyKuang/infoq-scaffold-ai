@@ -5,32 +5,30 @@ import cc.infoq.common.sensitive.core.SensitiveService;
 import cc.infoq.common.sensitive.core.SensitiveStrategy;
 import cc.infoq.common.utils.SpringUtils;
 import cn.hutool.core.util.ObjectUtil;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.BeanProperty;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.ser.ContextualSerializer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeansException;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.databind.BeanProperty;
+import tools.jackson.databind.SerializationContext;
+import tools.jackson.databind.ValueSerializer;
 
-import java.io.IOException;
 import java.util.Objects;
 
 /**
- * 数据脱敏json序列化工具
+ * 数据脱敏 JSON 序列化工具。
  *
  * @author Pontus
  */
 @Slf4j
-public class SensitiveHandler extends JsonSerializer<String> implements ContextualSerializer {
+public class SensitiveHandler extends ValueSerializer<String> {
 
     private SensitiveStrategy strategy;
     private String[] roleKey;
     private String[] perms;
 
     @Override
-    public void serialize(String value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
+    public void serialize(String value, JsonGenerator gen, SerializationContext context) throws JacksonException {
         try {
             SensitiveService sensitiveService = SpringUtils.getBean(SensitiveService.class);
             if (ObjectUtil.isNotNull(sensitiveService) && sensitiveService.isSensitive(roleKey, perms)) {
@@ -45,7 +43,7 @@ public class SensitiveHandler extends JsonSerializer<String> implements Contextu
     }
 
     @Override
-    public JsonSerializer<?> createContextual(SerializerProvider prov, BeanProperty property) throws JsonMappingException {
+    public ValueSerializer<?> createContextual(SerializationContext context, BeanProperty property) {
         Sensitive annotation = property.getAnnotation(Sensitive.class);
         if (Objects.nonNull(annotation) && Objects.equals(String.class, property.getType().getRawClass())) {
             this.strategy = annotation.strategy();
@@ -53,6 +51,6 @@ public class SensitiveHandler extends JsonSerializer<String> implements Contextu
             this.perms = annotation.perms();
             return this;
         }
-        return prov.findValueSerializer(property.getType(), property);
+        return context.findValueSerializer(property.getType());
     }
 }

@@ -5,7 +5,9 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import tools.jackson.databind.json.JsonMapper;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -43,6 +45,24 @@ class Jackson3CustomizerTest {
             "oversized primitive long must serialize as string, actual: " + oversized);
     }
 
+    @Test
+    @DisplayName("customize: BigDecimal and LocalDateTime use the unified wire format")
+    void customizeShouldUseUnifiedDecimalAndDateTimeFormat() {
+        Jackson3Customizer customizer = new Jackson3Customizer();
+        JsonMapper.Builder builder = JsonMapper.builder();
+        customizer.customize(builder);
+        JsonMapper mapper = builder.build();
+
+        String json = mapper.writeValueAsString(new FormatPayload(
+            new BigDecimal("123.45"), LocalDateTime.of(2026, 3, 8, 12, 34, 56)));
+
+        assertTrue(json.contains("\"amount\":\"123.45\""), "actual: " + json);
+        assertTrue(json.contains("\"at\":\"2026-03-08 12:34:56\""), "actual: " + json);
+    }
+
     record Payload(Long boxId, long plainId, BigInteger bigValue, Integer small) {
+    }
+
+    record FormatPayload(BigDecimal amount, LocalDateTime at) {
     }
 }

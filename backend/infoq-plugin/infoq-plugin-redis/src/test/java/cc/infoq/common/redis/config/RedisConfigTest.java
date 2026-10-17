@@ -8,6 +8,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
+import io.netty.buffer.ByteBuf;
+import org.redisson.client.codec.Codec;
 import org.redisson.config.ClusterServersConfig;
 import org.redisson.config.Config;
 import org.redisson.config.ReadMode;
@@ -51,6 +53,51 @@ class RedisConfigTest {
         assertInstanceOf(KeyPrefixHandler.class, config.getNameMapper());
         assertEquals(true, config.isTcpKeepAlive());
         assertEquals(true, config.isTcpNoDelay());
+    }
+
+    @Test
+    @DisplayName("redissonCustomizer: Jackson 3 codec should round-trip typed values")
+    void redissonCustomizerShouldUseJackson3CodecForRoundTrip() throws Exception {
+        RedisConfig redisConfig = new RedisConfig();
+        ReflectionTestUtils.setField(redisConfig, "redissonProperties", buildSingleServerProperties());
+
+        Config config = new Config();
+        try (MockedStatic<SpringUtils> springUtils = mockStatic(SpringUtils.class)) {
+            springUtils.when(SpringUtils::isVirtual).thenReturn(false);
+            redisConfig.redissonCustomizer().customize(config);
+        }
+
+        Codec codec = config.getCodec();
+        ByteBuf encoded = codec.getValueEncoder().encode(new CodecPayload("alice", 2));
+        try {
+            Object decoded = codec.getValueDecoder().decode(encoded, null);
+            assertInstanceOf(CodecPayload.class, decoded);
+            assertEquals("alice", ((CodecPayload) decoded).getName());
+            assertEquals(2, ((CodecPayload) decoded).getCount());
+        } finally {
+            encoded.release();
+        }
+    }
+
+    static class CodecPayload {
+        private String name;
+        private int count;
+
+        CodecPayload() {
+        }
+
+        CodecPayload(String name, int count) {
+            this.name = name;
+            this.count = count;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public int getCount() {
+            return count;
+        }
     }
 
     @Test

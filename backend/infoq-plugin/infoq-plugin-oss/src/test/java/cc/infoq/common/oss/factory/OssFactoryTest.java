@@ -5,7 +5,7 @@ import cc.infoq.common.oss.core.OssClient;
 import cc.infoq.common.oss.exception.OssException;
 import cc.infoq.common.oss.properties.OssProperties;
 import cc.infoq.common.utils.SpringUtils;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.*;
 import org.mockito.MockedConstruction;
 import org.redisson.api.RBucket;

@@ -2,7 +2,7 @@ package cc.infoq.common.security.handler;
 
 import cc.infoq.common.constant.HttpStatus;
 import cc.infoq.common.domain.ApiResult;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;

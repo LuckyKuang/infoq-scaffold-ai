@@ -4,30 +4,29 @@ import cc.infoq.common.translation.annotation.TranslationType;
 import cc.infoq.common.translation.core.TranslationInterface;
 import cc.infoq.common.translation.core.handler.TranslationBeanSerializerModifier;
 import cc.infoq.common.translation.core.handler.TranslationHandler;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.jackson.autoconfigure.JsonMapperBuilderCustomizer;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.module.SimpleModule;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
- * 翻译模块配置类
+ * 翻译模块配置类。
  *
  * @author Pontus
  */
 @Slf4j
 @AutoConfiguration
-public class TranslationConfig {
+public class TranslationConfig implements JsonMapperBuilderCustomizer {
 
     @Autowired
     private List<TranslationInterface<?>> list;
-
-    @Autowired
-    private ObjectMapper objectMapper;
 
     @PostConstruct
     public void init() {
@@ -41,10 +40,12 @@ public class TranslationConfig {
             }
         }
         TranslationHandler.TRANSLATION_MAPPER.putAll(map);
-        // 设置 Bean 序列化修改器
-        objectMapper.setSerializerFactory(
-            objectMapper.getSerializerFactory()
-                .withSerializerModifier(new TranslationBeanSerializerModifier()));
     }
 
+    @Override
+    public void customize(JsonMapper.Builder builder) {
+        SimpleModule module = new SimpleModule("infoqTranslation");
+        module.setSerializerModifier(new TranslationBeanSerializerModifier());
+        builder.addModule(module);
+    }
 }

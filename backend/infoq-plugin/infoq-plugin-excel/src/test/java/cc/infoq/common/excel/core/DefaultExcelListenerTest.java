@@ -6,7 +6,7 @@ import cn.idev.excel.exception.ExcelAnalysisException;
 import cn.idev.excel.exception.ExcelDataConvertException;
 import cn.idev.excel.metadata.data.ReadCellData;
 import cn.idev.excel.read.metadata.holder.ReadRowHolder;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import org.junit.jupiter.api.BeforeAll;

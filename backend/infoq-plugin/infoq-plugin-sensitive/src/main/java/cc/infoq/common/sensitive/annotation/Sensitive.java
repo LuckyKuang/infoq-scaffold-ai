@@ -3,7 +3,7 @@ package cc.infoq.common.sensitive.annotation;
 import cc.infoq.common.sensitive.core.SensitiveStrategy;
 import cc.infoq.common.sensitive.handler.SensitiveHandler;
 import com.fasterxml.jackson.annotation.JacksonAnnotationsInside;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import tools.jackson.databind.annotation.JsonSerialize;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

@@ -9,7 +9,6 @@ import java.math.BigInteger;
 /**
  * Jackson 3 路径的大数保护：超出 JS 安全整数范围的整数序列化为字符串，
  * 避免 snowflake 主键在浏览器端被 JSON.parse 舍入后错位。
- * 阈值与 Jackson 2 版 {@link BigNumberSerializer} 保持一致。
  *
  * @author Pontus
  */

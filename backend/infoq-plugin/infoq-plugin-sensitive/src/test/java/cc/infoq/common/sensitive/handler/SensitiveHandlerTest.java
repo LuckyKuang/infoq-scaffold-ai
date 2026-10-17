@@ -4,12 +4,12 @@ import cc.infoq.common.sensitive.annotation.Sensitive;
 import cc.infoq.common.sensitive.core.SensitiveService;
 import cc.infoq.common.sensitive.core.SensitiveStrategy;
 import cc.infoq.common.utils.SpringUtils;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.BeanProperty;
-import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.type.TypeFactory;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.databind.BeanProperty;
+import tools.jackson.databind.JavaType;
+import tools.jackson.databind.ValueSerializer;
+import tools.jackson.databind.SerializationContext;
+import tools.jackson.databind.type.TypeFactory;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -34,7 +34,7 @@ class SensitiveHandlerTest {
         initContext(sensitiveService);
 
         SensitiveHandler handler = createConfiguredHandler();
-        com.fasterxml.jackson.core.JsonGenerator gen = mock(com.fasterxml.jackson.core.JsonGenerator.class);
+        tools.jackson.core.JsonGenerator gen = mock(tools.jackson.core.JsonGenerator.class);
 
         handler.serialize("13800138000", gen, null);
 
@@ -50,7 +50,7 @@ class SensitiveHandlerTest {
         initContext(sensitiveService);
 
         SensitiveHandler handler = createConfiguredHandler();
-        com.fasterxml.jackson.core.JsonGenerator gen = mock(com.fasterxml.jackson.core.JsonGenerator.class);
+        tools.jackson.core.JsonGenerator gen = mock(tools.jackson.core.JsonGenerator.class);
 
         handler.serialize("13800138000", gen, null);
 
@@ -62,7 +62,7 @@ class SensitiveHandlerTest {
     void serializeShouldFallbackToRawWhenBeanMissing() throws Exception {
         initContext(null);
         SensitiveHandler handler = createConfiguredHandler();
-        com.fasterxml.jackson.core.JsonGenerator gen = mock(com.fasterxml.jackson.core.JsonGenerator.class);
+        tools.jackson.core.JsonGenerator gen = mock(tools.jackson.core.JsonGenerator.class);
 
         handler.serialize("13800138000", gen, null);
 
@@ -73,37 +73,37 @@ class SensitiveHandlerTest {
     @DisplayName("createContextual: should delegate to provider when annotation is absent")
     void createContextualShouldDelegateWhenAnnotationAbsent() throws Exception {
         SensitiveHandler handler = new SensitiveHandler();
-        SerializerProvider provider = mock(SerializerProvider.class);
+        SerializationContext provider = mock(SerializationContext.class);
         BeanProperty property = mock(BeanProperty.class);
-        JavaType javaType = TypeFactory.defaultInstance().constructType(String.class);
-        JsonSerializer<Object> fallback = mockJsonSerializer();
+        JavaType javaType = TypeFactory.createDefaultInstance().constructType(String.class);
+        ValueSerializer<Object> fallback = mockValueSerializer();
 
         when(property.getAnnotation(Sensitive.class)).thenReturn(null);
         when(property.getType()).thenReturn(javaType);
-        when(provider.findValueSerializer(javaType, property)).thenReturn(fallback);
+        when(provider.findValueSerializer(javaType)).thenReturn(fallback);
 
-        JsonSerializer<?> serializer = handler.createContextual(provider, property);
+        ValueSerializer<?> serializer = handler.createContextual(provider, property);
         assertSame(fallback, serializer);
     }
 
     private static SensitiveHandler createConfiguredHandler() throws Exception {
         SensitiveHandler handler = new SensitiveHandler();
-        SerializerProvider provider = mock(SerializerProvider.class);
+        SerializationContext provider = mock(SerializationContext.class);
         BeanProperty property = mock(BeanProperty.class);
-        JavaType javaType = TypeFactory.defaultInstance().constructType(String.class);
+        JavaType javaType = TypeFactory.createDefaultInstance().constructType(String.class);
         Sensitive annotation = DemoBean.class.getDeclaredField("phone").getAnnotation(Sensitive.class);
 
         when(property.getAnnotation(Sensitive.class)).thenReturn(annotation);
         when(property.getType()).thenReturn(javaType);
-        JsonSerializer<?> serializer = handler.createContextual(provider, property);
+        ValueSerializer<?> serializer = handler.createContextual(provider, property);
         assertSame(handler, serializer);
         return handler;
     }
 
-    private static JsonSerializer<Object> mockJsonSerializer() {
-        return new JsonSerializer<>() {
+    private static ValueSerializer<Object> mockValueSerializer() {
+        return new ValueSerializer<>() {
             @Override
-            public void serialize(Object value, JsonGenerator gen, SerializerProvider serializers) {
+            public void serialize(Object value, JsonGenerator gen, SerializationContext context) {
                 // no-op serializer for testing fallback wiring only
             }
         };

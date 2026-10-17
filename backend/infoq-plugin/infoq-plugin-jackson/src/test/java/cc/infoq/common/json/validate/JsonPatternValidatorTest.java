@@ -1,7 +1,7 @@
 package cc.infoq.common.json.validate;
 
 import cc.infoq.common.utils.SpringUtils;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;

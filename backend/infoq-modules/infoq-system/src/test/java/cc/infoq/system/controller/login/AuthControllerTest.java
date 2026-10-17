@@ -10,7 +10,7 @@ import cc.infoq.system.domain.vo.SysClientVo;
 import cc.infoq.system.service.*;
 import cc.infoq.system.support.plugin.OptionalMailHelper;
 import cc.infoq.system.support.plugin.OptionalSseHelper;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import org.junit.jupiter.api.AfterEach;

@@ -5,8 +5,8 @@ import cc.infoq.common.exception.ServiceException;
 import cc.infoq.common.exception.SseException;
 import cc.infoq.common.exception.base.BaseException;
 import cc.infoq.common.utils.SpringUtils;
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.exc.StreamReadException;
+import tools.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolation;
@@ -120,7 +120,7 @@ class GlobalExceptionHandlerTest {
         HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
         Mockito.when(request.getRequestURI()).thenReturn("/api/body");
 
-        ApiResult<Void> jsonParse = handler.handleJsonParseException(new JsonParseException(null, "invalid json"), request);
+        ApiResult<Void> jsonParse = handler.handleStreamReadException(new StreamReadException("invalid json"), request);
         HttpInputMessage httpInputMessage = Mockito.mock(HttpInputMessage.class);
         ApiResult<Void> bodyParse = handler.handleHttpMessageNotReadableException(
             new HttpMessageNotReadableException("bad body", httpInputMessage), request);

@@ -21,13 +21,7 @@
             <artifactId>infoq-core-common</artifactId>
         </dependency>
 
-        <!-- JSON工具类 -->
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-        </dependency>
-
-        <!-- Jackson 3（Spring Boot 4 MVC 默认 JsonMapper）与大数序列化 customizer -->
+        <!-- Jackson 3：Spring Boot 4 MVC 默认 JsonMapper，也是业务 JSON 的唯一实现 -->
         <dependency>
             <groupId>tools.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
@@ -35,11 +29,6 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-jackson</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>com.fasterxml.jackson.datatype</groupId>
-            <artifactId>jackson-datatype-jsr310</artifactId>
         </dependency>
 
     </dependencies>

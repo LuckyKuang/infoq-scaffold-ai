@@ -14,7 +14,7 @@ import cc.infoq.system.domain.vo.SysOssConfigVo;
 import cc.infoq.system.mapper.SysOssConfigMapper;
 import com.baomidou.mybatisplus.core.metadata.TableInfoHelper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import io.github.linpeilie.Converter;
 import org.apache.ibatis.builder.MapperBuilderAssistant;
 import org.apache.ibatis.session.Configuration;

@@ -10,7 +10,7 @@ import co.elastic.clients.elasticsearch.indices.IndexSettings;
 import co.elastic.clients.elasticsearch.indices.PutAliasRequest;
 import co.elastic.clients.elasticsearch.indices.UpdateAliasesRequest;
 import co.elastic.clients.json.JsonpUtils;
-import co.elastic.clients.json.jackson.JacksonJsonpMapper;
+import co.elastic.clients.json.jackson.Jackson3JsonpMapper;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -20,7 +20,7 @@ import java.util.Objects;
 
 class DefaultElasticsearchOperations implements ElasticsearchOperations {
 
-    private static final JacksonJsonpMapper JSON_MAPPER = new JacksonJsonpMapper();
+    private static final Jackson3JsonpMapper JSON_MAPPER = new Jackson3JsonpMapper();
 
     private final ElasticsearchClientResources resources;
     private final ElasticsearchPluginMonitor monitor;

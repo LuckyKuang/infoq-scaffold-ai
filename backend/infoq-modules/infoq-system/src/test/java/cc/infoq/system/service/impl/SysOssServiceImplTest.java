@@ -17,7 +17,7 @@ import cc.infoq.system.domain.vo.SysOssVo;
 import cc.infoq.system.mapper.SysOssMapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import io.github.linpeilie.Converter;
 import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.WriteListener;

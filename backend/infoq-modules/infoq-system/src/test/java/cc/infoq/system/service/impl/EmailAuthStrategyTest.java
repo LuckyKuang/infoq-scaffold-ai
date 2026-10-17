@@ -17,7 +17,7 @@ import cc.infoq.system.listener.UserActionListener;
 import cc.infoq.system.mapper.SysUserMapper;
 import cc.infoq.system.service.AuthEmailCodeService;
 import cc.infoq.system.service.SysLoginService;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import org.junit.jupiter.api.*;

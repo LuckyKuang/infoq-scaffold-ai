@@ -91,7 +91,7 @@ flowchart TB
 | `infoq-system` | 登录、注册、验证码、系统管理、监控接口、业务服务实现 | `controller/login`、`controller/system`、`controller/monitor`、`service/impl` |
 | `infoq-core-common` | 常量、通用 DTO、异常、工具、线程池/校验/应用配置 | `common/constant/*`、`common/config/*` |
 | `infoq-core-data` | 系统实体、BO/VO、Mapper 接口、Mapper XML | `system/domain/*`、`system/mapper/*`、`resources/mapper/system/*` |
-| `plugin-jackson` | Jackson 3 MVC 大数定制、Jackson 2 业务 ObjectMapper 兼容层、JSON 工具与校验注解 | `JacksonConfig`、`Jackson3Customizer`、`JsonUtils`、`JsonPatternValidator` |
+| `plugin-jackson` | Jackson 3 大数、日期定制、JSON 工具与校验注解 | `Jackson3Customizer`、`JsonUtils`、`JsonPatternValidator` |
 | `plugin-security` | Spring Security 过滤链、JWT access token、Redis session / revocation / online index、当前用户上下文、401/403 处理 | `SpringSecurityAutoConfiguration`、`SecurityTokenService`、`CurrentUserService` |
 | `plugin-web` | Web 基础自动配置与全局异常处理 | `FilterConfig`、`ResourcesConfig`、`CaptchaConfig`、`GlobalExceptionHandler` |
 | `plugin-mybatis` | Mapper 扫描、分页、数据权限、乐观锁、填充策略 | `MybatisPlusConfig` |
@@ -109,6 +109,8 @@ flowchart TB
 | `plugin-websocket` | WebSocket 自动配置，当前配置默认关闭 | `WebSocketConfig` |
 | `plugin-mqtt` | MQTT 3.1.1/MQTT 5 条件自动配置，当前配置默认关闭 | `MqttAutoConfiguration`、`MqttClientRegistry` |
 | `plugin-elasticsearch` | Elastic Java API Client 条件自动配置，当前配置默认关闭 | `ElasticsearchAutoConfiguration`、`ElasticsearchOperations` |
+
+> `plugin-doc` 的 Springdoc/Swagger `swagger-core` 仍传递 Jackson 2，仅用于 OpenAPI 文档生成；业务 JSON、Redis 和 MVC 统一使用 Jackson 3。
 
 如果要继续确认这些职责的入口类、配置项和边界，请继续下钻到 [`../infoq-plugin/README.md`](../infoq-plugin/README.md) 与对应叶子模块 README。
 
@@ -132,7 +134,7 @@ flowchart TB
 - Web 容器使用 Tomcat（Spring Boot 4.x 默认，配置在 `application.yml`）。
 - 默认开启验证码校验（`captcha.enable=true`）。
 - `spring.profiles.active=@profiles.active@`，实际激活值由 Maven profile 注入。
-- `spring.jackson.deserialization.fail_on_unknown_properties=true`，MVC Jackson 3 对请求字段不匹配显式失败；业务 Jackson 2 兼容层在 `JacksonConfig` 中单独配置。
+- `spring.jackson.deserialization.fail_on_unknown_properties=true`，Jackson 3 对请求字段不匹配显式失败，统一规则由 `Jackson3Customizer` 配置。
 - Spring Security token：`Authorization: Bearer <token>`，通过 `security.token.secret` 外部化配置签名密钥。
 - `api-decrypt.enabled=true`，请求解密头标识是 `encrypt-key`。
 - `springdoc.api-docs.enabled=true`。

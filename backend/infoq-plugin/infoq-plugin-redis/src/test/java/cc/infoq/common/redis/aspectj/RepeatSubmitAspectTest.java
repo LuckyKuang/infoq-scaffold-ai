@@ -6,7 +6,7 @@ import cc.infoq.common.redis.annotation.RepeatSubmit;
 import cc.infoq.common.redis.utils.RedisUtils;
 import cc.infoq.common.utils.ServletUtils;
 import cc.infoq.common.utils.SpringUtils;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.aspectj.lang.JoinPoint;

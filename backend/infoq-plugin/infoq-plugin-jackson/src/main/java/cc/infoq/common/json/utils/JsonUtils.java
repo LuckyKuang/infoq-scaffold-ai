@@ -5,16 +5,15 @@ import cc.infoq.common.utils.StringUtils;
 import cn.hutool.core.lang.Dict;
 import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.ObjectUtil;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.exc.MismatchedInputException;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.exc.MismatchedInputException;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -45,7 +44,7 @@ public class JsonUtils {
         }
         try {
             return OBJECT_MAPPER.writeValueAsString(object);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new RuntimeException(e);
         }
     }
@@ -65,7 +64,7 @@ public class JsonUtils {
         }
         try {
             return OBJECT_MAPPER.readValue(text, clazz);
-        } catch (IOException e) {
+        } catch (JacksonException e) {
             throw new RuntimeException(e);
         }
     }
@@ -83,10 +82,10 @@ public class JsonUtils {
             return null;
         }
         try {
-            return OBJECT_MAPPER.copy()
-                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true)
-                .readValue(text, clazz);
-        } catch (IOException e) {
+            return OBJECT_MAPPER.readerFor(clazz)
+                .with(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+                .readValue(text);
+        } catch (JacksonException e) {
             throw new RuntimeException(e);
         }
     }
@@ -106,7 +105,7 @@ public class JsonUtils {
         }
         try {
             return OBJECT_MAPPER.readValue(bytes, clazz);
-        } catch (IOException e) {
+        } catch (JacksonException e) {
             throw new RuntimeException(e);
         }
     }
@@ -126,7 +125,7 @@ public class JsonUtils {
         }
         try {
             return OBJECT_MAPPER.readValue(text, typeReference);
-        } catch (IOException e) {
+        } catch (JacksonException e) {
             throw new RuntimeException(e);
         }
     }
@@ -147,7 +146,7 @@ public class JsonUtils {
         } catch (MismatchedInputException e) {
             // 类型不匹配说明不是json
             return null;
-        } catch (IOException e) {
+        } catch (JacksonException e) {
             throw new RuntimeException(e);
         }
     }
@@ -165,7 +164,7 @@ public class JsonUtils {
         }
         try {
             return OBJECT_MAPPER.readValue(text, OBJECT_MAPPER.getTypeFactory().constructCollectionType(List.class, Dict.class));
-        } catch (IOException e) {
+        } catch (JacksonException e) {
             throw new RuntimeException(e);
         }
     }
@@ -185,7 +184,7 @@ public class JsonUtils {
         }
         try {
             return OBJECT_MAPPER.readValue(text, OBJECT_MAPPER.getTypeFactory().constructCollectionType(List.class, clazz));
-        } catch (IOException e) {
+        } catch (JacksonException e) {
             throw new RuntimeException(e);
         }
     }

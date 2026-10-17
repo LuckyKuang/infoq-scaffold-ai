@@ -6,7 +6,7 @@ import cc.infoq.common.security.config.properties.SseProperties;
 import cc.infoq.common.security.filter.SecurityTokenAuthenticationFilter;
 import cc.infoq.common.security.handler.SecurityAccessDeniedHandler;
 import cc.infoq.common.security.handler.SecurityAuthenticationEntryPoint;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
