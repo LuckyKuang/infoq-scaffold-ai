@@ -1,18 +1,18 @@
 ---
 name: test-cli
-description: 本仓库 Web 侧自动化测试与前端运行态验证的统一 skill，覆盖通用浏览器流程与 DevTools 诊断、管理端真实验证码登录、动态路由 smoke、case matrix、CRUD E2E、真实页面运维门禁，以及前端单测/coverage/lint/build 与本地栈启停。适用于网页交互、受保护路由验证、浏览器证据采集、管理端 E2E 和前端运行态回归。
+description: 本仓库 Web 侧自动化测试与前端运行态验证的统一 skill，覆盖通用浏览器流程与 DevTools 诊断、管理端 Redis 种子验证码登录、动态路由 smoke、case matrix、CRUD E2E、真实页面运维门禁，以及前端单测/coverage/lint/build 与本地栈启停。适用于网页交互、受保护路由验证、浏览器证据采集、管理端 E2E 和前端运行态回归。
 ---
 
 # InfoQ Web 自动化测试
 
-本技能统一管理 Web 侧测试与运行态验证。后端 smoke、数据运维与容器部署验证不在本技能范围，分别见 `tools/verify/`、`docs/DATA-OPS.md`、`deploy/VERIFICATION.md`。
+本技能统一管理 Web 侧测试与运行态验证。后端 smoke、数据运维与容器部署验证不在本技能范围，分别见 `tools/verify/`、`docs/DATA-OPS.md`、`deploy-cli`。
 
 ## 模式选择
 
 1. 通用页面流程、截图、console/pageerror 采集：`references/modes/browser.md`，入口 `scripts/playwright_cli.mjs`。
 2. DevTools 深度诊断（Network / Console / Performance）：`scripts/chrome_devtools_cli.mjs`。
 3. 受保护管理端路由快速探测：`scripts/admin_route_probe.mjs`；直接使用 `scripts/captcha_login.mjs` 的 Redis 种子验证码登录。
-4. 真实验证码登录与动态路由矩阵：`scripts/run_admin_e2e.mjs`；矩阵生成与校验用 `scripts/generate-case-matrix.mjs`、`scripts/validate-case-matrix.mjs`。
+4. 验证码种子登录与动态路由矩阵：`scripts/run_admin_e2e.mjs`；矩阵生成与校验用 `scripts/generate-case-matrix.mjs`、`scripts/validate-case-matrix.mjs`。
 5. 写入型 CRUD E2E：`scripts/run_admin_crud_e2e.mjs`（`--modules` 缩小范围）。
 6. 真实页面运营维护、权限巡检与写入型操作门禁：`references/ops/page-ops-guardrails.md`。
 7. 前端单测 / coverage / lint / build 与运行态验证：`references/modes/frontend.md`；本地栈由 `scripts/run_admin_e2e.mjs` 自管，手动启动命令见 `references/runtime/admin-commands.md`。

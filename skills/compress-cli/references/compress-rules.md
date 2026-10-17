@@ -38,7 +38,7 @@
 1. `|Local Skills:skills:{...}` 列出的 skill 集合。
 2. `skills/` 下的真实 skill 目录集合。
 3. `docs/SKILLS.md` 「当前关键 skills」表格里反引号包裹的 skill 名集合。
-4. `|Skill Trigger:` 与 `|Skill Priority:` 中出现的 `infoq-*` 引用。
+4. `|Skill Trigger:` 与 `|Skill Priority:` 中出现的 `*-cli` skill 引用。
 
 每条规则：
 
@@ -51,7 +51,7 @@
 
 `AGENTS.md` 中被反引号包裹的仓库内路径必须真实存在：
 
-- 允许的根前缀：`tools/`、`docs/`、`deploy/`、`skills/`、`sql/`、`openspec/`、`.codex/`、`infoq-scaffold-*`、`tmp/`、`README.md`、`AGENTS.md`、`DEV_GUIDE.md`、`CONTRIBUTING.md`。
+- 允许的根前缀：`tools/`、`docs/`、`deploy/`、`skills/`、`sql/`、`openspec/`、`.codex/`、`backend/`、`frontend-vue/`、`frontend-react/`、`tmp/`、`README.md`、`AGENTS.md`、`DEV_GUIDE.md`、`CONTRIBUTING.md`。
 - 带通配符（`*`、`YYYYMMDD`、`x.y.z`、`<...>`）的路径按模式跳过。
 - 仅校验存在性；不校验内容正确性。
 

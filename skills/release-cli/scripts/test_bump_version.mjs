@@ -24,6 +24,7 @@ const [initSqlRelPath] = initSqlCandidates;
 
 const files = [
   'README.md',
+  'README_CN.md',
   'deploy/DOCKER.md',
   'deploy/MANUAL.md',
   'deploy/examples/systemd/infoq-admin.service',
@@ -66,10 +67,12 @@ assertContains('backend/infoq-core/infoq-core-bom/pom.xml', '<revision>9.9.9</re
 assertContains('frontend-react/package.json', '"version": "9.9.9"');
 assertContains('frontend-vue/package.json', '"version": "9.9.9"');
 assertContains('README.md', 'Version-9.9.9-');
+assertContains('README_CN.md', 'Version-9.9.9-');
 assertContains('deploy/docker/docker-compose.yml', 'image: infoq/infoq-admin:9.9.9');
 assertContains('deploy/docker/docker-compose.yml', 'image: infoq/infoq-frontend-vue:9.9.9');
 assertContains('deploy/docker/docker-compose.yml', 'image: infoq/infoq-frontend-react:9.9.9');
 assertContains('README.md', initSqlRelPath);
+assertContains('README_CN.md', initSqlRelPath);
 assertContains('deploy/DOCKER.md', initSqlRelPath);
 assertContains('deploy/DOCKER.md', '当前文档对应项目基线版本为 `9.9.9`。');
 assertContains('deploy/bin/infoq.sh', initSqlRelPath);

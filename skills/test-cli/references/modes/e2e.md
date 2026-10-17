@@ -14,7 +14,7 @@
 
 ## 执行顺序
 
-1. 判定范围：先确认本次是矩阵、真实验证码 smoke、只读路由巡检，还是写入型 CRUD 模式设计。
+1. 判定范围：先确认本次是矩阵、验证码 smoke、只读路由巡检，还是写入型 CRUD 模式设计。
 2. 只读优先：先生成/校验矩阵，或用真实登录 smoke 只巡检路由；不要从写入型 case 开始。
 3. 目标枚举：涉及 CRUD、批量、删除、导出、权限按钮或 cleanup 时，先列出模块、目标数据、账号角色、影响范围和回滚/清理方式。
 4. 门禁确认：共享环境默认禁止写入型 E2E；确需写入时必须有测试数据隔离、cleanup 策略和危险动作门禁。
@@ -30,7 +30,7 @@ node skills/test-cli/scripts/generate-case-matrix.mjs
 node skills/test-cli/scripts/validate-case-matrix.mjs docs/testing/case-matrix.json
 ```
 
-真实验证码 E2E：
+验证码 E2E：
 
 ```bash
 node skills/test-cli/scripts/run_admin_e2e.mjs --client vue
@@ -46,7 +46,7 @@ node skills/test-cli/scripts/run_admin_crud_e2e.mjs --client react
 
 可用 `--modules role,user`（如仅公告模块用 `--modules notice`）缩小模块范围；报告会同时输出高副作用安全门禁：不删除非 `e2e_` 数据、不清空日志、不触发定时任务“立即执行”、不触碰真实 OSS 对象上传/删除。在线强退只允许对当前 run 创建的 `e2e_` 用户会话执行；缺少隔离 fixture 时记录 blocker，不伪造通过。
 
-仅获取真实验证码登录 token：
+仅获取验证码种子登录 token：
 
 ```bash
 node skills/test-cli/scripts/captcha_login.mjs --backend-url http://127.0.0.1:8080 --print-token
@@ -58,7 +58,7 @@ node skills/test-cli/scripts/captcha_login.mjs --backend-url http://127.0.0.1:80
 
 `run_admin_e2e.mjs` 默认会在完成、失败或中断后停止本 skill 启动的 backend/admin dev server；只有成功且显式传 `--keep-stack-after` 才保留联调栈，失败或中断仍必须收口。栈状态按 client 稳定记录在 `tmp/test-cli/e2e/stack/<vue|react>/state.json`，必须包含 pid、port、log、owned/reused 和 `running`/`stopped`/`failed`/`interrupted` 状态。
 
-`run_admin_crud_e2e.mjs` 会启动或复用 backend + 指定管理端、通过真实验证码登录，按安全模块顺序执行 UI 新增/查询/编辑/删除或模块可用的行删除/选择删除入口，并用 API 与 MySQL 直连只读查询核对 create/edit/delete；在线用户模块会创建本轮专属 `e2e_` 用户、真实登录生成会话，只强退该会话后清理用户。它只清理当前 run 创建的精确 `e2e_` 数据，不删除内置 admin、默认角色、默认菜单、默认部门、默认配置或非本轮数据；失败、中断和完成后都会收口 owned 栈并保留 `report.md`、`report.json`、`module-matrix.json`、截图、console 和 cleanup 结果。
+`run_admin_crud_e2e.mjs` 会启动或复用 backend + 指定管理端、通过验证码种子登录，按安全模块顺序执行 UI 新增/查询/编辑/删除或模块可用的行删除/选择删除入口，并用 API 与 MySQL 直连只读查询核对 create/edit/delete；在线用户模块会创建本轮专属 `e2e_` 用户、真实登录生成会话，只强退该会话后清理用户。它只清理当前 run 创建的精确 `e2e_` 数据，不删除内置 admin、默认角色、默认菜单、默认部门、默认配置或非本轮数据；失败、中断和完成后都会收口 owned 栈并保留 `report.md`、`report.json`、`module-matrix.json`、截图、console 和 cleanup 结果。
 
 只跑少量路由：
 
@@ -91,7 +91,7 @@ tmp/test-cli/e2e/<run-id>/
 
 - 矩阵 schema：`references/matrix/case-schema.md`
 - 路由来源规则：`references/matrix/route-source-rules.md`
-- 真实验证码场景矩阵：`references/captcha/scenario-matrix.md`
+- 验证码场景矩阵：`references/captcha/scenario-matrix.md`
 - CRUD 模式：`references/crud/crud-patterns.md`
 - 测试数据策略：`references/crud/test-data-policy.md`
 - 清理策略：`references/crud/cleanup-policy.md`

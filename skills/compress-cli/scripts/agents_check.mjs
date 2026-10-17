@@ -26,9 +26,6 @@ const PROTECTED_CATEGORIES = [
   'MCP Config Truth'
 ];
 
-// 非 skill 的 infoq-* 前缀（容器/资源命名），不参与 Skill Trigger 路由校验。
-const IGNORED_MENTIONS = new Set(['infoq-apple']);
-
 const ALLOWED_PATH_PREFIXES = [
   'tools/',
   'docs/',
@@ -38,7 +35,9 @@ const ALLOWED_PATH_PREFIXES = [
   'openspec/',
   '.codex/',
   'tmp/',
-  'infoq-scaffold-',
+  'backend/',
+  'frontend-vue/',
+  'frontend-react/',
   'README.md',
   'README_CN.md',
   'AGENTS.md',
@@ -244,9 +243,7 @@ function checkRouting(categories, dirNames) {
   const mentioned = new Set();
   for (const category of ['Skill Trigger', 'Skill Priority']) {
     for (const match of valueOf(categories, category).matchAll(/\b[a-z0-9][a-z0-9-]*-cli\b/g)) {
-      if (!IGNORED_MENTIONS.has(match[0])) {
-        mentioned.add(match[0]);
-      }
+      mentioned.add(match[0]);
     }
   }
   const dirSet = new Set(dirNames);

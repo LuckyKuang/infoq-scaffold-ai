@@ -29,7 +29,7 @@ ensure -> check(可选) -> [默认分支? 新建工作分支] -> commit -> push 
 
 | profile | 覆盖 |
 | --- | --- |
-| `docs` | `tools/validate_utf8.mjs`、`tools/check_readme_sync.mjs`、`skills/compress-cli/scripts/agents_check.mjs check`、存在 active change 时的 `tools/openspec_check.mjs <change-id>` |
+| `docs` | `tools/validate_utf8.mjs`、`tools/check_readme_sync.mjs`、`tools/check_release_version.mjs`、`tools/check_doc_links.mjs`、`skills/compress-cli/scripts/agents_check.mjs check`、存在 active change 时的 `tools/openspec_check.mjs <change-id>` |
 | `ci` | docs + React admin `lint`/`test`/`build:prod` + Vue admin `lint:eslint`/`test:unit`/`build:prod`（与 `.github/workflows/ci.yml` 对齐） |
 | `full` | ci + `tools/backend_mvn.mjs -- -DskipTests=false test` |
 

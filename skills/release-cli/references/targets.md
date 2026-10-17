@@ -12,6 +12,8 @@
   - 顶层 `"version"`
 - `README.md`
   - `![Version](https://img.shields.io/badge/Version-x.y.z-...)`
+- `README_CN.md`
+  - `![Version](https://img.shields.io/badge/Version-x.y.z-...)`
 - `deploy/DOCKER.md`
   - `当前文档对应项目基线版本为 \`x.y.z\`。`
 - `deploy/MANUAL.md`
@@ -44,11 +46,12 @@
 它会从 `sql/infoq_scaffold_x.y.z.sql` 中识别唯一的初始化 SQL，并忽略 `sql/infoq_scaffold_update_*.sql` 升级脚本；随后校验以下文件是否仍引用该初始化 SQL：
 
 - `README.md`
+- `README_CN.md`
 - `deploy/DOCKER.md`
 - `deploy/bin/infoq.sh`
 - `deploy/docker/docker-compose.yml`
 
-`skills/` 下的文档不再作为版本受管目标；版本真值集中在 `README.md`、`deploy/` 文档与后端配置。
+`skills/` 下的文档不再作为版本受管目标；版本真值集中在 `README.md`、`README_CN.md`、`deploy/` 文档与后端配置。
 
 若这些引用与 `sql/` 下真实文件不一致，脚本会失败，并要求显式后续任务处理。
 

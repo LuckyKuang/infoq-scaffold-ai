@@ -1,11 +1,11 @@
 ---
 name: push-cli
-description: 把本地改动安全推送到 GitHub 远程并走完 PR 校验闭环。覆盖默认分支保护（禁止直推 master，处于 master 时自动拉取分支）、本地校验矩阵、分支推送、PR 创建或复用、GitHub 校验轮询、失败日志回流修复，以及校验全绿后的受控合并。适用于用户要求推送代码、提交 PR、修复 PR 校验失败或合并 PR 的场景。
+description: 把本地改动安全推送到 GitHub 远程并走完 PR 校验闭环。覆盖默认分支保护（禁止直推默认分支，处于默认分支时自动拉取分支）、本地校验矩阵、分支推送、PR 创建或复用、GitHub 校验轮询、失败日志回流修复，以及校验全绿后的受控合并。适用于用户要求推送代码、提交 PR、修复 PR 校验失败或合并 PR 的场景。
 ---
 
 # InfoQ 推送与 PR 闭环
 
-本技能只负责一件事：从本地改动到 master 的受控推送链路。它默认 dry-run，只有在显式给出确认参数时才执行远程写操作。
+本技能只负责一件事：从本地改动到默认分支的受控推送链路。它默认 dry-run，只有在显式给出确认参数时才执行远程写操作。
 
 ## 硬边界
 
@@ -20,7 +20,7 @@ description: 把本地改动安全推送到 GitHub 远程并走完 PR 校验闭�
 
 1. 判定范围：确认是快速推送、完整 PR 提交、只看校验状态，还是修复校验失败。
 2. 只读探测：`ensure` 校验 gh 登录、仓库身份、默认分支与工作区状态；`status` 查看当前分支、脏文件与已打开的 PR。
-3. 本地校验：`check` 运行仓库校验矩阵（UTF-8、README 同步、AGENTS 校验、前端 lint/test，可选 build 与 backend）。
+3. 本地校验：`check` 运行仓库校验矩阵（UTF-8、README 同步、版本一致性、文档链接、AGENTS 校验、前端 lint/test，可选 build 与 backend）。
 4. 提交与推送：`submit-pr` 在非默认分支上提交并推送；失败的校验必须在本地修复后重跑，不允许带着红色校验推送。
 5. PR 与校验：`submit-pr` 创建或复用 PR，然后 `watch` 轮询 GitHub 校验；失败时输出失败 check 名称与失败日志摘要。
 6. 修复回流：根据失败日志修改代码 → 重新 `submit-pr`（同一个 PR 会被复用），直到校验全绿。
@@ -44,7 +44,7 @@ node skills/push-cli/scripts/push_cli.mjs merge --pr <number> --yes
 
 ## 校验矩阵
 
-- `--profile docs`：`node tools/validate_utf8.mjs`、`node tools/check_readme_sync.mjs`、`node skills/compress-cli/scripts/agents_check.mjs check`，并在存在 active change 时运行 `node tools/openspec_check.mjs <change-id>`。
+- `--profile docs`：`node tools/validate_utf8.mjs`、`node tools/check_readme_sync.mjs`、`node tools/check_release_version.mjs`、`node tools/check_doc_links.mjs`、`node skills/compress-cli/scripts/agents_check.mjs check`，并在存在 active change 时运行 `node tools/openspec_check.mjs <change-id>`。
 - `--profile ci`：docs 矩阵 + React admin（`lint`/`test`/`build:prod`）与 Vue admin（`lint:eslint`/`test:unit`/`build:prod`），与 `.github/workflows/ci.yml` 对齐。
 - `--profile full`：ci 矩阵 + `node tools/backend_mvn.mjs -- -DskipTests=false test`（需要 JDK 21 与 Maven 3.9.x）。
 - 任一命令失败即为硬失败；禁止把失败标记为通过后继续推送。

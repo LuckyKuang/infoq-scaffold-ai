@@ -35,7 +35,7 @@
 
 | Skill | 职责 | 典型场景 |
 | --- | --- | --- |
-| `test-cli` | Web 测试与运行态 | 浏览器流程与 DevTools 诊断、受保护路由探测、真实验证码登录、动态路由 smoke、case matrix、CRUD E2E、页面运维门禁、前端单测/coverage/lint/build 与本地栈 |
+| `test-cli` | Web 测试与运行态 | 浏览器流程与 DevTools 诊断、受保护路由探测、Redis 种子验证码登录、动态路由 smoke、case matrix、CRUD E2E、页面运维门禁、前端单测/coverage/lint/build 与本地栈 |
 | `compress-cli` | AGENTS 规约压缩与校验 | 压缩根 `AGENTS.md`、格式与唯一类别校验、Local Skills 路由一致性、引用路径存在性、受保护类别断言、行数预算 |
 | `push-cli` | 推送与 PR 闭环 | 本地校验矩阵、默认分支保护、自动工作分支、提交与推送、PR 创建/复用、GitHub 校验轮询、失败日志回流、受控合并 |
 | `release-cli` | 版本与 GitHub Release | 版本现状核对（含最新远程 tag）、受管文件同步、标注 tag、Release 发布与发布后校验 |

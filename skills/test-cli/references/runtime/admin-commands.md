@@ -31,7 +31,7 @@ java -jar infoq-admin/target/infoq-admin.jar --spring.profiles.active=local --se
 java -jar infoq-admin/target/infoq-admin.jar --spring.profiles.active=local --server.port=8080 --captcha.enable=false
 ```
 
-真实验证码登录和动态路由 smoke 使用 `run_admin_e2e.mjs` / `captcha_login.mjs`，不要用关闭验证码的诊断后端替代验收。
+验证码种子登录和动态路由 smoke 使用 `run_admin_e2e.mjs` / `captcha_login.mjs`，不要用关闭验证码的诊断后端替代验收。
 
 Admin（Vue `frontend-vue` / React `frontend-react`）：手动启动时不要依赖 `pnpm run dev -- --port ...` 覆盖 `.env.development` 的 `VITE_APP_PORT=80`；先显式设置 `VITE_APP_PORT` 与 `VITE_APP_PROXY_TARGET`，再执行 `pnpm run dev`。
 

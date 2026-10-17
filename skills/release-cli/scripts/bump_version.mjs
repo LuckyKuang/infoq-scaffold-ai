@@ -69,6 +69,7 @@ const bomPom = path.join(repoRoot, 'backend', 'infoq-core', 'infoq-core-bom', 'p
 const reactPackage = path.join(repoRoot, 'frontend-react', 'package.json');
 const vuePackage = path.join(repoRoot, 'frontend-vue', 'package.json');
 const readmeFile = path.join(repoRoot, 'README.md');
+const readmeCnFile = path.join(repoRoot, 'README_CN.md');
 const deployDoc = path.join(repoRoot, 'deploy', 'DOCKER.md');
 const manualDeployDoc = path.join(repoRoot, 'deploy', 'MANUAL.md');
 const systemdExample = path.join(repoRoot, 'deploy', 'examples', 'systemd', 'infoq-admin.service');
@@ -151,6 +152,7 @@ const filesToCheck = [
   reactPackage,
   vuePackage,
   readmeFile,
+  readmeCnFile,
   deployDoc,
   manualDeployDoc,
   systemdExample,
@@ -256,6 +258,7 @@ const sqlFilePath = findInitSqlFile();
 const sqlFileRel = path.relative(repoRoot, sqlFilePath).replace(/\\/g, '/');
 
 assertContainsFixed(readmeFile, sqlFileRel, 'README SQL reference');
+assertContainsFixed(readmeCnFile, sqlFileRel, 'README_CN SQL reference');
 assertContainsFixed(deployDoc, sqlFileRel, 'deploy doc SQL reference');
 assertContainsFixed(composeFile, sqlFileRel, 'docker compose SQL reference');
 assertContainsFixed(backendDeployScript, sqlFileRel, 'backend deploy script SQL reference');
@@ -270,6 +273,7 @@ for (const filePath of [
   reactPackage,
   vuePackage,
   readmeFile,
+  readmeCnFile,
   deployDoc,
   manualDeployDoc,
   systemdExample,
@@ -294,6 +298,7 @@ replaceOrThrow(bomPom, /<revision>[^<]+<\/revision>/, `<revision>${targetVersion
 replaceOrThrow(reactPackage, /("version"\s*:\s*")[^"]+(")/, `$1${targetVersion}$2`, 'react package version');
 replaceOrThrow(vuePackage, /("version"\s*:\s*")[^"]+(")/, `$1${targetVersion}$2`, 'vue package version');
 replaceOrThrow(readmeFile, /(!\[Version\]\(https:\/\/img\.shields\.io\/badge\/Version-)\d+\.\d+\.\d+(-[^)]*\))/, `$1${targetVersion}$2`, 'README version badge');
+replaceOrThrow(readmeCnFile, /(!\[Version\]\(https:\/\/img\.shields\.io\/badge\/Version-)\d+\.\d+\.\d+(-[^)]*\))/, `$1${targetVersion}$2`, 'README_CN version badge');
 replaceOrThrow(deployDoc, /(当前文档对应项目基线版本为 `)[^`]+(`。)/, `$1${targetVersion}$2`, 'deploy doc baseline version');
 for (const [filePath, description] of deployIdExampleFiles) {
   replaceDeployIdVersionExamples(filePath, description);
@@ -312,6 +317,7 @@ assertContainsFixed(bomPom, `<revision>${targetVersion}</revision>`, 'bom revisi
 assertContainsFixed(reactPackage, `"version": "${targetVersion}"`, 'react package version');
 assertContainsFixed(vuePackage, `"version": "${targetVersion}"`, 'vue package version');
 assertContainsFixed(readmeFile, `![Version](https://img.shields.io/badge/Version-${targetVersion}-`, 'README version badge');
+assertContainsFixed(readmeCnFile, `![Version](https://img.shields.io/badge/Version-${targetVersion}-`, 'README_CN version badge');
 assertContainsFixed(deployDoc, `当前文档对应项目基线版本为 \`${targetVersion}\`。`, 'deploy doc baseline version');
 for (const [filePath, description] of deployIdExampleFiles) {
   assertDeployIdVersionExamples(filePath, description);
