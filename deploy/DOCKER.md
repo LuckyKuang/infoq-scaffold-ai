@@ -88,6 +88,8 @@ docker compose version || docker-compose version
 
 ### 2.2 macOS Colima
 
+macOS 的**完整栈**使用 Colima + Docker，包含 MySQL、Redis、MinIO、后端、Vue/React 和 Nginx。Apple container 只提供后端栈，不含 MinIO、前端或 Nginx；仅开发后端时见 [APPLE_CONTAINER.md](APPLE_CONTAINER.md)，前后端联调可用 Apple 后端加两个前端 dev server。
+
 先确认 Colima 和 Docker CLI 可用：
 
 ```bash

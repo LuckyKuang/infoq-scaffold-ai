@@ -16,6 +16,19 @@ deployment guides. Compose files and runtime config still live under
 | Apple container | macOS local backend stack | [APPLE_CONTAINER.md](APPLE_CONTAINER.md) |
 | Manual JVM + Nginx | Non-container hosts | [MANUAL.md](MANUAL.md) |
 
+## 按平台选择
+
+| 平台 | 目标 | 推荐方式 | 入口 |
+| --- | --- | --- | --- |
+| Linux | 完整栈 | Docker Engine + Compose | `deploy/install.sh` |
+| Windows | 完整栈 | WSL2 Debian/Ubuntu + Docker CE | 在 WSL2 内执行 `deploy/install.sh` |
+| macOS | 完整栈 / 接近生产 | Colima + Docker | `deploy/install.sh` |
+| macOS | 仅后端开发 | Apple container | `deploy-cli init/up` |
+| macOS | 前后端联调 | Apple container + Vue/React dev server | `deploy-cli` + 两个 `pnpm run dev` |
+| 任意 | 非容器部署 | JVM + Nginx | [MANUAL.md](MANUAL.md) |
+
+“完整栈”指 MySQL、Redis、MinIO、后端、Vue/React 管理端和 Nginx 网关。Apple container 只启动 MySQL、Redis 和后端；前后端联调时前端以 dev server 连接 `http://127.0.0.1:19090`，该模式不包含 MinIO 与 Nginx，详见 [APPLE_CONTAINER.md](APPLE_CONTAINER.md#full-stack-local-development)。
+
 Install, upgrade, rollback, stop, and data-retention boundaries are documented in
 [DEPLOYMENT_LIFECYCLE.md](DEPLOYMENT_LIFECYCLE.md). The cross-platform runtime entry is
 `node skills/deploy-cli/scripts/deploy_cli.mjs`.

@@ -73,6 +73,24 @@ node skills/deploy-cli/scripts/deploy_cli.mjs status
 `deploy/apple-container.sh` remains the execution truth; `deploy-cli` adds state
 and smoke reporting.
 
+## Full-stack local development
+
+This stack is backend-only. For frontend development, keep the Apple backend running and start both admin dev servers against it:
+
+```bash
+# Terminal 1: Vue admin
+VITE_APP_PROXY_TARGET=http://127.0.0.1:19090 \
+VITE_APP_PORT=5173 \
+pnpm --dir frontend-vue run dev
+
+# Terminal 2: React admin
+VITE_APP_PROXY_TARGET=http://127.0.0.1:19090 \
+VITE_APP_PORT=5174 \
+pnpm --dir frontend-react run dev
+```
+
+Open `http://127.0.0.1:5173/login` or `http://127.0.0.1:5174/login`. This is a development setup, not a production-like full stack: it does not include the Nginx gateway or MinIO. Use Colima + Docker Compose when you need MinIO, OSS, gateway routing, or the complete stack.
+
 The env file uses literal `KEY=value` syntax. Do not use Compose expressions
 such as `${VALUE:-default}`. `APPLE_CONTAINER_BIND_HOST` must be an IPv4
 address, and `APPLE_CONTAINER_HOST_PORT` must be between 1025 and 65535.

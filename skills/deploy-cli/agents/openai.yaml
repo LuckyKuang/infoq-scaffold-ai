@@ -1,4 +1,4 @@
 interface:
   display_name: "Deploy CLI（本机部署）"
   short_description: "本机部署并冒烟验证 InfoQ Apple container / Docker 栈"
-  default_prompt: "使用 $deploy-cli 在目标平台部署 InfoQ-Scaffold-AI：macOS 只操作 infoq-apple* Apple container 资源，Windows 在 WSL2 内使用 Docker，Linux 使用本地 Docker；执行 init/build/up/status/smoke，记录 tmp/deploy-cli/state.json，并在验证后收口端口与资源。"
+  default_prompt: "使用 $deploy-cli 在目标平台部署 InfoQ-Scaffold-AI：macOS 完整栈使用 Colima + Docker，Apple container 仅操作 infoq-apple* 后端栈资源，Windows 在 WSL2 内使用 Docker，Linux 使用本地 Docker；执行 init/build/up/status/smoke，记录 tmp/deploy-cli/state.json，并在验证后收口端口与资源。"

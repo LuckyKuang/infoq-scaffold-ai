@@ -114,6 +114,14 @@ node skills/deploy-cli/scripts/deploy_cli.mjs status
 | Manual deployment | [Manual deploy](deploy/MANUAL.md) |
 | Prerequisites | [Deploy prerequisites](deploy/README.md) |
 
+| Platform | Full stack | Recommended path |
+| --- | --- | --- |
+| Linux | Yes | Docker install script |
+| Windows | Yes | WSL2 Debian/Ubuntu + Docker CE |
+| macOS | Yes | Colima + Docker |
+| macOS | No, backend only | Apple container |
+| macOS | No, backend + admin dev servers | Apple container + `pnpm run dev` |
+
 Images are built from source on the target host. The repository does not publish prebuilt application images: Docker builds the backend jar and admin bundles inside their images, while the Apple container path builds the jar on the host and starts a backend-only stack (MySQL, Redis, admin API; no Vue/React or Nginx gateway). Release artifacts are the jar and admin `dist` tarballs, not container images.
 
 ```bash

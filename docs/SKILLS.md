@@ -180,7 +180,7 @@ node skills/deploy-cli/scripts/deploy_cli.mjs destroy --yes
 
 说明：
 
-- macOS 默认走 Apple container，只操作 `infoq-apple*` 资源，默认端口 `19090`；细节见 `skills/deploy-cli/references/apple-containers.md`。
+- macOS 需要完整栈时使用 Colima + Docker；Apple container 仅启动 MySQL、Redis 和后端，默认端口 `19090`，只操作 `infoq-apple*` 资源。Apple 细节见 `skills/deploy-cli/references/apple-containers.md`。
 - Windows 必须在 WSL2 Debian/Ubuntu 内执行；Linux 使用本地 Docker。Docker 细节见 `skills/deploy-cli/references/docker.md` 与 `deploy/VERIFICATION.md`。
 - `status` / `smoke` 只读；`up` / `down` 是运行态变更；Docker 路径的写操作必须显式 `--execute`。
 - 状态写入 `tmp/deploy-cli/state.json`，日志写入 `tmp/deploy-cli/deploy.log`；完成、失败或中断都要收口。

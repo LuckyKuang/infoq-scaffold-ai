@@ -1,6 +1,6 @@
 ---
 name: deploy-cli
-description: 在本机部署并冒烟验证 InfoQ-Scaffold-AI：macOS 使用 Apple container（infoq-apple* 隔离资源），Windows 在 WSL2 Debian/Ubuntu 内使用 Docker，Linux 使用本地 Docker。覆盖 init/build/up/down/restart/status/smoke/logs/destroy、状态文件收口与端口归属；不负责发布 tag/Release、PR 合并或业务数据修复。
+description: 在本机部署并冒烟验证 InfoQ-Scaffold-AI：macOS 支持 Apple container（仅后端栈）与 Colima + Docker（完整栈），Windows 在 WSL2 Debian/Ubuntu 内使用 Docker，Linux 使用本地 Docker。覆盖 init/build/up/down/restart/status/smoke/logs/destroy、状态文件收口与端口归属；不负责发布 tag/Release、PR 合并或业务数据修复。
 ---
 
 # Deploy CLI
@@ -12,9 +12,12 @@ description: 在本机部署并冒烟验证 InfoQ-Scaffold-AI：macOS 使用 App
 
 | 平台 | 运行时 | 入口 |
 | --- | --- | --- |
-| macOS | Apple container | `deploy/apple-container.sh`（本技能自动调度） |
+| macOS | Colima + Docker（完整栈） | `deploy/install.sh` |
+| macOS | Apple container（仅后端） | `deploy/apple-container.sh`（本技能自动调度） |
 | Windows | WSL2 Debian/Ubuntu 内 Docker | 在 WSL2 中运行本技能 |
 | Linux | 本地 Docker Engine + Compose v2 | `deploy/install.sh` / `deploy/bin/infoq.sh` |
+
+macOS 需要完整前端栈时使用 Colima + Docker（`deploy/install.sh`）；Apple container 路径只启动 MySQL、Redis 和后端。仅开发后端或做前后端联调时，见 `deploy/APPLE_CONTAINER.md`。
 
 - 用户明确要求 Apple container 时才走 Apple 路径；默认不要切换到 Docker Desktop。
 - 只允许操作 `infoq-apple*` 容器、网络与卷；发现其他非本栈资源

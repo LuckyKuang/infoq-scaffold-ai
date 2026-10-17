@@ -113,6 +113,14 @@ node skills/deploy-cli/scripts/deploy_cli.mjs status
 | 手动部署 | [手动部署](deploy/MANUAL.md) |
 | 部署前置条件 | [部署前置条件](deploy/README.md) |
 
+| 平台 | 完整栈 | 推荐方式 |
+| --- | --- | --- |
+| Linux | 是 | Docker 安装脚本 |
+| Windows | 是 | WSL2 Debian/Ubuntu + Docker CE |
+| macOS | 是 | Colima + Docker |
+| macOS | 否，仅后端 | Apple container |
+| macOS | 否，后端 + 管理端 dev server | Apple container + `pnpm run dev` |
+
 镜像在目标主机上从源码构建，仓库不发布预构建应用镜像：Docker 路径在镜像内构建后端 jar 和前端产物；Apple container 路径先在宿主机打 jar，再启动仅包含 MySQL、Redis 和后端 API 的栈（不含 Vue/React 和 Nginx 网关）。Release 产物是 jar 与管理端 `dist` 压缩包，不是容器镜像。
 
 ```bash
