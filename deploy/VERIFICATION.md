@@ -2,7 +2,7 @@
 
 # InfoQ 部署验证
 
-本文件只负责一件事：用仓库部署脚本在免费商用容器运行时中拉起完整栈，并用可复跑 smoke 证明部署文档和脚本是否正确。默认支持三类运行时：WSL2 内 Docker CE、macOS Colima、原生 Linux Docker CE；不默认使用 Docker Desktop 或其他许可不明确的容器桌面产品。版本升级归 `infoq-release`，代码级后端测试归 `tools/verify`，前端单测/lint/build 归 `infoq-test`，数据修复归 `docs/DATA-OPS.md`。
+本文件只负责一件事：用仓库部署脚本在免费商用容器运行时中拉起完整栈，并用可复跑 smoke 证明部署文档和脚本是否正确。默认支持三类运行时：WSL2 内 Docker CE、macOS Colima、原生 Linux Docker CE；不默认使用 Docker Desktop 或其他许可不明确的容器桌面产品。版本升级归 `release-cli`，代码级后端测试归 `tools/verify`，前端单测/lint/build 归 `test-cli`，数据修复归 `docs/DATA-OPS.md`。
 
 ## 执行顺序
 
@@ -105,7 +105,7 @@ sudo env INFOQ_ENV_FILE=/etc/infoq-scaffold-ai/deploy.env bash deploy/uninstall.
 ## 护栏
 
 - 只默认使用免费商用基线运行时：WSL2 内 Docker CE、macOS Colima、原生 Linux Docker CE；检测到 Docker Desktop 时先停下说明其不在默认基线内，不要继续自动部署。
-- Apple `container` 不是默认免费商用基线。仅当用户明确要求时，才走 `deploy/apple-container.sh`。必须使用独立网络 `infoq-apple`、容器名前缀 `infoq-apple-*`、默认宿主机端口 `19090` 和数据目录 `$HOME/infoq-apple`；禁止停止、删除或改写 `sub2api-apple*` 或其他非本栈资源。官方后端 Dockerfile 的 BuildKit cache mount 不作为 Apple 默认构建路径。
+- Apple `container` 不是默认免费商用基线。仅当用户明确要求时，才走 `deploy-cli` 的 Apple 路径（底层 `deploy/apple-container.sh`）。必须使用独立网络 `infoq-apple`、容器名前缀 `infoq-apple-*`、默认宿主机端口 `19090` 和数据目录 `$HOME/infoq-apple`；禁止停止、删除或改写其他项目或其他非本栈资源。官方后端 Dockerfile 的 BuildKit cache mount 不作为 Apple 默认构建路径。
 - 不要把 MySQL 数据目录放在 `/mnt/c/...`、`/mnt/d/...` 等 WSL DrvFS 路径；WSL2/Linux 默认用 Linux 文件系统 `/infoq`，macOS Colima 默认用 `$HOME/infoq`。
 - 每次执行部署前都要提醒并确认 `/tmp/infoq-deploy` 和 `${INFOQ_DEPLOY_ROOT}/server/temp` 已创建；WSL2/Linux 默认就是 `/infoq/server/temp`。不能创建时明确请用户在服务器上创建，不要跳过后继续部署。
 - WSL2 验证期间保持一个长生命周期 WSL 进程，避免 distro 自动退出导致 Docker daemon 和容器反复重启。

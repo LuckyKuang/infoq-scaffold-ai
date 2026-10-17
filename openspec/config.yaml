@@ -3,10 +3,10 @@ schema: spec-driven
 # InfoQ-Scaffold-AI 项目上下文（创建 change 时展示给 AI）
 context: |
   技术栈与工作区：
-  - infoq-scaffold-backend：Spring Boot 4.1.1 多模块后端（JDK 21、MyBatis-Plus、
+  - backend：Spring Boot 4.1.1 多模块后端（JDK 21、MyBatis-Plus、
     Spring Security、Redisson、官方默认 Tomcat 容器）
-  - infoq-scaffold-frontend-react：React 19 + Ant Design 管理端
-  - infoq-scaffold-frontend-vue：Vue 3 + Element Plus 管理端
+  - frontend-react：React 19 + Ant Design 管理端
+  - frontend-vue：Vue 3 + Element Plus 管理端
   - script / deploy：部署、环境与本地辅助脚本；部署文档在 deploy/
   - sql：冻结初始化 SQL 与版本增量脚本
   - docs：文档正文真值源；稳定规格真值在 docs/specs/<capability>/spec.md
@@ -24,8 +24,8 @@ context: |
     与测试与提交信息
   - active change 在实现前和交付前都必须通过
     node skills/infoq-delivery-workflow/scripts/openspec_check.mjs <change-id>
-  - tasks.md 默认显式评估 infoq-scaffold-backend、infoq-scaffold-frontend-react、
-    infoq-scaffold-frontend-vue、docs、script / deploy、skills（受影响时）
+  - tasks.md 默认显式评估 backend、frontend-react、frontend-vue、docs、script / deploy、
+    skills（受影响时）
   - 每个变更只维护一个验收约定；验证顺序固定为：主流程验证 -> 目标测试 ->
     lint/build -> 差异评审
   - sql/infoq_scaffold_3.0.0.sql 是冻结初始化基线，不得修改；数据库变更只能

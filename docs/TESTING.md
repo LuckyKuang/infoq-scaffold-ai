@@ -1,6 +1,6 @@
 # 管理端 E2E 测试
 
-本文件固定管理端浏览器自动化（`infoq-test`）的测试数据、选择器与 cleanup 政策，并索引 case 集合。执行入口与命令见 [Skills 与插件](./SKILLS.md) 第 8.1 节。
+本文件固定管理端浏览器自动化（`test-cli`）的测试数据、选择器与 cleanup 政策，并索引 case 集合。执行入口与命令见 [Skills 与插件](./SKILLS.md) 第 8.1 节。
 
 ## 1. Case 集合
 

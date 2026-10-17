@@ -108,7 +108,7 @@ services:
       INFOQ_IT_MQTT_DENIED_USERNAME: ${MQTT_DENIED_USERNAME:?Set MQTT_DENIED_USERNAME in the run env file}
       INFOQ_IT_MQTT_DENIED_PASSWORD: ${MQTT_DENIED_PASSWORD:?Set MQTT_DENIED_PASSWORD in the run env file}
     volumes:
-      - ../../infoq-scaffold-backend:/workspace:rw
+      - ../../backend:/workspace:rw
       - ${MIDDLEWARE_MAVEN_REPO:?Set MIDDLEWARE_MAVEN_REPO in the run env file}:/maven-repo:ro
       - ${MIDDLEWARE_SECRET_DIR:?Set MIDDLEWARE_SECRET_DIR in the run env file}/truststore.p12:/run/secrets/truststore.p12:ro
     depends_on:

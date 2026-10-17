@@ -112,7 +112,7 @@ wait_for_tcp() {
 }
 
 copy_surefire_reports() {
-  local report_dir="${repository_root}/infoq-scaffold-backend/infoq-plugin/infoq-plugin-mqtt/target/surefire-reports"
+  local report_dir="${repository_root}/backend/infoq-plugin/infoq-plugin-mqtt/target/surefire-reports"
   [ -d "${report_dir}" ] || return 0
   mkdir -p "${evidence_dir}/mqtt-surefire-reports"
   while IFS= read -r report; do

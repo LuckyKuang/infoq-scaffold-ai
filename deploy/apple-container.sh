@@ -120,7 +120,6 @@ require_command() {
 assert_infoq_apple_name() {
     local name=$1
     [[ "${name}" == infoq-apple* ]] || die "Refusing unmanaged name '${name}'."
-    [[ "${name}" != sub2api-* ]] || die "Refusing to manage sub2api resource '${name}'."
 }
 
 json_extract() {
@@ -245,8 +244,8 @@ preflight_stack_ownership() {
 warn_foreign_stacks() {
     local output
     output="$(container list --all 2>/dev/null || true)"
-    if printf '%s\n' "${output}" | grep -q 'sub2api-apple'; then
-        info "Detected sub2api-apple* containers; they will be left untouched."
+    if printf '%s\n' "${output}" | awk 'NR > 1 && $1 != "buildkit" && $1 !~ /^infoq-apple/ { found = 1 } END { exit(found ? 0 : 1) }'; then
+        info "Detected other Apple container workloads; only infoq-apple* resources are managed."
     fi
 }
 
@@ -714,7 +713,7 @@ ensure_mysql_app_user() {
 
 cmd_build() {
     local from_existing=false
-    local jar_file="${REPO_ROOT}/infoq-scaffold-backend/infoq-admin/target/infoq-admin.jar"
+    local jar_file="${REPO_ROOT}/backend/infoq-admin/target/infoq-admin.jar"
     if [[ $# -gt 1 || ($# -eq 1 && "${1-}" != "--from-existing-jar") ]]; then
         usage
         exit 2

@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/images/logo.png" width="120" alt="InfoQ-Scaffold-AI Logo" />
+<img src="assets/logo.png" width="120" alt="InfoQ-Scaffold-AI Logo" />
 
 # InfoQ-Scaffold-AI
 
@@ -36,9 +36,9 @@
 
 当前保留三个工作区：
 
-- `infoq-scaffold-backend`：Spring Boot 4.1 多模块后端
-- `infoq-scaffold-frontend-vue`：Vue 3 + Element Plus 管理端
-- `infoq-scaffold-frontend-react`：React 19 + Ant Design 管理端
+- `backend`：Spring Boot 4.1 多模块后端
+- `frontend-vue`：Vue 3 + Element Plus 管理端
+- `frontend-react`：React 19 + Ant Design 管理端
 
 初始化数据库使用冻结基线
 [`sql/infoq_scaffold_3.0.0.sql`](sql/infoq_scaffold_3.0.0.sql)，后续结构或数据
@@ -52,6 +52,7 @@
 - 分层 [`AGENTS.md`](AGENTS.md)、`skills` 与 OpenSpec 交付流程
 - 冻结 SQL 基线与按日期增量脚本
 - Docker Compose 部署 MySQL、Redis、MinIO、后端和管理端网关
+- 跨平台 `deploy-cli`，覆盖 Apple container、WSL2 Docker 与 Linux Docker smoke
 - UTF-8、Maven、pnpm 与管理端 E2E 验证入口
 
 <!-- readme-section:quick-start -->
@@ -63,7 +64,7 @@
 
 ```bash
 node tools/backend_mvn.mjs -- clean install -DskipTests
-java -jar infoq-scaffold-backend/infoq-admin/target/infoq-admin.jar --spring.profiles.active=local
+java -jar backend/infoq-admin/target/infoq-admin.jar --spring.profiles.active=local
 ```
 
 默认地址：`http://127.0.0.1:8080`。验证码接口：`http://127.0.0.1:8080/auth/code`。
@@ -71,7 +72,7 @@ java -jar infoq-scaffold-backend/infoq-admin/target/infoq-admin.jar --spring.pro
 ### Vue 管理端
 
 ```bash
-cd infoq-scaffold-frontend-vue
+cd frontend-vue
 pnpm install
 pnpm run dev
 ```
@@ -79,7 +80,7 @@ pnpm run dev
 ### React 管理端
 
 ```bash
-cd infoq-scaffold-frontend-react
+cd frontend-react
 pnpm install
 pnpm run dev
 ```
@@ -90,8 +91,11 @@ pnpm run dev
 使用 skill 跑管理端路由 smoke 或验证码登录：
 
 ```bash
-node skills/infoq-test/scripts/run_admin_e2e.mjs --client vue --route-limit 1
-node skills/infoq-test/scripts/captcha_login.mjs --backend-url http://127.0.0.1:8080 --print-token
+node skills/test-cli/scripts/run_admin_e2e.mjs --client vue --route-limit 1
+node skills/test-cli/scripts/captcha_login.mjs --backend-url http://127.0.0.1:8080 --print-token
+
+# 本机部署 smoke（Apple container / WSL2 Docker / Linux Docker）
+node skills/deploy-cli/scripts/deploy_cli.mjs status
 ```
 
 <!-- readme-section:deployment -->
@@ -102,6 +106,7 @@ node skills/infoq-test/scripts/captcha_login.mjs --backend-url http://127.0.0.1:
 | Linux 安装脚本 | [部署指南](deploy/README.md) |
 | Docker Compose | [Docker 指南](deploy/DOCKER.md) |
 | Apple container | [Apple container](deploy/APPLE_CONTAINER.md) |
+| 部署生命周期 | [部署生命周期](deploy/DEPLOYMENT_LIFECYCLE.md) |
 | Compose 环境模板 | [.env.example](deploy/.env.example) |
 | 手动部署 | [手动部署](deploy/MANUAL.md) |
 | 部署前置条件 | [部署前置条件](deploy/README.md) |
@@ -125,6 +130,8 @@ README 只提供项目总览和快速开始。详细配置与维护请阅读下�
 | [安全策略](SECURITY.md) | 漏洞报告 |
 | [AGENTS.md](AGENTS.md) | 仓库协作规则 |
 | [设计系统](docs/DESIGN.md) | 管理端视觉语言 |
+| [发布流程](docs/RELEASING.md) | 版本、tag、Release workflow 与回滚 |
+| [CI 验证](docs/CI_VALIDATION.md) | 工作流覆盖、本地门禁与安全扫描 |
 
 <!-- readme-section:license -->
 ## 许可证

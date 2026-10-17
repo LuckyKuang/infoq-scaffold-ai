@@ -16,6 +16,10 @@ deployment guides. Compose files and runtime config still live under
 | Apple container | macOS local backend stack | [APPLE_CONTAINER.md](APPLE_CONTAINER.md) |
 | Manual JVM + Nginx | Non-container hosts | [MANUAL.md](MANUAL.md) |
 
+Install, upgrade, rollback, stop, and data-retention boundaries are documented in
+[DEPLOYMENT_LIFECYCLE.md](DEPLOYMENT_LIFECYCLE.md). The cross-platform runtime entry is
+`node skills/deploy-cli/scripts/deploy_cli.mjs`.
+
 ## Files
 
 | File | Description |
@@ -25,6 +29,7 @@ deployment guides. Compose files and runtime config still live under
 | `.env.example` | Environment template for Compose interpolation |
 | `DOCKER.md` | Docker Compose 全栈部署（教程 + 脚本化流程） |
 | `APPLE_CONTAINER.md` | Apple `container` local stack |
+| `DEPLOYMENT_LIFECYCLE.md` | Install, upgrade, rollback, stop, and cleanup |
 | `MANUAL.md` | 非容器化 JVM + Nginx 部署 |
 | `Dockerfile.apple` | Apple container runtime image |
 | `apple-container.sh` | Isolated MySQL, Redis, and backend helper |
@@ -55,9 +60,9 @@ deployment guides. Compose files and runtime config still live under
 
 说明：
 
-- Docker Compose / 脚本化部署不要求宿主机安装 JDK 或 Maven；后端 Maven 打包在 Docker builder 镜像 `maven:3.9.12-eclipse-temurin-21` 内完成，最终运行镜像仍是 `bellsoft/liberica-openjdk-rocky:21.0.12-cds`。后端 Dockerfile 使用 BuildKit `RUN --mount`，因此 Docker CLI 必须支持 `docker buildx`：[`infoq-scaffold-backend/infoq-admin/Dockerfile`](../infoq-scaffold-backend/infoq-admin/Dockerfile)
+- Docker Compose / 脚本化部署不要求宿主机安装 JDK 或 Maven；后端 Maven 打包在 Docker builder 镜像 `maven:3.9.12-eclipse-temurin-21` 内完成，最终运行镜像仍是 `bellsoft/liberica-openjdk-rocky:21.0.12-cds`。后端 Dockerfile 使用 BuildKit `RUN --mount`，因此 Docker CLI 必须支持 `docker buildx`：[`backend/infoq-admin/Dockerfile`](../backend/infoq-admin/Dockerfile)
 - 手动部署或本机直接执行 Maven 构建时，仍需要宿主机 JDK 21 与 Maven 3.9+。
-- 前端本机开发、CI、docs 站点和 Docker 构建镜像统一固定基于 Node 24.18.0：[`infoq-scaffold-frontend-vue/Dockerfile`](../infoq-scaffold-frontend-vue/Dockerfile) [`infoq-scaffold-frontend-react/Dockerfile`](../infoq-scaffold-frontend-react/Dockerfile)。npm 版本不作为仓库构建基线单独固定，包管理器遵循各工作区 `packageManager` 与 lockfile。
+- 前端本机开发、CI、docs 站点和 Docker 构建镜像统一固定基于 Node 24.18.0：[`frontend-vue/Dockerfile`](../frontend-vue/Dockerfile) [`frontend-react/Dockerfile`](../frontend-react/Dockerfile)。npm 版本不作为仓库构建基线单独固定，包管理器遵循各工作区 `packageManager` 与 lockfile。
 - Docker Compose 默认依赖 MySQL 8.0、Redis 7.2、MinIO `RELEASE.2026-06-18T00-00-00Z`、Nginx 1.30：[`deploy/docker/docker-compose.yml`](../deploy/docker/docker-compose.yml)
 
 ### 1.2 端口与网络准备
@@ -130,15 +135,15 @@ ${INFOQ_DEPLOY_ROOT}/react/logs      # INFOQ_FRONTEND_TARGET=react 或 all
 
 主要配置来源：
 
-- 默认生产配置：[`infoq-scaffold-backend/infoq-admin/src/main/resources/application-prod.yml`](../infoq-scaffold-backend/infoq-admin/src/main/resources/application-prod.yml)
-- 通用配置：[`infoq-scaffold-backend/infoq-admin/src/main/resources/application.yml`](../infoq-scaffold-backend/infoq-admin/src/main/resources/application.yml)
+- 默认生产配置：[`backend/infoq-admin/src/main/resources/application-prod.yml`](../backend/infoq-admin/src/main/resources/application-prod.yml)
+- 通用配置：[`backend/infoq-admin/src/main/resources/application.yml`](../backend/infoq-admin/src/main/resources/application.yml)
 - Compose 覆盖模板：[`deploy/docker/server/application-prod.yml`](../deploy/docker/server/application-prod.yml)
 
 生产环境不要直接保留仓库内默认密钥、默认数据库密码和示例邮箱配置。生产 `prod` profile 开启 Quartz bootstrap guard 时，`DEPLOY_ID` 不能为空；同一批滚动发布的所有 backend 节点必须使用同一个 `DEPLOY_ID`，新批次发布必须换新值。
 
 多节点部署前，至少逐项核对：所有节点 `SECURITY_TOKEN_SECRET` 完全一致；`api-decrypt.enabled` 与公私钥和前端加密配置匹配；所有节点连接同一组 MySQL、Redis/Redisson 与 OSS 配置，`redisson.keyPrefix` 不因节点隔离 token、缓存、Quartz marker、WebSocket/SSE 注册表；共享同一个 `DEPLOY_ID`。
 
-前端重点检查：`VITE_APP_CONTEXT_PATH`、`VITE_APP_BASE_API`、`VITE_APP_ENCRYPT`、RSA 公私钥、`VITE_APP_CLIENT_ID`。配置入口为 `infoq-scaffold-frontend-vue/.env.production` 与 `infoq-scaffold-frontend-react/.env.production`。
+前端重点检查：`VITE_APP_CONTEXT_PATH`、`VITE_APP_BASE_API`、`VITE_APP_ENCRYPT`、RSA 公私钥、`VITE_APP_CLIENT_ID`。配置入口为 `frontend-vue/.env.production` 与 `frontend-react/.env.production`。
 
 网关确认：`INFOQ_FRONTEND_TARGET=all` 时 `/vue/`、`/react/` 分别指向 Vue、React 静态资源；单目标时 `/` 指向被选中的前端；`/prod-api/` 反代到后端 `9090`；HTTPS 证书路径和域名配置正确。基线配置见 [`deploy/docker/nginx/conf/nginx.conf`](../deploy/docker/nginx/conf/nginx.conf)，运维示例见 `examples/nginx/` 与 `examples/systemd/`。
 
@@ -151,7 +156,7 @@ ${INFOQ_DEPLOY_ROOT}/react/logs      # INFOQ_FRONTEND_TARGET=react 或 all
 
 ### 1.6 构建产物准备
 
-Compose / 脚本化部署不需要提前在宿主机准备 jar；`infoq-admin` 镜像会在 Docker builder 阶段执行 Maven prod 打包。手动部署时，构建后 jar 产物路径为 `infoq-scaffold-backend/infoq-admin/target/infoq-admin.jar`。Vue 与 React 生产构建后产出各自工作区的 `dist/` 目录。
+Compose / 脚本化部署不需要提前在宿主机准备 jar；`infoq-admin` 镜像会在 Docker builder 阶段执行 Maven prod 打包。手动部署时，构建后 jar 产物路径为 `backend/infoq-admin/target/infoq-admin.jar`。Vue 与 React 生产构建后产出各自工作区的 `dist/` 目录。
 
 ## 2. Linux Installer
 
@@ -208,13 +213,14 @@ For a local Apple `container` backend stack that stays isolated from other
 Apple container projects:
 
 ```bash
-bash deploy/apple-container.sh init
-bash deploy/apple-container.sh up
-curl --noproxy '*' -fsS http://127.0.0.1:19090/monitor/health/readiness
+node skills/deploy-cli/scripts/deploy_cli.mjs init
+node skills/deploy-cli/scripts/deploy_cli.mjs up
+node skills/deploy-cli/scripts/deploy_cli.mjs status
 ```
 
-See [APPLE_CONTAINER.md](APPLE_CONTAINER.md). Do not reuse `$HOME/infoq` or
-stop unrelated containers such as `sub2api-apple*`.
+The underlying entry remains `deploy/apple-container.sh`; see
+[APPLE_CONTAINER.md](APPLE_CONTAINER.md) for direct shell usage. Do not reuse
+`$HOME/infoq` or stop containers owned by other projects.
 
 ## 5. Manual Deploy
 
@@ -283,5 +289,8 @@ docker compose logs redis
 | --- | --- |
 | [DOCKER.md](DOCKER.md) | WSL2 / macOS / Linux 容器部署全流程 |
 | [APPLE_CONTAINER.md](APPLE_CONTAINER.md) | macOS Apple `container` 本机后端栈 |
+| [DEPLOYMENT_LIFECYCLE.md](DEPLOYMENT_LIFECYCLE.md) | 安装、升级、回滚、停止与数据保留 |
 | [MANUAL.md](MANUAL.md) | 非容器化部署 |
+| [VERIFICATION.md](VERIFICATION.md) | 容器部署 smoke 与阻断收口 |
+| [runtime-matrix.md](runtime-matrix.md) | 运行时选择矩阵 |
 | [Security policy](../SECURITY.md) | Vulnerability reporting |

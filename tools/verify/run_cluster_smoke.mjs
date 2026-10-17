@@ -54,7 +54,7 @@ function resolveClusterRedisDefaults() {
 }
 
 const config = {
-  jarRelPath: 'infoq-scaffold-backend/infoq-admin/target/infoq-admin.jar',
+  jarRelPath: 'backend/infoq-admin/target/infoq-admin.jar',
   host: process.env.CLUSTER_SMOKE_HOST || '127.0.0.1',
   portA: process.env.CLUSTER_SMOKE_PORT_A || '19081',
   portB: process.env.CLUSTER_SMOKE_PORT_B || '19082',
@@ -220,7 +220,7 @@ for (const [flag, value] of [
   }
 }
 
-const backendDir = path.join(repoRoot, 'infoq-scaffold-backend');
+const backendDir = path.join(repoRoot, 'backend');
 const jarPath = path.join(repoRoot, config.jarRelPath);
 const pyScriptPath = path.join(scriptDir, 'websocket_cluster_smoke.py');
 stateFile = resolveTmpPath(repoRoot, 'tools/verify', `run-cluster-smoke-${config.portA}-${config.portB}.state.json`);

@@ -109,7 +109,7 @@ services:
       INFOQ_IT_ES_PASSWORD: ${ES_IT_PASSWORD:?Set ES_IT_PASSWORD in the run env file}
       INFOQ_IT_ES_INDEX_PREFIX: infoq_elasticsearch_it_${MIDDLEWARE_RUN_ID:?Set MIDDLEWARE_RUN_ID in the run env file}_
     volumes:
-      - ../../infoq-scaffold-backend:/workspace:rw
+      - ../../backend:/workspace:rw
       - ${MIDDLEWARE_MAVEN_REPO:?Set MIDDLEWARE_MAVEN_REPO in the run env file}:/maven-repo:ro
       - ${MIDDLEWARE_SECRET_DIR:?Set MIDDLEWARE_SECRET_DIR in the run env file}/truststore.p12:/run/secrets/truststore.p12:ro
     depends_on:

@@ -9,7 +9,7 @@ flow are in [`CONTRIBUTING.md`](CONTRIBUTING.md).
 Use the versions declared by the repository. Do not copy tool versions into
 extra policy documents.
 
-- JDK 21 and Maven 3.9.x: `infoq-scaffold-backend/pom.xml`
+- JDK 21 and Maven 3.9.x: `backend/pom.xml`
 - Node.js `24.18.0`: `.node-version` and `.nvmrc`
 - pnpm: frontend workspace `packageManager`
 
@@ -40,8 +40,8 @@ comes from that SQL file; do not guess passwords for an existing environment.
 ```bash
 node tools/backend_mvn.mjs -- clean install -DskipTests
 
-pnpm --dir infoq-scaffold-frontend-vue install
-pnpm --dir infoq-scaffold-frontend-react install
+pnpm --dir frontend-vue install
+pnpm --dir frontend-react install
 ```
 
 The root Makefile also provides:
@@ -56,7 +56,7 @@ make test-docs
 Backend:
 
 ```bash
-java -jar infoq-scaffold-backend/infoq-admin/target/infoq-admin.jar --spring.profiles.active=local
+java -jar backend/infoq-admin/target/infoq-admin.jar --spring.profiles.active=local
 ```
 
 `dev` is the default Spring profile in config. Use `local` for machine-specific
@@ -65,13 +65,13 @@ datasource and Redis overrides.
 Vue admin:
 
 ```bash
-pnpm --dir infoq-scaffold-frontend-vue run dev
+pnpm --dir frontend-vue run dev
 ```
 
 React admin:
 
 ```bash
-pnpm --dir infoq-scaffold-frontend-react run dev
+pnpm --dir frontend-react run dev
 ```
 
 Both admin apps default to port `80` and proxy `/dev-api` to
@@ -82,8 +82,8 @@ settings must match, and `clientId` must match initialized `sys_client` data.
 Admin E2E scripts manage their own local stack (start, verify, then close owned ports):
 
 ```bash
-node skills/infoq-test/scripts/run_admin_e2e.mjs --client vue --route-limit 1
-node skills/infoq-test/scripts/run_admin_e2e.mjs --client react --route-limit 1
+node skills/test-cli/scripts/run_admin_e2e.mjs --client vue --route-limit 1
+node skills/test-cli/scripts/run_admin_e2e.mjs --client react --route-limit 1
 ```
 
 ## Verification
@@ -98,17 +98,17 @@ node tools/backend_mvn.mjs -- -pl infoq-modules/infoq-system -am test
 Vue:
 
 ```bash
-pnpm --dir infoq-scaffold-frontend-vue run lint:eslint
-pnpm --dir infoq-scaffold-frontend-vue run test:unit
-pnpm --dir infoq-scaffold-frontend-vue run build:prod
+pnpm --dir frontend-vue run lint:eslint
+pnpm --dir frontend-vue run test:unit
+pnpm --dir frontend-vue run build:prod
 ```
 
 React:
 
 ```bash
-pnpm --dir infoq-scaffold-frontend-react run lint
-pnpm --dir infoq-scaffold-frontend-react run test
-pnpm --dir infoq-scaffold-frontend-react run build:prod
+pnpm --dir frontend-react run lint
+pnpm --dir frontend-react run test
+pnpm --dir frontend-react run build:prod
 ```
 
 Encoding and README sync:
@@ -118,8 +118,10 @@ node tools/validate_utf8.mjs
 node tools/check_readme_sync.mjs
 ```
 
-GitHub `CI Build` runs the encoding gate, backend package, and admin frontend
-checks on pull requests and pushes. Deployment scripts are verified with
+GitHub `CI Build` runs the repository gates (UTF-8, README structure, release
+version), backend package, and admin frontend checks on pull requests and
+pushes. Security Scan adds CodeQL and dependency review. Deployment runtime
+verification uses `deploy-cli`; Docker-specific steps are in
 `deploy/VERIFICATION.md`.
 
 ## Common Problems
@@ -175,9 +177,9 @@ Proxy config lives in each admin `vite.config.ts`.
 
 ```text
 infoq-scaffold-ai/
-├── infoq-scaffold-backend/       Spring Boot backend
-├── infoq-scaffold-frontend-vue/  Vue 3 admin
-├── infoq-scaffold-frontend-react/ React 19 admin
+├── backend/       Spring Boot backend
+├── frontend-vue/  Vue 3 admin
+├── frontend-react/ React 19 admin
 ├── deploy/                       Installer, Compose assets, and deployment guides
 ├── sql/                          Frozen baseline and incremental scripts
 ├── docs/                         User documentation and spec truth
@@ -193,5 +195,8 @@ infoq-scaffold-ai/
 - [Documentation index](docs/README.md)
 - [Deployment guide](deploy/README.md)
 - [Apple container](deploy/APPLE_CONTAINER.md)
+- [Deployment lifecycle](deploy/DEPLOYMENT_LIFECYCLE.md)
+- [Release process](docs/RELEASING.md)
+- [CI validation](docs/CI_VALIDATION.md)
 - [AGENTS.md](AGENTS.md)
 - [FAQ](docs/FAQ.md)

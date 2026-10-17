@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/images/logo.png" width="120" alt="InfoQ-Scaffold-AI Logo" />
+<img src="assets/logo.png" width="120" alt="InfoQ-Scaffold-AI Logo" />
 
 # InfoQ-Scaffold-AI
 
@@ -37,9 +37,9 @@ ships a runnable Spring Boot backend plus Vue and React admin consoles.
 
 Supported workspaces:
 
-- `infoq-scaffold-backend`: Spring Boot 4.1 multi-module backend
-- `infoq-scaffold-frontend-vue`: Vue 3 + Element Plus admin
-- `infoq-scaffold-frontend-react`: React 19 + Ant Design admin
+- `backend`: Spring Boot 4.1 multi-module backend
+- `frontend-vue`: Vue 3 + Element Plus admin
+- `frontend-react`: React 19 + Ant Design admin
 
 The frozen database baseline is
 [`sql/infoq_scaffold_3.0.0.sql`](sql/infoq_scaffold_3.0.0.sql). Later schema or
@@ -53,6 +53,7 @@ seed changes must use `sql/infoq_scaffold_update_YYYYMMDD.sql`.
 - Layered [`AGENTS.md`](AGENTS.md), `skills`, and OpenSpec delivery
 - Frozen SQL baseline plus dated incremental scripts
 - Docker Compose deployment for MySQL, Redis, MinIO, backend, and admin gateways
+- Cross-platform `deploy-cli` for Apple container, WSL2 Docker, and Linux Docker smoke checks
 - UTF-8, Maven, pnpm, and admin E2E verification entrypoints
 
 <!-- readme-section:quick-start -->
@@ -64,7 +65,7 @@ Import the SQL baseline and start MySQL 8 plus Redis 7 before login.
 
 ```bash
 node tools/backend_mvn.mjs -- clean install -DskipTests
-java -jar infoq-scaffold-backend/infoq-admin/target/infoq-admin.jar --spring.profiles.active=local
+java -jar backend/infoq-admin/target/infoq-admin.jar --spring.profiles.active=local
 ```
 
 Default URL: `http://127.0.0.1:8080`. Captcha: `http://127.0.0.1:8080/auth/code`.
@@ -72,7 +73,7 @@ Default URL: `http://127.0.0.1:8080`. Captcha: `http://127.0.0.1:8080/auth/code`
 ### Vue admin
 
 ```bash
-cd infoq-scaffold-frontend-vue
+cd frontend-vue
 pnpm install
 pnpm run dev
 ```
@@ -80,7 +81,7 @@ pnpm run dev
 ### React admin
 
 ```bash
-cd infoq-scaffold-frontend-react
+cd frontend-react
 pnpm install
 pnpm run dev
 ```
@@ -91,8 +92,11 @@ second console. Local setup details are in [`DEV_GUIDE.md`](DEV_GUIDE.md).
 Use skills for admin route smoke or captcha login:
 
 ```bash
-node skills/infoq-test/scripts/run_admin_e2e.mjs --client vue --route-limit 1
-node skills/infoq-test/scripts/captcha_login.mjs --backend-url http://127.0.0.1:8080 --print-token
+node skills/test-cli/scripts/run_admin_e2e.mjs --client vue --route-limit 1
+node skills/test-cli/scripts/captcha_login.mjs --backend-url http://127.0.0.1:8080 --print-token
+
+# Local deployment smoke (Apple container / WSL2 Docker / Linux Docker)
+node skills/deploy-cli/scripts/deploy_cli.mjs status
 ```
 
 <!-- readme-section:deployment -->
@@ -103,6 +107,7 @@ node skills/infoq-test/scripts/captcha_login.mjs --backend-url http://127.0.0.1:
 | Linux install script | [Deployment guide](deploy/README.md) |
 | Docker Compose | [Docker guide](deploy/DOCKER.md) |
 | Apple container | [Apple container](deploy/APPLE_CONTAINER.md) |
+| Deployment lifecycle | [Deployment lifecycle](deploy/DEPLOYMENT_LIFECYCLE.md) |
 | Compose environment template | [.env.example](deploy/.env.example) |
 | Manual deployment | [Manual deploy](deploy/MANUAL.md) |
 | Prerequisites | [Deploy prerequisites](deploy/README.md) |
@@ -127,6 +132,8 @@ detailed configuration and maintenance.
 | [Security policy](SECURITY.md) | Vulnerability reporting |
 | [AGENTS.md](AGENTS.md) | Repository collaboration rules |
 | [Design system](docs/DESIGN.md) | Admin visual language |
+| [Release process](docs/RELEASING.md) | Version, tag, release workflow, and rollback |
+| [CI validation](docs/CI_VALIDATION.md) | Workflow coverage, local gates, and security scans |
 
 <!-- readme-section:license -->
 ## License

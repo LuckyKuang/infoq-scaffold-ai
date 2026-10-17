@@ -16,9 +16,9 @@
 ### 1.1 当前分层方式
 
 - 根规则：`/AGENTS.md`
-- 后端：`infoq-scaffold-backend/AGENTS.md`
-- React 管理端：`infoq-scaffold-frontend-react/AGENTS.md`
-- Vue 管理端：`infoq-scaffold-frontend-vue/AGENTS.md`
+- 后端：`backend/AGENTS.md`
+- React 管理端：`frontend-react/AGENTS.md`
+- Vue 管理端：`frontend-vue/AGENTS.md`
 
 原则只有一条：**越靠近代码越优先**。
 
@@ -188,25 +188,26 @@ backend 工作区基线是 JDK 21 与 Maven 3.9.x。
 
 `skills` 负责把高频任务沉淀成仓库内 SOP；`MCP` 负责补充交互探索或深度诊断能力。
 
-仓库级 skill 是 CLI 型可执行 SOP：只保留 4 个工作域（`infoq-test`、`infoq-compress`、`infoq-push`、`infoq-release`），域内用子命令或 mode 表达子场景。维护时优先重构现有 skill，不为域外能力新增 skill。标准执行顺序是：判定范围 -> 只读探测/预览 -> 目标与影响枚举 -> 写入或危险动作门禁 -> 执行验证 -> `tmp/` 证据留存与显式失败。
+仓库级 skill 是 CLI 型可执行 SOP：只保留 5 个工作域（`test-cli`、`compress-cli`、`push-cli`、`release-cli`、`deploy-cli`），域内用子命令或 mode 表达子场景。维护时优先重构现有 skill，不为域外能力新增 skill。标准执行顺序是：判定范围 -> 只读探测/预览 -> 目标与影响枚举 -> 写入或危险动作门禁 -> 执行验证 -> `tmp/` 证据留存与显式失败。
 
 当前默认组合：
 
-- Web 测试、浏览器自动化、管理端 E2E、前端单测/构建/运行态：`infoq-test`
-- 推送、PR 创建/复用、校验回流与受控合并：`infoq-push`
-- 版本核对、tag 与 GitHub Release：`infoq-release`
-- AGENTS.md 压缩与路由一致性校验：`infoq-compress`
+- Web 测试、浏览器自动化、管理端 E2E、前端单测/构建/运行态：`test-cli`
+- 推送、PR 创建/复用、校验回流与受控合并：`push-cli`
+- 版本核对、tag 与 GitHub Release：`release-cli`
+- AGENTS.md 压缩与路由一致性校验：`compress-cli`
+- 本机部署、Apple container / WSL2 Docker / Linux Docker 运行态与 smoke：`deploy-cli`
 - 后端登录、smoke、集群与单测验证：`tools/verify/`（SOP 见 `tools/verify/README.md`）
 - SQL、数据库、Redis、数据修复、迁移和一致性核对：`docs/DATA-OPS.md`
-- 交付门禁、OpenSpec 与插件治理：`docs/DELIVERY-WORKFLOW.md`；容器部署验证：`deploy/VERIFICATION.md`
+- 交付门禁、OpenSpec 与插件治理：`docs/DELIVERY-WORKFLOW.md`；部署脚本与运行时矩阵：`deploy/VERIFICATION.md`、`deploy/runtime-matrix.md`
 - 组件选型与组件 API 核验：`docs/DESIGN.md`「组件选型与 API 核验」
 - OpenAI / Codex / AGENTS / MCP 问题：`openai-docs`（本机/系统 skill，不作为项目级 MCP 固定配置）
 - 前端深度调试：`chrome-devtools`
 
 说明：
 
-- `playwright-cli` 与 `chrome-devtools-cli` 是仓库内跨平台 CLI，位于 `skills/infoq-test/scripts/`。
-- `playwright-cli admin-route-probe` 遇到后端 `captchaEnabled=true` 时，会自动调用 `skills/infoq-test/scripts/captcha_login.mjs` 识别验证码并获取真实 token。
+- `playwright-cli` 与 `chrome-devtools-cli` 是仓库内跨平台 CLI，位于 `skills/test-cli/scripts/`。
+- `playwright-cli admin-route-probe` 遇到后端 `captchaEnabled=true` 时，会自动调用 `skills/test-cli/scripts/captcha_login.mjs` 识别验证码并获取真实 token。
 - `playwright` MCP 用于临时交互探索。
 - `chrome-devtools` MCP 用于 Network / Console / Performance 深度诊断。
 - 不要回退到任何历史浏览器入口。
@@ -238,7 +239,7 @@ backend 工作区基线是 JDK 21 与 Maven 3.9.x。
 
 ```bash
 node tools/validate_utf8.mjs README.md docs
-rg -n '\]\([^)]*infoq-scaffold-' README.md docs
+rg -n 'infoq-scaffold-(backend|frontend-vue|frontend-react)' README.md docs
 ```
 
 ### 2.7 核心原则
@@ -347,9 +348,9 @@ spec delta 放在 `openspec/changes/<change-id>/specs/<capability>/spec.md`；�
 
 本仓库的 subagent 工作流默认评估六个交付面：
 
-- `infoq-scaffold-backend`
-- `infoq-scaffold-frontend-react`
-- `infoq-scaffold-frontend-vue`
+- `backend`
+- `frontend-react`
+- `frontend-vue`
 - `docs`
 - `script / deploy`
 - `skills`（受影响时）
@@ -383,7 +384,7 @@ spec delta 放在 `openspec/changes/<change-id>/specs/<capability>/spec.md`；�
 
 ### 4.1 适用范围
 
-适用于存在明显层级拆分的工作区，例如 `infoq-scaffold-backend`、`infoq-scaffold-frontend-react`、`infoq-scaffold-frontend-vue`。如果某个工作区内部还分为父模块与叶子模块，这份规范优先采用"叶子真值 -> 父层聚合 -> 工作区总览 -> AGENTS 路由"的结构。
+适用于存在明显层级拆分的工作区，例如 `backend`、`frontend-react`、`frontend-vue`。如果某个工作区内部还分为父模块与叶子模块，这份规范优先采用"叶子真值 -> 父层聚合 -> 工作区总览 -> AGENTS 路由"的结构。
 
 ### 4.2 核心结论
 
@@ -407,8 +408,8 @@ spec delta 放在 `openspec/changes/<change-id>/specs/<capability>/spec.md`；�
 
 1. 先在 `infoq-core`、`infoq-modules`、`infoq-plugin` 的叶子模块下补真值文档。
 2. 再在 `infoq-core`、`infoq-modules`、`infoq-plugin` 这一层写聚合文档。
-3. 最后由 `infoq-scaffold-backend/README.md`、`doc/architecture.md`、`doc/data-flow.md` 汇总。
-4. `infoq-scaffold-backend/AGENTS.md` 只负责告诉 AI 先读什么、变更后要同步哪些层。
+3. 最后由 `backend/README.md`、`doc/architecture.md`、`doc/data-flow.md` 汇总。
+4. `backend/AGENTS.md` 只负责告诉 AI 先读什么、变更后要同步哪些层。
 
 前端工作区可以复用同一原则，只是叶子粒度不一定是 Maven 模块，也可以是 feature、package、page 或 domain module。
 

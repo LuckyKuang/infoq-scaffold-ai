@@ -115,22 +115,22 @@ function renderFrontendNote() {
     case 'vue':
       return `### 前端联动
 - 需要补充 Vue 前端环境变量：
-  - \`infoq-scaffold-frontend-vue/.env.development\`
-  - \`infoq-scaffold-frontend-vue/.env.production\`
+  - \`frontend-vue/.env.development\`
+  - \`frontend-vue/.env.production\`
 - 在 Vue 启动/请求链路中以 env 开关控制逻辑，关闭时走兼容分支。`;
     case 'react':
       return `### 前端联动
 - 需要补充 React 前端环境变量：
-  - \`infoq-scaffold-frontend-react/.env.development\`
-  - \`infoq-scaffold-frontend-react/.env.production\`
+  - \`frontend-react/.env.development\`
+  - \`frontend-react/.env.production\`
 - 在 React 启动/请求链路中以 env 开关控制逻辑，关闭时走兼容分支。`;
     case 'both':
       return `### 前端联动
 - 需要补充双前端环境变量：
-  - \`infoq-scaffold-frontend-vue/.env.development\`
-  - \`infoq-scaffold-frontend-vue/.env.production\`
-  - \`infoq-scaffold-frontend-react/.env.development\`
-  - \`infoq-scaffold-frontend-react/.env.production\`
+  - \`frontend-vue/.env.development\`
+  - \`frontend-vue/.env.production\`
+  - \`frontend-react/.env.development\`
+  - \`frontend-react/.env.production\`
 - 在受影响的 Vue / React 启动或请求链路中分别以 env 开关控制逻辑，关闭时走兼容分支。`;
     default:
       return `### 前端联动
@@ -144,19 +144,19 @@ function renderValidationCommands() {
       return 'node tools/backend_mvn.mjs -- clean package -P dev -pl infoq-modules/infoq-system -am';
     case 'vue':
       return `node tools/backend_mvn.mjs -- clean package -P dev -pl infoq-modules/infoq-system -am
-cd infoq-scaffold-frontend-vue && pnpm run build:prod`;
+cd frontend-vue && pnpm run build:prod`;
     case 'react':
       return `node tools/backend_mvn.mjs -- clean package -P dev -pl infoq-modules/infoq-system -am
-cd infoq-scaffold-frontend-react && pnpm run build:prod`;
+cd frontend-react && pnpm run build:prod`;
     case 'both':
       return `node tools/backend_mvn.mjs -- clean package -P dev -pl infoq-modules/infoq-system -am
-cd infoq-scaffold-frontend-vue && pnpm run build:prod
-cd infoq-scaffold-frontend-react && pnpm run build:prod`;
+cd frontend-vue && pnpm run build:prod
+cd frontend-react && pnpm run build:prod`;
     default:
       return `node tools/backend_mvn.mjs -- clean package -P dev -pl infoq-modules/infoq-system -am
 # If frontend impact is confirmed, run the affected frontend build(s); if impact is ambiguous, run both.
-cd infoq-scaffold-frontend-vue && pnpm run build:prod
-cd infoq-scaffold-frontend-react && pnpm run build:prod`;
+cd frontend-vue && pnpm run build:prod
+cd frontend-react && pnpm run build:prod`;
   }
 }
 
@@ -172,11 +172,11 @@ ${renderClassNote()}
 
 ## 后端改动清单
 1. 模块注册：
-   - \`infoq-scaffold-backend/infoq-plugin/pom.xml\` 增加 \`${pluginName}\` module。
+   - \`backend/infoq-plugin/pom.xml\` 增加 \`${pluginName}\` module。
 2. 版本管理：
-   - \`infoq-scaffold-backend/infoq-core/infoq-core-bom/pom.xml\` 增加版本属性/依赖管理。
+   - \`backend/infoq-core/infoq-core-bom/pom.xml\` 增加版本属性/依赖管理。
 3. 消费模块依赖：
-   - 目标模块（通常 \`infoq-scaffold-backend/infoq-modules/infoq-system/pom.xml\`）按需引入。
+   - 目标模块（通常 \`backend/infoq-modules/infoq-system/pom.xml\`）按需引入。
 4. 代码耦合控制：
    - 通过注解/接口/facade 暴露能力，避免业务直接依赖插件内部实现。
 5. 文档归档：

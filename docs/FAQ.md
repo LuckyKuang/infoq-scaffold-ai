@@ -30,13 +30,13 @@ Vue 和 React 管理端的 `.env.development` 默认都把 `VITE_APP_PORT` 设�
 
 ```bash
 node tools/backend_mvn.mjs -- clean install -DskipTests
-java -jar infoq-scaffold-backend/infoq-admin/target/infoq-admin.jar --spring.profiles.active=local
+java -jar backend/infoq-admin/target/infoq-admin.jar --spring.profiles.active=local
 ```
 
 本地临时端口也必须显式传入，并同步前端代理：
 
 ```bash
-java -jar infoq-scaffold-backend/infoq-admin/target/infoq-admin.jar --spring.profiles.active=local --server.port=8081 --captcha.enable=false
+java -jar backend/infoq-admin/target/infoq-admin.jar --spring.profiles.active=local --server.port=8081 --captcha.enable=false
 ```
 
 ## 5. 初始化 SQL 里有 `admin` 用户，为什么文档不直接写默认密码

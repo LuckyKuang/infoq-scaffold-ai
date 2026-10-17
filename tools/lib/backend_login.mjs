@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // InfoQ 后端登录加密共享实现：RSA 头密钥 + AES-256-ECB(PKCS7) 载荷。
-// 被 infoq-test 的真实验证码登录与 tools/verify 的快速登录校验共同复用，避免两处实现漂移。
+// 被 test-cli 的真实验证码登录与 tools/verify 的快速登录校验共同复用，避免两处实现漂移。
 import crypto from 'node:crypto';
 
 export function toPem(base64Key) {

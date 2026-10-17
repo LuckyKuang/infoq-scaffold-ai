@@ -1,4 +1,0 @@
-interface:
-  display_name: "InfoQ 版本与 Release"
-  short_description: "核对版本、按需升级、打 tag 并发布 GitHub Release"
-  default_prompt: "使用 $infoq-release 在 PR 合并后发布版本：先 plan 对比当前版本与最新远程 tag，版本不是最新时先用 bump --version x.y.z 同步受管文件（后端 revision、前端 package、README 徽标、deploy 文档、Docker tag、SpringDoc 测试、DEPLOY_ID 示例），再 tag 创建并推送标注 tag，最后 publish 创建 GitHub Release 并 verify；远程写操作默认 dry-run，已存在的 tag 与旧版本重复发布一律拒绝。"

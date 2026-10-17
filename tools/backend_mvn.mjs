@@ -22,7 +22,7 @@ function resolveRepoRoot(startDir) {
 }
 
 const repoRoot = resolveRepoRoot(scriptDir);
-const backendDir = path.join(repoRoot, 'infoq-scaffold-backend');
+const backendDir = path.join(repoRoot, 'backend');
 
 function usage() {
   console.log(`Usage: node tools/backend_mvn.mjs [options] -- <maven args>

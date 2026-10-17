@@ -185,8 +185,8 @@ font-family: Helvetica Neue, Helvetica, PingFang SC, Hiragino Sans GB, Microsoft
 ### 10.5 版本与 API 核验
 
 ```bash
-rg '"antd"|@ant-design' infoq-scaffold-frontend-react/package.json infoq-scaffold-frontend-react/pnpm-lock.yaml
-rg '"element-plus"' infoq-scaffold-frontend-vue/package.json infoq-scaffold-frontend-vue/pnpm-lock.yaml
+rg '"antd"|@ant-design' frontend-react/package.json frontend-react/pnpm-lock.yaml
+rg '"element-plus"' frontend-vue/package.json frontend-vue/pnpm-lock.yaml
 ```
 
 若 lock 文件中无结果，检查当前使用的包管理器，并同时检查工作区根目录与应用子目录。涉及构建体积、chunk warning 或分包策略时，以 `docs/ARCHITECTURE.md` 的 React 构建与分包真值为准。

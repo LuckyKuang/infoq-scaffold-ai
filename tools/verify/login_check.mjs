@@ -99,7 +99,7 @@ async function assertAuthCode() {
       'GET /auth/code',
       [
         'captchaEnabled=true.',
-        'Use infoq-test for real captcha login,',
+        'Use test-cli for real captcha login,',
         'or run verify_login.mjs with --allow-captcha-disabled for explicit fast diagnostics.'
       ].join(' ')
     );

@@ -6,8 +6,8 @@ import {resolveRepoRoot} from '../lib/skill_runtime.mjs';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolveRepoRoot(scriptDir);
-const root = path.join(repoRoot, 'infoq-scaffold-backend', 'infoq-modules', 'infoq-system', 'src', 'main', 'java', 'cc', 'infoq', 'system');
-const testRoot = path.join(repoRoot, 'infoq-scaffold-backend', 'infoq-modules', 'infoq-system', 'src', 'test', 'java', 'cc', 'infoq', 'system');
+const root = path.join(repoRoot, 'backend', 'infoq-modules', 'infoq-system', 'src', 'main', 'java', 'cc', 'infoq', 'system');
+const testRoot = path.join(repoRoot, 'backend', 'infoq-modules', 'infoq-system', 'src', 'test', 'java', 'cc', 'infoq', 'system');
 
 function collectJavaStems(baseDir) {
   const items = [];

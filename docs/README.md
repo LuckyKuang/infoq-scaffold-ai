@@ -26,7 +26,7 @@ current repository; it does not retell third-party framework tutorials.
 [架构总览](./ARCHITECTURE.md) → [开发指南](../DEV_GUIDE.md) → [FAQ](./FAQ.md)
 
 **部署上线**
-[部署指南](../deploy/README.md) → [Docker Compose](../deploy/DOCKER.md) → [Apple container](../deploy/APPLE_CONTAINER.md) → [手动部署](../deploy/MANUAL.md)
+[部署指南](../deploy/README.md) → [部署生命周期](../deploy/DEPLOYMENT_LIFECYCLE.md) → [Docker Compose](../deploy/DOCKER.md) → [Apple container](../deploy/APPLE_CONTAINER.md) → [手动部署](../deploy/MANUAL.md)
 
 **AI 协作**
 [AI 协作规范](./AI-COLLABORATION.md) → [Skills 与插件](./SKILLS.md) → [MCP Servers](./MCP-SERVERS.md)
@@ -41,6 +41,8 @@ current repository; it does not retell third-party framework tutorials.
 | [架构总览](./ARCHITECTURE.md) | 工作区、技术基线、后端模块、登录与菜单链路、双管理端结构 |
 | [设计系统](./DESIGN.md) | 管理端视觉语言与组件选型 |
 | [数据运维](./DATA-OPS.md) | SQL 增量脚本、冻结基线保护、数据修复、迁移与一致性核对 |
+| [发布流程](./RELEASING.md) | 版本格式、发布 PR、tag、Release workflow、产物与回滚 |
+| [CI 验证](./CI_VALIDATION.md) | 工作流覆盖、本地等价命令、发布门禁与安全扫描 |
 | [FAQ](./FAQ.md) | 常见问题和排障 |
 
 ### 部署运维
@@ -49,6 +51,7 @@ current repository; it does not retell third-party framework tutorials.
 | --- | --- |
 | [部署指南](../deploy/README.md) | 部署方式、前置条件、端口与目录准备、发布前检查 |
 | [Docker Compose](../deploy/DOCKER.md) | WSL2 / macOS Colima / Linux 全栈 Compose 与脚本化部署 |
+| [部署生命周期](../deploy/DEPLOYMENT_LIFECYCLE.md) | 安装、升级、回滚、停止与数据保留边界 |
 | [部署验证 SOP](../deploy/VERIFICATION.md) | 免费商用容器运行时、smoke 清单与阻断收口 |
 | [运行时矩阵](../deploy/runtime-matrix.md) | 运行时选择流程与必须停止询问的情况 |
 | [WSL2 全流程](../deploy/wsl2-docker-compose.md) | WSL2 Debian 内 Docker CE 的完整步骤 |
@@ -60,7 +63,7 @@ current repository; it does not retell third-party framework tutorials.
 | 文档 | 说明 |
 | --- | --- |
 | [AI 协作规范](./AI-COLLABORATION.md) | AGENTS 分层、subagents、研发工作流、模块文档治理 |
-| [Skills 与插件](./SKILLS.md) | 4 个仓库级 skill 的使用与后端插件开关矩阵 |
+| [Skills 与插件](./SKILLS.md) | 5 个仓库级 skill 的使用与后端插件开关矩阵 |
 | [交付工作流](./DELIVERY-WORKFLOW.md) | Acceptance Contract、OpenSpec 门禁、UI 四阶段与插件治理 |
 | [OpenSpec 流程](./OPENSPEC-WORKFLOW.md) | change 生命周期与结构校验 |
 | [UI 工作流](./UI-WORKFLOW.md) | 重大 UI/UX 四阶段设计辅助层 |
@@ -77,9 +80,9 @@ current repository; it does not retell third-party framework tutorials.
 
 | 工作区 | 文档入口 |
 | --- | --- |
-| **Vue 管理端** | [README](../infoq-scaffold-frontend-vue/README.md) · [架构](../infoq-scaffold-frontend-vue/doc/architecture.md) · [数据流](../infoq-scaffold-frontend-vue/doc/data-flow.md) |
-| **React 管理端** | [README](../infoq-scaffold-frontend-react/README.md) · [架构](../infoq-scaffold-frontend-react/doc/architecture.md) · [数据流](../infoq-scaffold-frontend-react/doc/data-flow.md) |
-| **Backend** | [README](../infoq-scaffold-backend/README.md) · [架构](../infoq-scaffold-backend/doc/architecture.md) · [数据流](../infoq-scaffold-backend/doc/data-flow.md) |
+| **Vue 管理端** | [README](../frontend-vue/README.md) · [架构](../frontend-vue/doc/architecture.md) · [数据流](../frontend-vue/doc/data-flow.md) |
+| **React 管理端** | [README](../frontend-react/README.md) · [架构](../frontend-react/doc/architecture.md) · [数据流](../frontend-react/doc/data-flow.md) |
+| **Backend** | [README](../backend/README.md) · [架构](../backend/doc/architecture.md) · [数据流](../backend/doc/data-flow.md) |
 
 <!-- doc-section:structure -->
 ## 目录结构
@@ -98,11 +101,12 @@ docs/
 ├── TESTING.md           # 管理端 E2E 测试
 ├── FAQ.md               # 常见问题
 ├── DESIGN.md            # 设计系统与组件选型
+├── RELEASING.md         # 发布流程与回滚
+├── CI_VALIDATION.md     # CI 覆盖与发布门禁
 ├── specs/               # 规格真值（capability 需求）
 ├── testing/             # E2E case 集合
 ├── plan/                # 治理执行计划
-├── ui-demos/            # UI 演示
-└── tmp/                 # 临时产物（已忽略）
+└── images/              # 文档配图
 ```
 
 <!-- doc-section:workspaces -->
@@ -110,11 +114,12 @@ docs/
 
 | 工作区 | 作用 | 技术栈 |
 | --- | --- | --- |
-| `infoq-scaffold-backend` | Spring Boot 后端 | JDK 21, Spring Boot 4.1.1 |
-| `infoq-scaffold-frontend-vue` | Vue 管理端 | Vue 3.5, Element Plus 2.14 |
-| `infoq-scaffold-frontend-react` | React 管理端 | React 19.2, Ant Design 6.4 |
-| `script` / `deploy` | 部署脚本与入口 | Bash, Docker Compose |
+| `backend` | Spring Boot 后端 | JDK 21, Spring Boot 4.1.1 |
+| `frontend-vue` | Vue 管理端 | Vue 3.5, Element Plus 2.14 |
+| `frontend-react` | React 管理端 | React 19.2, Ant Design 6.4 |
+| `deploy` | 部署脚本、运行时矩阵与容器编排 | Bash, Docker Compose, Apple container |
 | `sql` | 数据库脚本 | MySQL 8 |
+| `skills` | 仓库级 CLI 工作域 | Node.js |
 | `tools` | 仓库校验脚本 | Node.js |
 
 <!-- doc-section:scope -->

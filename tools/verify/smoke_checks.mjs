@@ -90,7 +90,7 @@ async function checkPublicEndpoints() {
     fail('GET /', `http=${rootResp.status}`);
   }
   const rootText = await rootResp.text();
-  if (!rootText.includes('infoq-scaffold-backend')) {
+  if (!rootText.includes('backend')) {
     fail('GET /', 'unexpected response body');
   }
   logPass('GET /', 'http=200');

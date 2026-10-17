@@ -6,7 +6,7 @@
 - HTTP 200
 - JSON `code = 200`
 - 默认登录成功校验要求 `data.captchaEnabled = false`
-- 若返回 `data.captchaEnabled = true`，应改用 `infoq-test` 验证真实验证码链路；只有快速诊断才显式传 `--allow-captcha-disabled`
+- 若返回 `data.captchaEnabled = true`，应改用 `test-cli` 验证真实验证码链路；只有快速诊断才显式传 `--allow-captcha-disabled`
 
 2. `POST /auth/login`
 - 优先加密请求

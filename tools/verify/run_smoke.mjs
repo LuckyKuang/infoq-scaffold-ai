@@ -25,7 +25,7 @@ const repoRoot = resolveRepoRoot(scriptDir);
 const args = normalizeForwardedArgs(process.argv.slice(2));
 
 const config = {
-  jarRelPath: 'infoq-scaffold-backend/infoq-admin/target/infoq-admin.jar',
+  jarRelPath: 'backend/infoq-admin/target/infoq-admin.jar',
   port: process.env.SMOKE_PORT || '18080',
   host: process.env.SMOKE_HOST || '127.0.0.1',
   springProfile: process.env.SMOKE_SPRING_PROFILES_ACTIVE || '',
@@ -135,7 +135,7 @@ for (let index = 0; index < args.length; index += 1) {
 const backendConfigSelection = resolveBackendConfigSelection(repoRoot);
 config.springProfile ||= backendConfigSelection.profile;
 
-const backendDir = path.join(repoRoot, 'infoq-scaffold-backend');
+const backendDir = path.join(repoRoot, 'backend');
 const jarPath = path.join(repoRoot, config.jarRelPath);
 const baseUrl = `http://${config.host}:${config.port}`;
 stateFile = resolveTmpPath(repoRoot, 'tools/verify', `run-smoke-${config.port}.state.json`);

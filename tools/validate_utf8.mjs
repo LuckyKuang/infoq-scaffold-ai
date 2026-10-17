@@ -131,7 +131,7 @@ except globally ignored metadata entries such as .DS_Store.
 
 Examples:
   node tools/validate_utf8.mjs
-  node tools/validate_utf8.mjs AGENTS.md infoq-scaffold-frontend-react/src
+  node tools/validate_utf8.mjs AGENTS.md frontend-react/src
   node tools/validate_utf8.mjs -- tools/validate_utf8.mjs`);
 }
 

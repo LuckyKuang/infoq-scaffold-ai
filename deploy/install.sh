@@ -247,8 +247,8 @@ write_env_file() {
 generate_env_file() {
   local revision="unknown"
 
-  if [[ -f "${SOURCE_DIR}/infoq-scaffold-backend/pom.xml" ]]; then
-    revision="$(sed -n 's/.*<revision>\(.*\)<\/revision>.*/\1/p' "${SOURCE_DIR}/infoq-scaffold-backend/pom.xml" | head -n 1)"
+  if [[ -f "${SOURCE_DIR}/backend/pom.xml" ]]; then
+    revision="$(sed -n 's/.*<revision>\(.*\)<\/revision>.*/\1/p' "${SOURCE_DIR}/backend/pom.xml" | head -n 1)"
     revision="${revision:-unknown}"
   fi
 

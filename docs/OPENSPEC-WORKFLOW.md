@@ -33,9 +33,9 @@ UI 密集型改动应使用 `docs/DELIVERY-WORKFLOW.md` 的四阶段 UI 门禁�
 
 每个 change 都必须显式评估以下工作区或交付面：
 
-- `infoq-scaffold-backend`
-- `infoq-scaffold-frontend-react`
-- `infoq-scaffold-frontend-vue`
+- `backend`
+- `frontend-react`
+- `frontend-vue`
 - `script / deploy`
 
 若某个工作区或交付面不受影响，必须在 `tasks.md` 中写明原因。

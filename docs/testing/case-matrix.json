@@ -6,234 +6,234 @@
       "sql/infoq_scaffold_3.0.0.sql"
     ],
     "reactPages": [
-      "infoq-scaffold-frontend-react/src/pages/error/401.tsx",
-      "infoq-scaffold-frontend-react/src/pages/error/404.tsx",
-      "infoq-scaffold-frontend-react/src/pages/forgot-password.tsx",
-      "infoq-scaffold-frontend-react/src/pages/index.tsx",
-      "infoq-scaffold-frontend-react/src/pages/login.tsx",
-      "infoq-scaffold-frontend-react/src/pages/message-center/index.tsx",
-      "infoq-scaffold-frontend-react/src/pages/monitor/cache/index.tsx",
-      "infoq-scaffold-frontend-react/src/pages/monitor/dataSource/index.tsx",
-      "infoq-scaffold-frontend-react/src/pages/monitor/job/index.tsx",
-      "infoq-scaffold-frontend-react/src/pages/monitor/jobLog/index.tsx",
-      "infoq-scaffold-frontend-react/src/pages/monitor/loginInfo/index.tsx",
-      "infoq-scaffold-frontend-react/src/pages/monitor/online/index.tsx",
-      "infoq-scaffold-frontend-react/src/pages/monitor/operLog/index.tsx",
-      "infoq-scaffold-frontend-react/src/pages/monitor/operLog/oper-info-dialog.tsx",
-      "infoq-scaffold-frontend-react/src/pages/monitor/server/index.tsx",
-      "infoq-scaffold-frontend-react/src/pages/oauth-callback.tsx",
-      "infoq-scaffold-frontend-react/src/pages/redirect/index.tsx",
-      "infoq-scaffold-frontend-react/src/pages/register.tsx",
-      "infoq-scaffold-frontend-react/src/pages/system/client/index.tsx",
-      "infoq-scaffold-frontend-react/src/pages/system/config/index.tsx",
-      "infoq-scaffold-frontend-react/src/pages/system/dept/index.tsx",
-      "infoq-scaffold-frontend-react/src/pages/system/dict/data.tsx",
-      "infoq-scaffold-frontend-react/src/pages/system/dict/index.tsx",
-      "infoq-scaffold-frontend-react/src/pages/system/invite/index.tsx",
-      "infoq-scaffold-frontend-react/src/pages/system/menu/index.tsx",
-      "infoq-scaffold-frontend-react/src/pages/system/notice/index.tsx",
-      "infoq-scaffold-frontend-react/src/pages/system/oss/config.tsx",
-      "infoq-scaffold-frontend-react/src/pages/system/oss/index.tsx",
-      "infoq-scaffold-frontend-react/src/pages/system/post/index.tsx",
-      "infoq-scaffold-frontend-react/src/pages/system/role/authUser.tsx",
-      "infoq-scaffold-frontend-react/src/pages/system/role/index.tsx",
-      "infoq-scaffold-frontend-react/src/pages/system/role/selectUser.tsx",
-      "infoq-scaffold-frontend-react/src/pages/system/user/authRole.tsx",
-      "infoq-scaffold-frontend-react/src/pages/system/user/index.tsx",
-      "infoq-scaffold-frontend-react/src/pages/system/user/profile/index.tsx",
-      "infoq-scaffold-frontend-react/src/pages/system/user/profile/oauthIdentity.tsx",
-      "infoq-scaffold-frontend-react/src/pages/system/user/profile/onlineDevice.tsx",
-      "infoq-scaffold-frontend-react/src/pages/system/user/profile/resetPwd.tsx",
-      "infoq-scaffold-frontend-react/src/pages/system/user/profile/userAvatar.tsx",
-      "infoq-scaffold-frontend-react/src/pages/system/user/profile/userInfo.tsx"
+      "frontend-react/src/pages/error/401.tsx",
+      "frontend-react/src/pages/error/404.tsx",
+      "frontend-react/src/pages/forgot-password.tsx",
+      "frontend-react/src/pages/index.tsx",
+      "frontend-react/src/pages/login.tsx",
+      "frontend-react/src/pages/message-center/index.tsx",
+      "frontend-react/src/pages/monitor/cache/index.tsx",
+      "frontend-react/src/pages/monitor/dataSource/index.tsx",
+      "frontend-react/src/pages/monitor/job/index.tsx",
+      "frontend-react/src/pages/monitor/jobLog/index.tsx",
+      "frontend-react/src/pages/monitor/loginInfo/index.tsx",
+      "frontend-react/src/pages/monitor/online/index.tsx",
+      "frontend-react/src/pages/monitor/operLog/index.tsx",
+      "frontend-react/src/pages/monitor/operLog/oper-info-dialog.tsx",
+      "frontend-react/src/pages/monitor/server/index.tsx",
+      "frontend-react/src/pages/oauth-callback.tsx",
+      "frontend-react/src/pages/redirect/index.tsx",
+      "frontend-react/src/pages/register.tsx",
+      "frontend-react/src/pages/system/client/index.tsx",
+      "frontend-react/src/pages/system/config/index.tsx",
+      "frontend-react/src/pages/system/dept/index.tsx",
+      "frontend-react/src/pages/system/dict/data.tsx",
+      "frontend-react/src/pages/system/dict/index.tsx",
+      "frontend-react/src/pages/system/invite/index.tsx",
+      "frontend-react/src/pages/system/menu/index.tsx",
+      "frontend-react/src/pages/system/notice/index.tsx",
+      "frontend-react/src/pages/system/oss/config.tsx",
+      "frontend-react/src/pages/system/oss/index.tsx",
+      "frontend-react/src/pages/system/post/index.tsx",
+      "frontend-react/src/pages/system/role/authUser.tsx",
+      "frontend-react/src/pages/system/role/index.tsx",
+      "frontend-react/src/pages/system/role/selectUser.tsx",
+      "frontend-react/src/pages/system/user/authRole.tsx",
+      "frontend-react/src/pages/system/user/index.tsx",
+      "frontend-react/src/pages/system/user/profile/index.tsx",
+      "frontend-react/src/pages/system/user/profile/oauthIdentity.tsx",
+      "frontend-react/src/pages/system/user/profile/onlineDevice.tsx",
+      "frontend-react/src/pages/system/user/profile/resetPwd.tsx",
+      "frontend-react/src/pages/system/user/profile/userAvatar.tsx",
+      "frontend-react/src/pages/system/user/profile/userInfo.tsx"
     ],
     "vueViews": [
-      "infoq-scaffold-frontend-vue/src/views/error/401.vue",
-      "infoq-scaffold-frontend-vue/src/views/error/404.vue",
-      "infoq-scaffold-frontend-vue/src/views/forgot-password.vue",
-      "infoq-scaffold-frontend-vue/src/views/index.vue",
-      "infoq-scaffold-frontend-vue/src/views/login.vue",
-      "infoq-scaffold-frontend-vue/src/views/message-center/index.vue",
-      "infoq-scaffold-frontend-vue/src/views/monitor/cache/index.vue",
-      "infoq-scaffold-frontend-vue/src/views/monitor/dataSource/index.vue",
-      "infoq-scaffold-frontend-vue/src/views/monitor/job/index.vue",
-      "infoq-scaffold-frontend-vue/src/views/monitor/jobLog/index.vue",
-      "infoq-scaffold-frontend-vue/src/views/monitor/loginInfo/index.vue",
-      "infoq-scaffold-frontend-vue/src/views/monitor/online/index.vue",
-      "infoq-scaffold-frontend-vue/src/views/monitor/operLog/index.vue",
-      "infoq-scaffold-frontend-vue/src/views/monitor/operLog/oper-info-dialog.vue",
-      "infoq-scaffold-frontend-vue/src/views/monitor/server/index.vue",
-      "infoq-scaffold-frontend-vue/src/views/oauth-callback.vue",
-      "infoq-scaffold-frontend-vue/src/views/redirect/index.vue",
-      "infoq-scaffold-frontend-vue/src/views/register.vue",
-      "infoq-scaffold-frontend-vue/src/views/system/client/index.vue",
-      "infoq-scaffold-frontend-vue/src/views/system/config/index.vue",
-      "infoq-scaffold-frontend-vue/src/views/system/dept/index.vue",
-      "infoq-scaffold-frontend-vue/src/views/system/dict/data.vue",
-      "infoq-scaffold-frontend-vue/src/views/system/dict/index.vue",
-      "infoq-scaffold-frontend-vue/src/views/system/invite/index.vue",
-      "infoq-scaffold-frontend-vue/src/views/system/menu/index.vue",
-      "infoq-scaffold-frontend-vue/src/views/system/notice/index.vue",
-      "infoq-scaffold-frontend-vue/src/views/system/oss/config.vue",
-      "infoq-scaffold-frontend-vue/src/views/system/oss/index.vue",
-      "infoq-scaffold-frontend-vue/src/views/system/post/index.vue",
-      "infoq-scaffold-frontend-vue/src/views/system/role/authUser.vue",
-      "infoq-scaffold-frontend-vue/src/views/system/role/index.vue",
-      "infoq-scaffold-frontend-vue/src/views/system/role/selectUser.vue",
-      "infoq-scaffold-frontend-vue/src/views/system/user/authRole.vue",
-      "infoq-scaffold-frontend-vue/src/views/system/user/index.vue",
-      "infoq-scaffold-frontend-vue/src/views/system/user/profile/index.vue",
-      "infoq-scaffold-frontend-vue/src/views/system/user/profile/onlineDevice.vue",
-      "infoq-scaffold-frontend-vue/src/views/system/user/profile/resetPwd.vue",
-      "infoq-scaffold-frontend-vue/src/views/system/user/profile/userAvatar.vue",
-      "infoq-scaffold-frontend-vue/src/views/system/user/profile/userInfo.vue"
+      "frontend-vue/src/views/error/401.vue",
+      "frontend-vue/src/views/error/404.vue",
+      "frontend-vue/src/views/forgot-password.vue",
+      "frontend-vue/src/views/index.vue",
+      "frontend-vue/src/views/login.vue",
+      "frontend-vue/src/views/message-center/index.vue",
+      "frontend-vue/src/views/monitor/cache/index.vue",
+      "frontend-vue/src/views/monitor/dataSource/index.vue",
+      "frontend-vue/src/views/monitor/job/index.vue",
+      "frontend-vue/src/views/monitor/jobLog/index.vue",
+      "frontend-vue/src/views/monitor/loginInfo/index.vue",
+      "frontend-vue/src/views/monitor/online/index.vue",
+      "frontend-vue/src/views/monitor/operLog/index.vue",
+      "frontend-vue/src/views/monitor/operLog/oper-info-dialog.vue",
+      "frontend-vue/src/views/monitor/server/index.vue",
+      "frontend-vue/src/views/oauth-callback.vue",
+      "frontend-vue/src/views/redirect/index.vue",
+      "frontend-vue/src/views/register.vue",
+      "frontend-vue/src/views/system/client/index.vue",
+      "frontend-vue/src/views/system/config/index.vue",
+      "frontend-vue/src/views/system/dept/index.vue",
+      "frontend-vue/src/views/system/dict/data.vue",
+      "frontend-vue/src/views/system/dict/index.vue",
+      "frontend-vue/src/views/system/invite/index.vue",
+      "frontend-vue/src/views/system/menu/index.vue",
+      "frontend-vue/src/views/system/notice/index.vue",
+      "frontend-vue/src/views/system/oss/config.vue",
+      "frontend-vue/src/views/system/oss/index.vue",
+      "frontend-vue/src/views/system/post/index.vue",
+      "frontend-vue/src/views/system/role/authUser.vue",
+      "frontend-vue/src/views/system/role/index.vue",
+      "frontend-vue/src/views/system/role/selectUser.vue",
+      "frontend-vue/src/views/system/user/authRole.vue",
+      "frontend-vue/src/views/system/user/index.vue",
+      "frontend-vue/src/views/system/user/profile/index.vue",
+      "frontend-vue/src/views/system/user/profile/onlineDevice.vue",
+      "frontend-vue/src/views/system/user/profile/resetPwd.vue",
+      "frontend-vue/src/views/system/user/profile/userAvatar.vue",
+      "frontend-vue/src/views/system/user/profile/userInfo.vue"
     ],
     "reactTests": [
-      "infoq-scaffold-frontend-react/tests/api/login.test.ts",
-      "infoq-scaffold-frontend-react/tests/api/system/invite.test.ts",
-      "infoq-scaffold-frontend-react/tests/api/type-contract.test.ts",
-      "infoq-scaffold-frontend-react/tests/api/user-guards.test.ts",
-      "infoq-scaffold-frontend-react/tests/api/user-oauth-identity.test.ts",
-      "infoq-scaffold-frontend-react/tests/components/bridge-components.test.tsx",
-      "infoq-scaffold-frontend-react/tests/components/common-components.test.tsx",
-      "infoq-scaffold-frontend-react/tests/components/CrudModal.test.tsx",
-      "infoq-scaffold-frontend-react/tests/components/svg-icon.test.tsx",
-      "infoq-scaffold-frontend-react/tests/components/upload-editor.test.tsx",
-      "infoq-scaffold-frontend-react/tests/layout/keep-alive.test.tsx",
-      "infoq-scaffold-frontend-react/tests/layout/main-layout-icons.test.tsx",
-      "infoq-scaffold-frontend-react/tests/layout/tags-view-bar.test.tsx",
-      "infoq-scaffold-frontend-react/tests/pages/cache-page.test.tsx",
-      "infoq-scaffold-frontend-react/tests/pages/data-source-page.test.tsx",
-      "infoq-scaffold-frontend-react/tests/pages/error-401.test.tsx",
-      "infoq-scaffold-frontend-react/tests/pages/error-404.test.tsx",
-      "infoq-scaffold-frontend-react/tests/pages/forgot-password.test.tsx",
-      "infoq-scaffold-frontend-react/tests/pages/home.test.tsx",
-      "infoq-scaffold-frontend-react/tests/pages/login.test.tsx",
-      "infoq-scaffold-frontend-react/tests/pages/monitor-auth-profile.test.tsx",
-      "infoq-scaffold-frontend-react/tests/pages/monitor-scheduler.test.tsx",
-      "infoq-scaffold-frontend-react/tests/pages/ops-pages.test.tsx",
-      "infoq-scaffold-frontend-react/tests/pages/register.test.tsx",
-      "infoq-scaffold-frontend-react/tests/pages/server-page.test.tsx",
-      "infoq-scaffold-frontend-react/tests/pages/system-config.test.tsx",
-      "infoq-scaffold-frontend-react/tests/pages/system-invite.test.tsx",
-      "infoq-scaffold-frontend-react/tests/pages/system-pages.test.tsx",
-      "infoq-scaffold-frontend-react/tests/pages/system/user/profile/oauth-identity.test.tsx",
-      "infoq-scaffold-frontend-react/tests/router/app-router.test.tsx",
-      "infoq-scaffold-frontend-react/tests/router/auth-permission.test.tsx",
-      "infoq-scaffold-frontend-react/tests/router/backend-route-view.test.tsx",
-      "infoq-scaffold-frontend-react/tests/router/component-map.test.ts",
-      "infoq-scaffold-frontend-react/tests/router/path-to-component.test.ts",
-      "infoq-scaffold-frontend-react/tests/router/route-transform.test.ts",
-      "infoq-scaffold-frontend-react/tests/store/layout-store.test.ts",
-      "infoq-scaffold-frontend-react/tests/store/notice.test.ts",
-      "infoq-scaffold-frontend-react/tests/store/permission-store.test.ts",
-      "infoq-scaffold-frontend-react/tests/store/user.test.ts",
-      "infoq-scaffold-frontend-react/tests/utils/auth.test.ts",
-      "infoq-scaffold-frontend-react/tests/utils/crypto.test.ts",
-      "infoq-scaffold-frontend-react/tests/utils/modal.test.ts",
-      "infoq-scaffold-frontend-react/tests/utils/realtime.test.ts",
-      "infoq-scaffold-frontend-react/tests/utils/request.test.ts",
-      "infoq-scaffold-frontend-react/tests/utils/scaffold-lang.test.ts"
+      "frontend-react/tests/api/login.test.ts",
+      "frontend-react/tests/api/system/invite.test.ts",
+      "frontend-react/tests/api/type-contract.test.ts",
+      "frontend-react/tests/api/user-guards.test.ts",
+      "frontend-react/tests/api/user-oauth-identity.test.ts",
+      "frontend-react/tests/components/bridge-components.test.tsx",
+      "frontend-react/tests/components/common-components.test.tsx",
+      "frontend-react/tests/components/CrudModal.test.tsx",
+      "frontend-react/tests/components/svg-icon.test.tsx",
+      "frontend-react/tests/components/upload-editor.test.tsx",
+      "frontend-react/tests/layout/keep-alive.test.tsx",
+      "frontend-react/tests/layout/main-layout-icons.test.tsx",
+      "frontend-react/tests/layout/tags-view-bar.test.tsx",
+      "frontend-react/tests/pages/cache-page.test.tsx",
+      "frontend-react/tests/pages/data-source-page.test.tsx",
+      "frontend-react/tests/pages/error-401.test.tsx",
+      "frontend-react/tests/pages/error-404.test.tsx",
+      "frontend-react/tests/pages/forgot-password.test.tsx",
+      "frontend-react/tests/pages/home.test.tsx",
+      "frontend-react/tests/pages/login.test.tsx",
+      "frontend-react/tests/pages/monitor-auth-profile.test.tsx",
+      "frontend-react/tests/pages/monitor-scheduler.test.tsx",
+      "frontend-react/tests/pages/ops-pages.test.tsx",
+      "frontend-react/tests/pages/register.test.tsx",
+      "frontend-react/tests/pages/server-page.test.tsx",
+      "frontend-react/tests/pages/system-config.test.tsx",
+      "frontend-react/tests/pages/system-invite.test.tsx",
+      "frontend-react/tests/pages/system-pages.test.tsx",
+      "frontend-react/tests/pages/system/user/profile/oauth-identity.test.tsx",
+      "frontend-react/tests/router/app-router.test.tsx",
+      "frontend-react/tests/router/auth-permission.test.tsx",
+      "frontend-react/tests/router/backend-route-view.test.tsx",
+      "frontend-react/tests/router/component-map.test.ts",
+      "frontend-react/tests/router/path-to-component.test.ts",
+      "frontend-react/tests/router/route-transform.test.ts",
+      "frontend-react/tests/store/layout-store.test.ts",
+      "frontend-react/tests/store/notice.test.ts",
+      "frontend-react/tests/store/permission-store.test.ts",
+      "frontend-react/tests/store/user.test.ts",
+      "frontend-react/tests/utils/auth.test.ts",
+      "frontend-react/tests/utils/crypto.test.ts",
+      "frontend-react/tests/utils/modal.test.ts",
+      "frontend-react/tests/utils/realtime.test.ts",
+      "frontend-react/tests/utils/request.test.ts",
+      "frontend-react/tests/utils/scaffold-lang.test.ts"
     ],
     "vueTests": [
-      "infoq-scaffold-frontend-vue/tests/animate.test.ts",
-      "infoq-scaffold-frontend-vue/tests/api/login.test.ts",
-      "infoq-scaffold-frontend-vue/tests/api/menu.test.ts",
-      "infoq-scaffold-frontend-vue/tests/api/system/invite.test.ts",
-      "infoq-scaffold-frontend-vue/tests/api/system/user-oauth-identity.test.ts",
-      "infoq-scaffold-frontend-vue/tests/app.test.ts",
-      "infoq-scaffold-frontend-vue/tests/components/Breadcrumb.test.ts",
-      "infoq-scaffold-frontend-vue/tests/components/DictTag.test.ts",
-      "infoq-scaffold-frontend-vue/tests/components/Editor.test.ts",
-      "infoq-scaffold-frontend-vue/tests/components/Hamburger.test.ts",
-      "infoq-scaffold-frontend-vue/tests/components/IconSelect.test.ts",
-      "infoq-scaffold-frontend-vue/tests/components/InfoQGit.test.ts",
-      "infoq-scaffold-frontend-vue/tests/components/LangSelect.test.ts",
-      "infoq-scaffold-frontend-vue/tests/components/OssUpload.test.ts",
-      "infoq-scaffold-frontend-vue/tests/components/Pagination.test.ts",
-      "infoq-scaffold-frontend-vue/tests/components/requireIcons.test.ts",
-      "infoq-scaffold-frontend-vue/tests/components/RightToolbar.test.ts",
-      "infoq-scaffold-frontend-vue/tests/components/ScreenFull.test.ts",
-      "infoq-scaffold-frontend-vue/tests/components/SizeSelect.test.ts",
-      "infoq-scaffold-frontend-vue/tests/components/TopNav.test.ts",
-      "infoq-scaffold-frontend-vue/tests/directive/copyText.test.ts",
-      "infoq-scaffold-frontend-vue/tests/directive/permission.test.ts",
-      "infoq-scaffold-frontend-vue/tests/layout/components/AppMain.test.ts",
-      "infoq-scaffold-frontend-vue/tests/layout/components/Navbar.test.ts",
-      "infoq-scaffold-frontend-vue/tests/layout/components/notice.test.ts",
-      "infoq-scaffold-frontend-vue/tests/layout/components/ScrollPane.test.ts",
-      "infoq-scaffold-frontend-vue/tests/layout/components/Settings.test.ts",
-      "infoq-scaffold-frontend-vue/tests/layout/components/TagsViewIndex.test.ts",
-      "infoq-scaffold-frontend-vue/tests/layout/components/TopBarSearch.test.ts",
-      "infoq-scaffold-frontend-vue/tests/permission.guard.test.ts",
-      "infoq-scaffold-frontend-vue/tests/plugins/auth.test.ts",
-      "infoq-scaffold-frontend-vue/tests/plugins/cache.test.ts",
-      "infoq-scaffold-frontend-vue/tests/plugins/download.test.ts",
-      "infoq-scaffold-frontend-vue/tests/plugins/modal.test.ts",
-      "infoq-scaffold-frontend-vue/tests/plugins/svgicon.test.ts",
-      "infoq-scaffold-frontend-vue/tests/plugins/tab.test.ts",
-      "infoq-scaffold-frontend-vue/tests/router/index.test.ts",
-      "infoq-scaffold-frontend-vue/tests/store/app.test.ts",
-      "infoq-scaffold-frontend-vue/tests/store/dict.test.ts",
-      "infoq-scaffold-frontend-vue/tests/store/notice.test.ts",
-      "infoq-scaffold-frontend-vue/tests/store/permission-store.test.ts",
-      "infoq-scaffold-frontend-vue/tests/store/permission-utils.test.ts",
-      "infoq-scaffold-frontend-vue/tests/store/settings.test.ts",
-      "infoq-scaffold-frontend-vue/tests/store/tagsView.test.ts",
-      "infoq-scaffold-frontend-vue/tests/store/user.test.ts",
-      "infoq-scaffold-frontend-vue/tests/utils/auth.test.ts",
-      "infoq-scaffold-frontend-vue/tests/utils/createCustomNameComponent.test.ts",
-      "infoq-scaffold-frontend-vue/tests/utils/crypto.test.ts",
-      "infoq-scaffold-frontend-vue/tests/utils/devtools-protection.test.ts",
-      "infoq-scaffold-frontend-vue/tests/utils/dict.test.ts",
-      "infoq-scaffold-frontend-vue/tests/utils/dynamicTitle.test.ts",
-      "infoq-scaffold-frontend-vue/tests/utils/jsencrypt.test.ts",
-      "infoq-scaffold-frontend-vue/tests/utils/permission.test.ts",
-      "infoq-scaffold-frontend-vue/tests/utils/propTypes.test.ts",
-      "infoq-scaffold-frontend-vue/tests/utils/request.test.ts",
-      "infoq-scaffold-frontend-vue/tests/utils/scaffold.test.ts",
-      "infoq-scaffold-frontend-vue/tests/utils/scroll-to.test.ts",
-      "infoq-scaffold-frontend-vue/tests/utils/sse.test.ts",
-      "infoq-scaffold-frontend-vue/tests/utils/theme.test.ts",
-      "infoq-scaffold-frontend-vue/tests/utils/validate.test.ts",
-      "infoq-scaffold-frontend-vue/tests/utils/websocket.test.ts",
-      "infoq-scaffold-frontend-vue/tests/views/error401.test.ts",
-      "infoq-scaffold-frontend-vue/tests/views/error404.test.ts",
-      "infoq-scaffold-frontend-vue/tests/views/forgot-password.test.ts",
-      "infoq-scaffold-frontend-vue/tests/views/index.test.ts",
-      "infoq-scaffold-frontend-vue/tests/views/login.test.ts",
-      "infoq-scaffold-frontend-vue/tests/views/monitor/cache/index.test.ts",
-      "infoq-scaffold-frontend-vue/tests/views/monitor/dataSource/index.test.ts",
-      "infoq-scaffold-frontend-vue/tests/views/monitor/job/index.test.ts",
-      "infoq-scaffold-frontend-vue/tests/views/monitor/jobLog/index.test.ts",
-      "infoq-scaffold-frontend-vue/tests/views/monitor/loginInfo/index.test.ts",
-      "infoq-scaffold-frontend-vue/tests/views/monitor/online/index.test.ts",
-      "infoq-scaffold-frontend-vue/tests/views/monitor/operLog/index.test.ts",
-      "infoq-scaffold-frontend-vue/tests/views/monitor/operLog/oper-info-dialog.test.ts",
-      "infoq-scaffold-frontend-vue/tests/views/monitor/server/index.test.ts",
-      "infoq-scaffold-frontend-vue/tests/views/redirect.test.ts",
-      "infoq-scaffold-frontend-vue/tests/views/register.test.ts",
-      "infoq-scaffold-frontend-vue/tests/views/system/client/index.test.ts",
-      "infoq-scaffold-frontend-vue/tests/views/system/config/index.test.ts",
-      "infoq-scaffold-frontend-vue/tests/views/system/dept/index.test.ts",
-      "infoq-scaffold-frontend-vue/tests/views/system/dict/data.test.ts",
-      "infoq-scaffold-frontend-vue/tests/views/system/dict/index.test.ts",
-      "infoq-scaffold-frontend-vue/tests/views/system/invite/index.test.ts",
-      "infoq-scaffold-frontend-vue/tests/views/system/menu/index.test.ts",
-      "infoq-scaffold-frontend-vue/tests/views/system/notice/index.test.ts",
-      "infoq-scaffold-frontend-vue/tests/views/system/oss/config.test.ts",
-      "infoq-scaffold-frontend-vue/tests/views/system/oss/index.test.ts",
-      "infoq-scaffold-frontend-vue/tests/views/system/post/index.test.ts",
-      "infoq-scaffold-frontend-vue/tests/views/system/role/authUser.test.ts",
-      "infoq-scaffold-frontend-vue/tests/views/system/role/index.test.ts",
-      "infoq-scaffold-frontend-vue/tests/views/system/role/selectUser.test.ts",
-      "infoq-scaffold-frontend-vue/tests/views/system/user/authRole.test.ts",
-      "infoq-scaffold-frontend-vue/tests/views/system/user/index.test.ts",
-      "infoq-scaffold-frontend-vue/tests/views/system/user/profile/index.test.ts",
-      "infoq-scaffold-frontend-vue/tests/views/system/user/profile/onlineDevice.test.ts",
-      "infoq-scaffold-frontend-vue/tests/views/system/user/profile/resetPwd.test.ts",
-      "infoq-scaffold-frontend-vue/tests/views/system/user/profile/userAvatar.test.ts",
-      "infoq-scaffold-frontend-vue/tests/views/system/user/profile/userInfo.test.ts"
+      "frontend-vue/tests/animate.test.ts",
+      "frontend-vue/tests/api/login.test.ts",
+      "frontend-vue/tests/api/menu.test.ts",
+      "frontend-vue/tests/api/system/invite.test.ts",
+      "frontend-vue/tests/api/system/user-oauth-identity.test.ts",
+      "frontend-vue/tests/app.test.ts",
+      "frontend-vue/tests/components/Breadcrumb.test.ts",
+      "frontend-vue/tests/components/DictTag.test.ts",
+      "frontend-vue/tests/components/Editor.test.ts",
+      "frontend-vue/tests/components/Hamburger.test.ts",
+      "frontend-vue/tests/components/IconSelect.test.ts",
+      "frontend-vue/tests/components/InfoQGit.test.ts",
+      "frontend-vue/tests/components/LangSelect.test.ts",
+      "frontend-vue/tests/components/OssUpload.test.ts",
+      "frontend-vue/tests/components/Pagination.test.ts",
+      "frontend-vue/tests/components/requireIcons.test.ts",
+      "frontend-vue/tests/components/RightToolbar.test.ts",
+      "frontend-vue/tests/components/ScreenFull.test.ts",
+      "frontend-vue/tests/components/SizeSelect.test.ts",
+      "frontend-vue/tests/components/TopNav.test.ts",
+      "frontend-vue/tests/directive/copyText.test.ts",
+      "frontend-vue/tests/directive/permission.test.ts",
+      "frontend-vue/tests/layout/components/AppMain.test.ts",
+      "frontend-vue/tests/layout/components/Navbar.test.ts",
+      "frontend-vue/tests/layout/components/notice.test.ts",
+      "frontend-vue/tests/layout/components/ScrollPane.test.ts",
+      "frontend-vue/tests/layout/components/Settings.test.ts",
+      "frontend-vue/tests/layout/components/TagsViewIndex.test.ts",
+      "frontend-vue/tests/layout/components/TopBarSearch.test.ts",
+      "frontend-vue/tests/permission.guard.test.ts",
+      "frontend-vue/tests/plugins/auth.test.ts",
+      "frontend-vue/tests/plugins/cache.test.ts",
+      "frontend-vue/tests/plugins/download.test.ts",
+      "frontend-vue/tests/plugins/modal.test.ts",
+      "frontend-vue/tests/plugins/svgicon.test.ts",
+      "frontend-vue/tests/plugins/tab.test.ts",
+      "frontend-vue/tests/router/index.test.ts",
+      "frontend-vue/tests/store/app.test.ts",
+      "frontend-vue/tests/store/dict.test.ts",
+      "frontend-vue/tests/store/notice.test.ts",
+      "frontend-vue/tests/store/permission-store.test.ts",
+      "frontend-vue/tests/store/permission-utils.test.ts",
+      "frontend-vue/tests/store/settings.test.ts",
+      "frontend-vue/tests/store/tagsView.test.ts",
+      "frontend-vue/tests/store/user.test.ts",
+      "frontend-vue/tests/utils/auth.test.ts",
+      "frontend-vue/tests/utils/createCustomNameComponent.test.ts",
+      "frontend-vue/tests/utils/crypto.test.ts",
+      "frontend-vue/tests/utils/devtools-protection.test.ts",
+      "frontend-vue/tests/utils/dict.test.ts",
+      "frontend-vue/tests/utils/dynamicTitle.test.ts",
+      "frontend-vue/tests/utils/jsencrypt.test.ts",
+      "frontend-vue/tests/utils/permission.test.ts",
+      "frontend-vue/tests/utils/propTypes.test.ts",
+      "frontend-vue/tests/utils/request.test.ts",
+      "frontend-vue/tests/utils/scaffold.test.ts",
+      "frontend-vue/tests/utils/scroll-to.test.ts",
+      "frontend-vue/tests/utils/sse.test.ts",
+      "frontend-vue/tests/utils/theme.test.ts",
+      "frontend-vue/tests/utils/validate.test.ts",
+      "frontend-vue/tests/utils/websocket.test.ts",
+      "frontend-vue/tests/views/error401.test.ts",
+      "frontend-vue/tests/views/error404.test.ts",
+      "frontend-vue/tests/views/forgot-password.test.ts",
+      "frontend-vue/tests/views/index.test.ts",
+      "frontend-vue/tests/views/login.test.ts",
+      "frontend-vue/tests/views/monitor/cache/index.test.ts",
+      "frontend-vue/tests/views/monitor/dataSource/index.test.ts",
+      "frontend-vue/tests/views/monitor/job/index.test.ts",
+      "frontend-vue/tests/views/monitor/jobLog/index.test.ts",
+      "frontend-vue/tests/views/monitor/loginInfo/index.test.ts",
+      "frontend-vue/tests/views/monitor/online/index.test.ts",
+      "frontend-vue/tests/views/monitor/operLog/index.test.ts",
+      "frontend-vue/tests/views/monitor/operLog/oper-info-dialog.test.ts",
+      "frontend-vue/tests/views/monitor/server/index.test.ts",
+      "frontend-vue/tests/views/redirect.test.ts",
+      "frontend-vue/tests/views/register.test.ts",
+      "frontend-vue/tests/views/system/client/index.test.ts",
+      "frontend-vue/tests/views/system/config/index.test.ts",
+      "frontend-vue/tests/views/system/dept/index.test.ts",
+      "frontend-vue/tests/views/system/dict/data.test.ts",
+      "frontend-vue/tests/views/system/dict/index.test.ts",
+      "frontend-vue/tests/views/system/invite/index.test.ts",
+      "frontend-vue/tests/views/system/menu/index.test.ts",
+      "frontend-vue/tests/views/system/notice/index.test.ts",
+      "frontend-vue/tests/views/system/oss/config.test.ts",
+      "frontend-vue/tests/views/system/oss/index.test.ts",
+      "frontend-vue/tests/views/system/post/index.test.ts",
+      "frontend-vue/tests/views/system/role/authUser.test.ts",
+      "frontend-vue/tests/views/system/role/index.test.ts",
+      "frontend-vue/tests/views/system/role/selectUser.test.ts",
+      "frontend-vue/tests/views/system/user/authRole.test.ts",
+      "frontend-vue/tests/views/system/user/index.test.ts",
+      "frontend-vue/tests/views/system/user/profile/index.test.ts",
+      "frontend-vue/tests/views/system/user/profile/onlineDevice.test.ts",
+      "frontend-vue/tests/views/system/user/profile/resetPwd.test.ts",
+      "frontend-vue/tests/views/system/user/profile/userAvatar.test.ts",
+      "frontend-vue/tests/views/system/user/profile/userInfo.test.ts"
     ]
   },
   "summary": {
@@ -286,8 +286,8 @@
       "testData": "只读或固定入口数据。",
       "cleanup": "无需业务数据清理。",
       "existingTests": [
-        "infoq-scaffold-frontend-react/tests/pages/forgot-password.test.tsx",
-        "infoq-scaffold-frontend-vue/tests/views/forgot-password.test.ts"
+        "frontend-react/tests/pages/forgot-password.test.tsx",
+        "frontend-vue/tests/views/forgot-password.test.ts"
       ],
       "gaps": [],
       "sourceFile": ""
@@ -330,11 +330,11 @@
       "testData": "只读或固定入口数据。",
       "cleanup": "无需业务数据清理。",
       "existingTests": [
-        "infoq-scaffold-frontend-react/tests/api/login.test.ts",
-        "infoq-scaffold-frontend-react/tests/pages/login.test.tsx",
-        "infoq-scaffold-frontend-vue/tests/api/login.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/login.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/monitor/loginInfo/index.test.ts"
+        "frontend-react/tests/api/login.test.ts",
+        "frontend-react/tests/pages/login.test.tsx",
+        "frontend-vue/tests/api/login.test.ts",
+        "frontend-vue/tests/views/login.test.ts",
+        "frontend-vue/tests/views/monitor/loginInfo/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": ""
@@ -417,8 +417,8 @@
       "testData": "只读或固定入口数据。",
       "cleanup": "无需业务数据清理。",
       "existingTests": [
-        "infoq-scaffold-frontend-react/tests/pages/register.test.tsx",
-        "infoq-scaffold-frontend-vue/tests/views/register.test.ts"
+        "frontend-react/tests/pages/register.test.tsx",
+        "frontend-vue/tests/views/register.test.ts"
       ],
       "gaps": [],
       "sourceFile": ""
@@ -460,7 +460,7 @@
       "testData": "只读或固定入口数据。",
       "cleanup": "无需业务数据清理。",
       "existingTests": [
-        "infoq-scaffold-frontend-react/tests/pages/error-401.test.tsx"
+        "frontend-react/tests/pages/error-401.test.tsx"
       ],
       "gaps": [],
       "sourceFile": ""
@@ -502,7 +502,7 @@
       "testData": "只读或固定入口数据。",
       "cleanup": "无需业务数据清理。",
       "existingTests": [
-        "infoq-scaffold-frontend-react/tests/pages/error-404.test.tsx"
+        "frontend-react/tests/pages/error-404.test.tsx"
       ],
       "gaps": [],
       "sourceFile": ""
@@ -544,29 +544,29 @@
       "testData": "只读或固定入口数据。",
       "cleanup": "无需业务数据清理。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/layout/components/TagsViewIndex.test.ts",
-        "infoq-scaffold-frontend-vue/tests/router/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/monitor/cache/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/monitor/dataSource/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/monitor/job/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/monitor/jobLog/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/monitor/loginInfo/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/monitor/online/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/monitor/operLog/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/monitor/server/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/client/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/config/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/dept/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/dict/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/invite/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/menu/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/notice/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/oss/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/post/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/role/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/index.test.ts"
+        "frontend-vue/tests/layout/components/TagsViewIndex.test.ts",
+        "frontend-vue/tests/router/index.test.ts",
+        "frontend-vue/tests/views/index.test.ts",
+        "frontend-vue/tests/views/monitor/cache/index.test.ts",
+        "frontend-vue/tests/views/monitor/dataSource/index.test.ts",
+        "frontend-vue/tests/views/monitor/job/index.test.ts",
+        "frontend-vue/tests/views/monitor/jobLog/index.test.ts",
+        "frontend-vue/tests/views/monitor/loginInfo/index.test.ts",
+        "frontend-vue/tests/views/monitor/online/index.test.ts",
+        "frontend-vue/tests/views/monitor/operLog/index.test.ts",
+        "frontend-vue/tests/views/monitor/server/index.test.ts",
+        "frontend-vue/tests/views/system/client/index.test.ts",
+        "frontend-vue/tests/views/system/config/index.test.ts",
+        "frontend-vue/tests/views/system/dept/index.test.ts",
+        "frontend-vue/tests/views/system/dict/index.test.ts",
+        "frontend-vue/tests/views/system/invite/index.test.ts",
+        "frontend-vue/tests/views/system/menu/index.test.ts",
+        "frontend-vue/tests/views/system/notice/index.test.ts",
+        "frontend-vue/tests/views/system/oss/index.test.ts",
+        "frontend-vue/tests/views/system/post/index.test.ts",
+        "frontend-vue/tests/views/system/role/index.test.ts",
+        "frontend-vue/tests/views/system/user/index.test.ts",
+        "frontend-vue/tests/views/system/user/profile/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": ""
@@ -613,17 +613,17 @@
       "testData": "只读或固定入口数据。",
       "cleanup": "无需业务数据清理。",
       "existingTests": [
-        "infoq-scaffold-frontend-react/tests/pages/monitor-auth-profile.test.tsx",
-        "infoq-scaffold-frontend-react/tests/pages/monitor-scheduler.test.tsx",
-        "infoq-scaffold-frontend-vue/tests/views/monitor/cache/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/monitor/dataSource/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/monitor/job/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/monitor/jobLog/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/monitor/loginInfo/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/monitor/online/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/monitor/operLog/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/monitor/operLog/oper-info-dialog.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/monitor/server/index.test.ts"
+        "frontend-react/tests/pages/monitor-auth-profile.test.tsx",
+        "frontend-react/tests/pages/monitor-scheduler.test.tsx",
+        "frontend-vue/tests/views/monitor/cache/index.test.ts",
+        "frontend-vue/tests/views/monitor/dataSource/index.test.ts",
+        "frontend-vue/tests/views/monitor/job/index.test.ts",
+        "frontend-vue/tests/views/monitor/jobLog/index.test.ts",
+        "frontend-vue/tests/views/monitor/loginInfo/index.test.ts",
+        "frontend-vue/tests/views/monitor/online/index.test.ts",
+        "frontend-vue/tests/views/monitor/operLog/index.test.ts",
+        "frontend-vue/tests/views/monitor/operLog/oper-info-dialog.test.ts",
+        "frontend-vue/tests/views/monitor/server/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -672,7 +672,7 @@
       "testData": "只读或固定入口数据。",
       "cleanup": "无需业务数据清理。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/monitor/cache/index.test.ts"
+        "frontend-vue/tests/views/monitor/cache/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -720,7 +720,7 @@
       "testData": "只读或固定入口数据。",
       "cleanup": "无需业务数据清理。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/monitor/dataSource/index.test.ts"
+        "frontend-vue/tests/views/monitor/dataSource/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -767,7 +767,7 @@
       "testData": "只读或固定入口数据。",
       "cleanup": "无需业务数据清理。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/monitor/dataSource/index.test.ts"
+        "frontend-vue/tests/views/monitor/dataSource/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -816,8 +816,8 @@
       "testData": "只读或固定入口数据。",
       "cleanup": "无需业务数据清理。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/monitor/job/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/monitor/jobLog/index.test.ts"
+        "frontend-vue/tests/views/monitor/job/index.test.ts",
+        "frontend-vue/tests/views/monitor/jobLog/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -865,8 +865,8 @@
       "testData": "只读或固定入口数据。",
       "cleanup": "无需业务数据清理。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/monitor/job/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/monitor/jobLog/index.test.ts"
+        "frontend-vue/tests/views/monitor/job/index.test.ts",
+        "frontend-vue/tests/views/monitor/jobLog/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -917,8 +917,8 @@
       "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
       "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/monitor/job/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/monitor/jobLog/index.test.ts"
+        "frontend-vue/tests/views/monitor/job/index.test.ts",
+        "frontend-vue/tests/views/monitor/jobLog/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -969,8 +969,8 @@
       "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
       "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/monitor/job/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/monitor/jobLog/index.test.ts"
+        "frontend-vue/tests/views/monitor/job/index.test.ts",
+        "frontend-vue/tests/views/monitor/jobLog/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -1021,8 +1021,8 @@
       "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
       "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/monitor/job/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/monitor/jobLog/index.test.ts"
+        "frontend-vue/tests/views/monitor/job/index.test.ts",
+        "frontend-vue/tests/views/monitor/jobLog/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -1073,8 +1073,8 @@
       "testData": "只读或固定入口数据。",
       "cleanup": "无需业务数据清理。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/monitor/job/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/monitor/jobLog/index.test.ts"
+        "frontend-vue/tests/views/monitor/job/index.test.ts",
+        "frontend-vue/tests/views/monitor/jobLog/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -1125,8 +1125,8 @@
       "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
       "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/monitor/job/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/monitor/jobLog/index.test.ts"
+        "frontend-vue/tests/views/monitor/job/index.test.ts",
+        "frontend-vue/tests/views/monitor/jobLog/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -1177,8 +1177,8 @@
       "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
       "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/monitor/job/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/monitor/jobLog/index.test.ts"
+        "frontend-vue/tests/views/monitor/job/index.test.ts",
+        "frontend-vue/tests/views/monitor/jobLog/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -1227,7 +1227,7 @@
       "testData": "只读或固定入口数据。",
       "cleanup": "无需业务数据清理。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/monitor/jobLog/index.test.ts"
+        "frontend-vue/tests/views/monitor/jobLog/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -1275,7 +1275,7 @@
       "testData": "只读或固定入口数据。",
       "cleanup": "无需业务数据清理。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/monitor/jobLog/index.test.ts"
+        "frontend-vue/tests/views/monitor/jobLog/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -1326,7 +1326,7 @@
       "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
       "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/monitor/jobLog/index.test.ts"
+        "frontend-vue/tests/views/monitor/jobLog/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -1377,7 +1377,7 @@
       "testData": "只读或固定入口数据。",
       "cleanup": "无需业务数据清理。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/monitor/jobLog/index.test.ts"
+        "frontend-vue/tests/views/monitor/jobLog/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -1428,7 +1428,7 @@
       "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
       "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/monitor/jobLog/index.test.ts"
+        "frontend-vue/tests/views/monitor/jobLog/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -1476,7 +1476,7 @@
       "testData": "只读或固定入口数据。",
       "cleanup": "无需业务数据清理。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/monitor/loginInfo/index.test.ts"
+        "frontend-vue/tests/views/monitor/loginInfo/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -1527,7 +1527,7 @@
       "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
       "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/monitor/loginInfo/index.test.ts"
+        "frontend-vue/tests/views/monitor/loginInfo/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -1578,7 +1578,7 @@
       "testData": "只读或固定入口数据。",
       "cleanup": "无需业务数据清理。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/monitor/loginInfo/index.test.ts"
+        "frontend-vue/tests/views/monitor/loginInfo/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -1629,7 +1629,7 @@
       "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
       "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/monitor/loginInfo/index.test.ts"
+        "frontend-vue/tests/views/monitor/loginInfo/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -1678,7 +1678,7 @@
       "testData": "只读或固定入口数据。",
       "cleanup": "无需业务数据清理。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/monitor/loginInfo/index.test.ts"
+        "frontend-vue/tests/views/monitor/loginInfo/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -1726,7 +1726,7 @@
       "testData": "只读或固定入口数据。",
       "cleanup": "无需业务数据清理。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/monitor/online/index.test.ts"
+        "frontend-vue/tests/views/monitor/online/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -1777,7 +1777,7 @@
       "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
       "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/monitor/online/index.test.ts"
+        "frontend-vue/tests/views/monitor/online/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -1828,7 +1828,7 @@
       "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
       "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/monitor/online/index.test.ts"
+        "frontend-vue/tests/views/monitor/online/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -1877,7 +1877,7 @@
       "testData": "只读或固定入口数据。",
       "cleanup": "无需业务数据清理。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/monitor/online/index.test.ts"
+        "frontend-vue/tests/views/monitor/online/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -1925,8 +1925,8 @@
       "testData": "只读或固定入口数据。",
       "cleanup": "无需业务数据清理。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/monitor/operLog/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/monitor/operLog/oper-info-dialog.test.ts"
+        "frontend-vue/tests/views/monitor/operLog/index.test.ts",
+        "frontend-vue/tests/views/monitor/operLog/oper-info-dialog.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -1977,8 +1977,8 @@
       "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
       "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/monitor/operLog/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/monitor/operLog/oper-info-dialog.test.ts"
+        "frontend-vue/tests/views/monitor/operLog/index.test.ts",
+        "frontend-vue/tests/views/monitor/operLog/oper-info-dialog.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -2029,8 +2029,8 @@
       "testData": "只读或固定入口数据。",
       "cleanup": "无需业务数据清理。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/monitor/operLog/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/monitor/operLog/oper-info-dialog.test.ts"
+        "frontend-vue/tests/views/monitor/operLog/index.test.ts",
+        "frontend-vue/tests/views/monitor/operLog/oper-info-dialog.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -2079,8 +2079,8 @@
       "testData": "只读或固定入口数据。",
       "cleanup": "无需业务数据清理。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/monitor/operLog/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/monitor/operLog/oper-info-dialog.test.ts"
+        "frontend-vue/tests/views/monitor/operLog/index.test.ts",
+        "frontend-vue/tests/views/monitor/operLog/oper-info-dialog.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -2128,7 +2128,7 @@
       "testData": "只读或固定入口数据。",
       "cleanup": "无需业务数据清理。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/monitor/server/index.test.ts"
+        "frontend-vue/tests/views/monitor/server/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -2175,7 +2175,7 @@
       "testData": "只读或固定入口数据。",
       "cleanup": "无需业务数据清理。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/monitor/server/index.test.ts"
+        "frontend-vue/tests/views/monitor/server/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -2217,7 +2217,7 @@
       "testData": "只读或固定入口数据。",
       "cleanup": "无需业务数据清理。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/redirect.test.ts"
+        "frontend-vue/tests/views/redirect.test.ts"
       ],
       "gaps": [],
       "sourceFile": ""
@@ -2264,34 +2264,34 @@
       "testData": "只读或固定入口数据。",
       "cleanup": "无需业务数据清理。",
       "existingTests": [
-        "infoq-scaffold-frontend-react/tests/api/system/invite.test.ts",
-        "infoq-scaffold-frontend-react/tests/pages/system-config.test.tsx",
-        "infoq-scaffold-frontend-react/tests/pages/system-invite.test.tsx",
-        "infoq-scaffold-frontend-react/tests/pages/system-pages.test.tsx",
-        "infoq-scaffold-frontend-react/tests/pages/system/user/profile/oauth-identity.test.tsx",
-        "infoq-scaffold-frontend-vue/tests/api/system/invite.test.ts",
-        "infoq-scaffold-frontend-vue/tests/api/system/user-oauth-identity.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/client/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/config/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/dept/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/dict/data.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/dict/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/invite/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/menu/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/notice/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/oss/config.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/oss/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/post/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/role/authUser.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/role/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/role/selectUser.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/authRole.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/onlineDevice.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/resetPwd.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/userAvatar.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/userInfo.test.ts"
+        "frontend-react/tests/api/system/invite.test.ts",
+        "frontend-react/tests/pages/system-config.test.tsx",
+        "frontend-react/tests/pages/system-invite.test.tsx",
+        "frontend-react/tests/pages/system-pages.test.tsx",
+        "frontend-react/tests/pages/system/user/profile/oauth-identity.test.tsx",
+        "frontend-vue/tests/api/system/invite.test.ts",
+        "frontend-vue/tests/api/system/user-oauth-identity.test.ts",
+        "frontend-vue/tests/views/system/client/index.test.ts",
+        "frontend-vue/tests/views/system/config/index.test.ts",
+        "frontend-vue/tests/views/system/dept/index.test.ts",
+        "frontend-vue/tests/views/system/dict/data.test.ts",
+        "frontend-vue/tests/views/system/dict/index.test.ts",
+        "frontend-vue/tests/views/system/invite/index.test.ts",
+        "frontend-vue/tests/views/system/menu/index.test.ts",
+        "frontend-vue/tests/views/system/notice/index.test.ts",
+        "frontend-vue/tests/views/system/oss/config.test.ts",
+        "frontend-vue/tests/views/system/oss/index.test.ts",
+        "frontend-vue/tests/views/system/post/index.test.ts",
+        "frontend-vue/tests/views/system/role/authUser.test.ts",
+        "frontend-vue/tests/views/system/role/index.test.ts",
+        "frontend-vue/tests/views/system/role/selectUser.test.ts",
+        "frontend-vue/tests/views/system/user/authRole.test.ts",
+        "frontend-vue/tests/views/system/user/index.test.ts",
+        "frontend-vue/tests/views/system/user/profile/index.test.ts",
+        "frontend-vue/tests/views/system/user/profile/onlineDevice.test.ts",
+        "frontend-vue/tests/views/system/user/profile/resetPwd.test.ts",
+        "frontend-vue/tests/views/system/user/profile/userAvatar.test.ts",
+        "frontend-vue/tests/views/system/user/profile/userInfo.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -2338,7 +2338,7 @@
       "testData": "只读或固定入口数据。",
       "cleanup": "无需业务数据清理。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/system/client/index.test.ts"
+        "frontend-vue/tests/views/system/client/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -2388,7 +2388,7 @@
       "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
       "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/system/client/index.test.ts"
+        "frontend-vue/tests/views/system/client/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -2438,7 +2438,7 @@
       "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
       "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/system/client/index.test.ts"
+        "frontend-vue/tests/views/system/client/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -2488,7 +2488,7 @@
       "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
       "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/system/client/index.test.ts"
+        "frontend-vue/tests/views/system/client/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -2538,7 +2538,7 @@
       "testData": "只读或固定入口数据。",
       "cleanup": "无需业务数据清理。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/system/client/index.test.ts"
+        "frontend-vue/tests/views/system/client/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -2586,7 +2586,7 @@
       "testData": "只读或固定入口数据。",
       "cleanup": "无需业务数据清理。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/system/client/index.test.ts"
+        "frontend-vue/tests/views/system/client/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -2633,8 +2633,8 @@
       "testData": "只读或固定入口数据。",
       "cleanup": "无需业务数据清理。",
       "existingTests": [
-        "infoq-scaffold-frontend-react/tests/pages/system-config.test.tsx",
-        "infoq-scaffold-frontend-vue/tests/views/system/config/index.test.ts"
+        "frontend-react/tests/pages/system-config.test.tsx",
+        "frontend-vue/tests/views/system/config/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -2684,8 +2684,8 @@
       "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
       "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
       "existingTests": [
-        "infoq-scaffold-frontend-react/tests/pages/system-config.test.tsx",
-        "infoq-scaffold-frontend-vue/tests/views/system/config/index.test.ts"
+        "frontend-react/tests/pages/system-config.test.tsx",
+        "frontend-vue/tests/views/system/config/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -2735,8 +2735,8 @@
       "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
       "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
       "existingTests": [
-        "infoq-scaffold-frontend-react/tests/pages/system-config.test.tsx",
-        "infoq-scaffold-frontend-vue/tests/views/system/config/index.test.ts"
+        "frontend-react/tests/pages/system-config.test.tsx",
+        "frontend-vue/tests/views/system/config/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -2786,8 +2786,8 @@
       "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
       "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
       "existingTests": [
-        "infoq-scaffold-frontend-react/tests/pages/system-config.test.tsx",
-        "infoq-scaffold-frontend-vue/tests/views/system/config/index.test.ts"
+        "frontend-react/tests/pages/system-config.test.tsx",
+        "frontend-vue/tests/views/system/config/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -2837,8 +2837,8 @@
       "testData": "只读或固定入口数据。",
       "cleanup": "无需业务数据清理。",
       "existingTests": [
-        "infoq-scaffold-frontend-react/tests/pages/system-config.test.tsx",
-        "infoq-scaffold-frontend-vue/tests/views/system/config/index.test.ts"
+        "frontend-react/tests/pages/system-config.test.tsx",
+        "frontend-vue/tests/views/system/config/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -2886,8 +2886,8 @@
       "testData": "只读或固定入口数据。",
       "cleanup": "无需业务数据清理。",
       "existingTests": [
-        "infoq-scaffold-frontend-react/tests/pages/system-config.test.tsx",
-        "infoq-scaffold-frontend-vue/tests/views/system/config/index.test.ts"
+        "frontend-react/tests/pages/system-config.test.tsx",
+        "frontend-vue/tests/views/system/config/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -2934,7 +2934,7 @@
       "testData": "只读或固定入口数据。",
       "cleanup": "无需业务数据清理。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/system/dept/index.test.ts"
+        "frontend-vue/tests/views/system/dept/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -2984,7 +2984,7 @@
       "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
       "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/system/dept/index.test.ts"
+        "frontend-vue/tests/views/system/dept/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -3034,7 +3034,7 @@
       "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
       "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/system/dept/index.test.ts"
+        "frontend-vue/tests/views/system/dept/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -3084,7 +3084,7 @@
       "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
       "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/system/dept/index.test.ts"
+        "frontend-vue/tests/views/system/dept/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -3132,7 +3132,7 @@
       "testData": "只读或固定入口数据。",
       "cleanup": "无需业务数据清理。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/system/dept/index.test.ts"
+        "frontend-vue/tests/views/system/dept/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -3179,8 +3179,8 @@
       "testData": "只读或固定入口数据。",
       "cleanup": "无需业务数据清理。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/system/dict/data.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/dict/index.test.ts"
+        "frontend-vue/tests/views/system/dict/data.test.ts",
+        "frontend-vue/tests/views/system/dict/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -3230,8 +3230,8 @@
       "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
       "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/system/dict/data.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/dict/index.test.ts"
+        "frontend-vue/tests/views/system/dict/data.test.ts",
+        "frontend-vue/tests/views/system/dict/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -3281,8 +3281,8 @@
       "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
       "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/system/dict/data.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/dict/index.test.ts"
+        "frontend-vue/tests/views/system/dict/data.test.ts",
+        "frontend-vue/tests/views/system/dict/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -3332,8 +3332,8 @@
       "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
       "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/system/dict/data.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/dict/index.test.ts"
+        "frontend-vue/tests/views/system/dict/data.test.ts",
+        "frontend-vue/tests/views/system/dict/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -3383,8 +3383,8 @@
       "testData": "只读或固定入口数据。",
       "cleanup": "无需业务数据清理。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/system/dict/data.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/dict/index.test.ts"
+        "frontend-vue/tests/views/system/dict/data.test.ts",
+        "frontend-vue/tests/views/system/dict/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -3432,8 +3432,8 @@
       "testData": "只读或固定入口数据。",
       "cleanup": "无需业务数据清理。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/system/dict/data.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/dict/index.test.ts"
+        "frontend-vue/tests/views/system/dict/data.test.ts",
+        "frontend-vue/tests/views/system/dict/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -3482,7 +3482,7 @@
       "testData": "只读或固定入口数据。",
       "cleanup": "无需业务数据清理。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/system/dict/data.test.ts"
+        "frontend-vue/tests/views/system/dict/data.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -3532,10 +3532,10 @@
       "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
       "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
       "existingTests": [
-        "infoq-scaffold-frontend-react/tests/api/system/invite.test.ts",
-        "infoq-scaffold-frontend-react/tests/pages/system-invite.test.tsx",
-        "infoq-scaffold-frontend-vue/tests/api/system/invite.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/invite/index.test.ts"
+        "frontend-react/tests/api/system/invite.test.ts",
+        "frontend-react/tests/pages/system-invite.test.tsx",
+        "frontend-vue/tests/api/system/invite.test.ts",
+        "frontend-vue/tests/views/system/invite/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -3585,10 +3585,10 @@
       "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
       "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
       "existingTests": [
-        "infoq-scaffold-frontend-react/tests/api/system/invite.test.ts",
-        "infoq-scaffold-frontend-react/tests/pages/system-invite.test.tsx",
-        "infoq-scaffold-frontend-vue/tests/api/system/invite.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/invite/index.test.ts"
+        "frontend-react/tests/api/system/invite.test.ts",
+        "frontend-react/tests/pages/system-invite.test.tsx",
+        "frontend-vue/tests/api/system/invite.test.ts",
+        "frontend-vue/tests/views/system/invite/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -3638,10 +3638,10 @@
       "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
       "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
       "existingTests": [
-        "infoq-scaffold-frontend-react/tests/api/system/invite.test.ts",
-        "infoq-scaffold-frontend-react/tests/pages/system-invite.test.tsx",
-        "infoq-scaffold-frontend-vue/tests/api/system/invite.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/invite/index.test.ts"
+        "frontend-react/tests/api/system/invite.test.ts",
+        "frontend-react/tests/pages/system-invite.test.tsx",
+        "frontend-vue/tests/api/system/invite.test.ts",
+        "frontend-vue/tests/views/system/invite/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -3691,10 +3691,10 @@
       "testData": "只读或固定入口数据。",
       "cleanup": "无需业务数据清理。",
       "existingTests": [
-        "infoq-scaffold-frontend-react/tests/api/system/invite.test.ts",
-        "infoq-scaffold-frontend-react/tests/pages/system-invite.test.tsx",
-        "infoq-scaffold-frontend-vue/tests/api/system/invite.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/invite/index.test.ts"
+        "frontend-react/tests/api/system/invite.test.ts",
+        "frontend-react/tests/pages/system-invite.test.tsx",
+        "frontend-vue/tests/api/system/invite.test.ts",
+        "frontend-vue/tests/views/system/invite/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -3742,10 +3742,10 @@
       "testData": "只读或固定入口数据。",
       "cleanup": "无需业务数据清理。",
       "existingTests": [
-        "infoq-scaffold-frontend-react/tests/api/system/invite.test.ts",
-        "infoq-scaffold-frontend-react/tests/pages/system-invite.test.tsx",
-        "infoq-scaffold-frontend-vue/tests/api/system/invite.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/invite/index.test.ts"
+        "frontend-react/tests/api/system/invite.test.ts",
+        "frontend-react/tests/pages/system-invite.test.tsx",
+        "frontend-vue/tests/api/system/invite.test.ts",
+        "frontend-vue/tests/views/system/invite/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -3837,7 +3837,7 @@
       "testData": "只读或固定入口数据。",
       "cleanup": "无需业务数据清理。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/system/menu/index.test.ts"
+        "frontend-vue/tests/views/system/menu/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -3887,7 +3887,7 @@
       "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
       "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/system/menu/index.test.ts"
+        "frontend-vue/tests/views/system/menu/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -3937,7 +3937,7 @@
       "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
       "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/system/menu/index.test.ts"
+        "frontend-vue/tests/views/system/menu/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -3987,7 +3987,7 @@
       "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
       "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/system/menu/index.test.ts"
+        "frontend-vue/tests/views/system/menu/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -4035,7 +4035,7 @@
       "testData": "只读或固定入口数据。",
       "cleanup": "无需业务数据清理。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/system/menu/index.test.ts"
+        "frontend-vue/tests/views/system/menu/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -4082,7 +4082,7 @@
       "testData": "只读或固定入口数据。",
       "cleanup": "无需业务数据清理。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/system/notice/index.test.ts"
+        "frontend-vue/tests/views/system/notice/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -4132,7 +4132,7 @@
       "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
       "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/system/notice/index.test.ts"
+        "frontend-vue/tests/views/system/notice/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -4182,7 +4182,7 @@
       "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
       "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/system/notice/index.test.ts"
+        "frontend-vue/tests/views/system/notice/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -4232,7 +4232,7 @@
       "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
       "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/system/notice/index.test.ts"
+        "frontend-vue/tests/views/system/notice/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -4280,7 +4280,7 @@
       "testData": "只读或固定入口数据。",
       "cleanup": "无需业务数据清理。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/system/notice/index.test.ts"
+        "frontend-vue/tests/views/system/notice/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -4330,8 +4330,8 @@
       "testData": "只读或固定入口数据。",
       "cleanup": "无需业务数据清理。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/system/oss/config.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/oss/index.test.ts"
+        "frontend-vue/tests/views/system/oss/config.test.ts",
+        "frontend-vue/tests/views/system/oss/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -4380,8 +4380,8 @@
       "testData": "只读或固定入口数据。",
       "cleanup": "无需业务数据清理。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/system/oss/config.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/oss/index.test.ts"
+        "frontend-vue/tests/views/system/oss/config.test.ts",
+        "frontend-vue/tests/views/system/oss/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -4433,8 +4433,8 @@
       "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
       "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/system/oss/config.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/oss/index.test.ts"
+        "frontend-vue/tests/views/system/oss/config.test.ts",
+        "frontend-vue/tests/views/system/oss/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -4486,8 +4486,8 @@
       "testData": "只读或固定入口数据。",
       "cleanup": "无需业务数据清理。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/system/oss/config.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/oss/index.test.ts"
+        "frontend-vue/tests/views/system/oss/config.test.ts",
+        "frontend-vue/tests/views/system/oss/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -4539,8 +4539,8 @@
       "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
       "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/system/oss/config.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/oss/index.test.ts"
+        "frontend-vue/tests/views/system/oss/config.test.ts",
+        "frontend-vue/tests/views/system/oss/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -4589,8 +4589,8 @@
       "testData": "只读或固定入口数据。",
       "cleanup": "无需业务数据清理。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/system/oss/config.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/oss/index.test.ts"
+        "frontend-vue/tests/views/system/oss/config.test.ts",
+        "frontend-vue/tests/views/system/oss/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -4642,8 +4642,8 @@
       "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
       "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/system/oss/config.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/oss/index.test.ts"
+        "frontend-vue/tests/views/system/oss/config.test.ts",
+        "frontend-vue/tests/views/system/oss/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -4695,8 +4695,8 @@
       "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
       "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/system/oss/config.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/oss/index.test.ts"
+        "frontend-vue/tests/views/system/oss/config.test.ts",
+        "frontend-vue/tests/views/system/oss/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -4748,8 +4748,8 @@
       "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
       "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/system/oss/config.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/oss/index.test.ts"
+        "frontend-vue/tests/views/system/oss/config.test.ts",
+        "frontend-vue/tests/views/system/oss/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -4800,7 +4800,7 @@
       "testData": "只读或固定入口数据。",
       "cleanup": "无需业务数据清理。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/system/oss/config.test.ts"
+        "frontend-vue/tests/views/system/oss/config.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -4847,7 +4847,7 @@
       "testData": "只读或固定入口数据。",
       "cleanup": "无需业务数据清理。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/system/post/index.test.ts"
+        "frontend-vue/tests/views/system/post/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -4897,7 +4897,7 @@
       "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
       "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/system/post/index.test.ts"
+        "frontend-vue/tests/views/system/post/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -4947,7 +4947,7 @@
       "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
       "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/system/post/index.test.ts"
+        "frontend-vue/tests/views/system/post/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -4997,7 +4997,7 @@
       "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
       "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/system/post/index.test.ts"
+        "frontend-vue/tests/views/system/post/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -5047,7 +5047,7 @@
       "testData": "只读或固定入口数据。",
       "cleanup": "无需业务数据清理。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/system/post/index.test.ts"
+        "frontend-vue/tests/views/system/post/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -5095,7 +5095,7 @@
       "testData": "只读或固定入口数据。",
       "cleanup": "无需业务数据清理。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/system/post/index.test.ts"
+        "frontend-vue/tests/views/system/post/index.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -5142,9 +5142,9 @@
       "testData": "只读或固定入口数据。",
       "cleanup": "无需业务数据清理。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/system/role/authUser.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/role/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/role/selectUser.test.ts"
+        "frontend-vue/tests/views/system/role/authUser.test.ts",
+        "frontend-vue/tests/views/system/role/index.test.ts",
+        "frontend-vue/tests/views/system/role/selectUser.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -5194,9 +5194,9 @@
       "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
       "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/system/role/authUser.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/role/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/role/selectUser.test.ts"
+        "frontend-vue/tests/views/system/role/authUser.test.ts",
+        "frontend-vue/tests/views/system/role/index.test.ts",
+        "frontend-vue/tests/views/system/role/selectUser.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -5244,9 +5244,9 @@
       "testData": "只读或固定入口数据。",
       "cleanup": "无需业务数据清理。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/system/role/authUser.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/role/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/role/selectUser.test.ts"
+        "frontend-vue/tests/views/system/role/authUser.test.ts",
+        "frontend-vue/tests/views/system/role/index.test.ts",
+        "frontend-vue/tests/views/system/role/selectUser.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -5296,9 +5296,9 @@
       "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
       "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/system/role/authUser.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/role/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/role/selectUser.test.ts"
+        "frontend-vue/tests/views/system/role/authUser.test.ts",
+        "frontend-vue/tests/views/system/role/index.test.ts",
+        "frontend-vue/tests/views/system/role/selectUser.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -5348,9 +5348,9 @@
       "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
       "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/system/role/authUser.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/role/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/role/selectUser.test.ts"
+        "frontend-vue/tests/views/system/role/authUser.test.ts",
+        "frontend-vue/tests/views/system/role/index.test.ts",
+        "frontend-vue/tests/views/system/role/selectUser.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -5400,9 +5400,9 @@
       "testData": "只读或固定入口数据。",
       "cleanup": "无需业务数据清理。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/system/role/authUser.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/role/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/role/selectUser.test.ts"
+        "frontend-vue/tests/views/system/role/authUser.test.ts",
+        "frontend-vue/tests/views/system/role/index.test.ts",
+        "frontend-vue/tests/views/system/role/selectUser.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -5451,7 +5451,7 @@
       "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
       "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/system/role/authUser.test.ts"
+        "frontend-vue/tests/views/system/role/authUser.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -5499,15 +5499,15 @@
       "testData": "只读或固定入口数据。",
       "cleanup": "无需业务数据清理。",
       "existingTests": [
-        "infoq-scaffold-frontend-react/tests/pages/system/user/profile/oauth-identity.test.tsx",
-        "infoq-scaffold-frontend-vue/tests/api/system/user-oauth-identity.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/authRole.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/onlineDevice.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/resetPwd.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/userAvatar.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/userInfo.test.ts"
+        "frontend-react/tests/pages/system/user/profile/oauth-identity.test.tsx",
+        "frontend-vue/tests/api/system/user-oauth-identity.test.ts",
+        "frontend-vue/tests/views/system/user/authRole.test.ts",
+        "frontend-vue/tests/views/system/user/index.test.ts",
+        "frontend-vue/tests/views/system/user/profile/index.test.ts",
+        "frontend-vue/tests/views/system/user/profile/onlineDevice.test.ts",
+        "frontend-vue/tests/views/system/user/profile/resetPwd.test.ts",
+        "frontend-vue/tests/views/system/user/profile/userAvatar.test.ts",
+        "frontend-vue/tests/views/system/user/profile/userInfo.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -5554,15 +5554,15 @@
       "testData": "只读或固定入口数据。",
       "cleanup": "无需业务数据清理。",
       "existingTests": [
-        "infoq-scaffold-frontend-react/tests/pages/system/user/profile/oauth-identity.test.tsx",
-        "infoq-scaffold-frontend-vue/tests/api/system/user-oauth-identity.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/authRole.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/onlineDevice.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/resetPwd.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/userAvatar.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/userInfo.test.ts"
+        "frontend-react/tests/pages/system/user/profile/oauth-identity.test.tsx",
+        "frontend-vue/tests/api/system/user-oauth-identity.test.ts",
+        "frontend-vue/tests/views/system/user/authRole.test.ts",
+        "frontend-vue/tests/views/system/user/index.test.ts",
+        "frontend-vue/tests/views/system/user/profile/index.test.ts",
+        "frontend-vue/tests/views/system/user/profile/onlineDevice.test.ts",
+        "frontend-vue/tests/views/system/user/profile/resetPwd.test.ts",
+        "frontend-vue/tests/views/system/user/profile/userAvatar.test.ts",
+        "frontend-vue/tests/views/system/user/profile/userInfo.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -5612,15 +5612,15 @@
       "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
       "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
       "existingTests": [
-        "infoq-scaffold-frontend-react/tests/pages/system/user/profile/oauth-identity.test.tsx",
-        "infoq-scaffold-frontend-vue/tests/api/system/user-oauth-identity.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/authRole.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/onlineDevice.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/resetPwd.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/userAvatar.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/userInfo.test.ts"
+        "frontend-react/tests/pages/system/user/profile/oauth-identity.test.tsx",
+        "frontend-vue/tests/api/system/user-oauth-identity.test.ts",
+        "frontend-vue/tests/views/system/user/authRole.test.ts",
+        "frontend-vue/tests/views/system/user/index.test.ts",
+        "frontend-vue/tests/views/system/user/profile/index.test.ts",
+        "frontend-vue/tests/views/system/user/profile/onlineDevice.test.ts",
+        "frontend-vue/tests/views/system/user/profile/resetPwd.test.ts",
+        "frontend-vue/tests/views/system/user/profile/userAvatar.test.ts",
+        "frontend-vue/tests/views/system/user/profile/userInfo.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -5670,15 +5670,15 @@
       "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
       "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
       "existingTests": [
-        "infoq-scaffold-frontend-react/tests/pages/system/user/profile/oauth-identity.test.tsx",
-        "infoq-scaffold-frontend-vue/tests/api/system/user-oauth-identity.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/authRole.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/onlineDevice.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/resetPwd.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/userAvatar.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/userInfo.test.ts"
+        "frontend-react/tests/pages/system/user/profile/oauth-identity.test.tsx",
+        "frontend-vue/tests/api/system/user-oauth-identity.test.ts",
+        "frontend-vue/tests/views/system/user/authRole.test.ts",
+        "frontend-vue/tests/views/system/user/index.test.ts",
+        "frontend-vue/tests/views/system/user/profile/index.test.ts",
+        "frontend-vue/tests/views/system/user/profile/onlineDevice.test.ts",
+        "frontend-vue/tests/views/system/user/profile/resetPwd.test.ts",
+        "frontend-vue/tests/views/system/user/profile/userAvatar.test.ts",
+        "frontend-vue/tests/views/system/user/profile/userInfo.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -5728,15 +5728,15 @@
       "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
       "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
       "existingTests": [
-        "infoq-scaffold-frontend-react/tests/pages/system/user/profile/oauth-identity.test.tsx",
-        "infoq-scaffold-frontend-vue/tests/api/system/user-oauth-identity.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/authRole.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/onlineDevice.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/resetPwd.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/userAvatar.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/userInfo.test.ts"
+        "frontend-react/tests/pages/system/user/profile/oauth-identity.test.tsx",
+        "frontend-vue/tests/api/system/user-oauth-identity.test.ts",
+        "frontend-vue/tests/views/system/user/authRole.test.ts",
+        "frontend-vue/tests/views/system/user/index.test.ts",
+        "frontend-vue/tests/views/system/user/profile/index.test.ts",
+        "frontend-vue/tests/views/system/user/profile/onlineDevice.test.ts",
+        "frontend-vue/tests/views/system/user/profile/resetPwd.test.ts",
+        "frontend-vue/tests/views/system/user/profile/userAvatar.test.ts",
+        "frontend-vue/tests/views/system/user/profile/userInfo.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -5786,15 +5786,15 @@
       "testData": "只读或固定入口数据。",
       "cleanup": "无需业务数据清理。",
       "existingTests": [
-        "infoq-scaffold-frontend-react/tests/pages/system/user/profile/oauth-identity.test.tsx",
-        "infoq-scaffold-frontend-vue/tests/api/system/user-oauth-identity.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/authRole.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/onlineDevice.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/resetPwd.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/userAvatar.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/userInfo.test.ts"
+        "frontend-react/tests/pages/system/user/profile/oauth-identity.test.tsx",
+        "frontend-vue/tests/api/system/user-oauth-identity.test.ts",
+        "frontend-vue/tests/views/system/user/authRole.test.ts",
+        "frontend-vue/tests/views/system/user/index.test.ts",
+        "frontend-vue/tests/views/system/user/profile/index.test.ts",
+        "frontend-vue/tests/views/system/user/profile/onlineDevice.test.ts",
+        "frontend-vue/tests/views/system/user/profile/resetPwd.test.ts",
+        "frontend-vue/tests/views/system/user/profile/userAvatar.test.ts",
+        "frontend-vue/tests/views/system/user/profile/userInfo.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -5844,15 +5844,15 @@
       "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
       "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
       "existingTests": [
-        "infoq-scaffold-frontend-react/tests/pages/system/user/profile/oauth-identity.test.tsx",
-        "infoq-scaffold-frontend-vue/tests/api/system/user-oauth-identity.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/authRole.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/onlineDevice.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/resetPwd.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/userAvatar.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/userInfo.test.ts"
+        "frontend-react/tests/pages/system/user/profile/oauth-identity.test.tsx",
+        "frontend-vue/tests/api/system/user-oauth-identity.test.ts",
+        "frontend-vue/tests/views/system/user/authRole.test.ts",
+        "frontend-vue/tests/views/system/user/index.test.ts",
+        "frontend-vue/tests/views/system/user/profile/index.test.ts",
+        "frontend-vue/tests/views/system/user/profile/onlineDevice.test.ts",
+        "frontend-vue/tests/views/system/user/profile/resetPwd.test.ts",
+        "frontend-vue/tests/views/system/user/profile/userAvatar.test.ts",
+        "frontend-vue/tests/views/system/user/profile/userInfo.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -5902,15 +5902,15 @@
       "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
       "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
       "existingTests": [
-        "infoq-scaffold-frontend-react/tests/pages/system/user/profile/oauth-identity.test.tsx",
-        "infoq-scaffold-frontend-vue/tests/api/system/user-oauth-identity.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/authRole.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/onlineDevice.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/resetPwd.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/userAvatar.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/userInfo.test.ts"
+        "frontend-react/tests/pages/system/user/profile/oauth-identity.test.tsx",
+        "frontend-vue/tests/api/system/user-oauth-identity.test.ts",
+        "frontend-vue/tests/views/system/user/authRole.test.ts",
+        "frontend-vue/tests/views/system/user/index.test.ts",
+        "frontend-vue/tests/views/system/user/profile/index.test.ts",
+        "frontend-vue/tests/views/system/user/profile/onlineDevice.test.ts",
+        "frontend-vue/tests/views/system/user/profile/resetPwd.test.ts",
+        "frontend-vue/tests/views/system/user/profile/userAvatar.test.ts",
+        "frontend-vue/tests/views/system/user/profile/userInfo.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -5959,7 +5959,7 @@
       "testData": "使用 e2e_ 前缀测试数据，并避免污染系统基础数据。",
       "cleanup": "必须在用例内清理测试数据；失败时记录人工回滚提示。",
       "existingTests": [
-        "infoq-scaffold-frontend-vue/tests/views/system/user/authRole.test.ts"
+        "frontend-vue/tests/views/system/user/authRole.test.ts"
       ],
       "gaps": [],
       "sourceFile": "sql/infoq_scaffold_3.0.0.sql"
@@ -6003,12 +6003,12 @@
       "testData": "只读或固定入口数据。",
       "cleanup": "无需业务数据清理。",
       "existingTests": [
-        "infoq-scaffold-frontend-react/tests/pages/system/user/profile/oauth-identity.test.tsx",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/index.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/onlineDevice.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/resetPwd.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/userAvatar.test.ts",
-        "infoq-scaffold-frontend-vue/tests/views/system/user/profile/userInfo.test.ts"
+        "frontend-react/tests/pages/system/user/profile/oauth-identity.test.tsx",
+        "frontend-vue/tests/views/system/user/profile/index.test.ts",
+        "frontend-vue/tests/views/system/user/profile/onlineDevice.test.ts",
+        "frontend-vue/tests/views/system/user/profile/resetPwd.test.ts",
+        "frontend-vue/tests/views/system/user/profile/userAvatar.test.ts",
+        "frontend-vue/tests/views/system/user/profile/userInfo.test.ts"
       ],
       "gaps": [],
       "sourceFile": ""

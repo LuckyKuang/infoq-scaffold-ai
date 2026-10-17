@@ -17,7 +17,7 @@ invoke it.
 
 This stack is isolated from other Apple container projects. Default names use
 the `infoq-apple` prefix and network `192.168.66.0/24`. The script refuses to
-manage `sub2api-apple*` or any resource that is not labeled
+manage any resource that is not labeled
 `org.infoq.stack=apple-container`.
 
 ## Requirements
@@ -60,6 +60,16 @@ nano .env
 Open `http://127.0.0.1:19090/monitor/health/readiness`. The default host port
 is `19090` so a local `8080` application, including another Apple container
 stack, can keep running.
+
+A cross-platform wrapper is available at the repository root:
+
+```bash
+node skills/deploy-cli/scripts/deploy_cli.mjs up
+node skills/deploy-cli/scripts/deploy_cli.mjs status
+```
+
+`deploy/apple-container.sh` remains the execution truth; `deploy-cli` adds state
+and smoke reporting.
 
 The env file uses literal `KEY=value` syntax. Do not use Compose expressions
 such as `${VALUE:-default}`. `APPLE_CONTAINER_BIND_HOST` must be an IPv4
@@ -133,7 +143,7 @@ Permanently delete the stack and named-volume data:
 ./apple-container.sh destroy --volumes --yes
 ```
 
-`destroy` never deletes `sub2api-apple*` containers, the `sub2api-apple`
+`destroy` never deletes containers or networks owned by other projects,
 network, `.env`, host bind directories, or pulled images.
 
 After a host reboot or `container system stop`, run `./apple-container.sh up`

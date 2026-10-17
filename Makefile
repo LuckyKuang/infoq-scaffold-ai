@@ -7,7 +7,7 @@ help:
 		'build-vue        Production build for the Vue admin' \
 		'build-react      Production build for the React admin' \
 		'test             Run docs, backend, and admin checks' \
-		'test-docs        UTF-8 gate plus README sync' \
+		'test-docs        UTF-8, README, release-version, and doc-link gates' \
 		'test-backend     Backend unit tests' \
 		'test-vue         Vue lint, unit tests, and production build' \
 		'test-react       React lint, unit tests, and production build' \
@@ -21,28 +21,30 @@ build-backend:
 	node tools/backend_mvn.mjs -- -B -ntp clean package -P dev -DskipTests
 
 build-vue:
-	pnpm --dir infoq-scaffold-frontend-vue run build:prod
+	cd frontend-vue && corepack pnpm run build:prod
 
 build-react:
-	pnpm --dir infoq-scaffold-frontend-react run build:prod
+	cd frontend-react && corepack pnpm run build:prod
 
 test: test-docs test-backend test-vue test-react
 
 test-docs: validate-utf8
 	node tools/check_readme_sync.mjs
+	node tools/check_release_version.mjs
+	node tools/check_doc_links.mjs
 
 test-backend:
 	node tools/backend_mvn.mjs -- -B -ntp -DskipTests=false test
 
 test-vue:
-	pnpm --dir infoq-scaffold-frontend-vue run lint:eslint
-	pnpm --dir infoq-scaffold-frontend-vue run test:unit
-	pnpm --dir infoq-scaffold-frontend-vue run build:prod
+	cd frontend-vue && corepack pnpm run lint:eslint
+	cd frontend-vue && corepack pnpm run test:unit
+	cd frontend-vue && corepack pnpm run build:prod
 
 test-react:
-	pnpm --dir infoq-scaffold-frontend-react run lint
-	pnpm --dir infoq-scaffold-frontend-react run test
-	pnpm --dir infoq-scaffold-frontend-react run build:prod
+	cd frontend-react && corepack pnpm run lint
+	cd frontend-react && corepack pnpm run test
+	cd frontend-react && corepack pnpm run build:prod
 
 validate-utf8:
 	node tools/validate_utf8.mjs

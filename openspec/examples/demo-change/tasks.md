@@ -6,9 +6,9 @@
 
 ## 影响矩阵
 
-- [ ] infoq-scaffold-backend：<是否受影响及原因>
-- [ ] infoq-scaffold-frontend-react：<是否受影响及原因>
-- [ ] infoq-scaffold-frontend-vue：<是否受影响及原因>
+- [ ] backend：<是否受影响及原因>
+- [ ] frontend-react：<是否受影响及原因>
+- [ ] frontend-vue：<是否受影响及原因>
 - [ ] docs：<是否受影响及原因>
 - [ ] script / deploy：<是否受影响及原因>
 - [ ] skills：<是否受影响及原因>

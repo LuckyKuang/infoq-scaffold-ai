@@ -8,9 +8,9 @@
 
 | client | 工作区 | 测试命令 | coverage | lint | build |
 | --- | --- | --- | --- | --- | --- |
-| `react` | `infoq-scaffold-frontend-react` | `pnpm --dir infoq-scaffold-frontend-react run test` | `pnpm --dir infoq-scaffold-frontend-react run test:coverage` | `pnpm --dir infoq-scaffold-frontend-react run lint` | `pnpm --dir infoq-scaffold-frontend-react run build:prod` |
-| `react` | `infoq-scaffold-frontend-react` | `pnpm --dir infoq-scaffold-frontend-react run test` | `pnpm --dir infoq-scaffold-frontend-react run test:coverage` | `pnpm --dir infoq-scaffold-frontend-react run lint` | `pnpm --dir infoq-scaffold-frontend-react run build` |
-| `vue` | `infoq-scaffold-frontend-vue` | `pnpm --dir infoq-scaffold-frontend-vue run test:unit` | `pnpm --dir infoq-scaffold-frontend-vue run test:unit:coverage` | `pnpm --dir infoq-scaffold-frontend-vue run lint:eslint` | `pnpm --dir infoq-scaffold-frontend-vue run build:prod` |
+| `react` | `frontend-react` | `pnpm --dir frontend-react run test` | `pnpm --dir frontend-react run test:coverage` | `pnpm --dir frontend-react run lint` | `pnpm --dir frontend-react run build:prod` |
+| `react` | `frontend-react` | `pnpm --dir frontend-react run test` | `pnpm --dir frontend-react run test:coverage` | `pnpm --dir frontend-react run lint` | `pnpm --dir frontend-react run build` |
+| `vue` | `frontend-vue` | `pnpm --dir frontend-vue run test:unit` | `pnpm --dir frontend-vue run test:unit:coverage` | `pnpm --dir frontend-vue run lint:eslint` | `pnpm --dir frontend-vue run build:prod` |
 
 ## 分层用例
 

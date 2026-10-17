@@ -103,7 +103,7 @@ render_config() {
 }
 
 copy_surefire_reports() {
-  local report_dir="${repository_root}/infoq-scaffold-backend/infoq-plugin/infoq-plugin-elasticsearch/target/surefire-reports"
+  local report_dir="${repository_root}/backend/infoq-plugin/infoq-plugin-elasticsearch/target/surefire-reports"
   [ -d "${report_dir}" ] || return 0
   mkdir -p "${evidence_dir}/elasticsearch-surefire-reports"
   while IFS= read -r report; do

@@ -9,22 +9,22 @@
 真实验证码登录和动态路由 smoke 使用仓库 runner：
 
 ```bash
-node skills/infoq-test/scripts/run_admin_e2e.mjs --client react --route-limit 1
-node skills/infoq-test/scripts/run_admin_e2e.mjs --client vue --route-limit 1
+node skills/test-cli/scripts/run_admin_e2e.mjs --client react --route-limit 1
+node skills/test-cli/scripts/run_admin_e2e.mjs --client vue --route-limit 1
 ```
 
 已授权测试数据库上的全模块 CRUD（可用 `--modules` 子集，如仅公告 `--modules notice`）使用写入型 runner；其中 `job` 和 `ossConfig` 覆盖可隔离的任务/OSS 配置新增、编辑、删除和选择型删除入口，`online` 只强退当前 run 创建的 `e2e_` 用户会话：
 
 ```bash
-node skills/infoq-test/scripts/run_admin_crud_e2e.mjs --client react
-node skills/infoq-test/scripts/run_admin_crud_e2e.mjs --client vue
+node skills/test-cli/scripts/run_admin_crud_e2e.mjs --client react
+node skills/test-cli/scripts/run_admin_crud_e2e.mjs --client vue
 ```
 
 完整矩阵来自后端菜单、三端页面组件和已有测试文件：
 
 ```bash
-node skills/infoq-test/scripts/generate-case-matrix.mjs
-node skills/infoq-test/scripts/validate-case-matrix.mjs docs/testing/case-matrix.json
+node skills/test-cli/scripts/generate-case-matrix.mjs
+node skills/test-cli/scripts/validate-case-matrix.mjs docs/testing/case-matrix.json
 ```
 
 ## 统一浏览器用例

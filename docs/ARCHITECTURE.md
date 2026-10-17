@@ -6,21 +6,22 @@ InfoQ-Scaffold-AI 当前由一个后端和两套管理端组成：Spring Boot �
 
 ```text
 infoq-scaffold-ai
-├── infoq-scaffold-backend
-├── infoq-scaffold-frontend-vue
-├── infoq-scaffold-frontend-react
-├── script
-├── sql
+├── backend
+├── frontend-vue
+├── frontend-react
 ├── deploy
+├── sql
 ├── docs
-└── openspec
+├── openspec
+├── skills
+└── tools
 ```
 
 | 工作区 | 职责 | 关键入口 |
 | --- | --- | --- |
-| `infoq-scaffold-backend` | Spring Boot 4.1 多模块后端 | `infoq-admin/src/main/java/cc/infoq/admin/SysAdminApplication.java` |
-| `infoq-scaffold-frontend-vue` | Vue 3 + Element Plus 管理端 | `src/main.ts`、`src/router/index.ts` |
-| `infoq-scaffold-frontend-react` | React 19 + Ant Design 管理端 | `src/main.tsx`、`src/router/AppRouter.tsx` |
+| `backend` | Spring Boot 4.1 多模块后端 | `infoq-admin/src/main/java/cc/infoq/admin/SysAdminApplication.java` |
+| `frontend-vue` | Vue 3 + Element Plus 管理端 | `src/main.ts`、`src/router/index.ts` |
+| `frontend-react` | React 19 + Ant Design 管理端 | `src/main.tsx`、`src/router/AppRouter.tsx` |
 
 ## 2. 技术基线
 
@@ -36,7 +37,7 @@ infoq-scaffold-ai
 
 ## 3. 后端由哪些模块组成
 
-后端工作区是 `infoq-scaffold-backend`，按"入口模块 + 核心模块 + 插件模块 + 业务模块"拆分。
+后端工作区是 `backend`，按"入口模块 + 核心模块 + 插件模块 + 业务模块"拆分。
 
 | 模块 | 作用 |
 | --- | --- |
@@ -204,7 +205,7 @@ Vue 与 React 管理端共享同一套后端、同一套菜单权限和大部分
 
 | 维度 | Vue 管理端 | React 管理端 |
 | --- | --- | --- |
-| 工作区 | `infoq-scaffold-frontend-vue` | `infoq-scaffold-frontend-react` |
+| 工作区 | `frontend-vue` | `frontend-react` |
 | UI 组件库 | Element Plus | Ant Design |
 | 路由入口 | `src/router/index.ts` | `src/router/AppRouter.tsx` |
 | 动态路由转换 | Vue Router 原生路由对象 | `route-transform.ts` + `BackendRouteView.tsx` |
@@ -277,7 +278,7 @@ Vue 与 React 管理端共享同一套后端、同一套菜单权限和大部分
 
 ### 12.5 构建与分包真值
 
-React admin 的分包真值在 `infoq-scaffold-frontend-react/vite.config.ts` 的 `build.rollupOptions.output.manualChunks`：
+React admin 的分包真值在 `frontend-react/vite.config.ts` 的 `build.rollupOptions.output.manualChunks`：
 
 - 当前策略优先稳定 vendor 分组与路由级懒加载：`vendor-react`、`vendor-shared`、`vendor-media`、`vendor-echarts`，以及 `vendor-antd-infra`、`vendor-rc-table`、`vendor-rc-picker`、`vendor-rc-form`、`vendor-rc-tree`、`vendor-rc-overlay`。
 - `src/router/AppRouter.tsx` 中的 `AuthGuard`、`MainLayout`、`BackendRouteView`、`login`、`register`、`401`、`redirect` 已改为 `lazy()`；入口首包优化依赖这些真实路由边界。
@@ -328,15 +329,15 @@ React admin 的分包真值在 `infoq-scaffold-frontend-react/vite.config.ts` �
 | 服务 | 默认地址或命令 |
 | --- | --- |
 | 后端 | `http://127.0.0.1:8080` |
-| Vue 管理端 | `pnpm --dir infoq-scaffold-frontend-vue run dev` |
-| React 管理端 | `pnpm --dir infoq-scaffold-frontend-react run dev` |
+| Vue 管理端 | `pnpm --dir frontend-vue run dev` |
+| React 管理端 | `pnpm --dir frontend-react run dev` |
 | Nginx 聚合入口 | `/vue/`、`/react/`、`/prod-api/` |
 
 配置与验证入口：
 
-- 后端环境配置位于 `infoq-scaffold-backend/infoq-admin/src/main/resources/`。
-- Vue 环境变量位于 `infoq-scaffold-frontend-vue/.env.*`。
-- React 环境变量位于 `infoq-scaffold-frontend-react/.env.*`。
+- 后端环境配置位于 `backend/infoq-admin/src/main/resources/`。
+- Vue 环境变量位于 `frontend-vue/.env.*`。
+- React 环境变量位于 `frontend-react/.env.*`。
 - 使用 `node tools/validate_utf8.mjs` 做仓库编码校验。
 - 后端使用 `node tools/backend_mvn.mjs -- ...`，前端使用 pnpm 执行测试、lint 和构建。
 
@@ -349,8 +350,8 @@ React admin 的分包真值在 `infoq-scaffold-frontend-react/vite.config.ts` �
 
 ```bash
 node tools/backend_mvn.mjs -- clean install -DskipTests
-java -jar infoq-scaffold-backend/infoq-admin/target/infoq-admin.jar --spring.profiles.active=dev
-java -jar infoq-scaffold-backend/infoq-admin/target/infoq-admin.jar --spring.profiles.active=local
+java -jar backend/infoq-admin/target/infoq-admin.jar --spring.profiles.active=dev
+java -jar backend/infoq-admin/target/infoq-admin.jar --spring.profiles.active=local
 node tools/backend_mvn.mjs -- -pl infoq-modules/infoq-system -am -DskipTests=false test
 node tools/backend_mvn.mjs -- clean package -P prod -pl infoq-admin -am
 ```

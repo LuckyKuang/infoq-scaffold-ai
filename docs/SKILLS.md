@@ -8,13 +8,13 @@
 
 当前仓库级 skill 遵循这些硬约束：
 
-1. **只保留 4 个 CLI 型工作域**：`infoq-test`（Web 测试）、`infoq-compress`（AGENTS 规约）、`infoq-push`（推送与 PR）、`infoq-release`（版本与 Release）。
-2. 仓库级 skill 统一使用 `infoq-` 前缀；创建或更新 skill 使用系统级 `skill-creator`。
+1. **只保留 5 个 CLI 型工作域**：`test-cli`（Web 测试）、`compress-cli`（AGENTS 规约）、`push-cli`（推送与 PR）、`release-cli`（版本与 Release）、`deploy-cli`（本机部署与运行态）。
+2. 仓库级 skill 统一使用 `*-cli` 后缀；创建或更新 skill 使用系统级 `skill-creator`。
 3. `skills` 下不保留共享底座型、README-only、helper-only 或已被新工作域覆盖的旧 skill 目录。
 4. 一个 skill 一个工作域；域内用子命令或 mode 表达子场景，细节放 `references/`。React / Vue 管理端差异通过 `references/*` 或 `--client react|vue` 区分。
 5. skill 的主执行入口必须兼容 Windows / macOS / Linux；统一使用 repo-owned Node CLI 或 `.mjs`，不再保留 `.sh` / `.ps1` / `.cmd` 作为 skill 入口。若内部仍需 Python 等实现，必须由跨平台 Node 入口调度。
 6. 仓库级 skill 是 CLI 型可执行 SOP：判定范围 -> 只读探测 / dry-run -> 目标与影响枚举 -> 写入或危险动作门禁 -> 执行验证 -> `tmp/` 证据留存与显式失败。远程写操作默认 dry-run。
-7. 工作域之外的能力不新建 skill：backend 验证与 OpenSpec 校验放 `tools/`，数据运维与交付工作流放 `docs/`，部署验证放 `deploy/`。
+7. 工作域之外的能力不新建 skill：backend 验证与 OpenSpec 校验放 `tools/`，数据运维与交付工作流放 `docs/`，部署脚本与运行时矩阵放 `deploy/`；部署生命周期编排由 `deploy-cli` 承担。
 
 ## 2. 一个 skill 通常包含什么
 
@@ -31,28 +31,29 @@
 
 ## 3. 当前关键 skills
 
-`skills/` 当前保留 4 个仓库级 skill：CLI 型可执行 SOP 优先；稳定的参考性内容归 `docs/`，域外验证能力归 `tools/` 与 `deploy/`。
+`skills/` 当前保留 5 个仓库级 skill：CLI 型可执行 SOP 优先；稳定的参考性内容归 `docs/`，域外验证能力归 `tools/`，部署脚本真值归 `deploy/`。
 
 | Skill | 职责 | 典型场景 |
 | --- | --- | --- |
-| `infoq-test` | Web 测试与运行态 | 浏览器流程与 DevTools 诊断、受保护路由探测、真实验证码登录、动态路由 smoke、case matrix、CRUD E2E、页面运维门禁、前端单测/coverage/lint/build 与本地栈 |
-| `infoq-compress` | AGENTS 规约压缩与校验 | 压缩根 `AGENTS.md`、格式与唯一类别校验、Local Skills 路由一致性、引用路径存在性、受保护类别断言、行数预算 |
-| `infoq-push` | 推送与 PR 闭环 | 本地校验矩阵、默认分支保护、自动工作分支、提交与推送、PR 创建/复用、GitHub 校验轮询、失败日志回流、受控合并 |
-| `infoq-release` | 版本与 GitHub Release | 版本现状核对（含最新远程 tag）、受管文件同步、标注 tag、Release 发布与发布后校验 |
+| `test-cli` | Web 测试与运行态 | 浏览器流程与 DevTools 诊断、受保护路由探测、真实验证码登录、动态路由 smoke、case matrix、CRUD E2E、页面运维门禁、前端单测/coverage/lint/build 与本地栈 |
+| `compress-cli` | AGENTS 规约压缩与校验 | 压缩根 `AGENTS.md`、格式与唯一类别校验、Local Skills 路由一致性、引用路径存在性、受保护类别断言、行数预算 |
+| `push-cli` | 推送与 PR 闭环 | 本地校验矩阵、默认分支保护、自动工作分支、提交与推送、PR 创建/复用、GitHub 校验轮询、失败日志回流、受控合并 |
+| `release-cli` | 版本与 GitHub Release | 版本现状核对（含最新远程 tag）、受管文件同步、标注 tag、Release 发布与发布后校验 |
+| `deploy-cli` | 本机部署与运行态 | Apple container / WSL2 Docker / Linux Docker 的 init/build/up/down/status/smoke、状态文件与端口收口 |
 
 ## 4. 浏览器 skill 的当前真值
 
-`infoq-test` 的默认主路径已经切换为仓库内跨平台 CLI：
+`test-cli` 的默认主路径已经切换为仓库内跨平台 CLI：
 
-- `pnpm --dir skills/infoq-test/scripts run playwright-cli ...`
-- `pnpm --dir skills/infoq-test/scripts run chrome-devtools-cli ...`
+- `pnpm --dir skills/test-cli/scripts run playwright-cli ...`
+- `pnpm --dir skills/test-cli/scripts run chrome-devtools-cli ...`
 
 说明：
 
 - 这两个 CLI 是 repo-owned 入口，适用于 Windows / macOS / Linux。
 - 为兼容不同平台和 `pnpm` 参数透传差异，也接受 `run <cli-name> -- ...` 形式，但默认推荐无 `--` 写法。
 - 不再维护平台包装脚本，直接调用仓库内 CLI。
-- `playwright-cli admin-route-probe` 先走快速 token 获取；若后端明确返回 `captchaEnabled=true`，会自动调用 `infoq-test/scripts/captcha_login.mjs` 识别验证码并获取真实 token。
+- `playwright-cli admin-route-probe` 先走快速 token 获取；若后端明确返回 `captchaEnabled=true`，会自动调用 `test-cli/scripts/captcha_login.mjs` 识别验证码并获取真实 token。
 - `playwright` MCP 只用于临时交互探索。
 - `chrome-devtools` MCP 只用于深度诊断。
 
@@ -93,7 +94,7 @@ node tools/openspec_check.mjs <change-id>
 | 路径 | 当前职责 | 当前主要消费者 |
 | --- | --- | --- |
 | `tools/lib/skill_runtime.mjs` | repo root 解析、`tmp/` 路径、命令执行、进程管理、HTTP/文件辅助等通用运行时能力 | 多数 repo-level skills 与脚本 |
-| `tools/lib/admin_dev_stack.mjs` | 本地 admin backend + frontend 栈的启动、停止、状态文件、日志与端口收口管理 | `infoq-test` 的 `run_admin_e2e.mjs` / `run_admin_crud_e2e.mjs` |
+| `tools/lib/admin_dev_stack.mjs` | 本地 admin backend + frontend 栈的启动、停止、状态文件、日志与端口收口管理 | `test-cli` 的 `run_admin_e2e.mjs` / `run_admin_crud_e2e.mjs` |
 
 维护约束：
 
@@ -104,42 +105,42 @@ node tools/openspec_check.mjs <change-id>
 
 ## 8. 各域 skill 速查
 
-### 8.1 Web 测试与运行态（infoq-test）
+### 8.1 Web 测试与运行态（test-cli）
 
 当任务要求"不要跳过验证码""用 OCR 跑完整登录""启动后端和前端后逐模块 smoke""生成管理端测试矩阵"或"设计 CRUD 浏览器自动化模式"时使用。测试政策与 case 集合见 [TESTING.md](./TESTING.md) 与 `docs/testing/`。
 
 ```bash
-node skills/infoq-test/scripts/generate-case-matrix.mjs
-node skills/infoq-test/scripts/validate-case-matrix.mjs docs/testing/case-matrix.json
-node skills/infoq-test/scripts/captcha_login.mjs --backend-url http://127.0.0.1:8080 --print-token
-node skills/infoq-test/scripts/run_admin_e2e.mjs --client vue
-node skills/infoq-test/scripts/run_admin_e2e.mjs --client react
-node skills/infoq-test/scripts/run_admin_crud_e2e.mjs --client vue
-node skills/infoq-test/scripts/run_admin_crud_e2e.mjs --client react
+node skills/test-cli/scripts/generate-case-matrix.mjs
+node skills/test-cli/scripts/validate-case-matrix.mjs docs/testing/case-matrix.json
+node skills/test-cli/scripts/captcha_login.mjs --backend-url http://127.0.0.1:8080 --print-token
+node skills/test-cli/scripts/run_admin_e2e.mjs --client vue
+node skills/test-cli/scripts/run_admin_e2e.mjs --client react
+node skills/test-cli/scripts/run_admin_crud_e2e.mjs --client vue
+node skills/test-cli/scripts/run_admin_crud_e2e.mjs --client react
 ```
 
 说明：
 
 - 真实验证码 E2E 默认不关闭验证码，必须通过 `/auth/code`、OCR 和 `/auth/login` 获取真实 token。
 - `captcha_login.mjs` 是共享验证码登录入口，`run_admin_e2e.mjs` 和 `admin-route-probe` 的验证码 fallback 都复用它。
-- 首次运行 OCR 场景需要本机 Python 环境可 import `ddddocr`，浏览器依赖仍复用 `infoq-test`。
-- 证据默认写入 `tmp/infoq-test/e2e/<run-id>/`。
+- 首次运行 OCR 场景需要本机 Python 环境可 import `ddddocr`，浏览器依赖仍复用 `test-cli`。
+- 证据默认写入 `tmp/test-cli/e2e/<run-id>/`。
 - `run_admin_e2e.mjs` 默认在完成、失败或中断后停止本次 skill 启动的栈；只有成功且需要保留联调进程时显式传 `--keep-stack-after`，失败或中断仍会关闭 owned 进程。
 - `run_admin_crud_e2e.mjs` 仅用于已授权的 `application-local.yml` 测试数据库，默认覆盖 `role,user,menu,dept,post,dict,config,notice,client,invite,ossConfig,job,online`，执行 UI 新增/查询/编辑/删除或模块可用的选择删除/行删除入口；`online` 会创建当前 run 专属 `e2e_` 用户会话并只强退该会话；cleanup 只处理当前 run 的精确 `e2e_` 数据。
-- 管理端 E2E 栈状态按 client 稳定写入 `tmp/infoq-test/e2e/stack/<vue|react>/state.json`，断开后下一次运行会先清理未标记 `keepAlive` 的旧状态。
+- 管理端 E2E 栈状态按 client 稳定写入 `tmp/test-cli/e2e/stack/<vue|react>/state.json`，断开后下一次运行会先清理未标记 `keepAlive` 的旧状态。
 - 写入型 CRUD、导出、批量操作和权限矩阵必须先定义测试数据、cleanup 和危险动作门禁。
-- 真实管理端页面运营维护、权限巡检和写入型操作门禁见 `references/ops/page-ops-guardrails.md`；页面运维证据写入 `tmp/infoq-test/e2e/page-ops/`。
+- 真实管理端页面运营维护、权限巡检和写入型操作门禁见 `references/ops/page-ops-guardrails.md`；页面运维证据写入 `tmp/test-cli/e2e/page-ops/`。
 
-### 8.2 前端验证（infoq-test，mode: frontend）
+### 8.2 前端验证（test-cli，mode: frontend）
 
-React / Vue admin 的运行态、单测、coverage、lint/build 都统一使用 `infoq-test`。
+React / Vue admin 的运行态、单测、coverage、lint/build 都统一使用 `test-cli`。
 
 ```bash
-node skills/infoq-test/scripts/run_admin_e2e.mjs --client vue --route-limit 1
-node skills/infoq-test/scripts/run_admin_e2e.mjs --client react --route-limit 1
+node skills/test-cli/scripts/run_admin_e2e.mjs --client vue --route-limit 1
+node skills/test-cli/scripts/run_admin_e2e.mjs --client react --route-limit 1
 ```
 
-真实验证码登录、OCR 和动态路由 smoke 见 `references/modes/e2e.md`。本地栈由 `run_admin_e2e.mjs` 自管，状态写入 `tmp/infoq-test/e2e/stack/<client>/state.json`，完成、失败或中断后按状态文件收口 owned 端口；纯单测 / 构建迭代可手动启动，命令见 `references/runtime/admin-commands.md`。
+真实验证码登录、OCR 和动态路由 smoke 见 `references/modes/e2e.md`。本地栈由 `run_admin_e2e.mjs` 自管，状态写入 `tmp/test-cli/e2e/stack/<client>/state.json`，完成、失败或中断后按状态文件收口 owned 端口；纯单测 / 构建迭代可手动启动，命令见 `references/runtime/admin-commands.md`。
 
 ### 8.3 数据运维（docs/DATA-OPS.md）
 
@@ -149,7 +150,7 @@ SQL、数据库、Redis、数据修复、迁移、测试数据维护和 API/UI/D
 - 新增、修改、删除表结构或初始化数据，只能新增 `sql/infoq_scaffold_update_YYYYMMDD.sql` 增量脚本。
 - 数据写入前必须先列出环境、目标表/key/ID、筛选条件、影响范围、幂等性、回滚脚本和验证查询。
 - 共享环境默认只读；生产或共享环境数据变更、SQL 迁移和批量修复必须联动 `docs/DELIVERY-WORKFLOW.md`。
-- 管理端页面操作与权限巡检归 `infoq-test` 的页面运维门禁（`references/ops/page-ops-guardrails.md`）；后端接口、登录和运行态验证归 `tools/verify`。
+- 管理端页面操作与权限巡检归 `test-cli` 的页面运维门禁（`references/ops/page-ops-guardrails.md`）；后端接口、登录和运行态验证归 `tools/verify`。
 
 ### 8.4 后端验证（tools/verify）
 
@@ -163,30 +164,37 @@ node tools/verify/run_cluster_smoke.mjs
 
 这些脚本启动临时后端时会在 `tmp/verify/` 写入 `*.state.json`。默认在成功、失败或中断后关闭自己启动的端口；显式 keep 参数只用于临时诊断，必须依赖状态文件后续清理。
 
-### 8.5 部署验证（deploy/VERIFICATION.md）
+### 8.5 部署与运行态（deploy-cli）
 
-当任务要求"在 WSL2 Debian 部署项目""在 macOS Colima 部署项目""在 Linux Docker CE 部署项目""验证部署文档和脚本""容器部署失败排查"或"确认 nginx / Vue / React / backend 是否可访问"时，使用 `deploy/VERIFICATION.md`。部署文档入口是 `deploy/README.md` 与 `deploy/DOCKER.md`。
+当任务要求"在本机部署项目""用 Apple container 起栈""在 WSL2 / Linux Docker 部署""运行态 smoke""部署失败诊断"或"停止/清理本地栈"时使用。部署脚本真值在 `deploy/`，运行态编排入口是 `deploy-cli`。
 
-默认职责：
+```bash
+node skills/deploy-cli/scripts/deploy_cli.mjs init
+node skills/deploy-cli/scripts/deploy_cli.mjs build
+node skills/deploy-cli/scripts/deploy_cli.mjs up
+node skills/deploy-cli/scripts/deploy_cli.mjs status
+node skills/deploy-cli/scripts/deploy_cli.mjs smoke
+node skills/deploy-cli/scripts/deploy_cli.mjs down
+node skills/deploy-cli/scripts/deploy_cli.mjs destroy --yes
+```
 
-- 使用 `deploy/bin/infoq.sh deploy` 部署后端、MySQL、Redis、MinIO。
-- 使用 `deploy/bin/deploy-frontend.sh deploy` 部署 Vue、React 和 `nginx-web`。
+说明：
+
+- macOS 默认走 Apple container，只操作 `infoq-apple*` 资源，默认端口 `19090`；细节见 `skills/deploy-cli/references/apple-containers.md`。
+- Windows 必须在 WSL2 Debian/Ubuntu 内执行；Linux 使用本地 Docker。Docker 细节见 `skills/deploy-cli/references/docker.md` 与 `deploy/VERIFICATION.md`。
+- `status` / `smoke` 只读；`up` / `down` 是运行态变更；Docker 路径的写操作必须显式 `--execute`。
+- 状态写入 `tmp/deploy-cli/state.json`，日志写入 `tmp/deploy-cli/deploy.log`；完成、失败或中断都要收口。
 - 默认只使用免费商用运行时基线：WSL2 内 Docker CE、macOS Colima、原生 Linux Docker CE；不默认使用 Docker Desktop。
-- 默认把 WSL2/Linux 部署根目录放在 Linux 文件系统 `/infoq`，macOS Colima 默认使用 `$HOME/infoq`。
-- 执行 deploy 前提醒并确认 `/tmp/infoq-deploy` 与 `${INFOQ_DEPLOY_ROOT}/server/temp` 已存在。
-- 使用 `curl --noproxy '*'` 验证 backend readiness、`/prod-api`、`/vue/`、`/react/` 和 `9091/9092`。
-- 证据写入 `tmp/deploy-verify/<run-id>/`。
+- 证据写入 `tmp/deploy-cli/` 或 `tmp/deploy-verify/<run-id>/`。
 
-`deploy/VERIFICATION.md` 不负责版本升级；发布版本同步仍使用 `infoq-release`。它也不替代后端单测、前端 lint/build 或写入型数据运维。
-
-### 8.6 AGENTS 规约压缩（infoq-compress）
+### 8.6 AGENTS 规约压缩（compress-cli）
 
 当任务涉及压缩或更新根 `AGENTS.md`、怀疑 Local Skills 路由漂移、或需要校验引用路径与受保护类别时使用。
 
 ```bash
-node skills/infoq-compress/scripts/agents_check.mjs check
-node skills/infoq-compress/scripts/agents_check.mjs budget
-node skills/infoq-compress/scripts/test_agents_check.mjs
+node skills/compress-cli/scripts/agents_check.mjs check
+node skills/compress-cli/scripts/agents_check.mjs budget
+node skills/compress-cli/scripts/test_agents_check.mjs
 ```
 
 说明：
@@ -196,17 +204,17 @@ node skills/infoq-compress/scripts/test_agents_check.mjs
 - `budget` 输出行数、超长类别与重复片段，作为压缩评审输入，不作为失败条件。
 - 通用 `agents-md-compress` 仅提供压缩写作方法；仓库特有真值以本 skill 为准。
 
-### 8.7 推送与 PR（infoq-push）
+### 8.7 推送与 PR（push-cli）
 
 当任务要求推送代码、提交或更新 PR、修复 PR 校验失败或合并 PR 时使用。
 
 ```bash
-node skills/infoq-push/scripts/push_cli.mjs ensure
-node skills/infoq-push/scripts/push_cli.mjs check --profile docs
-node skills/infoq-push/scripts/push_cli.mjs check --profile ci
-node skills/infoq-push/scripts/push_cli.mjs submit-pr --message "fix: xxx"
-node skills/infoq-push/scripts/push_cli.mjs watch --pr <number>
-node skills/infoq-push/scripts/push_cli.mjs merge --pr <number> --yes
+node skills/push-cli/scripts/push_cli.mjs ensure
+node skills/push-cli/scripts/push_cli.mjs check --profile docs
+node skills/push-cli/scripts/push_cli.mjs check --profile ci
+node skills/push-cli/scripts/push_cli.mjs submit-pr --message "fix: xxx"
+node skills/push-cli/scripts/push_cli.mjs watch --pr <number>
+node skills/push-cli/scripts/push_cli.mjs merge --pr <number> --yes
 ```
 
 说明：
@@ -215,26 +223,26 @@ node skills/infoq-push/scripts/push_cli.mjs merge --pr <number> --yes
 - `submit-pr` = 本地校验矩阵 -> 提交 -> 推送 -> 创建或复用 PR -> 自动 `watch`；失败时输出失败 check 与失败日志摘要，修复后重跑即复用同一 PR。
 - `merge` 需要全绿 + 显式 `--yes`；禁止 `--admin` 绕过保护。
 - 校验矩阵：`docs`（UTF-8、README 同步、AGENTS 校验、active change 的 OpenSpec 校验）、`ci`（对齐 `.github/workflows/ci.yml` 的双管理端 lint/test/build）、`full`（追加 backend 测试）。
-- 证据写入 `tmp/infoq-push/<run-id>/`。
+- 证据写入 `tmp/push-cli/<run-id>/`。
 
-### 8.8 版本与 Release（infoq-release）
+### 8.8 版本与 Release（release-cli）
 
 当任务要求版本升级、确认版本是否最新、创建 tag 或发布 GitHub Release 时使用。
 
 ```bash
-node skills/infoq-release/scripts/release_cli.mjs plan
-node skills/infoq-release/scripts/release_cli.mjs bump --version 3.0.1
-node skills/infoq-release/scripts/release_cli.mjs tag --version 3.0.1
-node skills/infoq-release/scripts/release_cli.mjs publish --version 3.0.1
-node skills/infoq-release/scripts/release_cli.mjs verify --version 3.0.1
-node skills/infoq-release/scripts/test_bump_version.mjs
+node skills/release-cli/scripts/release_cli.mjs plan
+node skills/release-cli/scripts/release_cli.mjs bump --version 3.0.1
+node skills/release-cli/scripts/release_cli.mjs tag --version 3.0.1
+node skills/release-cli/scripts/release_cli.mjs publish --version 3.0.1
+node skills/release-cli/scripts/release_cli.mjs verify --version 3.0.1
+node skills/release-cli/scripts/test_bump_version.mjs
 ```
 
 说明：
 
-- `plan` 会把「当前版本 <= 最新远程 tag」判为需要先 bump 并显式失败；版本升级需通过 `infoq-push` 合并后再打 tag。
+- `plan` 会把「当前版本 <= 最新远程 tag」判为需要先 bump 并显式失败；版本升级需通过 `push-cli` 合并后再打 tag。
 - tag 必须在 `HEAD == origin/<default>` 时创建，已存在的 tag 拒绝复用；Release 已存在时 `publish` 失败（更新说明用 `gh release edit`）。
-- 远程写操作默认 dry-run；受管文件清单见 `skills/infoq-release/references/targets.md`。
+- 远程写操作默认 dry-run；受管文件清单见 `skills/release-cli/references/targets.md`。
 
 ### 8.9 域外能力（不在 `skills/` 下的验证与运维）
 
@@ -244,7 +252,7 @@ node skills/infoq-release/scripts/test_bump_version.mjs
 | OpenSpec 结构校验与 change 初始化 | `tools/openspec_check.mjs`、`tools/init_change_dir.mjs` | `docs/OPENSPEC-WORKFLOW.md` |
 | SQL / 数据修复 / 迁移 / 一致性核对 | 无脚本（只读 MCP + SQL 增量脚本） | `docs/DATA-OPS.md` |
 | 交付门禁 / Acceptance Contract / UI 四阶段 / 插件治理 | `tools/generate_plugin_plan.mjs` | `docs/DELIVERY-WORKFLOW.md`、`docs/UI-WORKFLOW.md`、`docs/SKILLS.md` §9 |
-| 容器部署验证 | `deploy/install.sh`、`deploy/bin/*` | `deploy/VERIFICATION.md`、`deploy/runtime-matrix.md` |
+| 容器部署与 smoke | `skills/deploy-cli/scripts/deploy_cli.mjs`、`deploy/install.sh`、`deploy/bin/*` | `deploy/VERIFICATION.md`、`deploy/runtime-matrix.md` |
 
 ## 9. 插件目录与开关策略
 
@@ -256,7 +264,7 @@ node skills/infoq-release/scripts/test_bump_version.mjs
 2. 可选插件通过配置快速开启/关闭，尽量不改业务代码。
 3. 通用插件可被未来新增业务模块直接引用，降低接入成本。
 
-适用目录：后端 `infoq-scaffold-backend/infoq-plugin`、`infoq-core`、`infoq-modules`；前端 `infoq-scaffold-frontend-vue`、`infoq-scaffold-frontend-react`。
+适用目录：后端 `backend/infoq-plugin`、`infoq-core`、`infoq-modules`；前端 `frontend-vue`、`frontend-react`。
 
 ### 9.2 插件分档
 
@@ -294,8 +302,8 @@ node skills/infoq-release/scripts/test_bump_version.mjs
 
 后端系统模块依赖入口：
 
-- `infoq-scaffold-backend/infoq-modules/infoq-system/pom.xml`
-- `infoq-scaffold-backend/infoq-core/infoq-core-data/pom.xml`
+- `backend/infoq-modules/infoq-system/pom.xml`
+- `backend/infoq-core/infoq-core-data/pom.xml`
 
 当前策略：
 
@@ -314,15 +322,15 @@ node skills/infoq-release/scripts/test_bump_version.mjs
 
 后端配置文件：
 
-- `infoq-scaffold-backend/infoq-admin/src/main/resources/application.yml`
-- `infoq-scaffold-backend/infoq-admin/src/main/resources/application-dev.yml`
+- `backend/infoq-admin/src/main/resources/application.yml`
+- `backend/infoq-admin/src/main/resources/application-dev.yml`
 
 前端配置文件：
 
-- `infoq-scaffold-frontend-vue/.env.development`
-- `infoq-scaffold-frontend-vue/.env.production`
-- `infoq-scaffold-frontend-react/.env.development`
-- `infoq-scaffold-frontend-react/.env.production`
+- `frontend-vue/.env.development`
+- `frontend-vue/.env.production`
+- `frontend-react/.env.development`
+- `frontend-react/.env.production`
 
 ### 9.5 通用插件接入规范（新业务模块）
 
@@ -346,7 +354,7 @@ node tools/backend_mvn.mjs -- clean package -P dev -pl infoq-admin -am
 后端运行示例：
 
 ```bash
-java -jar infoq-admin/target/infoq-admin.jar \
+java -jar backend/infoq-admin/target/infoq-admin.jar \
   --server.port=18080 \
   --captcha.enable=false \
   --api-decrypt.enabled=false \
@@ -357,7 +365,7 @@ java -jar infoq-admin/target/infoq-admin.jar \
 前端编译：
 
 ```bash
-cd infoq-scaffold-frontend-vue
+cd frontend-vue
 pnpm run build:prod
 ```
 

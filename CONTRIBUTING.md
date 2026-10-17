@@ -8,20 +8,23 @@ flow.
 
 Use the versions declared by the repository:
 
-- JDK: `infoq-scaffold-backend/pom.xml` (`java.version`, currently 21)
+- JDK: `backend/pom.xml` (`java.version`, currently 21)
 - Maven: 3.9.x
 - Node.js: `.node-version` / `.nvmrc` (`24.18.0`)
 - pnpm: each frontend workspace `packageManager` and `engines`
 
 Install frontend dependencies with pnpm only and synchronize the workspace
-`pnpm-lock.yaml` when they change. Backend dependency changes belong in Maven
+`pnpm-lock.yaml` when they change. The repository pins pnpm `10.34.1`; if the
+local shim is older, activate it with
+`corepack prepare pnpm@10.34.1 --activate` or run `corepack pnpm` from the
+workspace directory. Backend dependency changes belong in Maven
 POMs; do not invent extra lockfiles.
 
 ## Development Checks
 
 Run the repository commands from the root. Host-side Maven and pnpm checks are
 the default development path. Containerized full-stack verification uses
-`deploy/VERIFICATION.md`.
+`deploy-cli` (`skills/deploy-cli/`); Docker-specific steps are in `deploy/VERIFICATION.md`.
 
 ```bash
 # Encoding
@@ -30,18 +33,21 @@ node tools/validate_utf8.mjs
 # README structure
 node tools/check_readme_sync.mjs
 
+# Release metadata consistency
+node tools/check_release_version.mjs
+
 # Backend, via the repo Maven runner
 node tools/backend_mvn.mjs -- test
 
 # Vue admin
-pnpm --dir infoq-scaffold-frontend-vue run lint:eslint
-pnpm --dir infoq-scaffold-frontend-vue run test:unit
-pnpm --dir infoq-scaffold-frontend-vue run build:prod
+pnpm --dir frontend-vue run lint:eslint
+pnpm --dir frontend-vue run test:unit
+pnpm --dir frontend-vue run build:prod
 
 # React admin
-pnpm --dir infoq-scaffold-frontend-react run lint
-pnpm --dir infoq-scaffold-frontend-react run test
-pnpm --dir infoq-scaffold-frontend-react run build:prod
+pnpm --dir frontend-react run lint
+pnpm --dir frontend-react run test
+pnpm --dir frontend-react run build:prod
 ```
 
 The root Makefile wraps the same entrypoints:
@@ -61,8 +67,9 @@ check pass.
 Use these entry points for the matching work:
 
 - Backend tests, login, and API smoke: `tools/verify`
-- Frontend unit/lint/build and local admin stack: `infoq-test`
-- Captcha login and admin E2E: `infoq-test`
+- Local deployment and readiness smoke: `deploy-cli` (`skills/deploy-cli/`)
+- Frontend unit/lint/build and local admin stack: `test-cli`
+- Captcha login and admin E2E: `test-cli`
 - SQL, Redis, and data repair: `docs/DATA-OPS.md`
 - OpenSpec and high-impact delivery: `docs/DELIVERY-WORKFLOW.md`
 - Docker Compose deploy verification: `deploy/VERIFICATION.md`

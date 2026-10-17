@@ -14,7 +14,7 @@ Before writing, read:
 Create or update only openspec/changes/<change-id>/tasks.md unless the parent agent explicitly asks for another path.
 
 The task plan must include:
-- implementation matrix for infoq-scaffold-backend, infoq-scaffold-frontend-react, and infoq-scaffold-frontend-vue
+- implementation matrix for backend, frontend-react, and frontend-vue
 - impacted modules, routes, APIs, stores, and page entry points
 - RESTful API contracts when backend work is needed
 - validation rules, permission rules, and failure behavior

@@ -99,9 +99,9 @@ createIfMissing(path.join(changeDir, 'tasks.md'), `# Tasks: ${changeId}
 
 ## 影响矩阵
 
-- [ ] infoq-scaffold-backend：
-- [ ] infoq-scaffold-frontend-react：
-- [ ] infoq-scaffold-frontend-vue：
+- [ ] backend：
+- [ ] frontend-react：
+- [ ] frontend-vue：
 - [ ] script / deploy：
 
 ## 实施任务

@@ -8,10 +8,11 @@
 
 1. 新功能、API 契约变更、跨工作区交付或用户明确要求 OpenSpec 时，走 OpenSpec。
 2. 单工作区但影响用户可见行为且范围不小的改动，可走 OpenSpec Lite。
-3. 重大 UI/UX、布局审批、`LAYOUT APPROVED` 或 `DEMO APPROVED` 门禁，读取 `references/ui-ux/design-intelligence-overlay.md`，并按四阶段执行。
-4. 插件新增、插件开关化、插件治理或插件分类判断，读取 `references/plugin/plugin-matrix.md`，必要时运行插件计划脚本。
+3. 重大 UI/UX、布局审批、`LAYOUT APPROVED` 或 `DEMO APPROVED` 门禁，读取 `docs/UI-WORKFLOW.md`，并按四阶段执行。
+4. 插件新增、插件开关化、插件治理或插件分类判断，读取 `docs/SKILLS.md` 第 9 节插件矩阵，必要时运行插件计划脚本。
 5. 生产或共享环境数据变更、SQL 迁移、批量修复、权限/菜单/任务基础数据调整，必须联动 `docs/DATA-OPS.md`；不确定分级时按 OpenSpec Lite 或 L3。
-6. L1 小修复可不建 OpenSpec，但实现前仍必须写清 Acceptance Contract。
+6. L1 小修复可不建 OpenSpec，但实现前必须写清 Acceptance Contract。
+7. 本机部署、Apple container 启停、WSL2/Linux Docker 启停与容器 smoke，使用 `deploy-cli` 并读取 `deploy/DEPLOYMENT_LIFECYCLE.md`。
 
 ## 默认命令
 
@@ -55,8 +56,9 @@ node tools/generate_plugin_plan.mjs --name infoq-plugin-xxx --class toggle --fro
 
 ## 参考
 
-- OpenSpec 工作流：`references/workflow.md`
-- UI/UX 设计辅助层：`references/ui-ux/design-intelligence-overlay.md`
-- 插件治理矩阵：`references/plugin/plugin-matrix.md`
+- OpenSpec 工作流：`docs/OPENSPEC-WORKFLOW.md`
+- UI/UX 设计辅助层：`docs/UI-WORKFLOW.md`
+- 插件治理矩阵：`docs/SKILLS.md` 第 9 节
+- 部署生命周期：`deploy/DEPLOYMENT_LIFECYCLE.md`
 - OpenSpec 长期项目上下文：`openspec/config.yaml`（context 段）
 - 当前规格真值：`docs/specs/`

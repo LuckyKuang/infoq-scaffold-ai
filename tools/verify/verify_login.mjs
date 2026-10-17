@@ -18,7 +18,7 @@ import {
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolveRepoRoot(scriptDir);
-const backendDir = path.join(repoRoot, 'infoq-scaffold-backend');
+const backendDir = path.join(repoRoot, 'backend');
 const jarPath = path.join(backendDir, 'infoq-admin', 'target', 'infoq-admin.jar');
 const loginCheckPath = path.join(scriptDir, 'login_check.mjs');
 const args = normalizeForwardedArgs(process.argv.slice(2));
@@ -127,7 +127,7 @@ function captchaGuidance(baseUrl) {
     `[login-check] captcha enabled on ${baseUrl}.`,
     'Default login verification no longer disables captcha automatically.',
     'Use real captcha E2E:',
-    '  node skills/infoq-test/scripts/run_admin_e2e.mjs --client vue',
+    '  node skills/test-cli/scripts/run_admin_e2e.mjs --client vue',
     'Or explicitly opt into fast diagnostics:',
     '  node tools/verify/verify_login.mjs --allow-captcha-disabled'
   ].join('\n');

@@ -163,7 +163,7 @@ function parseArgs(argv, config) {
 
 export async function runAdminDevStack(config, argv) {
   const options = parseArgs(argv, config);
-  const backendDir = path.join(config.repoRoot, 'infoq-scaffold-backend');
+  const backendDir = path.join(config.repoRoot, 'backend');
   const frontendDir = path.join(config.repoRoot, config.frontendDirName);
   const backendJar = path.join(backendDir, 'infoq-admin', 'target', 'infoq-admin.jar');
   const logDir = resolveTmpPath(config.repoRoot, config.stateSlug);

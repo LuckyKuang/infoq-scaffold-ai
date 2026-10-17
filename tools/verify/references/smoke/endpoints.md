@@ -3,7 +3,7 @@
 ## 公开接口
 
 - `GET /`
-  - 期望：HTTP 200，响应包含 `infoq-scaffold-backend`。
+  - 期望：HTTP 200，响应包含 `backend`。
 - `GET /auth/code`
   - 期望：JSON `code=200`（`captchaEnabled` 可为 true 或 false）。
 

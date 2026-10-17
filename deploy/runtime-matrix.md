@@ -130,5 +130,5 @@ Apple `container` 不是本流程的默认运行时。只有用户明确要求�
 - 网络固定为 `infoq-apple` / `192.168.66.0/24`，容器名前缀固定为 `infoq-apple-`。
 - 默认只发布 `127.0.0.1:19090`，不要占用 `8080`、`9000`、`9001`。
 - 数据目录默认 `$HOME/infoq-apple`，禁止复用 `$HOME/infoq` 或 `/infoq`。
-- 禁止停止、删除、重建或改写 `sub2api-apple*` 及其他未打 `org.infoq.stack=apple-container` 标签的资源。
+- 禁止停止、删除、重建或改写其他项目或未打 `org.infoq.stack=apple-container` 标签的资源。
 - 官方后端 Dockerfile 的 BuildKit cache mount 失败时，记录 blocker 并改走 `deploy/Dockerfile.apple` 运行时镜像，不得伪造成功。

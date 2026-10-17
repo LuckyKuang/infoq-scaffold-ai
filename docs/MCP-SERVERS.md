@@ -21,8 +21,8 @@
 
 它们位于：
 
-- `skills/infoq-test/scripts/playwright_cli.mjs`
-- `skills/infoq-test/scripts/chrome_devtools_cli.mjs`
+- `skills/test-cli/scripts/playwright_cli.mjs`
+- `skills/test-cli/scripts/chrome_devtools_cli.mjs`
 
 项目级 MCP 的本地启动入口位于：
 
@@ -64,7 +64,7 @@
 
 ## 4. 典型使用方式
 
-- React / Vue 管理端运行态问题：先用 `infoq-test` 的 CLI-first 路径；需要临时互动时再用 `playwright` MCP。
+- React / Vue 管理端运行态问题：先用 `test-cli` 的 CLI-first 路径；需要临时互动时再用 `playwright` MCP。
 - 页面白屏、接口报错、性能或请求细节排查：用 `chrome-devtools`。
 - OpenAI / AGENTS / skills / Codex / MCP 文档问题：优先本机或系统级 `openai-docs` skill，不在项目级 `.codex/config.toml` 声明对应 MCP server。
 - backend 数据或缓存排查：使用 `docs/DATA-OPS.md` 做只读探测与门禁；在本地配置完成后再显式启用只读 `mysql` / `redis`。

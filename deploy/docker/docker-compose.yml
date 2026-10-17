@@ -69,7 +69,7 @@ services:
 
   infoq-admin:
     build:
-      context: ../../infoq-scaffold-backend
+      context: ../../backend
       dockerfile: infoq-admin/Dockerfile
     image: infoq/infoq-admin:3.0.0
     container_name: infoq-admin
@@ -109,7 +109,7 @@ services:
 
   infoq-frontend-vue:
     build:
-      context: ../../infoq-scaffold-frontend-vue
+      context: ../../frontend-vue
       dockerfile: Dockerfile
       args:
         VITE_APP_CONTEXT_PATH: ${INFOQ_VUE_CONTEXT_PATH:-/vue/}
@@ -128,7 +128,7 @@ services:
 
   infoq-frontend-react:
     build:
-      context: ../../infoq-scaffold-frontend-react
+      context: ../../frontend-react
       dockerfile: Dockerfile
       args:
         VITE_APP_CONTEXT_PATH: ${INFOQ_REACT_CONTEXT_PATH:-/react/}

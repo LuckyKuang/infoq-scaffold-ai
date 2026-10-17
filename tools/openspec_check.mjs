@@ -116,9 +116,9 @@ const requiredTaskSections = [
 ];
 
 const requiredImpactRows = [
-  'infoq-scaffold-backend',
-  'infoq-scaffold-frontend-react',
-  'infoq-scaffold-frontend-vue',
+  'backend',
+  'frontend-react',
+  'frontend-vue',
   'script / deploy'
 ];
 

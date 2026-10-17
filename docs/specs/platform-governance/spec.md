@@ -36,7 +36,7 @@
 #### 场景：维护 `tasks.md`
 
 - 当维护者编写或更新 `tasks.md` 时
-- 则必须显式评估 `infoq-scaffold-backend`、`infoq-scaffold-frontend-react`、`infoq-scaffold-frontend-vue`、`script / deploy`
+- 则必须显式评估 `backend`、`frontend-react`、`frontend-vue`、`script / deploy`
 - 并且对不受影响项必须给出原因
 
 ### 要求：active change 结构校验
@@ -68,7 +68,7 @@ active change 在实现前和交付前都必须通过统一结构校验。
 #### 场景：使用 `application-local.yml`
 
 - 当维护者需要验证 `application-local.yml` 时
-- 则必须显式传 `--spring.profiles.active=local` 或运行态脚本的 `--profile local`（`skills/infoq-test/scripts/run_admin_e2e.mjs`、`run_admin_crud_e2e.mjs`）
+- 则必须显式传 `--spring.profiles.active=local` 或运行态脚本的 `--profile local`（`skills/test-cli/scripts/run_admin_e2e.mjs`、`run_admin_crud_e2e.mjs`）
 - 并且排障时必须先区分 profile 未切换、端口错配、外部依赖不可达 三类问题
 
 #### 场景：运行态脚本或 skill 启动长生命周期进程
@@ -81,26 +81,26 @@ active change 在实现前和交付前都必须通过统一结构校验。
 
 ### 要求：仓库级 skill 收敛与域外能力归属
 
-仓库级 skill 必须保持 4 个 CLI 型工作域，域外验证与运维能力不得新增 skill。
+仓库级 skill 必须保持 5 个 CLI 型工作域，域外验证与运维能力不得新增 skill。
 
 #### 场景：新增或调整仓库级 skill
 
 - 当需要新增 skill 或调整现有 skill 职责时
-- 则只能归入 `infoq-compress`、`infoq-push`、`infoq-release`、`infoq-test` 四个工作域
+- 则只能归入 `compress-cli`、`push-cli`、`release-cli`、`test-cli`、`deploy-cli` 五个工作域
 - 并且每个 skill 目录必须包含 `SKILL.md` 与 `agents/openai.yaml`，且 `default_prompt` 显式包含 `$<skill-name>`
 - 并且标准执行顺序为判定范围 -> 只读探测/预览 -> 目标与影响枚举 -> 写入或危险动作门禁 -> 执行验证 -> `tmp/` 证据留存与显式失败
 
 #### 场景：域外验证与运维能力
 
-- 当出现无法归入上述 4 个域的能力时
+- 当出现无法归入上述 5 个域的能力时
 - 则后端验证与 OpenSpec 校验放入 `tools/`
-- 并且数据运维与交付工作流放入 `docs/`，部署验证放入 `deploy/`
-- 并且不得为此新增 skill，也不得在 `skills/` 下保留 shared/README-only/helper-only 目录
+- 并且数据运维与交付工作流放入 `docs/`，部署脚本与运行时矩阵放入 `deploy/`
+- 并且部署生命周期编排归 `deploy-cli`，不得为此新增 skill，也不得在 `skills/` 下保留 shared/README-only/helper-only 目录
 
 #### 场景：AGENTS.md 压缩与路由校验
 
 - 当创建、压缩或更新根 `AGENTS.md` 时
-- 则必须执行 `node skills/infoq-compress/scripts/agents_check.mjs check`
+- 则必须执行 `node skills/compress-cli/scripts/agents_check.mjs check`
 - 并且校验必须覆盖格式与唯一类别、受保护类别完整性、Local Skills ↔ `skills/` 目录 ↔ `docs/SKILLS.md` ↔ Skill Trigger 引用一致性，以及被引用路径是否存在
 - 并且校验失败必须显式失败，禁止把失败当作环境噪声
 

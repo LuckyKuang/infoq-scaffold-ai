@@ -31,7 +31,7 @@
 推荐交付结构：
 
 ```text
-infoq-release/
+release-cli/
 ├── backend/
 │   └── infoq-admin.jar
 ├── config/
@@ -69,7 +69,7 @@ infoq-release/
 node tools/backend_mvn.mjs -- clean package -P prod -pl infoq-admin -am
 ```
 
-构建产物：`infoq-scaffold-backend/infoq-admin/target/infoq-admin.jar`。
+构建产物：`backend/infoq-admin/target/infoq-admin.jar`。
 
 ### 3.2 准备运行目录
 
@@ -86,15 +86,15 @@ mkdir -p /infoq/server/ip2region
 复制 jar 与 IPv6 地址库：
 
 ```bash
-cp infoq-scaffold-backend/infoq-admin/target/infoq-admin.jar /infoq/server/app/
+cp backend/infoq-admin/target/infoq-admin.jar /infoq/server/app/
 cp deploy/docker/server/ip2region/ip2region_v6.xdb /infoq/server/ip2region/
 chmod 644 /infoq/server/ip2region/ip2region_v6.xdb
 ```
 
 准备生产配置文件时，建议以仓库默认生产配置为基础，再按环境修改：
 
-- [infoq-scaffold-backend/infoq-admin/src/main/resources/application-prod.yml](../infoq-scaffold-backend/infoq-admin/src/main/resources/application-prod.yml)
-- [infoq-scaffold-backend/infoq-admin/src/main/resources/application.yml](../infoq-scaffold-backend/infoq-admin/src/main/resources/application.yml)
+- [backend/infoq-admin/src/main/resources/application-prod.yml](../backend/infoq-admin/src/main/resources/application-prod.yml)
+- [backend/infoq-admin/src/main/resources/application.yml](../backend/infoq-admin/src/main/resources/application.yml)
 
 ### 3.3 修改生产配置
 
@@ -187,22 +187,22 @@ journalctl -u infoq-admin -n 200 --no-pager
 ### 4.1 构建 Vue 管理端
 
 ```bash
-cd infoq-scaffold-frontend-vue
+cd frontend-vue
 pnpm install
 VITE_APP_CONTEXT_PATH=/vue/ pnpm run build:prod
 ```
 
-构建产物目录：`infoq-scaffold-frontend-vue/dist/`。
+构建产物目录：`frontend-vue/dist/`。
 
 ### 4.2 构建 React 管理端
 
 ```bash
-cd infoq-scaffold-frontend-react
+cd frontend-react
 pnpm install
 VITE_APP_CONTEXT_PATH=/react/ pnpm run build:prod
 ```
 
-构建产物目录：`infoq-scaffold-frontend-react/dist/`。
+构建产物目录：`frontend-react/dist/`。
 
 ### 4.3 准备静态资源目录
 
@@ -218,8 +218,8 @@ mkdir -p /infoq/nginx/conf
 复制构建产物：
 
 ```bash
-cp -R infoq-scaffold-frontend-vue/dist/* /infoq/nginx/html/vue/
-cp -R infoq-scaffold-frontend-react/dist/* /infoq/nginx/html/react/
+cp -R frontend-vue/dist/* /infoq/nginx/html/vue/
+cp -R frontend-react/dist/* /infoq/nginx/html/react/
 ```
 
 ### 4.4 前端生产变量确认
@@ -236,8 +236,8 @@ cp -R infoq-scaffold-frontend-react/dist/* /infoq/nginx/html/react/
 
 配置文件参考：
 
-- [infoq-scaffold-frontend-vue/.env.production](../infoq-scaffold-frontend-vue/.env.production)
-- [infoq-scaffold-frontend-react/.env.production](../infoq-scaffold-frontend-react/.env.production)
+- [frontend-vue/.env.production](../frontend-vue/.env.production)
+- [frontend-react/.env.production](../frontend-react/.env.production)
 
 ## 5. Nginx 网关部署
 

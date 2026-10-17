@@ -21,8 +21,8 @@ env:
   PNPM_VERSION: 10.34.1
 
 jobs:
-  encoding:
-    name: UTF-8 Gate
+  repository-gates:
+    name: Repository Gates
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -37,10 +37,19 @@ jobs:
       - name: Validate UTF-8
         run: node tools/validate_utf8.mjs
 
+      - name: Validate README structure
+        run: node tools/check_readme_sync.mjs
+
+      - name: Validate release version consistency
+        run: node tools/check_release_version.mjs
+
+      - name: Validate documentation links
+        run: node tools/check_doc_links.mjs
+
   backend:
     name: Backend Build
     runs-on: ubuntu-latest
-    needs: encoding
+    needs: repository-gates
     timeout-minutes: 35
     steps:
       - name: Checkout
@@ -67,20 +76,20 @@ jobs:
   admin-frontend:
     name: Admin Frontend (${{ matrix.name }})
     runs-on: ubuntu-latest
-    needs: encoding
+    needs: repository-gates
     timeout-minutes: 35
     strategy:
       fail-fast: false
       matrix:
         include:
           - name: react
-            workspace: infoq-scaffold-frontend-react
+            workspace: frontend-react
             checks: |
               pnpm run test
               pnpm run lint
               pnpm run build:prod
           - name: vue
-            workspace: infoq-scaffold-frontend-vue
+            workspace: frontend-vue
             checks: |
               pnpm run test:unit
               pnpm run lint:eslint

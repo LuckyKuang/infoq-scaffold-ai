@@ -137,7 +137,7 @@ function readYamlDocuments(configPath) {
 export function resolveBackendConfigSelection(rootDir) {
   const resourcesDir = path.join(
     rootDir,
-    'infoq-scaffold-backend',
+    'backend',
     'infoq-admin',
     'src',
     'main',

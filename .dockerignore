@@ -1,0 +1,35 @@
+# Root Docker context hygiene.
+# The compose stack uses per-workspace contexts, but a root context build must
+# never ship Git metadata, local secrets, dependencies, or validation output.
+
+.git
+.gitignore
+.gitattributes
+.github
+.idea
+.codex
+.vscode
+.DS_Store
+Thumbs.db
+
+**/node_modules
+**/target
+**/dist
+**/coverage
+**/.pnpm-store
+.pnpm-store
+tmp
+logs
+**/*.log
+**/*.tmp
+**/*.bak
+
+.env
+.env.*
+!.env.example
+deploy/.env
+deploy/docker/.env
+
+openspec/changes
+docs/plan
+docs/ui-demos
