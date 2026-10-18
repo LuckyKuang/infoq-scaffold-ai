@@ -143,6 +143,8 @@ node skills/test-cli/scripts/run_admin_e2e.mjs --client react --route-limit 1
 
 验证码种子登录和动态路由 smoke 见 `skills/test-cli/references/modes/e2e.md`。本地栈由 `run_admin_e2e.mjs` 自管，状态写入 `tmp/test-cli/e2e/stack/<client>/state.json`，完成、失败或中断后按状态文件收口 owned 端口；纯单测 / 构建迭代可手动启动，命令见 `skills/test-cli/references/runtime/admin-commands.md`。
 
+前端单测、coverage、lint/build 与 Playwright Chromium 前置见 [TESTING.md](./TESTING.md) 第 6 节；两套 admin 的脚本名不同（Vue `test:unit` / `lint:eslint`，React `test` / `lint`），不得互相套用。
+
 ### 8.3 数据运维（docs/DATA-OPS.md）
 
 SQL、数据库、Redis、数据修复、迁移、测试数据维护和 API/UI/DB 一致性核对统一使用 `docs/DATA-OPS.md`。

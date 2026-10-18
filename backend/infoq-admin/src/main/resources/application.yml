@@ -2,13 +2,13 @@
 server:
   # 服务器的HTTP端口，默认为8080
   port: 8080
-  # tomcat 配置（Spring Boot 官方默认 web 容器；Boot 4.x 已无 undertow starter）
+  # Tomcat 配置（Spring Boot 默认 Web 容器）
   tomcat:
     # HTTP post 内容的最大大小。-1 表示不限制
-    # （Tomcat setMaxPostSize 负值语义，对齐原 undertow max-http-post-size: -1）
+    # Tomcat setMaxPostSize 负值语义表示不限制
     max-http-form-post-size: -1
     threads:
-      # 阻塞任务线程池上限（对齐原 undertow threads.worker=256）
+      # 阻塞任务线程池上限
       max: 256
       # 最小空闲线程数保持默认 10；连接准入由 accept-count / max-connections 默认值控制
 

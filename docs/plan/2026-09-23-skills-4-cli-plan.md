@@ -1,5 +1,7 @@
 # Skills 4-CLI 收敛执行计划（8 → 4）
 
+> 状态：历史执行计划快照，仅用于记录当时决策、命令与证据；当前入口和命令以 `docs/SKILLS.md` 与 `skills/*/SKILL.md` 为准。
+
 - 日期：2026-09-23
 - Change：`skills-4-cli-restructure`（本地脚手架 `openspec/changes/`，不进 PR）
 - 参考形态：同类 CLI 型 skill 的通用分层（SKILL.md + agents + references + scripts + tests）

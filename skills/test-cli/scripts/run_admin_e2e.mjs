@@ -325,13 +325,13 @@ function parseArgs(argv) {
 
 function buildStackConfig(options, runDir) {
   const clientConfig = CLIENTS[options.client];
-  const stateDir = resolveTmpPath(repoRoot, 'test-cli', 'stack', options.client);
+  const stateDir = resolveTmpPath(repoRoot, 'test-cli', 'e2e', 'stack', options.client);
   return {
     ...clientConfig,
     repoRoot,
     defaultProfile,
     scriptPath: 'skills/test-cli/scripts/run_admin_e2e.mjs',
-    stateSlug: `test-cli/stack/${options.client}`,
+    stateSlug: `test-cli/e2e/stack/${options.client}`,
     stateFile: path.join(stateDir, 'state.json'),
     stateContext: {
       runId: path.basename(runDir),
@@ -565,7 +565,7 @@ async function main() {
   const options = parseArgs(normalizeForwardedArgs(process.argv.slice(2)));
   const clientConfig = CLIENTS[options.client];
   const runId = options.runId || `${options.client}-${timestampSlug()}`;
-  const runDir = resolveTmpPath(repoRoot, 'test-cli', runId);
+  const runDir = resolveTmpPath(repoRoot, 'test-cli', 'e2e', runId);
   ensureDir(runDir);
   options.backendUrl = options.backendUrl.replace(/\/+$/, '');
   if (options.backendUrl === DEFAULTS.backendUrl && options.backendPort !== DEFAULTS.backendPort) {

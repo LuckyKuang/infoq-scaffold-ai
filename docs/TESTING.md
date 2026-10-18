@@ -1,6 +1,6 @@
-# 管理端 E2E 测试
+# 管理端与前端测试
 
-本文件固定管理端浏览器自动化（`test-cli`）的测试数据、选择器与 cleanup 政策，并索引 case 集合。执行入口与命令见 [Skills 与插件](./SKILLS.md) 第 8.1 节。
+本文件固定管理端浏览器自动化、前端单测/构建（`test-cli`）的测试数据、选择器、cleanup 政策与执行入口，并索引 case 集合。执行入口与命令见 [Skills 与插件](./SKILLS.md) 第 8.1、8.2 节。
 
 ## 1. Case 集合
 
@@ -105,3 +105,51 @@ node skills/test-cli/scripts/captcha_login.mjs --backend-url http://127.0.0.1:80
 - 如果后端配置了 `redisson.keyPrefix`，`--redis-key-prefix` 必须包含相同前缀。
 - 该模式只允许在已授权的测试环境使用，禁止指向生产 Redis。
 - 种子 key 与后端校验一致，TTL 默认 120 秒，只能消费一次。
+
+## 6. 前端单测与界面测试
+
+前端单测与界面测试是两条独立门禁，不能互相替代。
+
+### 6.1 前置
+
+首次运行界面测试，或 Playwright 升级后，先安装 Chromium：
+
+```bash
+pnpm --dir skills/test-cli/scripts install
+pnpm --dir skills/test-cli/scripts exec playwright install chromium
+```
+
+### 6.2 单元测试
+
+```bash
+cd frontend-vue
+pnpm run test:unit
+pnpm run test:unit:coverage
+
+cd ../frontend-react
+pnpm run test
+pnpm run test:coverage
+```
+
+### 6.3 界面测试
+
+使用真实 backend、真实 MySQL/Redis、真实验证码登录和 Playwright Chromium：
+
+```bash
+node skills/test-cli/scripts/run_admin_e2e.mjs --client vue --route-limit 3
+node skills/test-cli/scripts/run_admin_e2e.mjs --client react --route-limit 3
+```
+
+默认路由 smoke 会逐路由检查 `console.error` / `pageerror` 和截图证据。浏览器缺失、后端不可达、验证码种子写入失败必须显式失败，不能通过关闭 console 检查或伪造登录绕过。
+
+### 6.4 lint 与生产构建
+
+```bash
+cd frontend-vue
+pnpm run lint:eslint
+pnpm run build:prod
+
+cd ../frontend-react
+pnpm run lint
+pnpm run build:prod
+```

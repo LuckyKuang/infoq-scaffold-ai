@@ -49,7 +49,6 @@
 
 - 只提供文档能力，不负责鉴权、业务路由或接口实现。
 
-
 ## 依赖边界
 
 - 使用 `io.github.vpelikh:springdoc-openapi-starter-webmvc-api:5.1.0`，其 `swagger-core 4.0.6` 基于 Jackson 3。

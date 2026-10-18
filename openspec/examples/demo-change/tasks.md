@@ -37,7 +37,7 @@
 ### lint / build
 
 - [ ] `node tools/validate_utf8.mjs`
-- [ ] `node skills/infoq-delivery-workflow/scripts/openspec_check.mjs <change-id>`
+- [ ] `node tools/openspec_check.mjs <change-id>`
 
 ### 差异审查
 

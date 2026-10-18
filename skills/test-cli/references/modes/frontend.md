@@ -2,7 +2,18 @@
 
 # InfoQ 前端验证
 
-本技能只负责一件事：React/Vue admin 的前端测试和运行态验证。它是前端验证领域型 SOP，不负责验证码 E2E，也不替代产品单测。
+本技能负责 React/Vue admin 的前端单测、构建和运行态验证。它是前端验证领域型 SOP；验证码种子登录由 Admin 工作流复用，不替代产品单测。
+
+## 前置：安装 Playwright 浏览器
+
+首次运行界面测试，或 Playwright 升级后，先安装 Chromium：
+
+```bash
+pnpm --dir skills/test-cli/scripts install
+pnpm --dir skills/test-cli/scripts exec playwright install chromium
+```
+
+缺少浏览器时 `run_admin_e2e.mjs` 会直接失败，不能用单测或构建结果替代界面测试。
 
 ## 客户端选择
 
