@@ -26,15 +26,15 @@ jobs:
       artifact_policy: ${{ steps.policy.outputs.artifact_policy }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version-file: .node-version
 
       - name: Setup JDK 21
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: "21"
@@ -61,7 +61,7 @@ jobs:
 
       - name: Upload backend jar
         if: steps.policy.outputs.artifact_policy == 'compiled'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: backend-jar
           path: backend/infoq-admin/target/infoq-admin.jar
@@ -89,7 +89,7 @@ jobs:
             workspace: frontend-react
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v6
@@ -98,7 +98,7 @@ jobs:
           run_install: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version-file: .node-version
           cache: pnpm
@@ -136,7 +136,7 @@ jobs:
           tar -czf "tmp/release-bundles/${{ matrix.name }}-dist.tar.gz" -C "${{ matrix.workspace }}/dist" .
 
       - name: Upload admin bundle
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.name }}-dist
           path: tmp/release-bundles/${{ matrix.name }}-dist.tar.gz
@@ -161,10 +161,10 @@ jobs:
       contents: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version-file: .node-version
 
@@ -179,21 +179,21 @@ jobs:
 
       - name: Download backend asset
         if: needs.verify.outputs.artifact_policy == 'compiled'
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v8
         with:
           name: backend-jar
           path: tmp/release-assets/backend-jar
 
       - name: Download Vue asset
         if: needs.verify.outputs.artifact_policy == 'compiled'
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v8
         with:
           name: vue-dist
           path: tmp/release-assets/vue-dist
 
       - name: Download React asset
         if: needs.verify.outputs.artifact_policy == 'compiled'
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v8
         with:
           name: react-dist
           path: tmp/release-assets/react-dist
@@ -211,7 +211,7 @@ jobs:
 
       - name: Create source-only RC prerelease
         if: needs.verify.outputs.artifact_policy == 'source-only'
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           body: |
             这是供部署验收的非正式 RC 预览版本，尚未判定生产就绪。此版本只提供 GitHub 自动生成的源码归档，不附加 jar 或 React/Vue dist，也不发布镜像。
@@ -228,7 +228,7 @@ jobs:
 
       - name: Create stable release
         if: needs.verify.outputs.artifact_policy == 'compiled'
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: |
             tmp/release-assets/backend-jar/infoq-admin.jar
