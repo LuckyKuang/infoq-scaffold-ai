@@ -33,7 +33,7 @@
     "nprogress": "^0.2.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
-    "react-easy-crop": "^5.5.7",
+    "react-easy-crop": "^6.2.4",
     "react-i18next": "^17.0.8",
     "react-router-dom": "^7.18.2",
     "zustand": "^5.0.14"
