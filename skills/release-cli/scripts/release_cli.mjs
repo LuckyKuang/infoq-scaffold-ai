@@ -5,6 +5,7 @@ import path from 'node:path';
 import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {normalizeForwardedArgs, resolveRepoRoot} from '../../../tools/lib/skill_runtime.mjs';
+import {githubRepositoryForRemote} from '../../push-cli/scripts/remote_target.mjs';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 let repoRoot = resolveRepoRoot(scriptDir);
@@ -26,7 +27,7 @@ Options:
   --repo-root <path>   指定仓库根（默认自动解析）
   --remote <name>      远端名，默认 origin
   --tag <name>         覆盖默认 tag 名 v<x.y.z>（自动 workflow 仍要求 v<x.y.z>）
-  --json               以 JSON 输出结果
+  --json               仅 plan：以 JSON 输出结果
   --execute            执行 tag/publish 远程写入；默认仅预览
   --dry-run            显式预览（bump 也不写入）；与 --execute 互斥
   -h, --help           显示帮助`);
@@ -44,6 +45,7 @@ const options = {
 };
 
 let explicitDryRun = false;
+const supplied = new Set();
 const valueOptions = new Set(['--version', '--tag', '--notes-file', '--remote', '--repo-root']);
 for (let index = 0; index < args.length; index += 1) {
   const arg = args[index];
@@ -54,6 +56,7 @@ for (let index = 0; index < args.length; index += 1) {
   if (valueOptions.has(arg) && (!args[index + 1] || args[index + 1].startsWith('-'))) {
     throw new Error(`missing value for ${arg}`);
   }
+  if (arg.startsWith('-')) supplied.add(arg);
   if (arg === '--dry-run') explicitDryRun = true;
   else if (arg === '--execute') options.execute = true;
   else if (arg === '--json') options.json = true;
@@ -77,6 +80,14 @@ if (!['plan', 'bump', 'tag', 'publish', 'verify'].includes(options.command)) {
 if (options.version && !/^\d+\.\d+\.\d+$/.test(options.version)) {
   throw new Error(`--version 必须匹配 x.y.z，收到：${options.version}`);
 }
+const allowed = {
+  plan: ['--version', '--remote', '--repo-root', '--json'],
+  bump: ['--version', '--repo-root', '--dry-run'],
+  tag: ['--version', '--tag', '--remote', '--repo-root', '--execute', '--dry-run'],
+  publish: ['--version', '--tag', '--remote', '--repo-root', '--notes-file', '--execute', '--dry-run'],
+  verify: ['--version', '--tag', '--remote', '--repo-root']
+};
+for (const flag of supplied) if (!allowed[options.command].includes(flag)) throw new Error(`${flag} 不适用于 ${options.command}`);
 if (options.execute && explicitDryRun) throw new Error('--execute 与 --dry-run 不能同时使用');
 if (options.execute && !['tag', 'publish'].includes(options.command)) throw new Error('--execute 只适用于 tag、publish');
 options.dryRun = options.command === 'bump' ? explicitDryRun : !options.execute;
@@ -87,6 +98,12 @@ function fail(message) {
 }
 
 function exec(command, commandArgs, {capture = true, allowFailure = false} = {}) {
+  if (command === 'gh') {
+    const target = githubRepository();
+    commandArgs = commandArgs[0] === 'repo' && commandArgs[1] === 'view'
+      ? [...commandArgs.slice(0, 2), target, ...commandArgs.slice(2)]
+      : [...commandArgs, '--repo', target];
+  }
   const result = spawnSync(command, commandArgs, {
     cwd: repoRoot,
     encoding: 'utf8',
@@ -100,6 +117,14 @@ function exec(command, commandArgs, {capture = true, allowFailure = false} = {})
 
 function git(commandArgs, allowFailure = false) {
   return exec('git', commandArgs, {allowFailure});
+}
+
+let boundRepository;
+function githubRepository() {
+  if (!boundRepository) {
+    try { boundRepository = githubRepositoryForRemote(git, options.remote); } catch (error) { fail(error.message); }
+  }
+  return boundRepository;
 }
 
 function readFileVersion(relPath, pattern, description) {
@@ -145,6 +170,7 @@ function compareSemver(a, b) {
 }
 
 function remoteTags() {
+  githubRepository();
   const result = git(['ls-remote', '--tags', '--refs', options.remote], true);
   if (result.status !== 0) {
     fail(`无法读取远端 tag：git ls-remote --tags --refs ${options.remote}\n${(result.stderr || '').trim()}`);
@@ -176,15 +202,18 @@ function tagName(version) {
 
 function commitsSince(tag) {
   const result = tag ? git(['log', '--oneline', `${tag}..HEAD`], true) : git(['log', '--oneline', '-n', '30'], true);
+  if (result.status !== 0) fail(`无法读取发布提交清单（exit=${result.status}）；请先将远端 tag ${tag || '(none)'} 获取到本地再重试：${(result.stderr || '').trim().slice(0, 1000)}`);
   return (result.stdout || '').trim().split('\n').filter(Boolean);
 }
 
 function defaultBranchName() {
-  const view = exec('gh', ['repo', 'view', '--json', 'defaultBranchRef'], {allowFailure: true});
+  const view = exec('gh', ['repo', 'view', '--json', 'nameWithOwner,defaultBranchRef'], {allowFailure: true});
   if (view.status !== 0) {
     fail('无法读取默认分支（需要 gh 已登录）');
   }
-  return JSON.parse(view.stdout).defaultBranchRef.name;
+  const info = JSON.parse(view.stdout);
+  if (String(info.nameWithOwner).toLowerCase() !== githubRepository().split('/').slice(1).join('/')) fail('gh 返回的仓库身份与 Git remote 不一致');
+  return info.defaultBranchRef.name;
 }
 
 function releaseView(name) {
@@ -246,12 +275,13 @@ function commandTag() {
   if (!options.version) {
     fail('tag 需要 --version x.y.z');
   }
+  if (git(['status', '--porcelain']).stdout.trim()) fail('tag 要求干净工作区；请先提交并合并版本与代码修改');
   const current = assertVersionsConsistent(currentVersions());
   if (current !== options.version) {
     fail(`工作区版本 ${current} 与 --version ${options.version} 不一致；请先 bump`);
   }
   const defaultBranch = defaultBranchName();
-  exec('git', ['fetch', options.remote, defaultBranch], {capture: true});
+  exec('git', ['fetch', '--no-tags', options.remote, defaultBranch], {capture: true});
   const head = git(['rev-parse', 'HEAD']).stdout.trim();
   const remoteHead = git(['rev-parse', `${options.remote}/${defaultBranch}`]).stdout.trim();
   if (head !== remoteHead) {
@@ -265,11 +295,11 @@ function commandTag() {
   }
   console.log(`[release] 将在 ${head.slice(0, 8)} 创建标注 tag ${name}`);
   if (options.dryRun) {
-    console.log(`[release] dry-run: git tag -a ${name} -m "Release ${name}" && git push ${options.remote} ${name}`);
+    console.log(`[release] dry-run: git tag -a ${name} -m "Release ${name}" && git push ${options.remote} refs/tags/${name}`);
     return;
   }
   exec('git', ['tag', '-a', name, '-m', `Release ${name}`], {capture: false});
-  exec('git', ['push', options.remote, name], {capture: false});
+  exec('git', ['push', options.remote, `refs/tags/${name}`], {capture: false});
   console.log(`[release] tag ${name} 已推送；仓库 Release workflow 将构建并发布，等待成功后执行 verify --version ${options.version}；不要并发 publish。`);
 }
 

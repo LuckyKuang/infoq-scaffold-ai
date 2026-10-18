@@ -12,12 +12,14 @@
 ## 清理顺序
 
 1. 优先通过 UI 删除当前用例创建的数据。
-2. UI 清理失败时记录 API 或数据库人工回滚提示。
-3. 仍无法清理时在报告中标记 residual risk。
+2. runner 在统一退出流程中，使用当前 run 的精确键执行 API cleanup，再以 JDBC 查询活动记录；恢复阶段使用独立 30 秒总时限。
+3. 清理失败、残留非零或查询结果未知都使 run 失败，并记录 API 或数据库人工恢复提示。
 
 ## 失败处理
 
-当前 CRUD runner 的正常/普通异常路径尝试 API cleanup；信号中断仅停止 owned 栈，不能保证清理数据或落盘最终报告。最终 DB 查询错误也可能被汇总为零 rows，必须审阅 `cleanup.finalDb[].db.error`。恢复时使用上次 run 的 `test-data.json` 唯一键，不要期待新 run 自动清理旧 fixture。完整实现限制见 `docs/TESTING.md` 第 6.6 节。
+正常、普通异常及 SIGINT/SIGTERM/SIGHUP 都按数据清理 → owned 进程关闭 → 报告落盘收口，保留主失败及 `cleanupErrors`。DB 查询错误记录 `db.error`/`rows=null`，`finalDbResidue=null` 表示未知；只有全部选中模块查询成功才可计数。清理只在本轮已开始业务写入后执行，不使用下一次运行预先删除既有键。
+
+硬终止、掉电或清理超时仍可能留下 fixture。恢复时使用对应 run 的 `test-data.json` 唯一键，确认 API/JDBC 同一实例后按 `docs/DATA-OPS.md` 核对与恢复；不得按整个 `e2e_` 前缀删除其他 run 的数据。完整条件见 `docs/TESTING.md` 第 6.6 节。
 
 清理失败不得被静默忽略。报告必须包含：
 

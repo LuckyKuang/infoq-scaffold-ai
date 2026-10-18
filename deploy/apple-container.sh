@@ -386,7 +386,7 @@ validate_port() {
 
 validate_ipv4_address() {
     local address=$1
-    [[ "${address}" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]] || die "Invalid IPv4 address: ${address}"
+    python3 -c 'import ipaddress,sys; ipaddress.IPv4Address(sys.argv[1])' "${address}" >/dev/null 2>&1 || die "Invalid IPv4 address: ${address}"
 }
 
 file_mode() {
@@ -484,6 +484,7 @@ ensure_deploy_dirs() {
 write_admin_config() {
     local config_file="${DEPLOY_ROOT}/server/config/application-prod.yml"
     python3 -c '
+import json
 import pathlib
 import sys
 
@@ -502,17 +503,17 @@ path.write_text(
         "      datasource:",
         "        master:",
         f"          url: jdbc:mysql://{mysql_ip}:3306/infoq?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8&autoReconnect=true&rewriteBatchedStatements=true&allowPublicKeyRetrieval=true&nullCatalogMeansCurrent=true&connectTimeout=10000&socketTimeout=30000&tcpKeepAlive=true",
-        f"          username: {db_user}",
-        f"          password: {db_password}",
+        f"          username: {json.dumps(db_user, ensure_ascii=False)}",
+        f"          password: {json.dumps(db_password, ensure_ascii=False)}",
         "spring.data:",
         "  redis:",
         f"    host: {redis_ip}",
         "    port: 6379",
-        f"    password: {redis_password}",
+        f"    password: {json.dumps(redis_password, ensure_ascii=False)}",
         "infoq:",
         "  quartz:",
         "    bootstrap:",
-        f"      deploy-id: {deploy_id}",
+        f"      deploy-id: {json.dumps(deploy_id, ensure_ascii=False)}",
         "spring.servlet.multipart.location: /infoq/server/temp",
         "",
     ]),
@@ -705,10 +706,13 @@ show_failure_logs() {
 }
 
 ensure_mysql_app_user() {
+    local db_user db_password
+    db_user="$(printf '%s' "${INFOQ_DB_USERNAME}" | sed "s/'/''/g")"
+    db_password="$(printf '%s' "${INFOQ_DB_PASSWORD}" | sed "s/'/''/g")"
     run_with_timeout 30 container exec \
         --env MYSQL_PWD="${MYSQL_ROOT_PASSWORD}" \
         "${MYSQL_CONTAINER}" \
-        mysql -uroot -e "CREATE USER IF NOT EXISTS '${INFOQ_DB_USERNAME}'@'%' IDENTIFIED BY '${INFOQ_DB_PASSWORD}'; ALTER USER '${INFOQ_DB_USERNAME}'@'%' IDENTIFIED BY '${INFOQ_DB_PASSWORD}'; GRANT ALL PRIVILEGES ON infoq.* TO '${INFOQ_DB_USERNAME}'@'%'; FLUSH PRIVILEGES;"
+        mysql -uroot -e "SET SESSION sql_mode='NO_BACKSLASH_ESCAPES'; CREATE USER IF NOT EXISTS '${db_user}'@'%' IDENTIFIED BY '${db_password}'; ALTER USER '${db_user}'@'%' IDENTIFIED BY '${db_password}'; GRANT ALL PRIVILEGES ON infoq.* TO '${db_user}'@'%'; FLUSH PRIVILEGES;"
 }
 
 cmd_build() {

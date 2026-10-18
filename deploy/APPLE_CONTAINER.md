@@ -201,7 +201,7 @@ Readiness requires MySQL and Redis only. MinIO, Nginx, and the Vue/React
 gateways stay on the Docker Compose path.
 
 Empty MySQL volumes receive the baseline and SQL updates during first startup;
-existing volumes do not automatically apply later migrations. Before an upgrade,
+existing volumes do not automatically apply later migrations. Custom credential values are encoded as YAML strings and SQL literals, including quotes and backslashes; the env file itself remains literal unquoted `KEY=value`. Before an upgrade,
 back up the database and apply the applicable updates under
 [`docs/DATA-OPS.md`](../docs/DATA-OPS.md). This path does not rotate the baseline
 administrator account or configure MinIO. It rewrites the generated backend

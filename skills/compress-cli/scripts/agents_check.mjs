@@ -143,6 +143,7 @@ const lines = agentsText.split('\n');
 function parseCategories() {
   const categories = [];
   const seen = new Map();
+  if (lines[0] !== '# AGENTS.md') fail(errors, '第 1 行必须是 `# AGENTS.md`');
   lines.forEach((line, index) => {
     const lineNo = index + 1;
     if (line.trim() === '') {
@@ -163,7 +164,7 @@ function parseCategories() {
       fail(errors, `第 ${lineNo} 行缺少 category 或 value 分隔符`);
       return;
     }
-    const category = match[1];
+    const category = match[1].trim();
     const value = match[2];
     if (!category.trim()) {
       fail(errors, `第 ${lineNo} 行 category 为空`);
@@ -239,7 +240,38 @@ function checkSkillStructure(dirNames) {
       continue;
     }
     const meta = fs.readFileSync(metaFile, 'utf8');
-    if (!meta.includes(`$${name}`)) {
+    // Inspect the actual interface field; mentions in descriptions/comments do not make a skill invocable.
+    const metaLines = meta.split(/\r?\n/u);
+    const interfaces = metaLines.flatMap((line, index) => /^(?:interface|"interface"|'interface')\s*:/u.test(line) ? [index] : []);
+    const interfaceIndex = interfaces.length === 1 && /^interface:\s*(?:#.*)?$/u.test(metaLines[interfaces[0]]) ? interfaces[0] : -1;
+    const fields = [];
+    let childIndent;
+    if (interfaceIndex >= 0) {
+      for (let index = interfaceIndex + 1; index < metaLines.length; index += 1) {
+        const line = metaLines[index];
+        if (!line.trim() || /^\s*#/u.test(line)) continue;
+        const indent = line.match(/^ */u)[0].length;
+        if (indent === 0) break;
+        childIndent ??= indent;
+        const field = /^\s+(?:default_prompt|"default_prompt"|'default_prompt')\s*:\s*(.*)$/u.exec(line);
+        if (!field || indent !== childIndent) continue;
+        let value = field[1];
+        if (/^[|>][+-]?(?:\s+#.*)?$/u.test(value)) {
+          const content = [];
+          while (index + 1 < metaLines.length && (!metaLines[index + 1].trim() || metaLines[index + 1].match(/^ */u)[0].length > indent)) content.push(metaLines[++index]);
+          value = content.join('\n');
+        } else if (value.startsWith('"')) {
+          const quoted = /^"(?:[^"\\]|\\.)*"/u.exec(value)?.[0];
+          try { value = quoted ? JSON.parse(quoted) : ''; } catch { value = ''; }
+        } else if (value.startsWith("'")) {
+          value = /^'((?:[^']|'')*)'/u.exec(value)?.[1]?.replaceAll("''", "'") ?? '';
+        } else {
+          value = value.replace(/(?:^|\s+)#.*$/u, '');
+        }
+        fields.push(value);
+      }
+    }
+    if (fields.length !== 1 || !new RegExp(`\\$${name}(?![a-zA-Z0-9_-])`, 'u').test(fields[0])) {
       fail(errors, `${name}/agents/openai.yaml 的 default_prompt 必须包含 $${name}`);
     }
   }

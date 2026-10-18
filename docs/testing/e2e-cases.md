@@ -8,14 +8,14 @@
 
 真实验证码登录和动态路由 smoke 使用仓库 runner：
 
-这些命令会写 Redis 验证码种子并创建会话，只用于已授权测试环境。下表是验收设计，不是 runner 已实现或已通过的清单；当前 runner 的 API 登录注入、动态菜单选择及 DOM/进程证据缺口见 [测试政策](../TESTING.md) 第 6.5 节。
+这些命令会写 Redis 验证码种子并创建会话，只用于已授权测试环境。下表是验收设计，不是 runner 已实现或已通过的清单；当前 runner 的 API 登录注入、动态菜单选择、DOM 验收边界及进程证据路径见 [测试政策](../TESTING.md) 第 6.5 节。
 
 ```bash
 node skills/test-cli/scripts/run_admin_e2e.mjs --client react --route-limit 1
 node skills/test-cli/scripts/run_admin_e2e.mjs --client vue --route-limit 1
 ```
 
-已授权隔离测试数据库上的全模块 CRUD（只接受 local profile，可用 `--modules` 子集，如仅公告 `--modules notice`）使用写入型 runner；其中 `job` 和 `ossConfig` 执行可隔离的任务/OSS 配置新增、编辑、删除和选择型删除入口，`online` 只强退当前 run 创建的 `e2e_` 用户会话。API/DB 结果当前只记录快照，信号中断无法保证数据 cleanup，最终残留计数也不能排除查询失败；执行前必须阅读 [测试政策](../TESTING.md) 第 6.6 节，并安排结果审阅与人工恢复：
+已授权隔离测试数据库上的全模块 CRUD（只接受 local profile，可用 `--modules` 子集，如仅公告 `--modules notice`）使用写入型 runner；其中 `job` 和 `ossConfig` 执行可隔离的任务/OSS 配置新增、编辑、删除和选择型删除入口，`online` 只强退当前 run 创建的 `e2e_` 用户会话。runner 断言 API/DB 关键字段、身份与活动记录数，并在可捕获中断时尝试清理和保存报告；DB 查询失败显示未知残留并失败。执行前必须阅读 [测试政策](../TESTING.md) 第 6.6 节，核对目标实例，并安排硬终止或清理超时后的人工恢复：
 
 ```bash
 node skills/test-cli/scripts/run_admin_crud_e2e.mjs --client react

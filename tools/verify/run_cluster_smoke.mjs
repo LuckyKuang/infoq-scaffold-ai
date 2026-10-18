@@ -57,6 +57,7 @@ function resolveClusterRedisDefaults() {
 const config = {
   jarRelPath: 'backend/infoq-admin/target/infoq-admin.jar',
   host: process.env.CLUSTER_SMOKE_HOST || '127.0.0.1',
+  httpTimeoutMs: process.env.CLUSTER_SMOKE_HTTP_TIMEOUT_MS || '10000',
   portA: process.env.CLUSTER_SMOKE_PORT_A || '19081',
   portB: process.env.CLUSTER_SMOKE_PORT_B || '19082',
   springProfile: process.env.CLUSTER_SMOKE_SPRING_PROFILES_ACTIVE || '',
@@ -96,12 +97,12 @@ Options:
   --build                    Build backend jar before cluster smoke testing.
   --keep-servers             Keep surviving backend process alive after checks.
   --skip-abnormal-exit       Skip the abnormal-exit cleanup phase.
-  --host <host>              Server host (default: 127.0.0.1).
-  --port-a <port>            Node A port (default: 19081).
-  --port-b <port>            Node B port (default: 19082).
+  --host <host>              Bind/probe 127.0.0.1 (default) or localhost only.
+  --port-a <port>            Node A port, 1-65535 (default: 19081).
+  --port-b <port>            Distinct node B port, 1-65535 (default: 19082).
   --profile <name>           Spring profile (default: local when application-local.yml exists, else dev).
-  --node-id-a <id>           Node A websocket node id (default: node-a).
-  --node-id-b <id>           Node B websocket node id (default: node-b).
+  --node-id-a <id>           Node A id, 1-64 letters/digits/._- (default: node-a).
+  --node-id-b <id>           Distinct node B id, same format (default: node-b).
   --client-id <id>           Client ID for login.
   --username <name>          Preferred login username.
   --password <pwd>           Preferred login password.
@@ -112,12 +113,16 @@ Options:
   --redis-db <db>            Python verifier Redis database; must match both Java nodes.
   --redis-password <pwd>     Python verifier password (prefer CLUSTER_SMOKE_REDIS_PASSWORD).
   --jar <path>               Jar path relative to repo root.
-  -h, --help                 Show help.`);
+  -h, --help                 Show help.
+
+Environment:
+  CLUSTER_SMOKE_HTTP_TIMEOUT_MS  HTTP request/header/body deadline, 1-60000 ms (default: 10000).
+  Python Redis connect and socket waits are each limited to 5 seconds.`);
 }
 
 function readValue(index, flag) {
   const value = args[index + 1];
-  if (!value || value.startsWith('--')) {
+  if (!value || value.startsWith('--') || value === '-h') {
     throw new Error(`Missing value for ${flag}.`);
   }
   return value;
@@ -212,6 +217,28 @@ for (let index = 0; index < args.length; index += 1) {
 if (!['encrypted', 'plain'].includes(config.loginMode)) {
   throw new Error('--login-mode must be encrypted or plain.');
 }
+if (!['127.0.0.1', 'localhost'].includes(config.host)) {
+  throw new Error('--host must be 127.0.0.1 or localhost; smoke disables captcha and must stay on loopback.');
+}
+for (const [flag, port] of [['--port-a', config.portA], ['--port-b', config.portB]]) {
+  if (!/^[1-9]\d{0,4}$/.test(port) || Number(port) > 65535) {
+    throw new Error(`${flag} must be an integer from 1 to 65535 without leading zeros.`);
+  }
+}
+if (config.portA === config.portB) {
+  throw new Error('--port-a and --port-b must be distinct.');
+}
+for (const [flag, nodeId] of [['--node-id-a', config.nodeIdA], ['--node-id-b', config.nodeIdB]]) {
+  if (!/^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/.test(nodeId)) {
+    throw new Error(`${flag} must be 1-64 letters/digits/._- and start with a letter or digit.`);
+  }
+}
+if (config.nodeIdA.toLowerCase() === config.nodeIdB.toLowerCase()) {
+  throw new Error('--node-id-a and --node-id-b must be distinct even on case-insensitive filesystems.');
+}
+if (!/^[1-9]\d{0,4}$/.test(config.httpTimeoutMs) || Number(config.httpTimeoutMs) > 60000) {
+  throw new Error('CLUSTER_SMOKE_HTTP_TIMEOUT_MS must be an integer from 1 to 60000 without leading zeros.');
+}
 
 const backendConfigSelection = resolveBackendConfigSelection(repoRoot);
 config.springProfile ||= backendConfigSelection.profile;
@@ -238,7 +265,7 @@ stateFile = resolveTmpPath(repoRoot, 'verify', `run-cluster-smoke-${config.portA
 
 async function isServerReady(baseUrl) {
   try {
-    const health = await fetchText(`${baseUrl}/monitor/health`);
+    const health = await fetchText(`${baseUrl}/monitor/health`, {signal: AbortSignal.timeout(1000)});
     if (health.response.status === 200) {
       return true;
     }
@@ -247,7 +274,7 @@ async function isServerReady(baseUrl) {
   }
 
   try {
-    const authCode = await fetchText(`${baseUrl}/auth/code`);
+    const authCode = await fetchText(`${baseUrl}/auth/code`, {signal: AbortSignal.timeout(1000)});
     if (authCode.response.status === 200) {
       return true;
     }
@@ -256,7 +283,7 @@ async function isServerReady(baseUrl) {
   }
 
   try {
-    const root = await fetchText(`${baseUrl}/`);
+    const root = await fetchText(`${baseUrl}/`, {signal: AbortSignal.timeout(1000)});
     return root.response.status === 200;
   } catch {
     return false;
@@ -316,6 +343,7 @@ function startNode(port, nodeId, logFile) {
     [
       '-jar',
       jarPath,
+      `--server.address=${config.host}`,
       `--server.port=${port}`,
       '--captcha.enable=false',
       '--websocket.enabled=true',
@@ -461,6 +489,7 @@ async function main() {
       LOGIN_MODE: config.loginMode,
       LOGIN_CANDIDATES: config.loginCandidates,
       RSA_PUBLIC_KEY: config.rsaPublicKey,
+      HTTP_TIMEOUT_MS: config.httpTimeoutMs,
       PRINT_TOKEN: '1',
       PRINT_USER_ID: '1'
     }

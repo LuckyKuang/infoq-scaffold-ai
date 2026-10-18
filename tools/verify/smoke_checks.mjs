@@ -14,8 +14,10 @@ const config = {
     'MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAKoR8mX0rGKLqzcWmOzbfj64K8ZIgOdHnzkXSOVOZbFu/TJhZ7rFAN+eaGkl3C4buccQd/EjEsj9ir7ijT7h96MCAwEAAQ==',
   printToken: process.env.PRINT_TOKEN === '1',
   printUserId: process.env.PRINT_USER_ID === '1',
-  loginMode: process.env.LOGIN_MODE || 'encrypted'
+  loginMode: process.env.LOGIN_MODE || 'encrypted',
+  httpTimeoutMs: process.env.HTTP_TIMEOUT_MS || '10000'
 };
+const requests = new WeakMap();
 
 function logPass(name, detail = '') {
   console.log(`[PASS] ${name}${detail ? ` | ${detail}` : ''}`);
@@ -23,6 +25,29 @@ function logPass(name, detail = '') {
 
 function fail(name, detail = '') {
   throw new Error(`[FAIL] ${name}${detail ? ` | ${detail}` : ''}`);
+}
+
+async function request(endpoint, options = {}) {
+  const name = `${options.method || 'GET'} ${endpoint}`;
+  const signal = AbortSignal.timeout(Number(config.httpTimeoutMs));
+  try {
+    const response = await fetch(`${config.baseUrl}${endpoint}`, {...options, signal});
+    requests.set(response, {name, signal});
+    return response;
+  } catch (error) {
+    const cause = ['ECONNREFUSED', 'ECONNRESET', 'ENOTFOUND', 'EAI_AGAIN', 'ETIMEDOUT', 'UND_ERR_CONNECT_TIMEOUT']
+      .includes(error.cause?.code) ? `, cause=${error.cause.code}` : '';
+    fail(name, `network=${signal.aborted ? 'timeout' : 'request-failed'}, timeout_ms=${config.httpTimeoutMs}${cause}`);
+  }
+}
+
+async function readBody(response, format = 'text') {
+  try {
+    return await response[format]();
+  } catch {
+    const context = requests.get(response);
+    fail(context?.name || 'HTTP response', `network=${context?.signal.aborted ? 'timeout' : 'response-read-failed'}, timeout_ms=${config.httpTimeoutMs}`);
+  }
 }
 
 function toPem(base64Key) {
@@ -54,7 +79,7 @@ function encryptHeaderKey(aesKey, publicKeyBase64) {
 }
 
 async function parseResponseAsJson(response) {
-  const text = await response.text();
+  const text = await readBody(response);
   try {
     return JSON.parse(text);
   } catch {
@@ -78,25 +103,25 @@ async function assertJsonApi(name, response, expectedHttp = 200) {
     fail(name, `http=${response.status}`);
   }
   const body = await parseResponseAsJson(response);
-  if (body.code !== 200) {
-    fail(name, `code=${body.code}, msg=${body.msg || body._raw || ''}`);
+  if (body?.code !== 200) {
+    fail(name, `http=${response.status}, code=${Number.isInteger(body?.code) ? body.code : 'invalid-response'}`);
   }
   logPass(name, `http=${response.status}, code=${body.code}`);
   return body;
 }
 
 async function checkPublicEndpoints() {
-  const rootResp = await fetch(`${config.baseUrl}/`);
+  const rootResp = await request('/');
   if (rootResp.status !== 200) {
     fail('GET /', `http=${rootResp.status}`);
   }
-  const rootText = await rootResp.text();
+  const rootText = await readBody(rootResp);
   if (!rootText.includes('backend')) {
     fail('GET /', 'unexpected response body');
   }
   logPass('GET /', 'http=200');
 
-  await assertJsonApi('GET /auth/code', await fetch(`${config.baseUrl}/auth/code`));
+  await assertJsonApi('GET /auth/code', await request('/auth/code'));
 }
 
 function buildCandidateList() {
@@ -124,7 +149,7 @@ async function loginEncrypted(username, password) {
     username,
     password
   });
-  const res = await fetch(`${config.baseUrl}/auth/login`, {
+  const res = await request('/auth/login', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json;charset=UTF-8',
@@ -138,7 +163,7 @@ async function loginEncrypted(username, password) {
 }
 
 async function loginPlain(username, password) {
-  const res = await fetch(`${config.baseUrl}/auth/login`, {
+  const res = await request('/auth/login', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json;charset=UTF-8',
@@ -162,7 +187,7 @@ async function loginAndGetToken() {
 
   for (const account of candidates) {
     const result = await login(account.username, account.password);
-    const code = result?.body?.code;
+    const code = Number.isInteger(result?.body?.code) ? result.body.code : 'invalid-response';
     const token = result?.body?.data?.access_token || result?.body?.data?.accessToken;
     if (result.res.status === 200 && code === 200 && token) {
       const payload = decodeJwtPayload(token);
@@ -189,22 +214,22 @@ async function checkProtectedEndpoints(token) {
 
   await assertJsonApi(
     'GET /system/menu/getRouters',
-    await fetch(`${config.baseUrl}/system/menu/getRouters`, { headers })
+    await request('/system/menu/getRouters', { headers })
   );
   await assertJsonApi(
     `GET /system/menu/roleMenuTreeselect/${config.roleId}`,
-    await fetch(`${config.baseUrl}/system/menu/roleMenuTreeselect/${config.roleId}`, { headers })
+    await request(`/system/menu/roleMenuTreeselect/${config.roleId}`, { headers })
   );
   await assertJsonApi(
     `GET /system/role/deptTree/${config.roleId}`,
-    await fetch(`${config.baseUrl}/system/role/deptTree/${config.roleId}`, { headers })
+    await request(`/system/role/deptTree/${config.roleId}`, { headers })
   );
   await assertJsonApi(
     `GET /system/dict/data/type/${config.dictType}`,
-    await fetch(`${config.baseUrl}/system/dict/data/type/${config.dictType}`, { headers })
+    await request(`/system/dict/data/type/${config.dictType}`, { headers })
   );
 
-  const exportResp = await fetch(`${config.baseUrl}/system/user/export`, {
+  const exportResp = await request('/system/user/export', {
     method: 'POST',
     headers: {
       ...headers,
@@ -216,7 +241,7 @@ async function checkProtectedEndpoints(token) {
     fail('POST /system/user/export', `http=${exportResp.status}`);
   }
   const contentType = exportResp.headers.get('content-type') || '';
-  const buffer = Buffer.from(await exportResp.arrayBuffer());
+  const buffer = Buffer.from(await readBody(exportResp, 'arrayBuffer'));
   if (!contentType.includes('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')) {
     fail('POST /system/user/export', `unexpected content-type=${contentType}`);
   }
@@ -229,6 +254,9 @@ async function checkProtectedEndpoints(token) {
 async function main() {
   if (!['encrypted', 'plain'].includes(config.loginMode)) {
     throw new Error('LOGIN_MODE must be encrypted or plain.');
+  }
+  if (!/^[1-9]\d{0,4}$/.test(config.httpTimeoutMs) || Number(config.httpTimeoutMs) > 60000) {
+    throw new Error('HTTP_TIMEOUT_MS must be an integer from 1 to 60000 without leading zeros.');
   }
   console.log(
     `[INFO] smoke target: ${config.baseUrl}, roleId=${config.roleId}, dictType=${config.dictType}`

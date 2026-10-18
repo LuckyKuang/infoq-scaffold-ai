@@ -12,11 +12,15 @@ function usage() {
   console.log(`Usage: node tools/check_release_version.mjs [--tag vX.Y.Z] [--expect X.Y.Z]
 
 Checks that the backend revision, BOM revision, both admin package versions,
-README badges, deployment docs, and Compose image tags agree.`);
+README badges, deployment docs, and Compose image tags agree.
+--tag accepts vX.Y.Z or X.Y.Z; --expect accepts X.Y.Z.
+Both options may be combined only when they name the same version.
+Empty values, repeated options, unknown arguments and malformed versions fail.`);
 }
 
 function parseArgs(argv) {
   const parsed = {tag: '', expect: ''};
+  const supplied = new Set();
   for (let index = 0; index < argv.length; index += 1) {
     const token = argv[index];
     if (token === '-h' || token === '--help') {
@@ -25,18 +29,28 @@ function parseArgs(argv) {
     }
     if (token === '--tag' || token === '--expect') {
       const value = argv[index + 1];
-      if (!value || value.startsWith('--')) throw new Error(`Missing value for ${token}`);
+      if (!value || value.startsWith('-')) throw new Error(`Missing value for ${token}`);
+      if (supplied.has(token)) throw new Error(`Repeated option: ${token}`);
+      supplied.add(token);
       parsed[token.slice(2)] = value;
       index += 1;
       continue;
     }
     if (token.startsWith('--tag=') || token.startsWith('--expect=')) {
-      const [name, value] = token.split('=', 2);
+      const separator = token.indexOf('=');
+      const name = token.slice(0, separator);
+      const value = token.slice(separator + 1);
+      if (!value) throw new Error(`Missing value for ${name}`);
+      if (supplied.has(name)) throw new Error(`Repeated option: ${name}`);
+      supplied.add(name);
       parsed[name.slice(2)] = value;
       continue;
     }
     throw new Error(`Unknown argument: ${token}`);
   }
+  if (parsed.tag && !/^v?[0-9]+\.[0-9]+\.[0-9]+$/u.test(parsed.tag)) throw new Error(`Invalid --tag: ${parsed.tag}`);
+  if (parsed.expect && !/^[0-9]+\.[0-9]+\.[0-9]+$/u.test(parsed.expect)) throw new Error(`Invalid --expect: ${parsed.expect}`);
+  if (parsed.tag && parsed.expect && parsed.tag.replace(/^v/u, '') !== parsed.expect) throw new Error('--tag and --expect must name the same version');
   return parsed;
 }
 

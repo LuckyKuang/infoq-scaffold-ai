@@ -68,7 +68,7 @@ pnpm --dir skills/test-cli/scripts run playwright-cli admin-route-probe --fronte
 4. 输出截图与 console 日志路径。
 5. 默认把 `console error` / `pageerror` 视为失败。
 
-当前执行器不自动判定截图空白、HTTP 错误状态或错误页 DOM；必须补充业务可见元素断言并审阅截图。URL 匹配与 console 无错不足以证明页面正确。完整边界见 `docs/TESTING.md` 第 6.5 节。
+当前执行器拒绝失败的导航 HTTP 状态，但不自动判定截图空白或 HTTP 200 的错误页 DOM；必须补充业务可见元素断言并审阅截图。URL 匹配与 console 无错不足以证明页面正确。状态落在 `tmp/test-cli/browser/states/`，包括 runner PID、`port=null`、pipe 通信、console 路径和 `browserClosed`；正常、失败及可捕获中断都等待浏览器关闭。完整边界见 `docs/TESTING.md` 第 6.5 节。
 
 ### 4. DevTools CLI
 
@@ -77,6 +77,8 @@ pnpm --dir skills/test-cli/scripts run chrome-devtools-cli --help
 ```
 
 该入口是本地 `chrome-devtools-mcp` 的服务启动包装器，启动后通过 MCP 协议接收调用；它不是带截图/性能子命令的交互 CLI。由 `.codex/config.toml` 配置的 MCP 客户端调用实际诊断工具，手动启动会保持进程等待客户端连接。
+
+状态和生命周期日志在 `tmp/test-cli/browser/chrome-devtools-mcp/`，记录子进程 PID、`port=null`（stdio）、owned 和终态。收到 SIGINT/SIGTERM/SIGHUP 时关闭 owned 进程树并核验退出；失败不能写成正常完成。隔离进程回归命令见 `references/crud/crud-patterns.md`。
 
 ## 前置条件
 

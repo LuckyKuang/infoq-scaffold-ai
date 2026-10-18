@@ -1,6 +1,9 @@
 import fs from 'node:fs';
+import crypto from 'node:crypto';
 import path from 'node:path';
 import {chromium} from 'playwright';
+import {fileURLToPath} from 'node:url';
+import {markRunState, resolveRepoRoot, resolveTmpPath} from '../../../tools/lib/skill_runtime.mjs';
 
 export function ensureParentDir(filePath) {
   if (!filePath) {
@@ -30,7 +33,8 @@ export async function runPlaywrightFlow({
   failOnConsoleErrors = true,
   timeoutMs = 45000,
   headed = false,
-  ignoreHTTPSErrors = false
+  ignoreHTTPSErrors = false,
+  signal: parentSignal
 }) {
   if (!targetUrl) {
     throw new Error('targetUrl is required.');
@@ -39,11 +43,34 @@ export async function runPlaywrightFlow({
   const consoleEntries = [];
   const normalizedWaitForUrl = normalizeWaitPattern(waitForUrl);
   let browser;
+  let closePromise;
+  let failure;
+  const controller = new AbortController();
+  const signal = parentSignal || controller.signal;
+  const handlers = new Map(['SIGINT', 'SIGTERM', 'SIGHUP'].map((name) => [name, () => {
+    controller.abort(new Error(`Interrupted by ${name}`));
+    process.exitCode = name === 'SIGINT' ? 130 : name === 'SIGHUP' ? 129 : 143;
+  }]));
+  if (!parentSignal) for (const [name, handler] of handlers) process.on(name, handler);
+  const closeBrowser = () => {
+    if (browser) closePromise ||= browser.close();
+    return closePromise;
+  };
+  const interrupt = () => { void closeBrowser()?.catch(() => undefined); };
+  signal.addEventListener('abort', interrupt, {once: true});
+  const repoRoot = resolveRepoRoot(path.dirname(fileURLToPath(import.meta.url)));
+  const stateFile = resolveTmpPath(repoRoot, 'test-cli', 'browser', 'states', `${Date.now()}-${process.pid}-${crypto.randomUUID()}.json`);
+  if (!consoleLogPath) consoleLogPath = stateFile.replace(/\.json$/u, '.console.json');
+  markRunState(stateFile, {status: 'starting', pid: process.pid, port: null, log: consoleLogPath, transport: 'pipe', owned: true, browserClosed: false});
 
   try {
+    signal.throwIfAborted();
     browser = await chromium.launch({
-      headless: !headed
+      headless: !headed, timeout: timeoutMs,
+      handleSIGINT: false, handleSIGTERM: false, handleSIGHUP: false
     });
+    signal.throwIfAborted();
+    markRunState(stateFile, {status: 'running'});
 
     const context = await browser.newContext({
       ignoreHTTPSErrors,
@@ -75,10 +102,11 @@ export async function runPlaywrightFlow({
       });
     });
 
-    await page.goto(targetUrl, {
+    const response = await page.goto(targetUrl, {
       waitUntil: 'domcontentloaded',
       timeout: timeoutMs
     });
+    if (response && !response.ok()) throw new Error(`Page navigation failed: HTTP ${response.status()}`);
 
     if (normalizedWaitForUrl) {
       await page.waitForURL(normalizedWaitForUrl, { timeout: timeoutMs });
@@ -91,6 +119,7 @@ export async function runPlaywrightFlow({
     try {
       await page.waitForLoadState('networkidle', { timeout: timeoutMs });
     } catch {
+      signal.throwIfAborted();
       // Some SPA routes keep background requests alive; keep evidence instead of failing here.
     }
 
@@ -117,11 +146,24 @@ export async function runPlaywrightFlow({
     return {
       consoleEntries,
       screenshotPath,
-      consoleLogPath
+      consoleLogPath,
+      stateFile
     };
+  } catch (error) {
+    failure = error;
+    throw error;
   } finally {
-    if (browser) {
-      await browser.close();
+    signal.removeEventListener('abort', interrupt);
+    let closeError;
+    try { await closeBrowser(); } catch (error) { closeError = error; }
+    try {
+      ensureParentDir(consoleLogPath);
+      fs.writeFileSync(consoleLogPath, `${JSON.stringify(consoleEntries, null, 2)}\n`, 'utf8');
+      markRunState(stateFile, {status: signal.aborted ? 'interrupted' : (failure || closeError) ? 'failed' : 'passed', browserClosed: !closeError, error: (signal.aborted ? signal.reason : failure || closeError)?.message || '', cleanupError: closeError?.message || ''});
+    } finally {
+      if (!parentSignal) for (const [name, handler] of handlers) process.removeListener(name, handler);
     }
+    if (closeError) throw new AggregateError([failure, closeError].filter(Boolean), [failure?.message, `Browser cleanup failed: ${closeError.message}`].filter(Boolean).join('; '));
+    if (!failure) signal.throwIfAborted();
   }
 }

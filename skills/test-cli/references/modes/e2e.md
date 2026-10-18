@@ -58,11 +58,11 @@ CRUD 的 API、浏览器和 JDBC 只读核对必须指向同一测试实例；�
 
 `run_admin_e2e.mjs` 默认只使用有管理端动态菜单的 route smoke 候选账号（`admin`、`dept`）；`captcha_login.mjs` 可继续通过 `--login-candidates` 做独立账号登录诊断。不要把无动态路由权限的账号作为 route smoke 默认候选，否则会出现登录成功但无路由可巡检的假失败。
 
-`run_admin_e2e.mjs` 默认会在完成、失败或中断后停止本 skill 启动的 backend/admin dev server；只有成功且显式传 `--keep-stack-after` 才保留联调栈，失败或中断仍必须收口。栈状态按 client 稳定记录在 `tmp/test-cli/e2e/stack/<vue|react>/state.json`，必须包含 pid、port、log、owned/reused 和 `running`/`stopped`/`failed`/`interrupted` 状态。
+`run_admin_e2e.mjs` 默认会在完成、失败或中断后停止本 skill 启动的 backend/admin dev server；只有验证及报告落盘均成功且显式传 `--keep-stack-after` 才保留联调栈，落盘失败或中断须撤销保留决定并收口。栈状态按 client 稳定记录在 `tmp/test-cli/e2e/stack/<vue|react>/state.json`，必须包含 pid、port、log、owned/reused 和 `running`/`stopped`/`failed`/`interrupted` 状态。
 
-`run_admin_crud_e2e.mjs` 会启动或复用 backend + 指定管理端、通过验证码种子登录，按模块顺序执行 UI 新增/查询/编辑/删除或模块可用的行删除/选择删除入口，并记录 API 与 MySQL 直连查询快照；在线用户模块会创建本轮专属 `e2e_` 用户、真实登录生成会话，只强退该会话后清理用户。cleanup 按当前 run 的精确键操作，正常完成和普通异常时尝试清理并保存报告；信号中断仅收口 owned 栈，不能保证数据清理和最终报告。
+`run_admin_crud_e2e.mjs` 会启动或复用 backend + 指定管理端、通过验证码种子登录，写入前查询所选模块精确键，拒绝冲突或查询失败。它按模块顺序执行 UI 新增/查询/编辑/删除，并对 API 与 MySQL 直连结果断言活动记录数、关键字段和主键；在线用户模块创建本轮专属 `e2e_` 用户、真实登录生成会话，只强退该会话后清理用户。
 
-当前 API/DB 快照没有逐项业务预期比较，最终残留计数也不能排除查询错误；必须审阅 `verification` 与 `cleanup.finalDb[].db.error`。账号候选重试、RSA 覆盖、实例一致性及中断恢复等已确认限制见 `docs/TESTING.md` 第 6.6 节，不能凭 runner 退出码宣布 CRUD 或无残留验收通过。
+正常、普通异常及 SIGINT/SIGTERM/SIGHUP 均尝试当前 run 数据清理（独立 30 秒预算），再关闭 owned 栈并落盘报告；DB 错误/未执行时残留为未知，不能算零。检查 `verification`、`cleanup.finalDb`、`cleanupErrors` 和浏览器 `browser-state.json`。硬终止、清理超时、账号候选、RSA 和实例一致性等条件见 `docs/TESTING.md` 第 6.6 节，工具隔离回归不能代替真实业务验收。
 
 只跑少量路由：
 

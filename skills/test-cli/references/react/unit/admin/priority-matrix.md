@@ -37,9 +37,10 @@
 
 ### 当前覆盖形态
 
-- 已覆盖基线：utils、stores、router guards、route transforms
-- 已覆盖复用 UI：通用组件、upload/editor 包装器、布局外壳
-- 已覆盖代表页：login、cache、system、monitor、auth/profile 流程
+- 已有测试文件：utils、stores、router guards、route transforms
+- 已有复用 UI 套件：通用组件、upload/editor 包装器、布局外壳
+- 已有代表页套件：login、cache、system、monitor、auth/profile
+- 文件存在不等于行为已覆盖或本轮执行通过；实际覆盖取决于断言与当前运行结果
 - 使用矩阵优先补业务分支与回归，不要追逐无意义的覆盖率数字
 
 ## 单文件完成定义

@@ -41,7 +41,7 @@ node skills/test-cli/scripts/generate-case-matrix.mjs
 node skills/test-cli/scripts/validate-case-matrix.mjs docs/testing/case-matrix.json
 ```
 
-`generate-case-matrix.mjs` 不带输出参数时会更新受管矩阵文档；只做审计/预览时必须指定 `--output-dir tmp/test-cli/matrix-preview`。矩阵存在不表示用例已执行，runner 的覆盖边界及账号候选、RSA、实例一致性、CRUD 快照/清理限制见 `docs/TESTING.md` 第 6.5–6.6 节。CRUD 只接受 local profile，没有 dry-run；执行前必须确认隔离实例与人工恢复条件。
+`generate-case-matrix.mjs` 不带输出参数时会更新受管矩阵文档；只做审计/预览时必须指定 `--output-dir tmp/test-cli/matrix-preview`。矩阵存在不表示用例已执行，runner 的覆盖边界及账号候选、RSA、实例一致性、CRUD 断言/清理条件见 `docs/TESTING.md` 第 6.5–6.6 节。CRUD 只接受 local profile，没有 dry-run；执行前必须确认隔离实例与人工恢复条件。
 
 Playwright 依赖安装在 `skills/test-cli/scripts/`（自带 `package.json` / `pnpm-lock.yaml`）：
 
@@ -53,7 +53,9 @@ pnpm --dir skills/test-cli/scripts exec playwright install chromium
 ## 证据目录
 
 - 浏览器流程与 route probe：`tmp/test-cli/browser/`
+- 通用 Playwright 状态：`tmp/test-cli/browser/states/`；DevTools 状态与日志：`tmp/test-cli/browser/chrome-devtools-mcp/`
 - E2E 运行与验证码登录：`tmp/test-cli/e2e/`
+- CRUD 浏览器状态：当前 E2E run 的 `browser-state.json`
 - E2E 自管栈状态：`tmp/test-cli/e2e/stack/<client>/state.json`
 - 页面运维与权限巡检：`tmp/test-cli/e2e/page-ops/`
 
@@ -69,7 +71,8 @@ pnpm --dir skills/test-cli/scripts exec playwright install chromium
 - 定时任务启停必须说明任务名称、执行计划、影响窗口与恢复方式；权限变更必须用拥有权限与不应拥有权限的两个角色分别核对。
 - 不把 E2E 通过当成真实运营操作完成，也不把接口 smoke 当成后台权限巡检。
 - 任何长生命周期进程必须写入 `tmp/test-cli/` 状态文件，并在完成、失败或中断后关闭 owned 端口。
-- 现有 E2E 自管栈记录 backend/frontend 状态；通用 Playwright 执行器只在 `finally` 关闭浏览器，DevTools 包装器也未实现同等状态文件。调用者必须补齐进程证据与收口检查，不能把缺失状态文件记为已验证。
+- Playwright 状态记录 runner PID、`port=null`、pipe 通信和 `browserClosed`；DevTools 记录子进程 PID 与进程树关闭结果。不得把 runner PID 当 Chromium PID；关闭失败必须保留为失败。
+- CRUD 在写入前拒绝精确键冲突；新增/编辑/删除同时核对 API 与 DB 预期。DB 查询失败或未执行必须显示未知，不能算零残留。SIGINT/SIGTERM/SIGHUP 走独立 30 秒数据清理、owned 进程关闭与报告落盘；硬终止和清理超时按当前 run 证据人工恢复。
 
 ## 参考
 

@@ -6,12 +6,13 @@ description: 预览或执行 GitHub 分支推送、PR 创建与校验回流、�
 # InfoQ 推送与 PR 闭环
 
 本技能负责从本地改动到默认分支的受控推送链路。`push`、`submit-pr`、`merge` 默认 dry-run，只有显式 `--execute` 才执行写操作。预览不会创建分支、提交、tag 或远程写入；仍会读取 GitHub 状态并要求相应前置条件。`--execute` 与 `--dry-run` 互斥，未知参数和缺失参数值显式失败。
+参数按子命令校验：`check` 会实际运行矩阵，不接受 `--dry-run`；`--json` 仅适用于 `status`。`origin` 的唯一 fetch/push URL 必须指向同一 GitHub 仓库，gh 请求显式绑定该目标，不受 `GH_REPO` 或默认 remote 选择影响。
 
 ## 硬边界
 
 - **禁止直推默认分支**：默认分支只接受 PR 合并。
-- 处于默认分支时，`submit-pr --execute` 会从 `origin/<default>` 拉取最新提交并新建工作分支（`auto/<yyyymmdd-hhmmss>`），后续提交与推送都发生在该分支；预览只展示计划。
-- 禁止 `--force`、`--all`、`--tags` 等危险推送形式；只有显式 `--force-with-lease` 才允许改写已推送分支。
+- 处于默认分支时，`submit-pr --execute` 会用 `fetch --no-tags` 从 `origin/<default>` 拉取最新提交并新建工作分支（`auto/<yyyymmdd-hhmmss>`），后续提交与推送都发生在该分支；预览只展示计划。
+- 禁止 `--force`、`--all`、`--tags` 等危险推送形式；只有显式 `--force-with-lease` 才允许改写已推送分支，远端不存在该分支时拒绝。
 - PR 必须通过 GitHub 校验；校验未全绿时禁止合并。
 - 合并是独立步骤，必须显式 `--execute --yes`；`--admin` 绕过分支保护一律禁止。`--yes` 单独使用仍是预览。
 - 凭证只使用已登录的 GitHub CLI 会话（`gh auth setup-git`）；禁止在仓库中写入 token，禁止静默切换到其他凭证方式。

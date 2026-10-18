@@ -5,6 +5,7 @@ import fs from 'node:fs';
 import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {PROFILES, buildMatrix} from './push_matrix.mjs';
+import {githubRepositoryForRemote} from './remote_target.mjs';
 import {normalizeForwardedArgs, resolveRepoRoot} from '../../../tools/lib/skill_runtime.mjs';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
@@ -30,7 +31,7 @@ Commands:
 Options:
   --execute       执行远程写入；push/submit-pr/merge 默认仅预览
   --dry-run       显式预览；与 --execute 互斥，不新建分支或提交
-  --json          以 JSON 输出结果摘要
+  --json          仅 status：以 JSON 输出结果摘要
   --yes           显式确认（merge 必需）
   --skip-check    submit-pr 时跳过本地校验矩阵（仅限已单独跑过 check 的场景）
   --no-watch      submit-pr 后不自动进入 watch
@@ -38,8 +39,6 @@ Options:
 
 Exit codes: 0 成功，1 失败（校验未通过、门禁未满足或远程操作失败）。`);
 }
-
-const EXPECTED_REMOTE_REPO = 'LuckyKuang/infoq-scaffold-ai';
 
 function parseArgs(argv) {
   const options = {
@@ -59,6 +58,7 @@ function parseArgs(argv) {
     noWatch: false
   };
   let explicitDryRun = false;
+  const supplied = new Set();
   const valueOptions = new Set(['--profile', '--message', '--branch', '--pr', '--method', '--timeout-min']);
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
@@ -69,6 +69,7 @@ function parseArgs(argv) {
     if (valueOptions.has(arg) && (!argv[index + 1] || argv[index + 1].startsWith('-'))) {
       throw new Error(`missing value for ${arg}`);
     }
+    if (arg.startsWith('-')) supplied.add(arg);
     if (arg === '--dry-run') explicitDryRun = true;
     else if (arg === '--execute') options.execute = true;
     else if (arg === '--json') options.json = true;
@@ -96,6 +97,13 @@ function parseArgs(argv) {
   if (!PROFILES.includes(options.profile)) {
     throw new Error(`unknown profile: ${options.profile}`);
   }
+  const allowed = {
+    ensure: [], status: ['--json'], check: ['--profile'],
+    push: ['--execute', '--dry-run', '--force-with-lease'],
+    'submit-pr': ['--execute', '--dry-run', '--message', '--branch', '--profile', '--skip-check', '--no-watch'],
+    watch: ['--pr', '--timeout-min'], merge: ['--execute', '--dry-run', '--pr', '--yes', '--method']
+  };
+  for (const flag of supplied) if (!allowed[options.command].includes(flag)) throw new Error(`${flag} 不适用于 ${options.command}`);
   if (options.execute && explicitDryRun) throw new Error('--execute 与 --dry-run 不能同时使用');
   if (options.execute && !['push', 'submit-pr', 'merge'].includes(options.command)) {
     throw new Error('--execute 只适用于 push、submit-pr、merge');
@@ -126,6 +134,12 @@ function fail(message, code = 1) {
 }
 
 function exec(command, commandArgs, {capture = true, allowFailure = false} = {}) {
+  if (command === 'gh' && commandArgs[0] !== 'auth') {
+    const target = githubRepository();
+    commandArgs = commandArgs[0] === 'repo' && commandArgs[1] === 'view'
+      ? [...commandArgs.slice(0, 2), target, ...commandArgs.slice(2)]
+      : [...commandArgs, '--repo', target];
+  }
   const result = spawnSync(command, commandArgs, {
     cwd: repoRoot,
     encoding: 'utf8',
@@ -155,14 +169,20 @@ function git(commandArgs, allowFailure = false) {
   return exec('git', commandArgs, {allowFailure});
 }
 
+let boundRepository;
+function githubRepository() {
+  if (!boundRepository) {
+    try { boundRepository = githubRepositoryForRemote(git, 'origin'); } catch (error) { fail(error.message); }
+  }
+  return boundRepository;
+}
+
 function repoInfo() {
   const info = ghJson(['repo', 'view', '--json', 'nameWithOwner,defaultBranchRef,viewerPermission']);
   if (!info) {
     fail('无法读取 gh repo view；请确认 gh 已登录且当前目录 origin 可达');
   }
-  if (info.nameWithOwner !== EXPECTED_REMOTE_REPO) {
-    log(`[push] 注意：origin 仓库为 ${info.nameWithOwner}，期望 ${EXPECTED_REMOTE_REPO}`);
-  }
+  if (String(info.nameWithOwner).toLowerCase() !== githubRepository().split('/').slice(1).join('/')) fail('gh 返回的仓库身份与 origin 不一致');
   return info;
 }
 
@@ -237,9 +257,6 @@ function ensureEnvironment() {
   if (!['ADMIN', 'MAINTAIN', 'WRITE'].includes(info.viewerPermission)) {
     fail(`当前账号对 ${info.nameWithOwner} 无写权限（viewerPermission=${info.viewerPermission}）`);
   }
-  if (!options.dryRun) {
-    exec('gh', ['auth', 'setup-git']);
-  }
   return info;
 }
 
@@ -252,7 +269,7 @@ function commandStatus() {
   const info = repoInfo();
   const branch = currentBranch();
   const entries = worktreeEntries();
-  git(['fetch', 'origin', info.defaultBranchRef.name]);
+  git(['fetch', '--no-tags', 'origin', info.defaultBranchRef.name]);
   const behind = git(['rev-list', '--count', `HEAD..origin/${info.defaultBranchRef.name}`]).stdout.trim();
   const prs = ghJson(['pr', 'list', '--state', 'open', '--json', 'number,title,headRefName,baseRefName,url']);
   const summary = {
@@ -301,6 +318,9 @@ function commandPush() {
   if (entries.length > 0) {
     fail(`工作区有 ${entries.length} 个未提交改动；请先提交，或使用 submit-pr 自动提交`);
   }
+  if (options.forceWithLease && !git(['ls-remote', '--heads', 'origin', `refs/heads/${branch}`]).stdout.trim()) {
+    fail(`--force-with-lease 要求远端分支 ${branch} 已存在；新分支请使用普通 push`);
+  }
   const pushArgs = options.forceWithLease
     ? ['push', '--force-with-lease', 'origin', `HEAD:${branch}`]
     : ['push', 'origin', `HEAD:${branch}`];
@@ -308,6 +328,7 @@ function commandPush() {
     log(`[push] dry-run: git ${pushArgs.join(' ')}`);
     return;
   }
+  exec('gh', ['auth', 'setup-git']);
   exec('git', pushArgs, {capture: false});
   log(`[push] 已推送 ${branch}`);
 }
@@ -324,9 +345,9 @@ function commandSubmitPr() {
     branch = options.branch || defaultAutoBranch();
     log(`[push] 当前处于默认分支 ${defaultBranch}，自动切换工作分支 ${branch}`);
     if (options.dryRun) {
-      log(`[push] dry-run: git fetch origin ${defaultBranch} && git checkout -b ${branch} origin/${defaultBranch}`);
+      log(`[push] dry-run: git fetch --no-tags origin ${defaultBranch} && git checkout -b ${branch} origin/${defaultBranch}`);
     } else {
-      exec('git', ['fetch', 'origin', defaultBranch], {capture: false});
+      exec('git', ['fetch', '--no-tags', 'origin', defaultBranch], {capture: false});
       exec('git', ['checkout', '-b', branch, `origin/${defaultBranch}`], {capture: false});
     }
   } else if (options.branch && options.branch !== startingBranch) {
@@ -362,6 +383,7 @@ function commandSubmitPr() {
     return;
   }
 
+  exec('gh', ['auth', 'setup-git']);
   exec('git', ['push', '-u', 'origin', `HEAD:${branch}`], {capture: false});
 
   const existing = ghJson(['pr', 'list', '--head', branch, '--state', 'open', '--json', 'number,url,baseRefName,headRefOid']) ?? [];
@@ -438,7 +460,8 @@ function commandWatch(prNumberInput) {
         const runMatch = String(item.link ?? '').match(/runs\/(\d+)/);
         if (runMatch) {
           const logResult = exec('gh', ['run', 'view', runMatch[1], '--log-failed'], {allowFailure: true});
-          const excerpt = (logResult.stdout || logResult.stderr || '').split('\n').slice(-60).join('\n');
+          if (logResult.status !== 0) console.error(`[push] 失败日志抓取失败：category=${logResult.error ? 'spawn' : logResult.signal ? 'signal' : 'exit'}，exit=${logResult.status}，signal=${logResult.signal || 'none'}，error=${logResult.error?.code || 'none'}，stderr=${(logResult.stderr || '').trim().slice(0, 1000)}；原校验仍失败`);
+          const excerpt = (logResult.stdout || '').split('\n').slice(-60).join('\n');
           console.error(`  失败日志摘要（gh run view ${runMatch[1]} --log-failed）：\n${excerpt}`);
         }
       }

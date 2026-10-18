@@ -307,6 +307,20 @@ bash deploy/bin/infoq.sh prepare
 bash deploy/bin/infoq.sh deploy
 ```
 
+从旧版升级且现有 `redis.conf` 含 `requirepass` 时，`prepare` / `deploy` / `start` 会在替换配置前核验现有 `redis` 容器的项目、只读配置挂载和完整认证命令。旧容器、密码不匹配或 inspect 失败都会停止并保留旧配置。先备份数据和受控配置，安排 Redis 重建窗口；在仓库根目录以能读取部署环境文件且能访问 Docker 的账号执行：
+
+```bash
+export INFOQ_ENV_FILE=/etc/infoq-scaffold-ai/deploy.env
+set -a
+. "${INFOQ_ENV_FILE}"
+set +a
+COMPOSE_PROJECT_NAME="${INFOQ_COMPOSE_PROJECT_NAME:-${COMPOSE_PROJECT_NAME:-infoq-scaffold-ai}}" \
+  docker compose -f deploy/docker/docker-compose.yml up -d --no-deps --force-recreate redis
+bash deploy/bin/infoq.sh prepare
+```
+
+先用目标环境核验过的挂载 UID/GID 收紧旧版 `777` 目录权限；重建使用同一 `INFOQ_DEPLOY_ROOT`、项目名及当前受控 `REDIS_PASSWORD`，不会删除数据。新 Compose 先通过 argv 指定密码，旧配置此时仍保留；后续 helper 验证匹配后才去除配置中的密码。禁止先手动删掉旧配置的认证行再重启旧容器；重建失败时保留旧配置并恢复已备份的容器/配置。缺少 Compose plugin 的旧环境将命令替换为已安装且已验证的 `docker-compose`。
+
 常用命令：
 
 ```bash
@@ -398,7 +412,7 @@ export DOCKER_HOST="unix://${HOME}/.colima/default/docker.sock"
 sudo env DOCKER_CONFIG="${DOCKER_CONFIG:-$HOME/.docker}" DOCKER_HOST="${DOCKER_HOST}" INFOQ_ENV_FILE=/etc/infoq-scaffold-ai/deploy.env bash deploy/uninstall.sh
 ```
 
-删除语义：选择删除应用时，始终删除 `infoq-admin`、`nginx-web`、`${INFOQ_DEPLOY_ROOT}/server` 和 `${INFOQ_DEPLOY_ROOT}/nginx`，并只删除 `INFOQ_FRONTEND_TARGET` 对应的前端容器与目录；MySQL、Redis、MinIO 的选择是独立的；配置目录与空的 `${INFOQ_DEPLOY_ROOT}` 是独立确认项；脚本不删除 Docker 镜像。
+删除语义：选择删除应用时，始终删除 `infoq-admin`、`nginx-web`、`${INFOQ_DEPLOY_ROOT}/server` 和 `${INFOQ_DEPLOY_ROOT}/nginx`，并只删除 `INFOQ_FRONTEND_TARGET` 对应的前端容器与目录；MySQL、Redis、MinIO 的选择是独立的；配置目录与空的 `${INFOQ_DEPLOY_ROOT}` 是独立确认项；脚本不删除 Docker 镜像。选择容器/数据时 dry-run 也要求 Docker 可达；任何删除前批量核验全部所选容器的 Compose project/service 标签和部署挂载、默认网络标签，查询失败或归属不符即停止，按核验 ID 删除。容器缺失时，残留服务目录必须有匹配 project 的 `.infoq-deploy-owner`，否则停止；helper 只标记新建目录，旧孤立数据必须由运维独立核验。执行期间禁止并发重建/替换本栈资源。
 
 ## 8. 部署后 smoke 验证
 
@@ -602,6 +616,6 @@ Docker credential helper 排查见第 2.2 节：macOS Colima 环境如果曾安�
 
 `deploy/docker/mqtt/run-mqtt-it.sh` 和 `deploy/docker/elasticsearch/run-elasticsearch-it.sh` 是 WSL2 Debian Docker CE 专项集成测试 runner，支持 `prepare [run-id]`、`config|verify|status|stop <run-id>`；`generate-certificates.sh`、`prepare-run.sh` 和 `init-*.sh` 是其工具镜像内部入口，不是生产初始化脚本。测试证书仅有效两天；禁止将测试账户、ACL、truststore 或 CA 导入生产。
 
-runner 默认 Maven 缓存 `/mnt/c/DevTools/repo`，可用 `MIDDLEWARE_MAVEN_REPO` 覆盖；只读缓存必须已经具备测试所需依赖。执行所有阶段前确认 WSL2 Debian Docker、独立 project、固定测试端口 MQTT `18883` / ES `19200` 和本轮证据目录。必须为每轮设置专用且可挂载的 `INFOQ_DEPLOY_ROOT`：ES IT 使用其 `elasticsearch/data/`，**不按 run-id 隔离数据**，不能复用生产根目录或已有 ES 数据。MQTT 数据按 run-id 隔离。仓库位于 DrvFS 时另选 WSL Linux 文件系统临时根并记录外部工具要求。
+runner 默认 Maven 缓存 `/mnt/c/DevTools/repo`，可用 `MIDDLEWARE_MAVEN_REPO` 覆盖；只读缓存必须已经具备测试所需依赖。执行所有阶段前确认 WSL2 Debian Docker、独立 project、固定测试端口 MQTT `18883` / ES `19200` 和本轮证据目录。必须设置专用且可挂载的 `INFOQ_DEPLOY_ROOT`：ES IT 数据在 `elasticsearch-it/<run-id>/data/`，MQTT 数据/配置在 `mqtt-it/<run-id>/{data,config}/`，不使用生产数据路径。run-id 仅接受 1–48 位小写字母、数字和 `-`，首位为字母或数字；拒绝路径穿越/符号链接、旧版或不匹配的运行环境文件。继承的生产同名环境变量会在 Compose 子进程中清除，以受控本轮 env 为准。渲染失败仍脱敏并保留非零退出码，证据默认 `0600`、run 目录 `0700`。已有测试数据或秘密目录不可覆盖，必须换新 run-id；旧版共用 ES 数据由运维保留并单独处理，不迁移或自动删除。仓库位于 DrvFS 时另选 WSL Linux 文件系统临时根并记录外部工具要求。
 
 `verify` 会启动节点、创建测试账号/规则并执行 Maven 测试；ES 还会停止测试节点验证不可用场景。失败或中断不会自动执行 `stop`，必须按相同 root/run-id 显式停止本轮自有资源。`stop` 使用 Compose `down --remove-orphans`，保留 bind 数据和秘密文件；清理数据另需确认。证据在 `tmp/mqtt-wsl2/<run-id>/` 或 `tmp/elasticsearch-wsl2/<run-id>/`。这些步骤未运行时应明确标为运行态未验证。

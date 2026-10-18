@@ -58,7 +58,7 @@
 
 从仓库根目录执行 `pnpm --dir frontend-vue install`、`pnpm --dir frontend-vue run dev`；Node 使用 `24.18.0`，pnpm 使用根 `packageManager` 固定版本。开发服务默认端口 `80`、代理后端 `8080`；端口覆盖与测试命令见 [本层规约](./AGENTS.md) 和 [测试政策](../docs/TESTING.md)。
 
-`bin/*.bat` 是遗留 Yarn 包装脚本，尚未与当前 pnpm 基线同步，不作为受支持的安装、开发或构建入口。Windows 同样使用上面的 pnpm 命令；生产构建使用 `pnpm --dir frontend-vue run build:prod`，先准备下述 RSA 配置。本次仅静态核查这些遗留入口，未在 Windows 执行。
+Windows 可直接使用上面的 pnpm 命令。`bin/package.bat`、`bin/run-web.bat`、`bin/build.bat` 分别包装冻结 lockfile 安装、开发服务和生产构建，会切换到工作区并保留 pnpm 退出码；先安装基线 Node/pnpm，构建前准备下述 RSA 配置。本轮静态核对了这些批处理入口，尚未在 Windows 实机执行。
 
 `VITE_APP_ENCRYPT=true` 时，dev/build 进程必须取得与目标后端对应的 `VITE_APP_RSA_PUBLIC_KEY` / `VITE_APP_RSA_PRIVATE_KEY`。浏览器中的私钥不能保护服务端秘密，生产仍须 HTTPS 与受控凭据。构建前执行 `node tools/validate_utf8.mjs`。
 

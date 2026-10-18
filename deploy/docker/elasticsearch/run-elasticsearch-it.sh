@@ -1,11 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
+umask 077
 
 command="${1:-}"
 run_id="${2:-}"
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repository_root="$(cd "${script_dir}/../../.." && pwd)"
+. "${repository_root}/deploy/bin/deploy-paths.sh"
 state_root="${INFOQ_DEPLOY_ROOT:-/infoq}"
+state_root="${state_root%/}"
 maven_repo="${MIDDLEWARE_MAVEN_REPO:-/mnt/c/DevTools/repo}"
 
 usage() {
@@ -19,31 +22,71 @@ require_wsl_docker() {
   docker compose version >/dev/null
 }
 
+validate_run_paths() {
+  [[ "${run_id}" =~ ^[a-z0-9][a-z0-9-]{0,47}$ ]] || { echo "Invalid run-id: use 1-48 lowercase letters, digits or hyphens, beginning with a letter/digit" >&2; exit 64; }
+  deploy_assert_safe_path "${state_root}" || exit 64
+  case "${state_root}${maven_repo}" in
+    *'$'*|*'#'*|*$'\n'*|*$'\r'*) echo "IT paths must not contain dotenv expressions, comments or line breaks" >&2; exit 64 ;;
+  esac
+  data_dir="${state_root}/elasticsearch-it/${run_id}/data"
+  deploy_assert_safe_path "${data_dir}" || exit 64
+}
+
 resolve_paths() {
   [ -n "${run_id}" ] || usage
+  validate_run_paths
   secret_dir="${state_root}/elasticsearch-it/secrets/${run_id}"
   env_file="${secret_dir}/compose.env"
   evidence_dir="${repository_root}/tmp/elasticsearch-wsl2/${run_id}"
   [ -f "${env_file}" ] || { echo "Unknown Elasticsearch run: ${run_id}" >&2; exit 66; }
+  deploy_assert_safe_path "${secret_dir}" || exit 64
+  deploy_assert_file_target "${env_file}" || exit 64
+  grep -Fxq "MIDDLEWARE_RUN_ID=${run_id}" "${env_file}" &&
+    grep -Fxq "MIDDLEWARE_SECRET_DIR=${secret_dir}" "${env_file}" &&
+    grep -Fxq "MIDDLEWARE_ES_DATA_DIR=${data_dir}" "${env_file}" || {
+      echo "Elasticsearch run env does not match its isolated paths; prepare a new run (legacy shared data must be preserved)" >&2; exit 78;
+    }
 }
 
-compose() {
+compose() (
+  local key value
+  while IFS='=' read -r key value; do
+    [[ "${key}" =~ ^(MIDDLEWARE_|ES_|MYSQL_|REDIS_|MINIO_|INFOQ_|SECURITY_)[A-Z0-9_]+$ ]] || { echo "Invalid run env key" >&2; exit 64; }
+    unset "${key}"
+  done < "${env_file}"
   docker compose --env-file "${env_file}" -p "infoq-elasticsearch-it-${run_id}" \
     -f "${repository_root}/deploy/docker/docker-compose.yml" \
     -f "${repository_root}/deploy/docker/docker-compose.elasticsearch-it.yml" "$@"
-}
+)
 
 redact() {
   local file="$1"
-  local value
-  cp "${file}" "${file}.redacted"
-  while IFS='=' read -r key value; do
-    case "${key}" in
-      *PASSWORD*|*COOKIE*|SECURITY_TOKEN_SECRET)
-        [ -n "${value}" ] && sed -i "s/${value}/<redacted>/g" "${file}.redacted"
-        ;;
-    esac
-  done < "${env_file}"
+  awk -v env_file="${env_file}" '
+    BEGIN {
+      while ((getline line < env_file) > 0) {
+        separator = index(line, "=")
+        key = substr(line, 1, separator - 1)
+        value = substr(line, separator + 1)
+        if (key ~ /PASSWORD|COOKIE/ || key == "SECURITY_TOKEN_SECRET") {
+          if (length(value)) secrets[++count] = value
+        }
+      }
+      close(env_file)
+    }
+    {
+      line = $0
+      for (i = 1; i <= count; i++) {
+        remaining = line
+        line = ""
+        while ((position = index(remaining, secrets[i])) > 0) {
+          line = line substr(remaining, 1, position - 1) "<redacted>"
+          remaining = substr(remaining, position + length(secrets[i]))
+        }
+        line = line remaining
+      }
+      print line
+    }
+  ' "${file}" > "${file}.redacted"
   mv "${file}.redacted" "${file}"
 }
 
@@ -98,8 +141,10 @@ capture_service_logs() {
 
 render_config() {
   local output="${evidence_dir}/compose-elasticsearch.yaml"
-  compose config > "${output}"
+  local status=0
+  compose config > "${output}" || status=$?
   redact "${output}"
+  return "${status}"
 }
 
 copy_surefire_reports() {
@@ -113,16 +158,19 @@ copy_surefire_reports() {
 }
 
 prepare() {
-  require_wsl_docker
   local created_run_id="${run_id:-$(date -u +%Y%m%d%H%M%S)-$(od -An -N4 -tx1 /dev/urandom | tr -d ' \n')}"
   run_id="${created_run_id}"
+  validate_run_paths
+  require_wsl_docker
   secret_dir="${state_root}/elasticsearch-it/secrets/${run_id}"
   evidence_dir="${repository_root}/tmp/elasticsearch-wsl2/${run_id}"
   [ ! -e "${secret_dir}" ] || { echo "Run already exists: ${run_id}" >&2; exit 73; }
+  [ ! -e "${state_root}/elasticsearch-it/${run_id}" ] || { echo "Run data already exists: ${run_id}; use a new run-id" >&2; exit 73; }
   [ -d "${maven_repo}" ] || { echo "Maven repository is unavailable: ${maven_repo}" >&2; exit 78; }
-  mkdir -p "${secret_dir}" "${evidence_dir}" "${state_root}/elasticsearch/data" \
+  deploy_assert_safe_path "${secret_dir}"
+  mkdir -p "${secret_dir}" "${evidence_dir}" "${data_dir}" \
     "${state_root}/server/temp" /tmp/infoq-deploy
-  chmod 0700 "${secret_dir}"
+  chmod 0700 "${secret_dir}" "${evidence_dir}"
   docker build -f "${repository_root}/deploy/docker/elasticsearch/Dockerfile" \
     -t infoq/elasticsearch-tools:2.1.8 "${repository_root}/deploy/docker/elasticsearch" \
     > "${evidence_dir}/elasticsearch-tools-build.log" 2>&1
@@ -130,6 +178,7 @@ prepare() {
     -e "MIDDLEWARE_RUN_ID=${run_id}" \
     -e "MIDDLEWARE_SECRET_DIR=${secret_dir}" \
     -e "MIDDLEWARE_MAVEN_REPO=${maven_repo}" \
+    -e "MIDDLEWARE_ES_DATA_DIR=${data_dir}" \
     -e "INFOQ_DEPLOY_ROOT=${state_root}" \
     -v "${secret_dir}:/run/secrets:rw" \
     infoq/elasticsearch-tools:2.1.8 /opt/infoq-elasticsearch/prepare-run.sh \
@@ -139,6 +188,7 @@ prepare() {
   echo "${run_id}"
 }
 
+(( $# <= 2 )) || usage
 case "${command}" in
   prepare)
     prepare
@@ -146,12 +196,14 @@ case "${command}" in
   config)
     resolve_paths
     mkdir -p "${evidence_dir}"
+    chmod 0700 "${evidence_dir}"
     render_config
     echo "Elasticsearch compose config passed"
     ;;
   verify)
     resolve_paths
     mkdir -p "${evidence_dir}"
+    chmod 0700 "${evidence_dir}"
     render_config
     compose up -d es-security-init > "${evidence_dir}/elasticsearch-up.log" 2>&1
     if ! wait_for_one_shot es-security-init; then

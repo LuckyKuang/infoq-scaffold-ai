@@ -33,7 +33,7 @@
 
 - 数据层：`infoq-core-data` 的 Entity、Bo、Vo、Mapper、XML
 - 公共层：`infoq-core-common` 的异常、工具、DTO、服务契约
-- 插件层：`oss`、`security`、`web`、`doc`、`encrypt`、`sse`、`push`、`quartz`、`mail`、`websocket`、`mqtt`、`elasticsearch`
+- 插件层：`oss`、`security`、`oauth`、`web`、`doc`、`encrypt`、`sse`、`push`、`quartz`、`mail`、`websocket`、`mqtt`、`elasticsearch`
 
 ## 6. 关键配置
 

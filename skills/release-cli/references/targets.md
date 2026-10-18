@@ -60,6 +60,8 @@ systemd 示例从受控 `EnvironmentFile` 读取实际 `DEPLOY_ID`，手动部�
 若这些引用与 `sql/` 下真实文件不一致，脚本会失败，并要求显式后续任务处理。
 所有替换与断言先在内存中校验，通过后才写入；dry-run 同样核验替换目标且不写入。实际写盘时的权限或 IO 失败仍可能造成部分更新，必须审查差异并仅恢复本次受管修改。
 
+一致性检查用 `node tools/check_release_version.mjs`；指定 `--tag v<x.y.z>` 或 `--expect <x.y.z>` 可要求候选版本。二者同时给出时必须一致，重复选项、空值与额外 `=` 内容不接受。`node tools/test_check_release_version.mjs` 在副本中验证这些失败语义与13来源一致性，不修改真实版本字段。
+
 ## 非目标
 
 - 不重命名 `sql/infoq_scaffold_*.sql`

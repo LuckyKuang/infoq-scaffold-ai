@@ -97,9 +97,9 @@ Apple 与 WSL2/Linux 的运行态编排入口是 `node skills/deploy-cli/scripts
 
 以下是当前实现事实，不代表已经修复或通过生产验收：
 
-- Docker 后端/前端 helper 对运行目录执行 `chmod 777`，Redis 含密码配置设置为 `644`；`prepare/start/deploy` 会再次应用相关权限。生产必须先完成 UID/GID、目录和秘密读取权限治理，不能用一次手工收紧权限掩盖后续覆盖。
+- helper 创建缺失目录为 `0755`，保留已有 owner/权限，拒绝 other-writable 目录与符号链接，不递归改业务数据。后端外置配置为 `0600`；Redis 配置不落密码、`0644` 只读挂载，密码通过 Compose argv/env 注入。旧版宽权限目录需管理员按镜像 UID/GID 迁移，并在目标运行时验证数据/日志写入；隔离文件测试不证明真实镜像用户兼容。
 - Compose 默认把数据库、Redis、MinIO、后端和前端直连端口发布到所有网卡；默认网关仅监听 HTTP，映射 `443` 或设置 HTTPS 公共地址不会启用 TLS。必须先收紧网络并验证实际 TLS 配置，且防止 helper 重写配置。
 - `infoq.sh` 使用浮动 `minio/mc:latest` 初始化 bucket，并执行 `mc anonymous set download`。业务文件不能默认公开；必须评审 bucket 访问策略、固定实际辅助镜像并验证上传/下载授权后上线。
-- Compose 使用固定通用容器名；卸载按名字删除，不自动核验 ownership 标签。部署、停止、卸载前必须人工核对实际容器和挂载属于本项目；同名冲突即停止，不得误删其他项目。
+- Compose 使用固定通用容器名；卸载已在任何删除前批量核验所选容器的 project/service 标签及部署挂载、默认网络标签，并按已核验 ID 删除。Docker 查询失败或归属不一致时明确停止。容器缺失的残留服务目录必须有匹配 project 的 `.infoq-deploy-owner`；helper 只为新建目录写标记，不自动认领旧孤立数据。部署与停止仍需人工确认归属；执行期间禁止并发替换资源或修改挂载，生产仍需目标环境归属演练。
 - Apple 仅为本机后端验证，不替换基线管理员/RSA、不提供 MinIO 或自动重启。不能把 Apple smoke 通过作为生产凭据或完整栈验收。
 - healthcheck 与 smoke 不创建外部告警。上线前需指定日志采集、轮转/保留、磁盘/备份/依赖/HTTP 失败告警及接收人，并留存告警与恢复演练证据。容量、真实跨平台、备份恢复和故障域可用性均需目标环境验证。

@@ -5,6 +5,9 @@ set -euo pipefail
 : "${MIDDLEWARE_SECRET_DIR:?MIDDLEWARE_SECRET_DIR is required}"
 : "${MIDDLEWARE_MAVEN_REPO:?MIDDLEWARE_MAVEN_REPO is required}"
 : "${INFOQ_DEPLOY_ROOT:?INFOQ_DEPLOY_ROOT is required}"
+: "${MIDDLEWARE_ES_DATA_DIR:?MIDDLEWARE_ES_DATA_DIR is required}"
+[[ "${MIDDLEWARE_RUN_ID}" =~ ^[a-z0-9][a-z0-9-]{0,47}$ ]] || { echo "Invalid MIDDLEWARE_RUN_ID" >&2; exit 64; }
+[[ "${MIDDLEWARE_ES_DATA_DIR}" == "${INFOQ_DEPLOY_ROOT}/elasticsearch-it/${MIDDLEWARE_RUN_ID}/data" ]] || { echo "Elasticsearch data must be isolated by run" >&2; exit 64; }
 
 secret() { openssl rand -hex 24; }
 
@@ -27,6 +30,7 @@ MIDDLEWARE_PROJECT_NAME=infoq-elasticsearch-it-${MIDDLEWARE_RUN_ID}
 MIDDLEWARE_SECRET_DIR=${MIDDLEWARE_SECRET_DIR}
 MIDDLEWARE_MAVEN_REPO=${MIDDLEWARE_MAVEN_REPO}
 INFOQ_DEPLOY_ROOT=${INFOQ_DEPLOY_ROOT}
+MIDDLEWARE_ES_DATA_DIR=${MIDDLEWARE_ES_DATA_DIR}
 MIDDLEWARE_TRUSTSTORE_PASSWORD=${truststore_password}
 ES_BOOTSTRAP_PASSWORD=${es_bootstrap_password}
 ES_IT_USERNAME=infoq_it_${MIDDLEWARE_RUN_ID//-/_}

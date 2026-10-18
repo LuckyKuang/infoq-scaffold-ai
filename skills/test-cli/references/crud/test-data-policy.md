@@ -4,11 +4,15 @@
 
 所有自动化写入数据必须使用 `e2e_` 前缀。
 
-建议格式：
+CRUD runner 使用的名称格式：
 
 ```text
-e2e_<module>_<timestamp>_<short-random>
+e2e_<client>_<stage>_<module>_<random>
 ```
+
+`client` 区分 React/Vue，`stage` 区分新增/编辑；代码型唯一键可省略阶段。随机后缀保留完整 10 位十六进制（40-bit），长度约束只截断可读前缀，不能截掉随机量。最短用户名同样遵守此规则。
+
+写入前对所选模块全部精确键做 DB preflight，冲突或查询失败立即停止，不删除既有键；本次 run 也不承担前次 fixture 的自动清理。随机后缀降低冲突概率，preflight 不是数据库唯一约束或并发锁的替代。
 
 ## 数据来源
 

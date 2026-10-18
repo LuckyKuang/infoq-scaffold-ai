@@ -25,6 +25,15 @@ const BOOLEAN_FLAGS = new Set([
 ]);
 
 const VALUE_FLAGS = new Set(['--base-url', '--timeout-ms', '--service']);
+const COMMAND_OPTIONS = {
+  help: [], init: [], build: ['from-existing-jar'],
+  up: ['recreate', 'no-build', 'execute', 'timeout-ms'], down: ['execute'], restart: [],
+  status: ['json', 'base-url', 'timeout-ms'], smoke: ['json', 'base-url', 'timeout-ms'],
+  logs: ['service', 'follow', 'execute'], destroy: ['volumes', 'yes'], pull: [],
+};
+const activeChildren = new Set();
+const lifecycleAbort = new AbortController();
+let interruptionSignal = null;
 
 export function resolveRuntime(platform = process.platform) {
   if (platform === 'darwin') return 'apple';
@@ -33,7 +42,7 @@ export function resolveRuntime(platform = process.platform) {
   throw new Error(`Unsupported platform: ${platform}. Use macOS Apple container, WSL2 Docker, or Linux Docker.`);
 }
 
-export function parseEnvFile(text) {
+export function parseEnvFile(text, {literal = false} = {}) {
   const result = {};
   const lines = text.split(/\r?\n/u);
   for (const [index, rawLine] of lines.entries()) {
@@ -48,8 +57,36 @@ export function parseEnvFile(text) {
     if (!/^[A-Za-z_][A-Za-z0-9_]*$/u.test(key)) {
       throw new Error(`Invalid env key: ${key}`);
     }
-    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
-      value = value.slice(1, -1);
+    if (literal) {
+      if (rawLine.slice(0, rawLine.indexOf('=')) !== key) throw new Error(`Invalid literal env assignment on line ${index + 1}`);
+      value = rawLine.slice(rawLine.indexOf('=') + 1).replace(/\r$/u, '');
+    }
+    if (!literal) {
+      // Decode the installer's shell assignments without executing shell expressions.
+      let decoded = '';
+      let quote = null;
+      for (let cursor = 0; cursor < value.length; cursor += 1) {
+        const char = value[cursor];
+        if (quote === "'") {
+          if (char === "'") quote = null;
+          else decoded += char;
+        } else if (char === '"' || char === "'") {
+          if (quote === char) quote = null;
+          else if (quote === null) quote = char;
+          else decoded += char;
+        } else if (char === '\\') {
+          const next = value[++cursor];
+          if (next === undefined) throw new Error(`Invalid env quoting on line ${index + 1}`);
+          decoded += quote === '"' && !['$', '`', '"', '\\'].includes(next) ? `\\${next}` : next;
+        } else {
+          if (char === '$' || char === '`' || (quote === null && /[\s;&|<>()]/u.test(char))) {
+            throw new Error(`Unsupported shell expression on env line ${index + 1}; use literal installer assignments`);
+          }
+          decoded += char;
+        }
+      }
+      if (quote !== null) throw new Error(`Invalid env quoting on line ${index + 1}`);
+      value = decoded;
     }
     result[key] = value;
   }
@@ -61,16 +98,16 @@ export function readDeployEnv(runtime = resolveRuntime(), environment = process.
     ? deployEnvFile
     : '/etc/infoq-scaffold-ai/deploy.env');
   if (!fs.existsSync(envFile)) {
-    if (environment.INFOQ_ENV_FILE && !allowMissing) throw new Error(`Deployment env file does not exist: ${envFile}`);
+    if (!allowMissing) throw new Error(`Deployment env file does not exist: ${envFile}`);
     return {...environment};
   }
   // Match the shell helpers: sourced file values override inherited variables.
-  return {...environment, ...parseEnvFile(fs.readFileSync(envFile, 'utf8'))};
+  return {...environment, ...parseEnvFile(fs.readFileSync(envFile, 'utf8'), {literal: runtime === 'apple'})};
 }
 
 export function parseArgs(argv) {
   const args = [...argv];
-  if (args.length === 0 || args[0] === '--help' || args[0] === '-h') {
+  if (args.length === 0 || (args.length === 1 && ['--help', '-h'].includes(args[0]))) {
     return {command: 'help', flags: {}, values: {}};
   }
   const command = args.shift();
@@ -86,29 +123,40 @@ export function parseArgs(argv) {
     }
     if (VALUE_FLAGS.has(token)) {
       const value = args.shift();
-      if (value === undefined || value.startsWith('--')) {
+      if (value === undefined || value === '' || value.startsWith('-')) {
         throw new Error(`Missing value for ${token}`);
       }
+      if (Object.hasOwn(values, token.slice(2))) throw new Error(`Duplicate option: ${token}`);
       values[token.slice(2)] = value;
       continue;
     }
     if (token.startsWith('--') && token.includes('=')) {
-      const [name, value] = token.split('=', 2);
+      const separator = token.indexOf('=');
+      const name = token.slice(0, separator);
+      const value = token.slice(separator + 1);
       if (!VALUE_FLAGS.has(name)) throw new Error(`Unknown option: ${name}`);
+      if (!value) throw new Error(`Missing value for ${name}`);
+      if (Object.hasOwn(values, name.slice(2))) throw new Error(`Duplicate option: ${name}`);
       values[name.slice(2)] = value;
       continue;
     }
     if (BOOLEAN_FLAGS.has(token)) {
+      if (flags[token.replace(/^--?/u, '')]) throw new Error(`Duplicate option: ${token}`);
       flags[token.replace(/^--?/u, '')] = true;
       continue;
     }
     throw new Error(`Unknown argument: ${token}`);
   }
+  for (const option of [...Object.keys(flags), ...Object.keys(values)]) {
+    if (!['help', 'h'].includes(option) && !COMMAND_OPTIONS[command].includes(option)) {
+      throw new Error(`Option --${option} is not supported for ${command}`);
+    }
+  }
   return {command, flags, values};
 }
 
 export function parsePort(value, fallback) {
-  if (value === undefined || value === '') return fallback;
+  if (value === undefined) return fallback;
   const port = /^\d+$/u.test(String(value)) ? Number(value) : NaN;
   if (Number.isInteger(port) && port >= 1 && port <= 65535) return port;
   throw new Error(`Invalid TCP port: ${value}`);
@@ -179,13 +227,20 @@ function appendLog(chunk) {
   fs.appendFileSync(logFile, chunk, 'utf8');
 }
 
+function trackChild(child) {
+  activeChildren.add(child);
+  child.once('close', () => activeChildren.delete(child));
+}
+
 function runInherited(command, args, options = {}) {
   return new Promise((resolve, reject) => {
     const child = spawn(command, args, {
       cwd: options.cwd ?? repoRoot,
       env: {...process.env, ...options.env},
       stdio: ['ignore', 'pipe', 'pipe'],
+      detached: process.platform !== 'win32',
     });
+    trackChild(child);
     const pipe = (stream, target) => {
       stream.setEncoding('utf8');
       stream.on('data', (chunk) => {
@@ -206,7 +261,9 @@ function runCaptured(command, args, options = {}) {
       cwd: options.cwd ?? repoRoot,
       env: {...process.env, ...options.env},
       stdio: ['ignore', 'pipe', 'pipe'],
+      detached: process.platform !== 'win32',
     });
+    trackChild(child);
     let stdout = '';
     let stderr = '';
     child.stdout.setEncoding('utf8');
@@ -223,9 +280,11 @@ function runCaptured(command, args, options = {}) {
 }
 
 async function runOrThrow(command, args, options) {
+  if (interruptionSignal) throw new Error(`Interrupted by ${interruptionSignal}`);
   const result = options?.capture
     ? await runCaptured(command, args, options)
     : await runInherited(command, args, options);
+  if (interruptionSignal) throw new Error(`Interrupted by ${interruptionSignal}`);
   if (result.code !== 0) {
     throw new Error(`${command} ${args.join(' ')} failed with exit code ${result.code}`);
   }
@@ -237,10 +296,10 @@ async function probe(check, timeoutMs) {
   try {
     const response = await fetch(check.url, {
       redirect: 'manual',
-      signal: AbortSignal.timeout(timeoutMs),
+      signal: AbortSignal.any([AbortSignal.timeout(timeoutMs), lifecycleAbort.signal]),
       headers: {'cache-control': 'no-cache'},
     });
-    const ok = response.status >= 200 && response.status < 300;
+    const ok = response.status === 200;
     return {...check, ok, status: response.status, durationMs: Date.now() - startedAt};
   } catch (error) {
     return {...check, ok: false, status: null, durationMs: Date.now() - startedAt, error: error.message};
@@ -343,11 +402,22 @@ async function main() {
     return;
   }
   const runtime = resolveRuntime();
+  if (runtime === 'apple' && flags.execute) throw new Error('--execute is only supported for Docker lifecycle commands');
+  if (runtime !== 'apple' && (flags.recreate || flags['no-build'] || flags['from-existing-jar'])) {
+    throw new Error('Apple build/recreate options are not supported by the Docker installer');
+  }
   ensureStateDir();
-  const env = readDeployEnv(runtime, process.env, command === 'init' || command === 'up');
-  const port = runtime === 'apple'
-    ? parsePort(env.APPLE_CONTAINER_HOST_PORT, DEFAULT_APPLE_PORT)
-    : DEFAULT_DOCKER_BACKEND_PORT;
+  let env;
+  let port;
+  try {
+    env = readDeployEnv(runtime, process.env, command === 'init' || command === 'up');
+    port = runtime === 'apple'
+      ? parsePort(env.APPLE_CONTAINER_HOST_PORT, DEFAULT_APPLE_PORT)
+      : DEFAULT_DOCKER_BACKEND_PORT;
+  } catch (error) {
+    writeState({command, status: 'failed', pid: process.pid, runtime, port: null, log: relativeLogPath(), error: error.message});
+    throw error;
+  }
 
   const mutating = new Set(['init', 'build', 'up', 'down', 'restart', 'destroy', 'pull']);
   writeState({
@@ -358,13 +428,32 @@ async function main() {
     runtime,
     log: relativeLogPath(),
     startedAt: new Date().toISOString(),
+    signal: null,
+    error: null,
+    dryRun: false,
   });
 
   let interrupted = false;
   const onSignal = (signal, code) => {
     interrupted = true;
+    interruptionSignal = signal;
+    lifecycleAbort.abort(new Error(`Interrupted by ${signal}`));
     writeState({status: 'interrupted', signal});
-    process.exit(code);
+    process.exitCode = code;
+    for (const child of activeChildren) {
+      const stop = (nextSignal) => {
+        try {
+          if (process.platform === 'win32') child.kill(nextSignal);
+          else process.kill(-child.pid, nextSignal);
+        } catch (error) {
+          if (error.code !== 'ESRCH') console.error(`deploy-cli: could not stop owned child ${child.pid}: ${error.message}`);
+        }
+      };
+      stop(signal);
+      const deadline = setTimeout(() => stop('SIGKILL'), 5000);
+      deadline.unref();
+      child.once('close', () => clearTimeout(deadline));
+    }
   };
   process.once('SIGINT', () => onSignal('SIGINT', 130));
   process.once('SIGTERM', () => onSignal('SIGTERM', 143));
@@ -375,6 +464,7 @@ async function main() {
         baseUrl: values['base-url'],
         timeoutMs: values['timeout-ms'],
       });
+      if (interrupted) return;
       if (flags.json) console.log(JSON.stringify(result, null, 2));
       else printSmoke(result);
       writeState({status: result.passed ? 'passed' : 'failed', port: result.port});
@@ -393,6 +483,7 @@ async function main() {
         baseUrl: values['base-url'],
         timeoutMs: values['timeout-ms'],
       });
+      if (interrupted) return;
       if (flags.json) {
         console.log(JSON.stringify({runtime, port: result.port, checks: result.checks, passed: result.passed}, null, 2));
       } else {
@@ -427,6 +518,7 @@ async function main() {
       if (command === 'up') {
         await runOrThrow('bash', [path.join(repoRoot, 'deploy', 'install.sh')], {env: {INFOQ_PRINT_SECRETS: '0'}});
         const result = await smoke(runtime, {timeoutMs: values['timeout-ms']});
+        if (interrupted) return;
         printSmoke(result);
         writeState({status: result.passed ? 'passed' : 'failed', port: result.port});
         if (!result.passed) process.exitCode = 1;
@@ -460,6 +552,7 @@ async function main() {
       }
       await runOrThrow('bash', [appleScript, ...appleArgs('up', flags, values)]);
       const result = await smoke(runtime, {timeoutMs: values['timeout-ms']});
+      if (interrupted) return;
       printSmoke(result);
       writeState({status: result.passed ? 'passed' : 'failed', port: result.port});
       if (!result.passed) process.exitCode = 1;
@@ -496,21 +589,23 @@ Commands:
   help                 Show this help
 
 Options:
-  --json               Emit machine-readable output where supported
-  --recreate           Recreate owned containers (up)
-  --no-build           Skip the image build (up)
+  --json               Emit machine-readable output (status, smoke)
+  --recreate           Recreate owned containers (Apple up)
+  --no-build           Skip the image build (Apple up)
   --from-existing-jar  Reuse backend/infoq-admin/target/infoq-admin.jar (build)
-  --execute            Perform the Docker lifecycle mutation (WSL2/Linux)
+  --execute            Perform Docker up/down/logs (WSL2/Linux only)
   --volumes            Delete owned volumes (destroy; requires --yes)
   --yes                Confirm destroy
   --follow             Follow logs
   --service <name>     Service for logs
-  --base-url <url>     Override Apple API / Docker gateway URL (Docker API stays local :9090)
-  --timeout-ms <n>     Per-probe timeout (default 10000)
+  --base-url <url>     Override Apple API / Docker gateway (status, smoke; Docker API stays :9090)
+  --timeout-ms <n>     Per-probe timeout (up, status, smoke; default 10000)
 
 State: tmp/deploy-cli/state.json
 Log:   tmp/deploy-cli/deploy.log
 Env:   INFOQ_ENV_FILE; default deploy/.env (Apple), /etc/infoq-scaffold-ai/deploy.env (Docker)
+Apple env values are literal KEY=value; Docker env accepts installer shell quoting without evaluation.
+SIGINT/SIGTERM closes owned command process groups and records interrupted; containers remain managed separately.
 macOS wrapper uses Apple; use deploy/install.sh and deploy/VERIFICATION.md for Colima.
 Successful up keeps the deployment running; verification tasks must explicitly down their owned stack.`);
 }

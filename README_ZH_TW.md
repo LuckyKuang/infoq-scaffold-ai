@@ -99,6 +99,7 @@ pnpm run dev
 node skills/test-cli/scripts/run_admin_e2e.mjs --client vue --route-limit 1
 node skills/test-cli/scripts/captcha_login.mjs --backend-url http://127.0.0.1:8080 --print-token
 
+# 先準備所選執行環境的設定檔，見 deploy/README.md。
 # 部署狀態：macOS 選擇 Apple，Linux/WSL2 選擇 Docker
 node skills/deploy-cli/scripts/deploy_cli.mjs status
 ```

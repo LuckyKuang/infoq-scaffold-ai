@@ -45,7 +45,7 @@ tmp/data-ops/
 
 ## SQL migration 规则
 
-- 冻结初始化基线是 `sql/` 下唯一的 `infoq_scaffold_x.y.z.sql`（当前为 `sql/infoq_scaffold_3.0.0.sql`），永远不要修改。
+- 冻结初始化基线固定为 `sql/infoq_scaffold_3.0.0.sql`，永远不要修改，也不随应用版本升级改名或替换。
 - 新增、修改、删除表结构或初始化数据，只能新增 `sql/infoq_scaffold_update_YYYYMMDD.sql` 增量脚本。
 - 若误改初始化 SQL，必须立即回退该文件，并把变更迁移到当前日期增量脚本。
 - 增量脚本必须考虑幂等性、重复执行安全、回滚路径和与现有数据的兼容性。

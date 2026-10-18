@@ -2,6 +2,8 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=deploy-paths.sh
+. "${SCRIPT_DIR}/deploy-paths.sh"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 COMPOSE_FILE="${REPO_ROOT}/deploy/docker/docker-compose.yml"
 REDIS_CONF_SOURCE="${REPO_ROOT}/deploy/docker/redis/conf/redis.conf"
@@ -28,11 +30,13 @@ usage() {
   package      通过 Docker builder 执行后端 prod 打包并构建镜像
   build-image  仅构建 infoq-admin 镜像
   deploy       prepare + Docker 构建后端镜像 + 启动依赖服务 + 自动初始化数据库 + 启动 infoq-admin
-  start        启动现有 mysql、redis、minio、infoq-admin 容器
+  start        准备配置、启动依赖并同步 SQL/账号/OSS/bucket，再启动现有 infoq-admin
   stop         停止 mysql、redis、minio、infoq-admin
   restart      重启现有 infoq-admin 容器
   status       查看后端相关服务状态
   logs         查看服务日志，默认 infoq-admin，可选 mysql|redis|minio|infoq-admin
+
+旧版含 requirepass 的 Redis 配置仅在容器已匹配当前认证命令/归属/只读挂载时替换；迁移见 deploy/DOCKER.md。
 EOF
 }
 
@@ -199,7 +203,40 @@ resolve_deploy_root() {
   fi
 }
 
+assert_redis_auth_migration() {
+  local config="${DEPLOY_ROOT}/redis/conf/redis.conf"
+  local status=0
+  local actual expected
+  [[ -f "${config}" ]] || return 0
+  grep -qE '^[[:space:]]*requirepass[[:space:]]' "${config}" || status=$?
+  [[ "${status}" != 1 ]] || return 0
+  if [[ "${status}" != 0 ]]; then
+    echo "[backend] 无法读取现有 Redis 认证配置: ${config}" >&2
+    return 1
+  fi
+
+  # A legacy container must retain its password until its command has been recreated.
+  require_command docker
+  actual="$(docker container inspect redis --format '{{index .Config.Labels "com.docker.compose.project"}}
+{{index .Config.Labels "com.docker.compose.service"}}
+{{range .Mounts}}{{if eq .Destination "/redis/config"}}{{.Source}}|{{.RW}}{{end}}{{end}}
+{{range .Config.Cmd}}{{printf "%s\n" .}}{{end}}END' 2>/dev/null)" || {
+    echo "[backend] 旧 Redis 认证配置保留不变；请先按 deploy/DOCKER.md 重建 Redis 认证命令，再重新 prepare/deploy/start" >&2
+    return 1
+  }
+  printf -v expected '%s\nredis\n%s|false\nredis-server\n/redis/config/redis.conf\n--requirepass\n%s\nEND' \
+    "${INFOQ_COMPOSE_PROJECT_NAME:-${COMPOSE_PROJECT_NAME:-infoq-scaffold-ai}}" "${DEPLOY_ROOT}/redis/conf" "${REDIS_PASSWORD}"
+  if [[ "${actual}" != "${expected}" ]]; then
+    echo "[backend] 旧 Redis 认证配置保留不变；容器项目/挂载/认证命令尚未匹配当前 Compose，请按 deploy/DOCKER.md 重建 redis 后重试" >&2
+    return 1
+  fi
+}
+
 prepare_dirs() {
+  DEPLOY_ROOT="${DEPLOY_ROOT%/}"
+  require_env_vars REDIS_PASSWORD
+  deploy_assert_file_target "${DEPLOY_ROOT}/redis/conf/redis.conf"
+  assert_redis_auth_migration
   local dirs=(
     "${DEPLOY_ROOT}/mysql/data"
     "${DEPLOY_ROOT}/mysql/conf"
@@ -212,28 +249,32 @@ prepare_dirs() {
     "${DEPLOY_ROOT}/server/ip2region"
   )
 
+  local dir
+  prepare_deploy_dir "${DEPLOY_ROOT}"
+  for dir in mysql redis minio server; do
+    prepare_deploy_service_dir "${DEPLOY_ROOT}/${dir}"
+  done
   for dir in "${dirs[@]}"; do
-    mkdir -p "${dir}"
-    chmod 777 "${dir}" || true
+    prepare_deploy_dir "${dir}"
   done
 
-  require_env_vars REDIS_PASSWORD
-  awk -v password="${REDIS_PASSWORD}" '{ gsub(/__REDIS_PASSWORD__/, password); print }' "${REDIS_CONF_SOURCE}" > "${DEPLOY_ROOT}/redis/conf/redis.conf"
-  # The official Redis image runs as a non-root user, so strict host umask must not hide the config.
-  chmod 644 "${DEPLOY_ROOT}/redis/conf/redis.conf" || true
+  cp -f "${REDIS_CONF_SOURCE}" "${DEPLOY_ROOT}/redis/conf/redis.conf"
+  chmod 0644 "${DEPLOY_ROOT}/redis/conf/redis.conf"
 
   if [[ ! -f "${IP2REGION_V6_SOURCE}" ]]; then
     echo "[backend] 缺少 IPv6 地址库源文件: ${IP2REGION_V6_SOURCE}" >&2
     exit 1
   fi
   if [[ ! -f "${DEPLOY_ROOT}/server/ip2region/ip2region_v6.xdb" ]]; then
+    deploy_assert_file_target "${DEPLOY_ROOT}/server/ip2region/ip2region_v6.xdb"
     cp -f "${IP2REGION_V6_SOURCE}" "${DEPLOY_ROOT}/server/ip2region/ip2region_v6.xdb"
-    chmod 644 "${DEPLOY_ROOT}/server/ip2region/ip2region_v6.xdb" || true
+    chmod 644 "${DEPLOY_ROOT}/server/ip2region/ip2region_v6.xdb"
     echo "[backend] 已同步 ${DEPLOY_ROOT}/server/ip2region/ip2region_v6.xdb"
   else
     echo "[backend] 保留现有 ${DEPLOY_ROOT}/server/ip2region/ip2region_v6.xdb"
   fi
 
+  deploy_assert_file_target "${DEPLOY_ROOT}/server/config/application-prod.yml"
   if [[ ! -f "${DEPLOY_ROOT}/server/config/application-prod.yml" ]]; then
     cp -f "${SERVER_CONFIG_TEMPLATE}" "${DEPLOY_ROOT}/server/config/application-prod.yml"
     echo "[backend] 已初始化 ${DEPLOY_ROOT}/server/config/application-prod.yml"
@@ -243,6 +284,7 @@ prepare_dirs() {
   else
     echo "[backend] 保留现有 ${DEPLOY_ROOT}/server/config/application-prod.yml"
   fi
+  chmod 0600 "${DEPLOY_ROOT}/server/config/application-prod.yml"
 
   echo "[backend] 使用部署根目录: ${DEPLOY_ROOT}"
   echo "[backend] 目录和配置已同步完成"
@@ -270,6 +312,7 @@ validate_deploy_id() {
 
 persist_deploy_id() {
   local deploy_id_file="${DEPLOY_ROOT}/server/config/deploy-id"
+  deploy_assert_file_target "${deploy_id_file}"
   printf '%s\n' "${DEPLOY_ID}" > "${deploy_id_file}"
   echo "[backend] 当前部署批次 DEPLOY_ID=${DEPLOY_ID}"
 }

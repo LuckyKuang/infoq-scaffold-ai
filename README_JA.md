@@ -103,6 +103,7 @@ pnpm run dev
 node skills/test-cli/scripts/run_admin_e2e.mjs --client vue --route-limit 1
 node skills/test-cli/scripts/captcha_login.mjs --backend-url http://127.0.0.1:8080 --print-token
 
+# 先に対象ランタイムの環境ファイルを準備します。deploy/README.md を参照。
 # デプロイ状態：macOS は Apple、Linux/WSL2 は Docker を選択
 node skills/deploy-cli/scripts/deploy_cli.mjs status
 ```

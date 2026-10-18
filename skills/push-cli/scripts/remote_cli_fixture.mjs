@@ -6,7 +6,7 @@ import {pathToFileURL} from 'node:url';
 
 // 真实 Git 只连接 tmp/ 内的 bare origin；预加载器隔离所有 gh 调用并记录行为。
 export function createRemoteFixture(repoRoot, name) {
-  const auditDir = path.join(repoRoot, 'tmp', 'documentation-audit');
+  const auditDir = path.join(repoRoot, 'tmp', 'documentation-reaudit');
   fs.mkdirSync(auditDir, {recursive: true});
   const base = fs.mkdtempSync(path.join(auditDir, `${name}-`));
   const root = path.join(base, 'repo');
@@ -30,7 +30,7 @@ export function createRemoteFixture(repoRoot, name) {
   write('backend/pom.xml', '<project><revision>1.2.3</revision></project>\n');
   write('frontend-react/package.json', '{"version":"1.2.3"}\n');
   write('frontend-vue/package.json', '{"version":"1.2.3"}\n');
-  for (const rel of ['skills/push-cli/scripts/push_cli.mjs', 'skills/push-cli/scripts/push_matrix.mjs', 'skills/release-cli/scripts/release_cli.mjs', 'skills/release-cli/scripts/bump_version.mjs', 'tools/lib/skill_runtime.mjs']) {
+  for (const rel of ['skills/push-cli/scripts/push_cli.mjs', 'skills/push-cli/scripts/push_matrix.mjs', 'skills/push-cli/scripts/remote_target.mjs', 'skills/release-cli/scripts/release_cli.mjs', 'skills/release-cli/scripts/bump_version.mjs', 'tools/lib/skill_runtime.mjs']) {
     const target = path.join(root, rel);
     fs.mkdirSync(path.dirname(target), {recursive: true});
     fs.copyFileSync(path.join(repoRoot, rel), target);
@@ -47,10 +47,15 @@ export function createRemoteFixture(repoRoot, name) {
   git('push', '-u', 'origin', 'main');
   const head = git('rev-parse', 'HEAD');
   const state = {
+    remoteFetchUrls: 'https://github.com/LuckyKuang/infoq-scaffold-ai.git',
+    remotePushUrls: 'git@github.com:LuckyKuang/infoq-scaffold-ai.git',
     repo: {nameWithOwner: 'LuckyKuang/infoq-scaffold-ai', defaultBranchRef: {name: 'main'}, viewerPermission: 'WRITE'},
     pr: {number: 42, state: 'OPEN', isDraft: false, baseRefName: 'main', headRefOid: head, mergeable: 'MERGEABLE', statusCheckRollup: [{name: 'CI', status: 'COMPLETED', conclusion: 'SUCCESS'}], url: 'https://example.invalid/pr/42'},
     checks: [{name: 'CI', state: 'SUCCESS', bucket: 'pass'}],
     checksStatus: 0,
+    runLogStatus: 0,
+    runLogStdout: '',
+    runLogStderr: '',
     release: null,
     releasesError: ''
   };
@@ -65,8 +70,11 @@ cp.spawnSync = (command, args, options) => {
   if (command !== 'git' && command !== 'gh') return original(command, args, options);
   if (options?.cwd !== ${JSON.stringify(root)}) throw new Error('fixture escaped cwd');
   fs.appendFileSync(${JSON.stringify(callsFile)}, JSON.stringify({command, args}) + '\\n', 'utf8');
-  if (command === 'git') return original(command, args, options);
   const state = JSON.parse(fs.readFileSync(${JSON.stringify(stateFile)}, 'utf8'));
+  if (command === 'git') {
+    if (args[0] === 'remote' && args[1] === 'get-url') return {status: 0, stdout: args.includes('--push') ? state.remotePushUrls : state.remoteFetchUrls, stderr: ''};
+    return original(command, args, options);
+  }
   let value = ''; let status = 0; let stderr = '';
   if (args[0] === 'repo' && args[1] === 'view') value = state.repo;
   else if (args[0] === 'auth') value = '';
@@ -75,6 +83,7 @@ cp.spawnSync = (command, args, options) => {
   else if (args[0] === 'pr' && args[1] === 'checks') { value = state.checks; status = state.checksStatus; }
   else if (args[0] === 'pr' && args[1] === 'create') value = 'https://example.invalid/pr/42';
   else if (args[0] === 'pr' && args[1] === 'merge') value = '';
+  else if (args[0] === 'run' && args[1] === 'view') { value = state.runLogStdout; status = state.runLogStatus; stderr = state.runLogStderr; }
   else if (args[0] === 'release' && args[1] === 'view') {
     if (state.releasesError || !state.release) { status = 1; stderr = state.releasesError || 'release not found'; }
     else value = state.release;

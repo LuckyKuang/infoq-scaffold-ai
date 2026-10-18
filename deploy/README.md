@@ -148,6 +148,10 @@ ${INFOQ_DEPLOY_ROOT}/react/logs      # INFOQ_FRONTEND_TARGET=react 或 all
 
 部署账号需要对这些目录具备读写权限，尤其是后端日志目录、临时文件目录、IPv6 地址库目录、Nginx 静态资源目录和日志目录。
 
+后端与前端 helper 创建缺失目录时使用 `0755`，保留已有目录 owner/权限；遇到 other-writable 目录、非规范绝对路径或符号链接时明确停止，不递归修改业务数据。旧版 `777` 目录须由管理员先核实实际镜像 UID/GID、收紧权限并验证挂载写入，再重试。不要对整个部署根目录递归 chmod/chown。后端外置配置为 `0600`，当前后端镜像以 root 读取；改用非 root 镜像时须先评审读取权限。Redis `redis.conf` 不包含密码，权限 `0644`、只读挂载；密码通过 Compose argv/env 注入，仍须限制 Docker socket 与 env 文件访问。
+
+旧 Redis 配置仍含 `requirepass` 时，helper 会先核验已重建容器的归属、只读挂载及当前认证命令，不匹配或查询失败则保留旧配置并退出；升级步骤见 [DOCKER.md](DOCKER.md#71-首次部署后端)。不得先删认证配置再重启旧容器。
+
 ### 1.4 配置检查项
 
 后端重点检查：数据库地址/账号/密码、Redis 地址/端口/密码、`spring.servlet.multipart.location`、`security.token.secret`（推荐通过 `SECURITY_TOKEN_SECRET` 提供）、`api-decrypt` 公私钥、`DEPLOY_ID`、IPv6 地址库外置路径、邮件/OSS 等插件配置。
@@ -210,6 +214,8 @@ Uninstall（先预览，实际删除仍需逐项确认）：
 ```bash
 sudo bash deploy/uninstall.sh --dry-run
 ```
+
+选择删除容器/数据时，预览也要求 Docker 可达。脚本在任何删除前批量核验全部所选容器的 Compose project/service 标签、部署挂载及默认网络标签，按已核验容器 ID 删除；查询失败或归属不符即停止。仅在列表查询成功时才把缺失容器认定为不存在；残留目录还必须包含匹配 project 的 `.infoq-deploy-owner`。helper 只为新建服务目录写该标记，不自动认领旧数据；旧目录无容器可核验、也无标记时拒绝卸载，须由运维独立证明归属并评审清理。
 
 ## 3. Docker Compose
 

@@ -38,11 +38,11 @@ services:
     ports:
       - "6379:6379"
     volumes:
-      - ${INFOQ_DEPLOY_ROOT:-/infoq}/redis/conf:/redis/config:rw
+      - ${INFOQ_DEPLOY_ROOT:-/infoq}/redis/conf:/redis/config:ro
       - ${INFOQ_DEPLOY_ROOT:-/infoq}/redis/data:/redis/data:rw
       # redis image declares VOLUME /data; bind it to avoid anonymous volumes.
       - ${INFOQ_DEPLOY_ROOT:-/infoq}/redis/data:/data:rw
-    command: redis-server /redis/config/redis.conf
+    command: ["redis-server", "/redis/config/redis.conf", "--requirepass", "${REDIS_PASSWORD:?Set REDIS_PASSWORD before starting redis}"]
     healthcheck:
       test: ["CMD-SHELL", "redis-cli -a \"$${REDIS_PASSWORD}\" ping | grep -q '^PONG$'"]
       interval: 10s

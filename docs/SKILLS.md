@@ -104,6 +104,7 @@ node tools/openspec_check.mjs <change-id>
 - 修改 `tools/lib/*` 的 CLI 参数、默认端口、日志落点或 env 语义时，必须同步检查对应 skill 的 `SKILL.md`、`references/*.md`、`README.md` 与相关 `docs/*.md`。
 - `tools/lib` 只沉淀跨 skill 复用的运行时能力，不把单个 skill 的私有流程提前抽成共享层。
 - 共享 helper 产生的状态文件、日志和一次性产物仍统一落在 `tmp/`。
+- `runCommand` / `runCommandChecked` 等待子进程输出流关闭后完成；调用者可提供 `signal` 与正整数 `timeoutMs`。取消/超时清理自有进程树后分别以 `AbortError`（`ABORT_ERR`）/ `TimeoutError`（`ETIMEDOUT`）失败；清理失败保留在 `AggregateError`。带这两种控制的命令在 Unix 使用独立进程组，普通命令仍保留原有 detached 默认值；长生命周期进程须按 owned 状态收口，不能清理同组的无关进程。修改执行/清理行为时运行 `node tools/test_skill_runtime.mjs`，验证完整输出、非零/超时/取消、父进程先退出后的后代清理与 unowned 隔离；不得把发出 kill 请求当作清理成功。Windows 使用 `taskkill`，仍需目标平台实测。
 - 任何启动长生命周期进程的 helper 都必须记录 pid、port、log、owned/reused 关系和 `starting/running/passed/failed/interrupted/stopped` 状态；验证完成、失败或中断时关闭 owned 进程，下一次运行前清理 `running` 或 `interrupted` 的旧状态。
 
 ## 8. 各域 skill 速查
@@ -202,6 +203,7 @@ node skills/deploy-cli/scripts/deploy_cli.mjs down --execute
 - macOS 需要完整栈时使用 Colima + Docker；Apple container 仅启动 MySQL、Redis 和后端，默认端口 `19090`，只操作 `infoq-apple*` 资源。Apple 细节见 `skills/deploy-cli/references/apple-containers.md`。
 - Windows 必须在 WSL2 Debian/Ubuntu 内执行；Linux 使用本地 Docker。Docker 细节见 `skills/deploy-cli/references/docker.md` 与 `deploy/VERIFICATION.md`。
 - Apple 环境文件是 `deploy/.env`；Docker 环境文件是 `INFOQ_ENV_FILE`（默认 `/etc/infoq-scaffold-ai/deploy.env`）。
+- 默认或显式环境文件不存在时立即失败，不隐式退回示例配置。目录权限、归属标记、Redis 凭据和卸载前置核验见 [部署生命周期](../deploy/DEPLOYMENT_LIFECYCLE.md)；已有目录不会自动迁移权限或认领，须先核对备份、实际挂载和容器用户。
 - Node 入口在 macOS 固定选择 Apple，在 Linux/WSL2 选择 Docker，没有 `--runtime`。macOS Colima 使用底层部署脚本，不调用该入口管理 Docker 栈。
 - `smoke` 做 HTTP 探测并写本地证据；Apple `status` 还会启动未运行的 daemon，严格只读时用 `container system status` / `container list`。`up` / `down` 是运行态变更；Docker 写操作必须显式 `--execute`；`down --execute` 同时停止依赖、后端与前端。
 - 状态写入 `tmp/deploy-cli/state.json`，日志写入 `tmp/deploy-cli/deploy.log`；成功部署会保留服务，一次性验证必须显式关闭自有栈，脚本失败不会自动清理容器。任务前已有栈不得误停。
@@ -244,6 +246,7 @@ node skills/push-cli/scripts/test_push_cli.mjs
 - 默认分支（`master`）禁止直推；显式执行 `submit-pr --execute` 时会自动 `git fetch` 最新默认分支并创建 `auto/<yyyymmdd-hhmmss>` 工作分支。省略 `--execute` 只预览，不创建分支/commit 或远程 PR。
 - `submit-pr` = 本地校验矩阵 -> 提交 -> 推送 -> 创建或复用 PR -> 自动 `watch`；失败时输出失败 check 与失败日志摘要，修复后重跑即复用同一 PR。
 - `merge` 需要全绿 + 显式 `--execute --yes`；禁止 `--admin` 绕过保护。
+- Git remote 必须具有指向同一仓库的唯一 fetch/push URL，gh 使用显式相同仓库，拒绝内嵌凭据或多目标。`--json` 仅用于 `status`；`check` 不接受 `--dry-run`，它会实际执行所选本地矩阵。
 - 校验矩阵：`docs`（UTF-8、README 同步、版本一致性、文档链接、AGENTS 校验、active change 的 OpenSpec 校验）、`ci`（精确对齐 `.github/workflows/ci.yml`：仓库门禁 + 双管理端 lint/test/build + 后端 `clean package -P dev`，不含 agents/openspec）、`full`（docs + ci）。
 - 证据写入 `tmp/push-cli/<run-id>/`。
 
@@ -263,9 +266,10 @@ node skills/release-cli/scripts/test_release_cli.mjs
 说明：
 
 - `plan` 会把「当前版本 <= 最新远程 tag」判为需要先 bump 并显式失败；版本升级需通过 `push-cli` 合并后再打 tag。
-- tag 必须在 `HEAD == origin/<default>` 时创建，已存在的 tag 拒绝复用；Release 已存在时 `publish` 失败（更新说明用 `gh release edit`）。
+- tag 必须在干净工作区且 `HEAD == origin/<default>` 时创建，已存在的 tag 拒绝复用；预览 fetch 使用 `--no-tags`，不隐式创建本地 tag。Git 与 gh 仓库目标绑定规则与 push 相同；`--json` 仅用于 `plan`。Release 已存在时 `publish` 失败（更新说明用 `gh release edit`）。
 - 远程写操作默认 dry-run，只有 `--execute` 才创建/推送 tag 或发布 Release；本地 `bump` 是版本文件写入，不受远程预览默认值保护。受管文件清单见 `skills/release-cli/references/targets.md`。
 - 推送 `vX.Y.Z` tag 会触发 Release workflow，应先等待工作流结束，再验证 Release；不要同时执行手工 `publish`。只有已明确不由工作流发布的独立场景才使用 `publish --version <version> --execute`，该命令不构建或上传发布资产。
+- workflow 将 `backend-jar`、`vue-dist`、`react-dist` artifact 下载到独立目录，发布前通过 `verify_release_assets.mjs` 校验各自恰好对应一个非空普通文件：`infoq-admin.jar`、`vue-dist.tar.gz`、`react-dist.tar.gz`，防止合并目录覆盖重名产物；该门禁不验证资产内容、签名或生产配置。
 - `verify` 只核对其实现列出的 tag/Release 元数据，不核验 tag 对应提交、资产完整性或生产健康；不能作为完整发布验收。
 
 ### 8.9 域外能力（不在 `skills/` 下的验证与运维）
@@ -396,6 +400,7 @@ node tools/backend_mvn.mjs -- clean package -P dev -pl infoq-admin -am
 ```bash
 node tools/run-env.mjs INFOQ_LOG_PATH=tmp/plugin-check/logs -- java -jar backend/infoq-admin/target/infoq-admin.jar \
   --server.port=18080 \
+  --server.address=127.0.0.1 \
   --captcha.enable=false \
   --api-decrypt.enabled=false \
   --springdoc.api-docs.enabled=false \

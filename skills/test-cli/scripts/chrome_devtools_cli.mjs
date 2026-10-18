@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {spawn} from 'node:child_process';
-import {resolveRepoRoot} from '../../../tools/lib/skill_runtime.mjs';
+import {isProcessAlive, markRunState, resolveRepoRoot, terminateProcessTree} from '../../../tools/lib/skill_runtime.mjs';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolveRepoRoot(scriptDir);
@@ -36,22 +36,47 @@ if (!fs.existsSync(entryPath)) {
 }
 
 fs.mkdirSync(path.dirname(localStoragePath), { recursive: true });
+const stateFile = path.join(path.dirname(localStoragePath), `${Date.now()}-${process.pid}.state.json`);
+const logFile = stateFile.replace(/\.state\.json$/u, '.log');
+const record = (patch) => {
+  fs.appendFileSync(logFile, `${new Date().toISOString()} ${JSON.stringify(patch)}\n`, 'utf8');
+  markRunState(stateFile, patch);
+};
+record({status: 'starting', pid: null, runnerPid: process.pid, port: null, log: logFile, transport: 'stdio', owned: true});
 
 const child = spawn(process.execPath, [`--localstorage-file=${localStoragePath}`, entryPath, ...forwardedArgs], {
   cwd: scriptDir,
   env: process.env,
-  stdio: 'inherit'
+  stdio: 'inherit',
+  detached: process.platform !== 'win32'
 });
+record({status: 'running', pid: child.pid || null});
+let interrupted = '';
+let stopPromise;
+let cleanupError;
+const stopChild = () => {
+  stopPromise ||= terminateProcessTree(child.pid).catch((error) => {
+    cleanupError = error;
+    record({status: 'failed', cleanupError: error.message});
+  });
+  return stopPromise;
+};
+const handlers = new Map(['SIGINT', 'SIGTERM', 'SIGHUP'].map((signal) => [signal, () => {
+  interrupted ||= signal;
+  void stopChild();
+}]));
+for (const [signal, handler] of handlers) process.on(signal, handler);
 
 child.on('error', (error) => {
   console.error(`Failed to launch chrome-devtools-mcp: ${error.message}`);
-  process.exit(1);
+  record({status: 'failed', error: error.message});
+  process.exitCode = 1;
 });
 
-child.on('exit', (code, signal) => {
-  if (signal) {
-    process.kill(process.pid, signal);
-    return;
-  }
-  process.exit(code ?? 1);
+child.on('close', async (code, signal) => {
+  await stopChild();
+  const alive = isProcessAlive(child.pid);
+  record({status: (alive || cleanupError) ? 'failed' : interrupted ? 'interrupted' : code === 0 ? 'stopped' : 'failed', exitCode: code, signal: interrupted || signal, processClosed: !alive && !cleanupError});
+  for (const [name, handler] of handlers) process.removeListener(name, handler);
+  process.exitCode = (alive || cleanupError) ? 1 : interrupted === 'SIGINT' ? 130 : interrupted === 'SIGHUP' ? 129 : interrupted ? 143 : (code ?? 1);
 });

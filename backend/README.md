@@ -17,7 +17,7 @@
 - Redis 参与验证码、登录失败计数、在线用户、限流、防重提交和若干缓存组。
 - 配置按 `application.yml + application-{dev,prod,local}.yml` 叠加：
   - `application.yml` 承载通用运行时行为配置，包括 Tomcat、captcha、Spring Security token、`api-decrypt`、SpringDoc、SSE、WebSocket、默认关闭的 MQTT/Elasticsearch、`infoq.quartz`、MyBatis-Plus、Jackson 3、XSS、lock4j、security excludes 等。
-  - `application-dev.yml` 是默认激活 profile，主要补充/覆写 datasource、Redis、Redisson、Quartz 开发环境差异、`infoq.quartz.bootstrap` 和 mail。
+  - 默认 Maven `dev` 构建且没有运行时 profile override 时激活 `application-dev.yml`，主要补充/覆写 datasource、Redis、Redisson、Quartz 开发环境差异、`infoq.quartz.bootstrap` 和 mail；`-P prod` / `-P local` 或运行时显式指定 profile 会改变选择，详见 [配置分层](./doc/architecture.md#32-配置分层)。
   - `application-prod.yml` 补充/覆写 datasource、Redis、Redisson、Quartz 生产环境差异、`infoq.quartz.bootstrap`、graceful shutdown 和 mail；`application-local.yml` 是可选且被 Git 忽略的本机覆盖文件，其存在性和具体覆盖项须以本机为准。
 - 第三方身份、微信小程序登录、实时 Push、MQTT、Elasticsearch 与消息清理均是关闭态默认能力：`oauth.enabled=false`、`infoq.auth.wechat-miniapp.enabled=false`、`infoq.push.enabled=false`、`infoq.mqtt.enabled=false`、`infoq.elasticsearch.enabled=false`、`infoq.message.cleanup.enabled=false`；启用微信登录必须同时提供部署侧 AppID/Secret 并启用 Provider，启用 Push 必须显式选择已开启的 SSE 或 WebSocket 通道，启用 MQTT/Elasticsearch 必须注入各自连接配置。
 

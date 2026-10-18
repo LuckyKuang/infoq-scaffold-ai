@@ -10,6 +10,7 @@
 - 三个版本字段必须一致：backend `pom.xml` `<revision>`、`frontend-vue/package.json`、
   `frontend-react/package.json`；`README.md`、`README_CN.md`、`README_JA.md`、`README_ZH_TW.md` 的 Version 徽标必须同步。
 - `node tools/check_release_version.mjs` 会同时校验这些版本字段、README 徽标与部署文档中的版本引用。
+- 版本门禁接受 `--tag v<x.y.z>` 或 `--expect <x.y.z>`，也支持 `--tag=...` / `--expect=...`；同时指定时必须指向同一版本。空值、重复、未知参数及尾部垃圾均失败，不能用空预期绕过检查。
 - 已存在的 tag 与 Release 一律拒绝复用，禁止重打、覆盖或强推。
 
 ## 2. 发布前置条件
@@ -22,11 +23,13 @@
   `node skills/release-cli/scripts/test_bump_version.mjs`、
   `node skills/release-cli/scripts/test_release_cli.mjs` 与
   `node skills/push-cli/scripts/test_push_cli.mjs` 通过。
+- `node tools/test_check_release_version.mjs` 与 `node skills/release-cli/scripts/test_release_assets.mjs` 通过。
 - 依赖版本与 lockfile 一致；SQL 基线 `sql/infoq_scaffold_3.0.0.sql` 未被修改。
 - 发布说明已准备：变更摘要、兼容性、迁移、已知问题、回滚方式。
 - 发布操作者具备 tag 与 Release 权限，且已完成 `gh auth status` 核验。
 - 发布前人工确认最新远程版本、候选 SHA 和该 SHA 的 CI 结果；tag CLI 不自动查询 CI 或读取分支保护配置。
 - 所有远程写默认预览，显式 `--execute` 才执行；合并还需 `--yes`。`--execute` 与 `--dry-run` 不能同时使用。`bump` 默认修改本地文件，预览需显式 `--dry-run`。
+- 选择的 Git remote 必须只有一个 fetch/push URL 且指向同一仓库，gh 请求显式绑定相同 host/owner/repo。内嵌凭据、本地路径、多目标或不支持的 URL 明确失败；`GH_REPO` 不改变该绑定。
 
 ## 3. 发布流程
 
@@ -65,7 +68,7 @@ node skills/release-cli/scripts/release_cli.mjs tag --version 3.0.1
 node skills/release-cli/scripts/release_cli.mjs tag --version 3.0.1 --execute
 ```
 
-`tag` 校验 `HEAD == origin/<default>`、版本一致性与 tag 是否已存在。
+`tag` 要求工作区干净，校验 `HEAD == origin/<default>`、版本一致性与 tag 是否已存在；`fetch --no-tags` 不自动获取远端 tag。推送显式使用 `refs/tags/<tag>`，同名 branch 不构成歧义。`plan` 无法读取最新 tag 的本地历史时明确失败，先核对目标并获取该 tag 再重试，不把错误当零提交。
 
 ### 3.4 Release
 
@@ -75,7 +78,8 @@ node skills/release-cli/scripts/release_cli.mjs tag --version 3.0.1 --execute
 2. 后端单测与 `clean package -P prod`。
 3. Vue / React `pnpm install --frozen-lockfile` 与 `pnpm run build:prod`。
 4. 上传 `infoq-admin.jar`、`vue-dist.tar.gz`、`react-dist.tar.gz`。
-5. 使用 GitHub 自动生成说明创建正式 Release。
+5. 按 `backend-jar`、`vue-dist`、`react-dist` 下载到 `release-assets/` 下各自同名目录，运行 `node skills/release-cli/scripts/verify_release_assets.mjs release-assets`，要求每个目录仅含对应非空普通文件；缺失、跨 artifact 重名、错误名称、额外、空资产和符号链接失败，避免合并下载覆盖重名文件。
+6. 使用精确三文件列表和 GitHub 自动生成说明创建正式 Release。
 
 自动 workflow 是本仓库默认发布路径，不要在 tag 推送后并发运行 `publish`；这会与自动创建 Release 竞争。已发布 Release 补充说明属于独立的 `gh release edit` 写操作，应先审查具体内容并取得对应授权。仅在确认自动发布未运行、确需独立手工发布时，使用以下预览与执行；它不会构建或上传 jar/dist：
 
@@ -114,6 +118,7 @@ CLI 校验工作区版本与请求一致、远端 tag 存在及 Release 非 draf
 | 容器镜像 | `deploy/docker/docker-compose.yml` 构建 | 由部署验证单独覆盖，不在 tag workflow 中推送 |
 
 Tag workflow 只发布源码与构建产物；镜像推送与实际部署是独立动作。
+这三项不是完整运行交付包：外部配置、独立生产凭据、IPv6 地址库、SQL 增量、systemd/Nginx 与监控/备份资产按对应部署方式另行准备，见 `deploy/MANUAL.md` 与 `deploy/VERIFICATION.md`。资产检查只证明名称/数量/非空，不证明签名、内容安全或生产可用性。
 
 ### 5.1 生产构建配置边界
 

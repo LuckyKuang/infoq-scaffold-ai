@@ -92,7 +92,7 @@ mistake, revert it and move the change into a dated incremental script.
 
 ## Documentation and Locales
 
-- Keep English and Chinese README section IDs aligned
+- Keep all four root README section IDs aligned (English, Simplified Chinese, Traditional Chinese, Japanese)
 - Put detailed operations in `docs/` or `deploy/`
 - Update `deploy/` examples when configuration changes
 - After README edits, run `node tools/check_readme_sync.mjs`

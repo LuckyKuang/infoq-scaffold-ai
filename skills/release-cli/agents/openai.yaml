@@ -1,4 +1,4 @@
 interface:
   display_name: "Release CLI（版本与发布）"
   short_description: "同步受管版本，默认预览 tag 与 Release 并验证发布状态"
-  default_prompt: "使用 $release-cli 核对版本并预览本地 bump 与 tag；确认后执行 bump 并经 PR 合并，tag 需显式 --execute，随后等待自动 Release workflow 再 verify，避免并发手动 publish；应用和数据回滚按部署方案处理。"
+  default_prompt: "使用 $release-cli 核对 Git/gh 同一目标与版本，预览 bump 与干净工作区的 tag；经 PR 合并后显式 --execute 推 tag，等待自动 workflow 校验三件资产并发布，再 verify，避免并发手工 publish。"

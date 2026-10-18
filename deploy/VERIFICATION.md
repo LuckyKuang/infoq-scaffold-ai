@@ -9,7 +9,7 @@
 3. 确认 Docker daemon、Compose、Buildx 与镜像/依赖下载能力。Compose 在 Maven 3.9.12 / JDK 21 builder 内打包，宿主不要求 Java/Maven；前端 builder 固定 Node 24.18.0，pnpm 10.34.1。Docker 权限等同主机高权限，不随意放宽 socket 权限。
 4. 显式选 `INFOQ_DEPLOY_ROOT`；WSL2/Linux 通常 `/infoq`，Colima 通常 `$HOME/infoq`，WSL 数据禁止 DrvFS。预创建 `/tmp/infoq-deploy` 和 `${INFOQ_DEPLOY_ROOT}/server/temp`；权限不足由授权管理员处理，不能跳过。
 5. 核对 `INFOQ_FRONTEND_TARGET=all|vue|react`、公共 URL、端口与秘密来源。环境文件/凭据文件必须 `600`，由有权限的属主/root 执行；shell helper 会执行该文件，必须是可信受控文件。不要用打印文件或 `set -x` 诊断。目标目录或通用容器名与其他项目冲突即停止。
-6. 生产必须先关闭 [当前生产准备阻塞](DEPLOYMENT_LIFECYCLE.md#9-当前生产准备阻塞)：目录/Redis 配置权限、所有网卡端口暴露、TLS、MinIO 匿名 bucket 与浮动 mc、ownership、凭据及告警。默认 `443` 只有映射，没有 TLS listener。前端 Docker builder 不接受宿主 RSA env，必须按 [RSA 构建前提](README.md#14-配置检查项) 准备并核验受控构建产物。
+6. 生产必须先关闭 [当前生产准备阻塞](DEPLOYMENT_LIFECYCLE.md#9-当前生产准备阻塞)：旧目录权限迁移与镜像用户读写、所有网卡端口暴露、TLS、MinIO 匿名 bucket 与浮动 mc、部署/停止归属、凭据及告警。默认 `443` 只有映射，没有 TLS listener。前端 Docker builder 不接受宿主 RSA env，必须按 [RSA 构建前提](README.md#14-配置检查项) 准备并核验受控构建产物。
 
 ## 部署与运行时
 
@@ -87,7 +87,7 @@ SQL 示例只验证结构，不验证安装器凭据与数据库记录的相等�
 ## 日志与失败处理
 
 - readiness 失败先查看 `INFOQ_ENV_FILE=... bash deploy/bin/infoq.sh logs infoq-admin`、MySQL/Redis 与 Nginx 日志；`logs` 持续跟随，`Ctrl-C` 只退出查看。后端日志在 `${INFOQ_DEPLOY_ROOT}/server/logs/`，网关在 `nginx/log/`，目标前端在 `vue/logs/` / `react/logs/`。
-- Redis 权限错误核对 owner/UID 与配置读取权限；helper 当前的 `644` 含密码配置属于生产阻塞，不用开放全部目录或删除持久化数据解决。
+- Redis 权限错误核对 owner/UID 与配置读取权限；helper 使用无密码只读配置并拒绝 other-writable 目录；管理员核验镜像 UID/GID 后迁移旧权限，不用开放全部目录或删除持久化数据解决。
 - 前端直连成功、网关 404/502 时核对 context、目标前端和 upstream DNS；重建前端后需受控刷新 Nginx。重跑 `deploy` 会重建与写配置，不是只读诊断。
 - Docker credential helper 错误按 `DOCKER.md` 核对；临时 `DOCKER_CONFIG` 放在 `tmp/`，记录并恢复原 context/env，不因失败切换到其他未经选定的运行时。
 - 保存命令、平台、脱敏日志和退出状态；镜像拉取 EOF、构建失败、坏配置、SQL 部分迁移分别记录原因。按生命周期恢复旧镜像/配置并重新 smoke；不删除数据重试，不把失败当作完成。
@@ -96,6 +96,6 @@ SQL 示例只验证结构，不验证安装器凭据与数据库记录的相等�
 
 只在任务要求停止时执行，先停止前端/网关，再后端及 MySQL/Redis/MinIO；普通停止保留数据。一次性验证必须记录本次创建的栈，结束、失败或中断后显式收口自有资源；不能停止开始前已有服务。生产滚动更新先摘流量，不能用停整栈替代。
 
-卸载先 `bash deploy/uninstall.sh --dry-run`；它仍会读取可信 env 并询问每项选择。实际卸载需明确授权与固定确认短语，独立确认应用、MySQL、Redis、MinIO、配置与空根目录；按名字删除前人工确认 ownership，保留项不停止不删除。可选中间件由 `deploy-middleware.sh <component> <topology> stop` 单独管理，不在基础卸载范围内。
+卸载先 `bash deploy/uninstall.sh --dry-run`；它仍会读取可信 env 并询问每项选择。实际卸载需明确授权与固定确认短语，独立确认应用、MySQL、Redis、MinIO、配置与空根目录；任何删除前脚本批量核验所选容器的 Compose 标签/部署挂载与默认网络标签，按核验 ID 删除；查询失败或归属未知即停止，孤立目录必须有匹配 project 的 `.infoq-deploy-owner`；无标记的旧数据需另行证明归属，保留项不停止不删除。可选中间件由 `deploy-middleware.sh <component> <topology> stop` 单独管理，不在基础卸载范围内。
 
 收口报告包含运行时/root/目标、容器健康、readiness/liveness、网关与直连、结构与登录/OSS、失败与恢复证据、停止/保留状态，以及未验证的容量、告警、TLS、跨平台、备份恢复。没有执行的步骤明确写未验证。脚本修改先通过 `node skills/deploy-cli/scripts/test_deploy_cli.mjs`，再执行语法、UTF-8 与 diff 检查；不以真实部署替代隔离回归。

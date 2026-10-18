@@ -15,6 +15,7 @@ import {
 } from '../../../tools/lib/skill_runtime.mjs';
 import {runAdminDevStack, stopAdminDevStackState} from '../../../tools/lib/admin_dev_stack.mjs';
 import {DEFAULT_CAPTCHA_LOGIN_OPTIONS, loginWithRealCaptcha} from './captcha_login.mjs';
+import {runTestLifecycle} from './test_run_lifecycle.mjs';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolveRepoRoot(scriptDir);
@@ -307,6 +308,7 @@ function parseArgs(argv) {
     }
   }
 
+  if (options.runId && !/^[A-Za-z0-9][A-Za-z0-9._-]{0,119}$/u.test(options.runId)) throw new Error('--run-id must be a simple slug without path separators.');
   if (!CLIENTS[options.client]) {
     throw new Error('--client must be one of: vue, react');
   }
@@ -385,6 +387,7 @@ function sanitizeName(value) {
 
 async function fetchProtectedJson(options, token, apiPath, label) {
   const {response, body} = await fetchJson(`${options.backendUrl}${apiPath}`, {
+    signal: AbortSignal.any([AbortSignal.timeout(options.timeoutMs), ...(options.signal ? [options.signal] : [])]),
     headers: {
       Authorization: `Bearer ${token}`,
       clientid: options.clientId,
@@ -478,11 +481,11 @@ async function loadPlaywrightFlow() {
   }
 }
 
-async function runRouteSmoke(options, runDir, token, routes) {
+async function runRouteSmoke(options, runDir, token, routes, results = []) {
   const runPlaywrightFlow = await loadPlaywrightFlow();
-  const results = [];
 
   for (const route of routes) {
+    options.signal?.throwIfAborted();
     const routeName = sanitizeName(route.path);
     const screenshotPath = path.join(runDir, 'screenshots', `${routeName}.png`);
     const consoleLogPath = path.join(runDir, 'console', `${routeName}.json`);
@@ -499,7 +502,8 @@ async function runRouteSmoke(options, runDir, token, routes) {
         consoleLogPath,
         failOnConsoleErrors: !options.allowConsoleErrors,
         timeoutMs: options.timeoutMs,
-        headed: options.headed
+        headed: options.headed,
+        signal: options.signal
       });
       results.push({
         ...route,
@@ -521,6 +525,7 @@ async function runRouteSmoke(options, runDir, token, routes) {
         consoleLogPath,
         error: error.message || String(error)
       });
+      if (options.signal?.aborted) break;
     }
   }
 
@@ -557,6 +562,8 @@ function writeMarkdownReport(reportPath, report) {
   for (const attempt of report.loginAttempts) {
     lines.push(`- #${attempt.sequence} ${attempt.username}: status=${attempt.status}, seedKey="${attempt.seedKey}", code="${attempt.captchaCode}"`);
   }
+  if (report.error) lines.push('', `- Error: ${report.error}`);
+  for (const error of report.cleanupErrors || []) lines.push(`- Cleanup error: ${error}`);
 
   fs.writeFileSync(reportPath, `${lines.join('\n')}\n`, 'utf8');
 }
@@ -593,101 +600,61 @@ async function main() {
     console.log(`[admin-e2e] cleaning recorded stack state before run: ${stackConfig.stateFile}`);
     await stopAdminDevStackState(stackConfig, {status: 'stopped', reason: 'stale-before-e2e'});
   };
-  let finalStatus = 'stopped';
-  let stopReason = 'e2e-complete';
-  const stopStackIfNeeded = async (status, reason) => {
-    if (options.startStack && (options.stopStackAfter || status !== 'stopped')) {
-      await stopAdminDevStackState(stackConfig, {status, reason});
-    }
+  const report = {
+    runId, runDir, client: options.client, backendUrl: options.backendUrl, frontendOrigin: options.frontendOrigin,
+    username: '', user: null, status: 'running', startedAt: new Date().toISOString(),
+    summary: {totalRoutes: 0, passedRoutes: 0, failedRoutes: 0, captchaAttempts: 0},
+    loginAttempts: [], routes: [], error: ''
   };
-  const handleInterrupt = async (signal) => {
-    await stopStackIfNeeded('interrupted', signal);
-    process.exit(signal === 'SIGINT' ? 130 : signal === 'SIGHUP' ? 129 : 143);
-  };
-  const handleSigint = () => handleInterrupt('SIGINT');
-  const handleSigterm = () => handleInterrupt('SIGTERM');
-  const handleSighup = () => handleInterrupt('SIGHUP');
-  process.once('SIGINT', handleSigint);
-  process.once('SIGTERM', handleSigterm);
-  process.once('SIGHUP', handleSighup);
-  try {
-    if (options.startStack) {
-      await stopStaleStackBeforeRun();
-      console.log(`[admin-e2e] starting/reusing stack for ${options.client}`);
-      await runAdminDevStack(stackConfig, buildStackArgs(options, clientConfig));
+  await runTestLifecycle({
+    report,
+    execute: async (signal) => {
+      options.signal = signal;
+      if (options.startStack) {
+        await stopStaleStackBeforeRun();
+        console.log(`[admin-e2e] starting/reusing stack for ${options.client}`);
+        await runAdminDevStack({...stackConfig, signal}, buildStackArgs(options, clientConfig));
+      }
+      signal.throwIfAborted();
+      console.log(`[admin-e2e] backend: ${options.backendUrl}`);
+      console.log(`[admin-e2e] frontend: ${options.frontendOrigin}`);
+      console.log(`[admin-e2e] evidence: ${runDir}`);
+      const login = await loginWithRealCaptcha(options, runDir);
+      report.username = login.username;
+      report.loginAttempts = login.attempts;
+      report.summary.captchaAttempts = login.attempts.length;
+      const userInfo = await fetchProtectedJson(options, login.token, '/system/user/getInfo', 'GET /system/user/getInfo');
+      report.user = userInfo?.user || null;
+      const routeTree = await fetchProtectedJson(options, login.token, '/system/menu/getRouters', 'GET /system/menu/getRouters');
+      const allRoutes = Array.from(new Map(collectRoutes(routeTree).map((route) => [route.path, route])).values()).sort((a, b) => a.path.localeCompare(b.path));
+      const routes = filterRoutes(allRoutes, options);
+      if (routes.length === 0) throw new Error('No routes selected for smoke. Check --include-route / --exclude-route / --route-limit.');
+      writeJson(path.join(runDir, 'routes.json'), {total: allRoutes.length, selected: routes.length, routes});
+      report.routes = await runRouteSmoke(options, runDir, login.token, routes, report.routes);
+      const failedRoutes = report.routes.filter((route) => route.status !== 'passed');
+      report.summary.totalRoutes = report.routes.length;
+      report.summary.passedRoutes = report.routes.length - failedRoutes.length;
+      report.summary.failedRoutes = failedRoutes.length;
+      if (failedRoutes.length > 0) throw new Error(`[admin-e2e] route smoke failed: ${failedRoutes.length}/${report.routes.length}`);
+    },
+    cleanup: async () => {},
+    stop: async (status) => {
+      if (options.startStack && (options.stopStackAfter || status !== 'passed')) {
+        await stopAdminDevStackState(stackConfig, {status: status === 'passed' ? 'stopped' : status, reason: report.error || 'e2e-complete'});
+      } else if (options.startStack && status === 'passed') {
+        markRunState(stackConfig.stateFile, {status: 'running', validationStatus: 'passed', keepAlive: true, keepReason: '--keep-stack-after', context: stackConfig.stateContext});
+      }
+    },
+    persist: () => {
+      writeJson(path.join(runDir, 'report.json'), report);
+      writeMarkdownReport(path.join(runDir, 'report.md'), report);
+      console.log(`[admin-e2e] report: ${path.join(runDir, 'report.md')}`);
     }
-
-    console.log(`[admin-e2e] backend: ${options.backendUrl}`);
-    console.log(`[admin-e2e] frontend: ${options.frontendOrigin}`);
-    console.log(`[admin-e2e] evidence: ${runDir}`);
-
-    const login = await loginWithRealCaptcha(options, runDir);
-    const userInfo = await fetchProtectedJson(options, login.token, '/system/user/getInfo', 'GET /system/user/getInfo');
-    const routeTree = await fetchProtectedJson(options, login.token, '/system/menu/getRouters', 'GET /system/menu/getRouters');
-    const allRoutes = Array.from(new Map(collectRoutes(routeTree).map((route) => [route.path, route])).values())
-      .sort((a, b) => a.path.localeCompare(b.path));
-    const routes = filterRoutes(allRoutes, options);
-    if (routes.length === 0) {
-      throw new Error('No routes selected for smoke. Check --include-route / --exclude-route / --route-limit.');
-    }
-
-    writeJson(path.join(runDir, 'routes.json'), {
-      total: allRoutes.length,
-      selected: routes.length,
-      routes
-    });
-
-    const routeResults = await runRouteSmoke(options, runDir, login.token, routes);
-    const failedRoutes = routeResults.filter((route) => route.status !== 'passed');
-    const report = {
-      runId,
-      runDir,
-      client: options.client,
-      backendUrl: options.backendUrl,
-      frontendOrigin: options.frontendOrigin,
-      username: login.username,
-      user: userInfo?.user || null,
-      status: failedRoutes.length === 0 ? 'passed' : 'failed',
-      summary: {
-        totalRoutes: routeResults.length,
-        passedRoutes: routeResults.length - failedRoutes.length,
-        failedRoutes: failedRoutes.length,
-        captchaAttempts: login.attempts.length
-      },
-      loginAttempts: login.attempts,
-      routes: routeResults
-    };
-
-    writeJson(path.join(runDir, 'report.json'), report);
-    writeMarkdownReport(path.join(runDir, 'report.md'), report);
-
-    console.log(`[admin-e2e] report: ${path.join(runDir, 'report.md')}`);
-    if (failedRoutes.length > 0) {
-      throw new Error(`[admin-e2e] route smoke failed: ${failedRoutes.length}/${routeResults.length}. See ${path.join(runDir, 'report.md')}`);
-    }
-    if (options.startStack && !options.stopStackAfter) {
-      markRunState(stackConfig.stateFile, {
-        status: 'running',
-        validationStatus: 'passed',
-        keepAlive: true,
-        keepReason: '--keep-stack-after',
-        context: stackConfig.stateContext
-      });
-    }
-    console.log(`[admin-e2e] completed successfully: ${routeResults.length} route(s) passed`);
-  } catch (error) {
-    finalStatus = 'failed';
-    stopReason = error.message || String(error);
-    throw error;
-  } finally {
-    process.removeListener('SIGINT', handleSigint);
-    process.removeListener('SIGTERM', handleSigterm);
-    process.removeListener('SIGHUP', handleSighup);
-    await stopStackIfNeeded(finalStatus, stopReason);
-  }
+  });
+  console.log(`[admin-e2e] completed successfully: ${report.routes.length} route(s) passed`);
 }
 
 main().catch((error) => {
   console.error(error.message || error);
-  process.exit(1);
+  process.exitCode ||= 1;
 });

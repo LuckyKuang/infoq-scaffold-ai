@@ -56,24 +56,22 @@ node skills/test-cli/scripts/playwright_cli.mjs admin-route-probe --list-routes
 
 ## 单测和构建
 
-React admin：
+以下命令均从仓库根目录执行。React admin：
 
 ```bash
-cd frontend-react
-pnpm run test
-pnpm run test:coverage
-pnpm run lint
-pnpm run build:prod
+pnpm --dir frontend-react run test
+pnpm --dir frontend-react run test:coverage
+pnpm --dir frontend-react run lint
+pnpm --dir frontend-react run build:prod
 ```
 
 Vue admin：
 
 ```bash
-cd frontend-vue
-pnpm run test:unit
-pnpm run test:unit:coverage
-pnpm run lint:eslint
-pnpm run build:prod
+pnpm --dir frontend-vue run test:unit
+pnpm --dir frontend-vue run test:unit:coverage
+pnpm --dir frontend-vue run lint:eslint
+pnpm --dir frontend-vue run build:prod
 ```
 
 构建前执行 `node tools/validate_utf8.mjs`。当 `VITE_APP_ENCRYPT=true` 时，为 dev/build 进程提供与目标后端协议对应的 `VITE_APP_RSA_PUBLIC_KEY` 与 `VITE_APP_RSA_PRIVATE_KEY`，不要缺配置就关闭加密。Node 使用 `24.18.0`，pnpm 使用根 `packageManager` 固定版本。
@@ -85,7 +83,7 @@ pnpm run build:prod
 - 不用运行态 smoke 替代缺失的单测覆盖。
 - 禁止通过弱化断言、放宽 mock、伪造成功路径来硬凑覆盖率。
 - 涉及环境文件、客户端 ID、端口、构建产物或测试数据的写入必须先明确目标和恢复方式。
-- 任何会启动 backend、admin dev server 或其他长生命周期进程的验证，必须把状态和日志落在 `tmp/test-cli/e2e/stack/<client>/`；状态缺失时不得声称端口已清理。
+- 自管 backend/admin dev server 的状态和日志在 `tmp/test-cli/e2e/stack/<client>/`；浏览器状态路径见 `references/modes/browser.md`。状态缺失时不得声称 owned 资源已清理。Maven 构建及就绪探针可取消，中断后进入 owned 进程收口。
 
 ## 参考
 

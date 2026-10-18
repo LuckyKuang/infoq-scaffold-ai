@@ -27,7 +27,7 @@ services:
       - >-
         install -d -m 0750 -o 1000 -g 0 /usr/share/elasticsearch/data
     volumes:
-      - ${INFOQ_DEPLOY_ROOT:-/infoq}/elasticsearch/data:/usr/share/elasticsearch/data:rw
+      - ${MIDDLEWARE_ES_DATA_DIR:?Set MIDDLEWARE_ES_DATA_DIR in the run env file}:/usr/share/elasticsearch/data:rw
 
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.18.8
@@ -50,7 +50,7 @@ services:
     ports:
       - "127.0.0.1:19200:9200"
     volumes:
-      - ${INFOQ_DEPLOY_ROOT:-/infoq}/elasticsearch/data:/usr/share/elasticsearch/data:rw
+      - ${MIDDLEWARE_ES_DATA_DIR:?Set MIDDLEWARE_ES_DATA_DIR in the run env file}:/usr/share/elasticsearch/data:rw
       - ${MIDDLEWARE_SECRET_DIR:?Set MIDDLEWARE_SECRET_DIR in the run env file}/certs/ca/ca.crt:/usr/share/elasticsearch/config/certs/ca.crt:ro
       - ${MIDDLEWARE_SECRET_DIR:?Set MIDDLEWARE_SECRET_DIR in the run env file}/certs/elasticsearch/tls.crt:/usr/share/elasticsearch/config/certs/tls.crt:ro
       - ${MIDDLEWARE_SECRET_DIR:?Set MIDDLEWARE_SECRET_DIR in the run env file}/certs/elasticsearch/tls.key:/usr/share/elasticsearch/config/certs/tls.key:ro

@@ -40,6 +40,9 @@ try {
   assert.ok(!matrix.gaps.some((gap) => gap.component === 'message-center/index'));
   assert.ok(fs.readFileSync(path.join(fixtureDir, 'case-matrix.md'), 'utf8').includes('FE-MESSAGE-CENTER'));
   assert.equal(matrix.summary.totalCases, matrix.cases.length);
+  const gatedWrites = matrix.cases.filter((item) => item.sideEffect && /^(?:monitor\.(?:job|cache)|system\.oss)(?:\.|$)/u.test(item.moduleKey));
+  assert.ok(gatedWrites.length > 0);
+  for (const item of gatedWrites) assert.equal(item.priority, 'P2', `${item.id} changes gated resources`);
   assert.equal(run('validate-case-matrix.mjs', [matrixPath]).status, 0);
 
   matrix.cases.push({ ...messageCase });

@@ -67,6 +67,8 @@ tag workflow 复用与 CI 相同的版本门禁，并额外要求：
 - 后端以 `-P prod` 完成单测与打包。
 - 双管理端以 `--frozen-lockfile` 完成生产构建。
 - Release 只在全部上游 job 成功后创建。
+- publish job 按 `backend-jar`、`vue-dist`、`react-dist` 下载到各自独立目录，`verify_release_assets.mjs` 要求每个目录仅有对应的 `infoq-admin.jar`、`vue-dist.tar.gz`、`react-dist.tar.gz` 非空普通文件，再把精确列表交给发布 action；缺失、跨 artifact 重名、错误名称、额外、空文件和符号链接阻止发布，避免下载合并覆盖掩盖重复资产。隔离回归：`node skills/release-cli/scripts/test_release_assets.mjs`。
+- 版本门禁拒绝空值、尾部垃圾、重复参数和冲突的 `--tag`/`--expect`；隔离回归：`node tools/test_check_release_version.mjs`。
 
 CI 不负责创建 tag、推送镜像或执行生产部署。
 发布 tag 由 `release-cli tag --version <x.y.z>` 默认预览，显式 `--execute` 才创建并推送；推送后自动 workflow 负责 Release，不能并发手工 `publish`。CI/Release 均未为前端 RSA 注入受控生产值，现有 `.env.production` 示例密钥不构成生产凭据就绪证明；受控构建注入与部署阻塞见 `docs/RELEASING.md` 第 5.1 节。

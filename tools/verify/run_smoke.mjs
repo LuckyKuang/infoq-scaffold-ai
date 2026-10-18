@@ -28,6 +28,7 @@ const config = {
   jarRelPath: 'backend/infoq-admin/target/infoq-admin.jar',
   port: process.env.SMOKE_PORT || '18080',
   host: process.env.SMOKE_HOST || '127.0.0.1',
+  httpTimeoutMs: process.env.SMOKE_HTTP_TIMEOUT_MS || '10000',
   springProfile: process.env.SMOKE_SPRING_PROFILES_ACTIVE || '',
   roleId: process.env.SMOKE_ROLE_ID || '3',
   dictType: process.env.SMOKE_DICT_TYPE || 'sys_yes_no',
@@ -53,8 +54,8 @@ function usage() {
 Options:
   --build                    Build backend jar before smoke testing.
   --keep-server              Keep backend process alive after checks.
-  --port <port>              Server port (default: 18080).
-  --host <host>              Server host (default: 127.0.0.1).
+  --port <port>              Server port, 1-65535 (default: 18080).
+  --host <host>              Bind/probe 127.0.0.1 (default) or localhost only.
   --profile <name>           Spring profile (default: local when application-local.yml exists, else dev).
   --role-id <id>             Role ID for role menu/dept checks (default: 3).
   --dict-type <type>         Dict type check target (default: sys_yes_no).
@@ -64,12 +65,15 @@ Options:
   --login-mode <mode>        encrypted (default), or plain only for api-decrypt.enabled=false.
   --login-candidates <list>  Comma list like "dept:666666,owner:666666".
   --jar <path>               Jar path relative to repo root.
-  -h, --help                 Show help.`);
+  -h, --help                 Show help.
+
+Environment:
+  SMOKE_HTTP_TIMEOUT_MS      HTTP request/header/body deadline, 1-60000 ms (default: 10000).`);
 }
 
 function readValue(index, flag) {
   const value = args[index + 1];
-  if (!value || value.startsWith('--')) {
+  if (!value || value.startsWith('--') || value === '-h') {
     throw new Error(`Missing value for ${flag}.`);
   }
   return value;
@@ -141,6 +145,15 @@ for (let index = 0; index < args.length; index += 1) {
 if (!['encrypted', 'plain'].includes(config.loginMode)) {
   throw new Error('--login-mode must be encrypted or plain.');
 }
+if (!['127.0.0.1', 'localhost'].includes(config.host)) {
+  throw new Error('--host must be 127.0.0.1 or localhost; smoke disables captcha and must stay on loopback.');
+}
+if (!/^[1-9]\d{0,4}$/.test(config.port) || Number(config.port) > 65535) {
+  throw new Error('--port must be an integer from 1 to 65535 without leading zeros.');
+}
+if (!/^[1-9]\d{0,4}$/.test(config.httpTimeoutMs) || Number(config.httpTimeoutMs) > 60000) {
+  throw new Error('SMOKE_HTTP_TIMEOUT_MS must be an integer from 1 to 60000 without leading zeros.');
+}
 
 const backendConfigSelection = resolveBackendConfigSelection(repoRoot);
 config.springProfile ||= backendConfigSelection.profile;
@@ -152,7 +165,7 @@ stateFile = resolveTmpPath(repoRoot, 'verify', `run-smoke-${config.port}.state.j
 
 async function isServerReady() {
   try {
-    const health = await fetchText(`${baseUrl}/monitor/health`);
+    const health = await fetchText(`${baseUrl}/monitor/health`, {signal: AbortSignal.timeout(1000)});
     if (health.response.status === 200) {
       return true;
     }
@@ -161,7 +174,7 @@ async function isServerReady() {
   }
 
   try {
-    const root = await fetchText(`${baseUrl}/`);
+    const root = await fetchText(`${baseUrl}/`, {signal: AbortSignal.timeout(1000)});
     return root.response.status === 200;
   } catch {
     return false;
@@ -259,7 +272,7 @@ async function main() {
   console.log(`[smoke] starting server on ${baseUrl} with profile=${config.springProfile}`);
   const child = spawnDetachedProcess(
     'java',
-    ['-jar', jarPath, `--server.port=${config.port}`, '--captcha.enable=false'],
+    ['-jar', jarPath, `--server.address=${config.host}`, `--server.port=${config.port}`, '--captcha.enable=false'],
     {
       cwd: backendDir,
       env: {
@@ -306,7 +319,10 @@ async function main() {
       PASSWORD: config.password,
       LOGIN_MODE: config.loginMode,
       LOGIN_CANDIDATES: config.loginCandidates,
-      RSA_PUBLIC_KEY: config.rsaPublicKey
+      RSA_PUBLIC_KEY: config.rsaPublicKey,
+      HTTP_TIMEOUT_MS: config.httpTimeoutMs,
+      PRINT_TOKEN: '0',
+      PRINT_USER_ID: '0'
     }
   });
 

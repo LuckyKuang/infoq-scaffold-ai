@@ -32,7 +32,7 @@ Node 入口按操作系统选择运行时：macOS 固定为 Apple，Linux 固定
    Apple 路径先确认 `container --version` 与 `container system status`。
 3. 预检：确认 Node 24.18.0、Python 3/openssl（Apple）、JDK 21/Maven 3.9.x（Apple 构建需要）、Docker/Compose（Docker 路径）、
    运行环境文件与 `sql/infoq_scaffold_3.0.0.sql` 存在。Apple 使用 `deploy/.env`；
-   Docker 使用 `INFOQ_ENV_FILE`（默认 `/etc/infoq-scaffold-ai/deploy.env`）。缺失时显式失败，不静默生成生产秘密。
+   Docker 使用 `INFOQ_ENV_FILE`（默认 `/etc/infoq-scaffold-ai/deploy.env`）。除显式 `init` / Docker 首次 `up --execute` 外，缺失时显式失败。Docker env 使用安装器生成的 shell 字面量赋值，Node 不执行表达式；Apple env 按未加引号的字面量读取。
 4. 执行：Apple 按 `init -> up -> smoke`（`up` 默认构建；已单独构建则 `up --no-build`）；Docker 按 `install.sh -> status/smoke` 或 `up --execute`；失败记录日志，不能假设自动恢复旧容器或自动停栈。
 5. 验证：Apple 检查 readiness、liveness、验证码接口；Docker 检查本机 API、nginx 反代与所选前端入口。生产验收还需 `deploy/VERIFICATION.md` 的数据库、Redis、OSS 与登录验证。
 6. 收口：`up/status/smoke` 的探针通过后写 `tmp/deploy-cli/state.json` 为 `passed`；停止/销毁写 `stopped`；
@@ -77,7 +77,7 @@ node skills/deploy-cli/scripts/deploy_cli.mjs up --execute
 node skills/deploy-cli/scripts/deploy_cli.mjs down --execute
 ```
 
-- `up` 默认先构建镜像；已有产物时用 `--no-build`，复用现有 jar 时用 `build --from-existing-jar`。
+- Apple `up` 默认先构建镜像；已有产物时用 `--no-build`，复用现有 jar 时用 `build --from-existing-jar`。
 - `destroy --yes` 只删除容器与网络；删除卷必须显式追加 `--volumes`。
 - Docker 路径的 `up`/`down` 默认只打印计划，必须显式追加 `--execute` 才执行。
 - `smoke` 只做 HTTP 探测并更新本地证据；Docker `status` 额外读取容器状态。Apple `status` 底层会调用 `ensure_system`，daemon 未运行时会启动 Apple 服务；严格只读时使用 `container system status` / `container list` 与 `smoke`。
@@ -86,7 +86,7 @@ node skills/deploy-cli/scripts/deploy_cli.mjs down --execute
 ## 状态与端口
 
 - 状态文件：`tmp/deploy-cli/state.json`，包含 `status`、`pid`、`port`、`log`、时间戳；`pid` 是 CLI 进程，不能当作容器 PID 或持续健康状态。
-- 日志：`tmp/deploy-cli/deploy.log`。
+- 日志：`tmp/deploy-cli/deploy.log`。收到 SIGINT/SIGTERM 时终结为 `interrupted`，转发信号并等待自有 shell 子进程组退出，超时强制结束；已部署容器按下述保留/显式收口规则处理。
 - Apple 默认端口 `19090`（来自 `APPLE_CONTAINER_HOST_PORT`），默认部署根目录
   `$HOME/infoq-apple`；禁止复用 `/infoq` 或 `$HOME/infoq`。
 - Docker 默认后端端口 `9090`，网关默认 `80/443`；以 `INFOQ_ENV_FILE` 与 Compose 为准。
@@ -97,7 +97,9 @@ node skills/deploy-cli/scripts/deploy_cli.mjs down --execute
 - 不得把 `deploy/.env`、`/etc/infoq-scaffold-ai/deploy.env` 或任何秘密写入日志。
 - 不得用 `status` 的 HTTP 成功代替容器状态检查；Apple 路径必须同时检查
   `deploy/apple-container.sh status`。
+- 参数必须适用于当前 command；重复/空值/不适用参数明确失败。`--base-url` 等值中的 `=` 原样保留；HTTP 无条件 GET 仅 `200` 通过。
 - readiness 失败时先看 `logs` 与 `tmp/deploy-cli/deploy.log`，不要反复重建数据卷。
+- 旧 Redis `requirepass` 配置的迁移必须先按 `deploy/DOCKER.md` 重建认证命令；helper 核验归属/只读挂载/当前密码失败时保留旧配置并停止，禁止先删除认证行再重启旧容器。
 - 不自动删除 MySQL/Redis/MinIO 数据卷；`destroy --volumes` 必须由用户显式确认。
 - Docker `down --execute` 会停止 MySQL、Redis、MinIO、后端、目标前端与网关；不是只摘应用流量，生产滚动更新不要使用它。
 - 本技能不创建 tag、不发布 Release、不推送镜像。

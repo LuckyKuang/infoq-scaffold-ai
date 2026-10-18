@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+. "${SCRIPT_DIR}/bin/deploy-paths.sh"
+
 DEFAULT_CONFIG_DIR="/etc/infoq-scaffold-ai"
 DEFAULT_ENV_FILE="${DEFAULT_CONFIG_DIR}/deploy.env"
 CONFIRM_PHRASE="DELETE INFOQ DEPLOYMENT"
@@ -8,6 +11,9 @@ DEFAULT_COMPOSE_PROJECT_NAME="infoq-scaffold-ai"
 
 APP_CONTAINERS=()
 APP_DIRS=()
+PLAN_CONTAINER_NAMES=()
+PLAN_CONTAINER_IDS=()
+PLAN_NETWORK_ID=""
 
 DRY_RUN=0
 INFOQ_CONFIG_DIR_WAS_SET="${INFOQ_CONFIG_DIR:+1}"
@@ -29,6 +35,7 @@ usage() {
   - 不删除 Docker 镜像。
   - 缺少 deploy.env 或 INFOQ_FRONTEND_TARGET 时会停止卸载，避免误删前端目录。
   - 实际删除前必须输入固定确认短语: DELETE INFOQ DEPLOYMENT
+  - 预览与删除前均核验 Docker 可达性、Compose project/service 标签及部署挂载；归属未知即停止。
 
 自动化验证变量:
   INFOQ_UNINSTALL_APPS=yes|no
@@ -276,6 +283,8 @@ assert_safe_config_dir() {
   fi
 
   config_abs="$(abs_dir "${config_dir}")"
+  deploy_assert_file_target "${INFOQ_ENV_FILE}" || fail "卸载环境文件路径不安全"
+  [[ "$(abs_dir "$(dirname "${INFOQ_ENV_FILE}")")" == "${config_abs}" ]] || fail "配置目录不包含本次加载的环境文件，拒绝删除: ${config_abs}"
   base="$(basename "${config_abs}")"
   if [[ "${base}" != "infoq-scaffold-ai" ]]; then
     fail "配置目录名称不是 infoq-scaffold-ai，拒绝删除: ${config_abs}"
@@ -298,28 +307,140 @@ run_cmd() {
   "$@"
 }
 
-container_exists() {
-  local name="$1"
-  command -v docker >/dev/null 2>&1 && docker container inspect "${name}" >/dev/null 2>&1
+expected_mount_child() {
+  case "$1:$2" in
+    mysql:/var/lib/mysql) printf mysql/data ;;
+    mysql:/etc/mysql/conf.d) printf mysql/conf ;;
+    redis:/redis/config) printf redis/conf ;;
+    redis:/redis/data|redis:/data) printf redis/data ;;
+    minio:/data) printf minio/data ;;
+    infoq-admin:/infoq/server/config) printf server/config ;;
+    infoq-admin:/infoq/server/logs) printf server/logs ;;
+    infoq-admin:/infoq/server/ip2region) printf server/ip2region ;;
+    nginx-web:/etc/nginx/cert) printf nginx/cert ;;
+    nginx-web:/etc/nginx/nginx.conf) printf nginx/conf/nginx.conf ;;
+    nginx-web:/var/log/nginx) printf nginx/log ;;
+    infoq-frontend-vue:/var/log/nginx) printf vue/logs ;;
+    infoq-frontend-react:/var/log/nginx) printf react/logs ;;
+    *) return 1 ;;
+  esac
+}
+
+preflight_container() {
+  local name="$1" snapshot="$2" project="$3" inspections="$4"
+  local id="" candidate candidate_id inspection header owner service inspected_id
+  local type source destination writable child expected mount_count=0
+  while IFS=$'\t' read -r candidate candidate_id; do
+    [[ "${candidate}" != "${name}" ]] || id="${candidate_id}"
+  done <<< "${snapshot}"
+  PLAN_CONTAINER_NAMES+=("${name}")
+  if [[ -z "${id}" ]]; then
+    PLAN_CONTAINER_IDS+=("")
+    log "已确认容器不存在: ${name}"
+    return
+  fi
+  inspection=""
+  while [[ -n "${inspections}" ]]; do
+    local block="${inspections%%$'\nEND'*}"
+    header="${block%%$'\n'*}"
+    IFS='|' read -r owner service inspected_id <<< "${header}"
+    if [[ "${inspected_id}" == "${id}" ]]; then inspection="${block}"; break; fi
+    [[ "${inspections}" == *$'\nEND\n'* ]] || break
+    inspections="${inspections#*$'\nEND\n'}"
+  done
+  [[ -n "${inspection}" ]] || fail "缺少容器的批量查询结果，未执行删除: ${name}"
+  header="${inspection%%$'\n'*}"
+  IFS='|' read -r owner service inspected_id <<< "${header}"
+  [[ "${owner}" == "${project}" && "${service}" == "${name}" && "${inspected_id}" == "${id}" ]] || fail "容器归属不匹配，未执行删除: ${name}"
+  while IFS='|' read -r type source destination writable; do
+    [[ "${type}" == bind ]] || fail "容器存在非预期挂载，未执行删除: ${name}"
+    if [[ "${name}:${destination}" == mysql:/docker-entrypoint-initdb.d && "${writable}" == false ]]; then
+      continue
+    fi
+    child="$(expected_mount_child "${name}" "${destination}")" || fail "容器挂载目标不在本栈契约内: ${name} ${destination}"
+    expected="${INFOQ_DEPLOY_ROOT}/${child}"
+    if [[ -e "${expected}" ]]; then
+      deploy_assert_safe_path "${expected}" || fail "部署挂载路径不安全: ${name}"
+      if [[ -d "${expected}" ]]; then expected="$(abs_dir "${expected}")";
+      else expected="$(abs_dir "$(dirname "${expected}")")/$(basename "${expected}")"; fi
+    fi
+    [[ "${source%/}" == "${expected%/}" ]] || fail "容器挂载来源不匹配，未执行删除: ${name} ${destination}"
+    mount_count=$((mount_count + 1))
+  done <<< "${inspection#*$'\n'}"
+  (( mount_count > 0 )) || fail "容器缺少本栈部署挂载: ${name}"
+  PLAN_CONTAINER_IDS+=("${id}")
+  log "已核验容器 project/service 与部署挂载: ${name}"
+}
+
+preflight_plan() {
+  local apps="$1" mysql="$2" redis="$3" minio="$4" config="$5"
+  local containers=() dirs=() ids=() name child snapshot networks inspection owner network_label candidate candidate_id index matched marker
+  local project="${INFOQ_COMPOSE_PROJECT_NAME:-${COMPOSE_PROJECT_NAME:-${DEFAULT_COMPOSE_PROJECT_NAME}}}"
+  local network="${project}_default"
+  deploy_assert_safe_path "${INFOQ_DEPLOY_ROOT}" || fail "部署根目录不安全"
+  if [[ -d "${INFOQ_DEPLOY_ROOT}" ]]; then INFOQ_DEPLOY_ROOT="$(abs_dir "${INFOQ_DEPLOY_ROOT}")"; fi
+  if [[ "${apps}" == yes ]]; then containers+=("${APP_CONTAINERS[@]}"); dirs+=("${APP_DIRS[@]}"); fi
+  if [[ "${mysql}" == yes ]]; then containers+=(mysql); dirs+=(mysql); fi
+  if [[ "${redis}" == yes ]]; then containers+=(redis); dirs+=(redis); fi
+  if [[ "${minio}" == yes ]]; then containers+=(minio); dirs+=(minio); fi
+  if (( ${#dirs[@]} > 0 )); then
+    for child in "${dirs[@]}"; do
+      deploy_assert_safe_path "${INFOQ_DEPLOY_ROOT}/${child}" || fail "删除路径不安全: ${child}"
+      if [[ -e "${INFOQ_DEPLOY_ROOT}/${child}" ]]; then assert_safe_child_dir "${INFOQ_DEPLOY_ROOT}" "${child}"; fi
+    done
+  fi
+  if [[ "${config}" == yes ]]; then
+    deploy_assert_safe_path "${INFOQ_CONFIG_DIR}" || fail "配置目录不安全"
+    assert_safe_config_dir "${INFOQ_CONFIG_DIR}"
+  fi
+  (( ${#containers[@]} > 0 )) || return 0
+  command -v docker >/dev/null 2>&1 || fail "缺少 docker 命令，无法核验卸载归属"
+  snapshot="$(docker container ls --all --no-trunc --format '{{.Names}}\t{{.ID}}')" || fail "无法列出 Docker 容器，未执行任何删除"
+  for name in "${containers[@]}"; do
+    while IFS=$'\t' read -r candidate candidate_id; do
+      [[ "${candidate}" != "${name}" ]] || ids+=("${candidate_id}")
+    done <<< "${snapshot}"
+  done
+  inspection=""
+  if (( ${#ids[@]} > 0 )); then
+    inspection="$(docker container inspect "${ids[@]}" --format '{{index .Config.Labels "com.docker.compose.project"}}|{{index .Config.Labels "com.docker.compose.service"}}|{{.Id}}{{range .Mounts}}{{printf "\n%s|%s|%s|%t" .Type .Source .Destination .RW}}{{end}}{{printf "\nEND"}}')" || fail "批量查询容器失败，未执行任何删除"
+  fi
+  for name in "${containers[@]}"; do preflight_container "${name}" "${snapshot}" "${project}" "${inspection}"; done
+  for child in "${dirs[@]}"; do
+    [[ -e "${INFOQ_DEPLOY_ROOT}/${child}" ]] || continue
+    matched=0
+    case "${child}" in
+      server) name=infoq-admin ;; nginx) name=nginx-web ;;
+      vue) name=infoq-frontend-vue ;; react) name=infoq-frontend-react ;; *) name="${child}" ;;
+    esac
+    for ((index=0; index<${#PLAN_CONTAINER_NAMES[@]}; index++)); do
+      if [[ "${PLAN_CONTAINER_NAMES[index]}" == "${name}" && -n "${PLAN_CONTAINER_IDS[index]}" ]]; then matched=1; break; fi
+    done
+    if [[ "${matched}" == 0 ]]; then
+      marker="${INFOQ_DEPLOY_ROOT}/${child}/.infoq-deploy-owner"
+      deploy_assert_file_target "${marker}" || fail "孤立部署目录标记不安全: ${child}"
+      [[ -f "${marker}" && "$(cat "${marker}")" == "${project}" ]] || fail "孤立数据缺少匹配的 project 归属标记，未执行删除: ${child}"
+    fi
+  done
+  networks="$(docker network ls --format '{{.Name}}')" || fail "无法列出 Docker 网络，未执行任何删除"
+  if printf '%s\n' "${networks}" | grep -Fxq "${network}"; then
+    inspection="$(docker network inspect "${network}" --format '{{.Id}}|{{index .Labels "com.docker.compose.project"}}|{{index .Labels "com.docker.compose.network"}}')" || fail "无法核验 Compose 网络，未执行任何删除"
+    IFS='|' read -r PLAN_NETWORK_ID owner network_label <<< "${inspection}"
+    [[ -n "${PLAN_NETWORK_ID}" && "${owner}" == "${project}" && "${network_label}" == default ]] || fail "Compose 网络归属不匹配，未执行任何删除"
+  fi
 }
 
 remove_container_if_exists() {
   local name="$1"
-
-  if [[ "${DRY_RUN}" == "1" ]]; then
-    log "dry-run: 将删除容器（若存在）: ${name}"
-    return
-  fi
-
-  if ! command -v docker >/dev/null 2>&1; then
-    fail "缺少 docker 命令，无法删除容器: ${name}"
-  fi
-
-  if container_exists "${name}"; then
-    run_cmd docker rm -f "${name}"
-  else
-    log "容器不存在，跳过: ${name}"
-  fi
+  local index
+  for ((index=0; index<${#PLAN_CONTAINER_NAMES[@]}; index++)); do
+    if [[ "${PLAN_CONTAINER_NAMES[index]}" == "${name}" ]]; then
+      if [[ -n "${PLAN_CONTAINER_IDS[index]}" ]]; then run_cmd docker rm -f "${PLAN_CONTAINER_IDS[index]}";
+      else log "容器不存在，跳过: ${name}"; fi
+      return
+    fi
+  done
+  fail "容器未完成归属预检: ${name}"
 }
 
 remove_child_dir_if_exists() {
@@ -358,45 +479,23 @@ remove_empty_deploy_root() {
     return
   fi
 
-  if rmdir -- "${INFOQ_DEPLOY_ROOT}" 2>/dev/null; then
-    log "已删除空部署根目录: ${INFOQ_DEPLOY_ROOT}"
-  else
+  local first_entry
+  first_entry="$(find "${INFOQ_DEPLOY_ROOT}" -mindepth 1 -maxdepth 1 -print -quit)" || fail "无法检查部署根目录是否为空"
+  if [[ -n "${first_entry}" ]]; then
     log "部署根目录非空，已保留: ${INFOQ_DEPLOY_ROOT}"
+  else
+    rmdir -- "${INFOQ_DEPLOY_ROOT}" || fail "删除空部署根目录失败"
+    log "已删除空部署根目录: ${INFOQ_DEPLOY_ROOT}"
   fi
 }
 
 remove_empty_project_networks() {
-  local project_name="${INFOQ_COMPOSE_PROJECT_NAME:-${COMPOSE_PROJECT_NAME:-${DEFAULT_COMPOSE_PROJECT_NAME}}}"
-  local networks=("${project_name}_default")
-  local network
   local container_count
-
-  if ! command -v docker >/dev/null 2>&1; then
-    if [[ "${DRY_RUN}" == "1" ]]; then
-      log "dry-run: 缺少 docker 命令，跳过 Compose 网络检查"
-      return
-    fi
-    fail "缺少 docker 命令，无法清理 Compose 网络"
-  fi
-
-  for network in "${networks[@]}"; do
-    if ! docker network inspect "${network}" >/dev/null 2>&1; then
-      log "Compose 网络不存在，跳过: ${network}"
-      continue
-    fi
-
-    if [[ "${DRY_RUN}" == "1" ]]; then
-      log "dry-run: 若网络为空，将删除 Compose 网络: ${network}"
-      continue
-    fi
-
-    container_count="$(docker network inspect "${network}" --format '{{len .Containers}}')"
-    if [[ "${container_count}" == "0" ]]; then
-      run_cmd docker network rm "${network}"
-    else
-      log "Compose 网络仍有容器使用，已保留: ${network} (${container_count})"
-    fi
-  done
+  [[ -n "${PLAN_NETWORK_ID}" ]] || return 0
+  container_count="$(docker network inspect "${PLAN_NETWORK_ID}" --format '{{len .Containers}}')" || fail "无法查询已核验网络的使用状态"
+  [[ "${container_count}" =~ ^[0-9]+$ ]] || fail "Compose 网络容器数无效"
+  if [[ "${container_count}" == 0 ]]; then run_cmd docker network rm "${PLAN_NETWORK_ID}";
+  else log "Compose 网络仍有容器使用，已保留: ${PLAN_NETWORK_ID} (${container_count})"; fi
 }
 
 print_plan() {
@@ -511,6 +610,7 @@ main() {
     return
   fi
 
+  preflight_plan "${remove_apps_choice}" "${remove_mysql_choice}" "${remove_redis_choice}" "${remove_minio_choice}" "${remove_config_choice}"
   confirm_plan
 
   if [[ "${remove_apps_choice}" == "yes" ]]; then

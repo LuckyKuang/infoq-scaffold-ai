@@ -24,6 +24,8 @@ node skills/compress-cli/scripts/test_agents_check.mjs
 
 校验器是**只读**的：不提供自动改写模式，只检查受保护类别存在性等结构条件，不能证明规则语义未被弱化。安全与发布类规则的压缩必须结合仓库上下文人工评审；更近工作区规约也需单独核对，不在本工具的根文件检查范围内。
 
+UI 路由检查读取 `agents/openai.yaml` 的实际 `interface.default_prompt`：字段必须唯一且包含完整 `$skill-name`；仅出现在注释、描述或其他技能名称前缀中不能通过。支持仓库使用的标量与缩进块格式，完整 YAML 语法另行校验。
+
 ## 与通用 `agents-md-compress` 的分工
 
 - 通用 `agents-md-compress`：负责压缩写作方法与压缩动作本身。

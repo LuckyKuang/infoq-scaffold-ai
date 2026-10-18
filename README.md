@@ -102,6 +102,7 @@ Use skills for admin route smoke or captcha login:
 node skills/test-cli/scripts/run_admin_e2e.mjs --client vue --route-limit 1
 node skills/test-cli/scripts/captcha_login.mjs --backend-url http://127.0.0.1:8080 --print-token
 
+# Prepare the selected runtime env file first; see deploy/README.md.
 # Deployment status: macOS selects Apple; Linux/WSL2 selects Docker
 node skills/deploy-cli/scripts/deploy_cli.mjs status
 ```

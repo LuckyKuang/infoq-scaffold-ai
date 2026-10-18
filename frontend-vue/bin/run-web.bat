@@ -1,12 +1,7 @@
 @echo off
-echo.
-echo [信息] 使用 Vite 命令运行 Web 工程。
-echo.
-
-%~d0
-cd %~dp0
-
-cd ..
-yarn dev
-
+setlocal
+cd /d "%~dp0.." || exit /b 1
+call pnpm run dev
+set "INFOQ_EXIT_CODE=%ERRORLEVEL%"
 pause
+exit /b %INFOQ_EXIT_CODE%

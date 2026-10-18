@@ -111,16 +111,39 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
-      - name: Download release assets
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .node-version
+
+      - name: Download backend asset
         uses: actions/download-artifact@v5
         with:
-          path: release-assets
-          merge-multiple: true
+          name: backend-jar
+          path: release-assets/backend-jar
+
+      - name: Download Vue asset
+        uses: actions/download-artifact@v5
+        with:
+          name: vue-dist
+          path: release-assets/vue-dist
+
+      - name: Download React asset
+        uses: actions/download-artifact@v5
+        with:
+          name: react-dist
+          path: release-assets/react-dist
+
+      - name: Verify release assets
+        run: node skills/release-cli/scripts/verify_release_assets.mjs release-assets
 
       - name: Create release
         uses: softprops/action-gh-release@v2
         with:
-          files: release-assets/*
+          files: |
+            release-assets/backend-jar/infoq-admin.jar
+            release-assets/vue-dist/vue-dist.tar.gz
+            release-assets/react-dist/react-dist.tar.gz
           generate_release_notes: true
           draft: false
           prerelease: false

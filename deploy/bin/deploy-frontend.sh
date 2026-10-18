@@ -2,6 +2,8 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=deploy-paths.sh
+. "${SCRIPT_DIR}/deploy-paths.sh"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 COMPOSE_FILE="${REPO_ROOT}/deploy/docker/docker-compose.yml"
 NGINX_CONF_SOURCE="${REPO_ROOT}/deploy/docker/nginx/conf/nginx.conf"
@@ -22,7 +24,7 @@ usage() {
   prepare   创建目标前端与网关所需宿主机目录，并生成 nginx.conf
   build     构建目标前端镜像；目标为 all 时构建 Vue 与 React
   deploy    prepare + build + 启动目标前端与 nginx-web
-  start     启动目标前端与 nginx-web
+  start     准备目录并重新生成 nginx.conf，再启动目标前端与 nginx-web
   stop      停止目标前端与 nginx-web
   restart   重启目标前端与 nginx-web
   status    查看目标前端与 nginx-web 服务状态
@@ -389,22 +391,29 @@ render_nginx_conf() {
 }
 
 prepare_dirs() {
+  DEPLOY_ROOT="${DEPLOY_ROOT%/}"
   local dirs=(
     "${DEPLOY_ROOT}/nginx/cert"
     "${DEPLOY_ROOT}/nginx/conf"
     "${DEPLOY_ROOT}/nginx/log"
   )
   local frontend_dir
+  local dir
 
   for frontend_dir in "${TARGET_FRONTEND_DIRS[@]}"; do
-    dirs+=("${DEPLOY_ROOT}/${frontend_dir}" "${DEPLOY_ROOT}/${frontend_dir}/logs")
+    dirs+=("${DEPLOY_ROOT}/${frontend_dir}/logs")
   done
 
+  prepare_deploy_dir "${DEPLOY_ROOT}"
+  prepare_deploy_service_dir "${DEPLOY_ROOT}/nginx"
+  for frontend_dir in "${TARGET_FRONTEND_DIRS[@]}"; do
+    prepare_deploy_service_dir "${DEPLOY_ROOT}/${frontend_dir}"
+  done
   for dir in "${dirs[@]}"; do
-    mkdir -p "${dir}"
-    chmod 777 "${dir}" || true
+    prepare_deploy_dir "${dir}"
   done
 
+  deploy_assert_file_target "${DEPLOY_ROOT}/nginx/conf/nginx.conf"
   render_nginx_conf
   echo "[frontend] 使用部署根目录: ${DEPLOY_ROOT}"
   echo "[frontend] 目标前端: ${FRONTEND_TARGET}"

@@ -50,6 +50,14 @@ test('parseEnvFile rejects malformed lines', () => {
   assert.throws(() => parseEnvFile('1BAD=value'), /Invalid env key/u);
 });
 
+test('env parser matches installer quoting and Apple literal values without executing expressions', () => {
+  assert.equal(parseEnvFile("PASSWORD='quote'\\'' slash\\ dollar$ space value'\n").PASSWORD, "quote' slash\\ dollar$ space value");
+  assert.equal(parseEnvFile('PASSWORD="literal\\$value"\n').PASSWORD, 'literal$value');
+  assert.equal(parseEnvFile("PASSWORD='literal'  \n", {literal: true}).PASSWORD, "'literal'  ");
+  assert.throws(() => parseEnvFile('PASSWORD=$(touch tmp/should-never-exist)'), /Unsupported shell expression/u);
+  assert.throws(() => parseEnvFile('PASSWORD="unclosed'), /Invalid env quoting/u);
+});
+
 test('parseArgs treats --help as help', () => {
   assert.deepEqual(parseArgs(['--help']), {command: 'help', flags: {}, values: {}});
   assert.deepEqual(parseArgs([]), {command: 'help', flags: {}, values: {}});
@@ -80,11 +88,20 @@ test('parseArgs rejects unknown commands, options, and positional arguments', ()
   assert.throws(() => parseArgs(['status', '--', 'extra']), /pass-through/u);
 });
 
+test('CLI rejects ignored, empty and duplicate options and preserves equals in values', () => {
+  assert.equal(parseArgs(['smoke', '--base-url=http://127.0.0.1/?probe=expected']).values['base-url'], 'http://127.0.0.1/?probe=expected');
+  assert.throws(() => parseArgs(['down', '--volumes']), /not supported for down/u);
+  assert.throws(() => parseArgs(['smoke', '--base-url=']), /Missing value/u);
+  assert.throws(() => parseArgs(['smoke', '--json', '--json']), /Duplicate option/u);
+  assert.throws(() => parseArgs(['smoke', '--timeout-ms', '100', '--timeout-ms=200']), /Duplicate option/u);
+});
+
 test('parsePort rejects invalid configured ports instead of probing a different service', () => {
   assert.equal(parsePort('19090', 1), 19090);
   assert.throws(() => parsePort('0', 19090), /Invalid TCP port/u);
   assert.throws(() => parsePort('65536', 19090), /Invalid TCP port/u);
   assert.throws(() => parsePort('19090oops', 19090), /Invalid TCP port/u);
+  assert.throws(() => parsePort('', 19090), /Invalid TCP port/u);
   assert.equal(parsePort(undefined, 19090), 19090);
 });
 
@@ -137,7 +154,8 @@ try {
     assert.equal(env.INFOQ_FRONTEND_TARGET, 'react');
     assert.equal(env.INFOQ_PUBLIC_BASE_URL, 'https://gateway.example:8443');
     assert.throws(() => readDeployEnv('docker', {INFOQ_ENV_FILE: path.join(fixture, 'missing')}), /does not exist/u);
-    assert.equal(readDeployEnv('apple', {INFOQ_ENV_FILE: envFile}).INFOQ_FRONTEND_TARGET, 'react');
+    // Apple shell helpers use literal KEY=value, including quote characters.
+    assert.equal(readDeployEnv('apple', {INFOQ_ENV_FILE: envFile}).INFOQ_FRONTEND_TARGET, "'react'");
     assert.doesNotThrow(() => readDeployEnv('docker', {INFOQ_ENV_FILE: path.join(fixture, 'new-install')}, true));
   });
 
@@ -145,7 +163,7 @@ try {
   const originalEnvFile = process.env.INFOQ_ENV_FILE;
   try {
     process.env.INFOQ_ENV_FILE = envFile;
-    for (const status of [200, 302, 503]) {
+    for (const status of [200, 201, 204, 302, 304, 503]) {
       const requested = [];
       globalThis.fetch = async (url) => {
         requested.push(url);

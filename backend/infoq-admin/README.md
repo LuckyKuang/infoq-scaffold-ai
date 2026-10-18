@@ -37,7 +37,7 @@
 
 ## 7. 关键数据流
 
-1. `java -jar infoq-admin.jar` 或 `mvn spring-boot:run` 进入 `SysAdminApplication`。
+1. 按 [`../AGENTS.md`](../AGENTS.md) 构建后，从仓库根执行 `java -jar backend/infoq-admin/target/infoq-admin.jar --spring.profiles.active=dev` 进入 `SysAdminApplication`；PATH 中的 `java` 必须为 JDK 21，日志目录按前述 `INFOQ_LOG_PATH` 设置。
 2. Spring Boot 加载 `application*.yml` 与 classpath 中各插件的自动装配入口。
 3. `scanBasePackages = "cc.infoq"` 让 `infoq-system` 控制器、服务、Mapper、插件配置全部进入同一应用上下文。
 4. 对外 HTTP、SSE、WebSocket、Quartz 与健康检查能力最终都通过这个模块打包后的应用暴露。

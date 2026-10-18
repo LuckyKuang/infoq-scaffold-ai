@@ -2,6 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {setTimeout as delay} from 'node:timers/promises';
 import {
     ensureDir,
     fetchJson,
@@ -184,6 +185,7 @@ function parseArgs(argv) {
 }
 
 function validateCaptchaOptions(options) {
+  if (options.runId && !/^[A-Za-z0-9][A-Za-z0-9._-]{0,119}$/u.test(options.runId)) throw new Error('--run-id must be a simple slug without path separators.');
   if (!Number.isInteger(options.maxCaptchaAttempts) || options.maxCaptchaAttempts <= 0) {
     throw new Error('--max-captcha-attempts must be a positive integer.');
   }
@@ -243,6 +245,7 @@ async function fetchCaptcha(options, runDir, sequence) {
   let lastBody;
   for (let attempt = 1; attempt <= options.captchaFetchRetries; attempt += 1) {
     const {response, body} = await fetchJson(`${options.backendUrl}/auth/code`, {
+      signal: AbortSignal.any([AbortSignal.timeout(options.timeoutMs || 30000), ...(options.signal ? [options.signal] : [])]),
       headers: {
         clientid: options.clientId,
         'Content-Language': 'zh-CN'
@@ -278,7 +281,7 @@ async function fetchCaptcha(options, runDir, sequence) {
     }
 
     if (String(body.msg || '').includes('访问过于频繁') && attempt < options.captchaFetchRetries) {
-      await new Promise((resolve) => setTimeout(resolve, options.captchaFetchRetryDelayMs));
+      await delay(options.captchaFetchRetryDelayMs, undefined, {signal: options.signal});
       continue;
     }
     break;
@@ -299,6 +302,7 @@ async function loginEncrypted(options, account, captchaCode, uuid) {
   });
 
   const response = await fetch(`${options.backendUrl}/auth/login`, {
+    signal: AbortSignal.any([AbortSignal.timeout(options.timeoutMs || 30000), ...(options.signal ? [options.signal] : [])]),
     method: 'POST',
     headers: {
       'Content-Type': 'application/json;charset=UTF-8',
@@ -322,6 +326,8 @@ export async function loginWithRealCaptcha(inputOptions = {}, inputRunDir = '') 
   };
   validateCaptchaOptions(options);
   const runDir = inputRunDir || resolveRunDir(options);
+  const relativeRunDir = path.relative(path.join(repoRoot, 'tmp'), path.resolve(runDir));
+  if (relativeRunDir.startsWith('..') || path.isAbsolute(relativeRunDir)) throw new Error('--run-dir must be inside the repository tmp/ directory.');
   ensureDir(runDir);
   const candidates = buildCaptchaLoginCandidates(options);
   const attempts = [];
@@ -329,6 +335,7 @@ export async function loginWithRealCaptcha(inputOptions = {}, inputRunDir = '') 
 
   for (const account of candidates) {
     for (let attempt = 1; attempt <= options.maxCaptchaAttempts; attempt += 1) {
+      options.signal?.throwIfAborted();
       sequence += 1;
       const captcha = await fetchCaptcha(options, runDir, sequence);
       let seed;
@@ -351,6 +358,7 @@ export async function loginWithRealCaptcha(inputOptions = {}, inputRunDir = '') 
         );
       }
       const captchaCode = String(options.captchaAnswer);
+      options.signal?.throwIfAborted();
       const attemptRecord = {
         sequence,
         username: account.username,
@@ -396,7 +404,6 @@ function resolveRunDir(options) {
 async function main() {
   const options = parseArgs(normalizeForwardedArgs(process.argv.slice(2)));
   const runDir = resolveRunDir(options);
-  ensureDir(runDir);
   const login = await loginWithRealCaptcha(options, runDir);
   const result = {
     backendUrl: options.backendUrl,

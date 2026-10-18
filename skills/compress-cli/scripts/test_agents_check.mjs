@@ -63,9 +63,9 @@ function writeFixture({agentsBody, skills = [{name: 'alpha-cli', withPrompt: tru
     );
     fs.writeFileSync(
       path.join(dir, 'openai.yaml'),
-      skill.withPrompt
+      skill.metadata ?? (skill.withPrompt
         ? `interface:\n  display_name: "${skill.name}"\n  short_description: "test"\n  default_prompt: "使用 $${skill.name} 执行任务。"\n`
-        : 'interface:\n  display_name: "no variable"\n  short_description: "test"\n  default_prompt: "missing prompt variable"\n',
+        : 'interface:\n  display_name: "no variable"\n  short_description: "test"\n  default_prompt: "missing prompt variable"\n'),
       'utf8'
     );
   }
@@ -195,6 +195,24 @@ assertCase(
   (status, output) => status === 1 && output.includes('逃逸仓库根目录'),
   false
 );
+
+for (const [name, metadata, expected] of [
+  ['skill mention in description cannot substitute default_prompt', 'interface:\n  display_name: "$alpha-cli"\n  default_prompt: "do work"\n', 1],
+  ['skill mention in comment cannot substitute default_prompt', 'interface:\n  default_prompt: do work # $alpha-cli\n', 1],
+  ['comment-only default_prompt is rejected', 'interface:\n  default_prompt: # $alpha-cli\n', 1],
+  ['duplicate top-level interface is rejected', 'interface:\n  default_prompt: "$alpha-cli"\ninterface:\n  default_prompt: "do work"\n', 1],
+  ['inline duplicate interface is rejected', 'interface:\n  default_prompt: "$alpha-cli"\ninterface: {default_prompt: "do work"}\n', 1],
+  ['quoted duplicate interface is rejected', 'interface:\n  default_prompt: "$alpha-cli"\n"interface":\n  default_prompt: "do work"\n', 1],
+  ['quoted inline duplicate interface is rejected', 'interface:\n  default_prompt: "$alpha-cli"\n"interface": {default_prompt: "do work"}\n', 1],
+  ['double-quoted duplicate prompt field is rejected', 'interface:\n  default_prompt: "$alpha-cli"\n  "default_prompt": "do work"\n', 1],
+  ['single-quoted duplicate prompt field is rejected', "interface:\n  default_prompt: '$alpha-cli'\n  'default_prompt': 'do work'\n", 1],
+  ['another skill with same prefix is rejected', 'interface:\n  default_prompt: "use $alpha-cli-extra"\n', 1],
+  ['block default_prompt is accepted', 'interface:\n  default_prompt: >-\n    使用 $alpha-cli\n    执行任务。\n', 0],
+  ['duplicate default_prompt is rejected', 'interface:\n  default_prompt: "$alpha-cli"\n  default_prompt: "do work"\n', 1],
+]) {
+  assertCase(name, {agentsBody: validAgents(), skills: [{name: 'alpha-cli', metadata}]}, (status) => status === expected);
+}
+assertCase('blank first line is rejected', {agentsBody: `\n${validAgents().split('\n').slice(1).join('\n')}`}, (status) => status === 1);
 
 const failed = results.filter((item) => !item.ok);
 console.log(`[agents-check-test] ${failed.length === 0 ? 'pass' : 'fail'} (${results.length - failed.length}/${results.length})`);

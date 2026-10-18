@@ -69,7 +69,7 @@ foreach ($infoqPath in $infoqPaths) {
 | MySQL/ES 权限错误 | 确认数据在 WSL Linux 文件系统、UID/GID 与挂载权限；不删除数据重试 |
 | 容器反复短暂 Up | 核对 WSL 发行版/Docker daemon 生命周期，保持本轮专用前台会话 |
 | localhost 代理 502 | `curl --noproxy '*'`，区分代理失败与服务失败 |
-| Redis 配置 Permission denied | 检查容器用户可读性及 owner；helper 的含密码配置 `644`/目录 `777` 是生产阻塞，不作为生产修复方案 |
+| Redis 配置 Permission denied | 检查容器用户可读性及 owner；helper 的无密码配置只读挂载，旧 `777` 目录会被拒绝；管理员按镜像 UID/GID 迁移权限后重试 |
 | 前端直连 200、网关 404/502 | 核对 context 与 upstream；受控前端部署会重建网关刷新 DNS，也会覆盖配置 |
 | 镜像 EOF / Corepack 失败 | 按 `DOCKER.md` 区分网络和版本；固定 Node 24.18.0 / pnpm 10.34.1，不降版本伪造通过 |
 | Debian 未提供宿主 JDK 21 | Compose 不依赖宿主 JDK；手动/Apple Maven 构建才需宿主工具链 |

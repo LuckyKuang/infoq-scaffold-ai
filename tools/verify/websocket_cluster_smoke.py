@@ -53,6 +53,8 @@ def build_redis_client():
         db=int(require_env("CLUSTER_SMOKE_REDIS_DB")),
         password=require_env("CLUSTER_SMOKE_REDIS_PASSWORD"),
         decode_responses=True,
+        socket_connect_timeout=5,
+        socket_timeout=5,
     )
 
 

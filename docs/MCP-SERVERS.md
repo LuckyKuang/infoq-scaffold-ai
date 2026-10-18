@@ -46,9 +46,15 @@
 - 显式环境变量优先级高于解析出的 backend 配置值
 - 共享文档示例统一使用本地依赖基线：MySQL `127.0.0.1:3306/infoq`、Redis `127.0.0.1:6379/0`
 
-这里是文件选择顺序，不是 Spring profile 合并：本地文件存在时只解析该文件，缺字段不会再从 `dev` 补齐。解析器只支持当前配置所用的标量/缩进结构，不执行 Spring `${...}` 占位符解析，也不自动继承 JDBC TLS、Redis Sentinel/Cluster 配置；适用的 TLS/拓扑字段必须显式通过白名单环境变量提供并核验。
+这里是文件选择顺序，不是 Spring profile 合并：本地文件存在时只解析该文件，缺字段不会再从 `dev` 补齐。首个 YAML 文档不要求 `---`；Redis 支持 `spring.data:` 与嵌套 `spring: data: redis:` 两种写法。连接标量保留文本（包括口令前导零），支持 YAML 单引号及 JSON 兼容的双引号转义。连接字段中的 `${...}`、复杂值、缺失必填项或重复连接文档会明确失败，不模拟 Spring profile 合并；显式环境变量在文件解析成功后才覆盖结果。
+
+MySQL `hikari.maxPoolSize` 缺省为 `10`；显式值必须是正安全整数，未展开的占位符、复杂值、零、负数或小数会在启动前失败。解析器不自动继承 JDBC TLS、Redis Sentinel/Cluster 配置；适用的 TLS/拓扑字段必须显式通过白名单环境变量提供并核验。它不是完整 YAML/Spring 配置解析器；需要复杂配置时先为 MCP 准备一份无歧义的本地标量配置。
 
 共享 helper 的仓库缓存位于 `tmp/mcp/npm-cache/`。缓存命中或 `npx` 下载的版本未被锁定，不属于生产应用依赖；首次启用前需检查包来源、实际版本及暴露的工具，不能把启动成功当作安全审计通过。
+
+缓存包优先启动 `package.json` 声明的 `bin`，避免把仅供 import 的 `dist/index.js` 当成服务；声明的入口缺失时停止。没有 `bin` 的兼容包才检查 `dist/index.js` / `index.js`。三个 STDIO 包装器会转发中断，并将子进程信号终止保留为非零退出，不能将服务退出判成成功。
+
+修改配置解析或缓存启动时，先用隔离 fixture 执行 `node tools/test_backend_mcp_env.mjs` 与 `node tools/test_mcp_cache.mjs`；前者覆盖单双引号、缺值与歧义，后者覆盖入口优先级、缺失入口和包装器退出状态。测试不启动真实 MCP 包、不下载依赖、不连接数据库。
 
 推荐关系：
 

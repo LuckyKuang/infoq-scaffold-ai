@@ -21,7 +21,7 @@ extra policy documents.
 Development requires MySQL 8 and Redis 7. Use configured local services, or follow
 the environment and directory preparation in [`deploy/README.md`](deploy/README.md)
 and [`deploy/DOCKER.md`](deploy/DOCKER.md) for Compose. Copying `.env.example`
-alone is insufficient: Redis needs a matching `redis.conf`, credentials must be
+alone is insufficient: Redis needs the prepared `redis.conf`, credentials must be
 set, and Compose uses host-mounted data/configuration directories. Restrict
 published dependency ports to trusted local access.
 
@@ -65,11 +65,15 @@ Backend:
 java -jar backend/infoq-admin/target/infoq-admin.jar --spring.profiles.active=local
 ```
 
-`dev` is the default Spring profile in config. `application-local.yml` is an
+The default Maven `dev` build selects the Spring `dev` profile unless overridden
+at runtime; a `prod` build selects `prod`. `application-local.yml` is an
 ignored, developer-owned file, not a bundled profile with usable credentials.
 Prepare it from the relevant `application-dev.yml` sections, set local datasource
 and Redis values, then select `local` explicitly. Do not assume it inherits
 `dev` dependencies or point it at production services.
+Rebuild the jar after adding or changing the source resource, or load the file
+explicitly with Spring external configuration; selecting `local` alone does not
+read the source tree from an already packaged jar.
 
 Vue admin:
 

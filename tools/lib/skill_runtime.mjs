@@ -101,9 +101,8 @@ export async function stopRecordedRunState(stateFile, options = {}) {
     }
 
     const aliveBeforeStop = isProcessAlive(record.pid);
-    const stopped = aliveBeforeStop
-      ? await terminateProcessTree(record.pid, {graceMs: options.graceMs ?? 1000})
-      : false;
+    // A detached leader may already have exited while its owned process group remains.
+    const stopped = await terminateProcessTree(record.pid, {graceMs: options.graceMs ?? 1000});
     stoppedProcesses.push({
       ...record,
       aliveBeforeStop,
@@ -233,43 +232,67 @@ export async function terminateProcessTree(pid, options = {}) {
   if (!Number.isInteger(numericPid) || numericPid <= 0) {
     return false;
   }
-
-  if (!isProcessAlive(numericPid)) {
-    return false;
-  }
+  if (numericPid === process.pid) throw new Error('Refusing to terminate the current process');
 
   const graceMs = options.graceMs ?? 1000;
 
   if (process.platform === 'win32') {
-    spawnSync('taskkill', ['/PID', String(numericPid), '/T', '/F'], {stdio: 'ignore'});
+    if (!isProcessAlive(numericPid)) return false;
+    const result = spawnSync('taskkill', ['/PID', String(numericPid), '/T', '/F'], {stdio: 'ignore'});
+    if (isProcessAlive(numericPid)) {
+      throw new Error(`Failed to stop owned process ${numericPid}: ${result.error?.message || `taskkill exit ${result.status}`}`);
+    }
     return true;
   }
 
-  try {
-    process.kill(-numericPid, 'SIGTERM');
-  } catch (error) {
-    if (error?.code === 'ESRCH') {
-      return false;
+  const ownedPids = new Set([numericPid]);
+  let ownsGroup = false;
+  // One process-table read per snapshot avoids per-process IO and never exposes command lines.
+  const snapshot = () => {
+    const result = spawnSync('ps', ['-A', '-o', 'pid=', '-o', 'ppid=', '-o', 'pgid=', '-o', 'stat='], {encoding: 'utf8'});
+    if (result.error || result.status !== 0) throw new Error(`Cannot inspect owned process tree: ${result.error?.message || `ps exit ${result.status}`}`);
+    const rows = result.stdout.split(/\r?\n/u).filter((line) => line.trim()).map((line) => {
+      const match = /^\s*(\d+)\s+(\d+)\s+(\d+)\s+(\S+)\s*$/u.exec(line);
+      if (!match) throw new Error('Cannot parse process-table PID/PPID/PGID/status fields');
+      return {pid: Number(match[1]), parent: Number(match[2]), group: Number(match[3]), active: !/^[ZX]/u.test(match[4])};
+    });
+    ownsGroup ||= rows.some((row) => row.group === numericPid);
+    let changed = true;
+    while (changed) {
+      changed = false;
+      for (const row of rows) {
+        if (!ownedPids.has(row.pid) && (ownedPids.has(row.parent) || (ownsGroup && row.group === numericPid))) {
+          ownedPids.add(row.pid);
+          changed = true;
+        }
+      }
     }
-    process.kill(numericPid, 'SIGTERM');
-  }
+    if (ownedPids.has(process.pid)) throw new Error('Refusing to terminate a process tree containing the current process');
+    return rows.filter((row) => row.active && ownedPids.has(row.pid));
+  };
+  const signalTree = (rows, signal) => {
+    const targets = ownsGroup ? [-numericPid] : [];
+    // Keep the parent until descendants have been signalled; a shared process group is never killed.
+    targets.push(...rows.filter((row) => row.pid !== numericPid && (!ownsGroup || row.group !== numericPid)).map((row) => row.pid));
+    if (!ownsGroup && rows.some((row) => row.pid === numericPid)) targets.push(numericPid);
+    for (const target of new Set(targets)) {
+      try { process.kill(target, signal); } catch (error) { if (error?.code !== 'ESRCH') throw error; }
+    }
+  };
+  let remaining = snapshot();
+  if (!remaining.length) return false;
+  signalTree(remaining, 'SIGTERM');
 
   await sleep(graceMs);
-
-  if (!isProcessAlive(numericPid)) {
-    return true;
+  remaining = snapshot();
+  if (!remaining.length) return true;
+  signalTree(remaining, 'SIGKILL');
+  for (let attempt = 0; attempt < 50; attempt += 1) {
+    await sleep(20);
+    remaining = snapshot();
+    if (!remaining.length) return true;
   }
-
-  try {
-    process.kill(-numericPid, 'SIGKILL');
-  } catch {
-    try {
-      process.kill(numericPid, 'SIGKILL');
-    } catch {
-      // Ignore final cleanup failures for already-dead processes.
-    }
-  }
-  return true;
+  throw new Error(`Owned process tree ${numericPid} still has active PIDs after SIGKILL: ${remaining.map((row) => row.pid).join(', ')}`);
 }
 
 export function spawnDetachedProcess(command, args = [], options = {}) {
@@ -298,12 +321,24 @@ export function spawnDetachedProcess(command, args = [], options = {}) {
 
 export function runCommand(command, args = [], options = {}) {
   return new Promise((resolve, reject) => {
+    if (options.signal?.aborted) {
+      const error = new Error('Command aborted before start', {cause: options.signal.reason});
+      error.name = 'AbortError';
+      error.code = 'ABORT_ERR';
+      reject(error);
+      return;
+    }
+    if (options.timeoutMs !== undefined && (!Number.isInteger(options.timeoutMs) || options.timeoutMs <= 0)) {
+      reject(new Error('timeoutMs must be a positive integer'));
+      return;
+    }
     const captureOutput = options.captureOutput === true;
     const child = spawn(command, args, {
       cwd: options.cwd,
       env: options.env ?? process.env,
       stdio: options.stdio ?? (captureOutput ? ['ignore', 'pipe', 'pipe'] : 'inherit'),
-      detached: options.detached ?? false,
+      // Cancellation must also stop descendants that inherited our stdout/stderr pipes.
+      detached: process.platform !== 'win32' && (options.signal || options.timeoutMs) ? true : (options.detached ?? false),
       windowsHide: true
     });
 
@@ -322,15 +357,48 @@ export function runCommand(command, args = [], options = {}) {
       });
     }
 
-    child.on('error', reject);
-    child.on('exit', (code, signal) => {
+    let spawnError;
+    let cancellationError;
+    let stopPromise;
+    let timer;
+    const cancel = (error) => {
+      if (cancellationError) return;
+      cancellationError = error;
+      stopPromise = child.pid ? terminateProcessTree(child.pid, {graceMs: 40}) : Promise.resolve(false);
+      stopPromise.catch((cleanupError) => reject(new AggregateError([error, cleanupError], `${error.message}; owned process cleanup failed: ${cleanupError.message}`)));
+    };
+    const onAbort = () => {
+      const error = new Error('Command aborted', {cause: options.signal.reason});
+      error.name = 'AbortError';
+      error.code = 'ABORT_ERR';
+      cancel(error);
+    };
+    child.on('error', (error) => { spawnError = error; });
+    child.on('close', async (code, signal) => {
+      clearTimeout(timer);
+      options.signal?.removeEventListener('abort', onAbort);
+      try { await stopPromise; } catch { return; }
+      if (spawnError || cancellationError) {
+        reject(spawnError || cancellationError);
+        return;
+      }
       resolve({
-        code: code ?? 0,
+        code: code ?? 1,
         signal: signal ?? null,
         stdout,
         stderr
       });
     });
+    if (options.signal) {
+      options.signal.addEventListener('abort', onAbort, {once: true});
+      if (options.signal.aborted) onAbort();
+    }
+    if (options.timeoutMs !== undefined) timer = setTimeout(() => {
+      const error = new Error(`Command timed out after ${options.timeoutMs}ms`);
+      error.name = 'TimeoutError';
+      error.code = 'ETIMEDOUT';
+      cancel(error);
+    }, options.timeoutMs);
   });
 }
 

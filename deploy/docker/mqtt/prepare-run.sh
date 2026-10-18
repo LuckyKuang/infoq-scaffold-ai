@@ -5,6 +5,7 @@ set -euo pipefail
 : "${MIDDLEWARE_SECRET_DIR:?MIDDLEWARE_SECRET_DIR is required}"
 : "${MIDDLEWARE_MAVEN_REPO:?MIDDLEWARE_MAVEN_REPO is required}"
 : "${INFOQ_DEPLOY_ROOT:?INFOQ_DEPLOY_ROOT is required}"
+[[ "${MIDDLEWARE_RUN_ID}" =~ ^[a-z0-9][a-z0-9-]{0,47}$ ]] || { echo "Invalid MIDDLEWARE_RUN_ID" >&2; exit 64; }
 
 secret() { openssl rand -hex 24; }
 

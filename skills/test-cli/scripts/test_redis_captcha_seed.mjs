@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import http from 'node:http';
 import net from 'node:net';
+import crypto from 'node:crypto';
+import {encryptHeaderKey, encryptWithAesEcbPkcs7, randomAesKey} from '../../../tools/lib/backend_login.mjs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {
@@ -105,6 +107,35 @@ function startFakeBackend() {
 
 await test('encodeCommand encodes RESP arrays and unicode payloads', () => {
   assert.equal(encodeCommand(['SET', 'k', '值']), '*3\r\n$3\r\nSET\r\n$1\r\nk\r\n$3\r\n值\r\n');
+});
+
+await test('random AES key preserves the backend RSA/AES wire protocol', () => {
+  const aesKey = randomAesKey();
+  assert.match(aesKey, /^[A-Za-z0-9]{32}$/u);
+  const plaintext = JSON.stringify({username: 'fixture', password: '边界密码!'});
+  const ciphertext = encryptWithAesEcbPkcs7(plaintext, aesKey);
+  const decipher = crypto.createDecipheriv('aes-256-ecb', Buffer.from(aesKey), null);
+  assert.equal(Buffer.concat([decipher.update(ciphertext, 'base64'), decipher.final()]).toString(), plaintext);
+  const {publicKey, privateKey} = crypto.generateKeyPairSync('rsa', {modulusLength: 2048});
+  const publicBase64 = publicKey.export({type: 'spki', format: 'der'}).toString('base64');
+  // OpenSSL 3 may disallow PKCS#1 v1.5 privateDecrypt; decode the fixture's raw block explicitly.
+  const block = crypto.privateDecrypt({key: privateKey, padding: crypto.constants.RSA_NO_PADDING}, Buffer.from(encryptHeaderKey(aesKey, publicBase64), 'base64'));
+  assert.equal(block[0], 0);
+  assert.equal(block[1], 2);
+  const separator = block.indexOf(0, 2);
+  assert.ok(separator >= 10);
+  assert.equal(block.subarray(separator + 1).toString(), Buffer.from(aesKey).toString('base64'));
+});
+
+await test('an already interrupted login sends no HTTP or Redis request', async () => {
+  const controller = new AbortController();
+  controller.abort(new Error('fixture cancelled'));
+  await assert.rejects(loginWithRealCaptcha({signal: controller.signal, runDir, loginCandidates: 'fixture:secret'}), /fixture cancelled/);
+});
+
+await test('login evidence paths cannot escape repository tmp', async () => {
+  await assert.rejects(loginWithRealCaptcha({runDir: path.join(repoRoot, 'outside-evidence')}), /inside the repository tmp/);
+  await assert.rejects(loginWithRealCaptcha({runId: '../../outside-evidence'}), /simple slug/);
 });
 
 await test('parseRespValue handles simple strings, bulk strings, arrays, nulls, and errors', () => {

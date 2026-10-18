@@ -1,6 +1,6 @@
 # 管理端 Web 自动化测试矩阵
 
-生成时间：2026-10-18T07:01:10.364Z
+生成时间：2026-10-18T08:01:19.710Z
 
 这是静态用例设计清单，不是执行报告；范围与 runner 验收限制见 [测试政策](../TESTING.md) 第 6.5–6.6 节。
 
@@ -8,8 +8,8 @@
 
 - 用例总数：115
 - P0：24
-- P1：70
-- P2：21
+- P1：64
+- P2：27
 - React 适用用例：115
 - Vue 适用用例：115
 - 副作用用例：51
@@ -34,11 +34,11 @@
 | FE-MONITOR-DATA-SOURCE-2026042921 | P1 | permission | monitor.dataSource | 连接池监控查询 | /monitor/dataSource | monitor/dataSource/index | react,vue | no |  |
 | FE-MONITOR-JOB-2026042510 | P0 | smoke | monitor.job | 定时任务 | /monitor/job | monitor/job/index | react,vue | no |  |
 | FE-MONITOR-JOB-2026042511 | P1 | permission | monitor.job | 任务查询 | /monitor/job | monitor/job/index | react,vue | no |  |
-| FE-MONITOR-JOB-2026042512 | P1 | CRUD | monitor.job | 任务新增 | /monitor/job | monitor/job/index | react,vue | yes |  |
-| FE-MONITOR-JOB-2026042513 | P1 | CRUD | monitor.job | 任务修改 | /monitor/job | monitor/job/index | react,vue | yes |  |
+| FE-MONITOR-JOB-2026042512 | P2 | CRUD | monitor.job | 任务新增 | /monitor/job | monitor/job/index | react,vue | yes |  |
+| FE-MONITOR-JOB-2026042513 | P2 | CRUD | monitor.job | 任务修改 | /monitor/job | monitor/job/index | react,vue | yes |  |
 | FE-MONITOR-JOB-2026042514 | P2 | CRUD | monitor.job | 任务删除 | /monitor/job | monitor/job/index | react,vue | yes |  |
 | FE-MONITOR-JOB-2026042515 | P1 | CRUD | monitor.job | 任务导出 | /monitor/job | monitor/job/index | react,vue | no |  |
-| FE-MONITOR-JOB-2026042516 | P1 | CRUD | monitor.job | 状态切换 | /monitor/job | monitor/job/index | react,vue | yes |  |
+| FE-MONITOR-JOB-2026042516 | P2 | CRUD | monitor.job | 状态切换 | /monitor/job | monitor/job/index | react,vue | yes |  |
 | FE-MONITOR-JOB-2026042517 | P2 | CRUD | monitor.job | 立即执行 | /monitor/job | monitor/job/index | react,vue | yes |  |
 | FE-MONITOR-JOB-LOG-2026042520 | P0 | smoke | monitor.jobLog | 任务日志 | /monitor/jobLog | monitor/jobLog/index | react,vue | no |  |
 | FE-MONITOR-JOB-LOG-2026042521 | P1 | permission | monitor.jobLog | 日志查询 | /monitor/jobLog | monitor/jobLog/index | react,vue | no |  |
@@ -104,12 +104,12 @@
 | FE-SYSTEM-NOTICE-107 | P0 | smoke | system.notice | 通知公告 | /system/notice | system/notice/index | react,vue | no |  |
 | FE-SYSTEM-OSS-118 | P0 | smoke | system.oss | 文件管理 | /system/oss | system/oss/index | react,vue | no |  |
 | FE-SYSTEM-OSS-1600 | P1 | permission | system.oss | 文件查询 | /system/oss | system/oss/index | react,vue | no |  |
-| FE-SYSTEM-OSS-1601 | P1 | CRUD | system.oss | 文件上传 | /system/oss | system/oss/index | react,vue | yes |  |
+| FE-SYSTEM-OSS-1601 | P2 | CRUD | system.oss | 文件上传 | /system/oss | system/oss/index | react,vue | yes |  |
 | FE-SYSTEM-OSS-1602 | P1 | CRUD | system.oss | 文件下载 | /system/oss | system/oss/index | react,vue | no |  |
 | FE-SYSTEM-OSS-1603 | P2 | CRUD | system.oss | 文件删除 | /system/oss | system/oss/index | react,vue | yes |  |
 | FE-SYSTEM-OSS-1620 | P1 | permission | system.oss | 配置列表 | /system/oss | system/oss/index | react,vue | no |  |
-| FE-SYSTEM-OSS-1621 | P1 | CRUD | system.oss | 配置添加 | /system/oss | system/oss/index | react,vue | yes |  |
-| FE-SYSTEM-OSS-1622 | P1 | CRUD | system.oss | 配置编辑 | /system/oss | system/oss/index | react,vue | yes |  |
+| FE-SYSTEM-OSS-1621 | P2 | CRUD | system.oss | 配置添加 | /system/oss | system/oss/index | react,vue | yes |  |
+| FE-SYSTEM-OSS-1622 | P2 | CRUD | system.oss | 配置编辑 | /system/oss | system/oss/index | react,vue | yes |  |
 | FE-SYSTEM-OSS-1623 | P2 | CRUD | system.oss | 配置删除 | /system/oss | system/oss/index | react,vue | yes |  |
 | FE-SYSTEM-OSS-CONFIG-133 | P1 | route | system.oss.config | 文件配置管理 | /system/oss-config/index | system/oss/config | react,vue | no |  |
 | FE-SYSTEM-POST-1021 | P1 | permission | system.post | 岗位查询 | /system/post | system/post/index | react,vue | no |  |

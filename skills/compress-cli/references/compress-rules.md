@@ -45,7 +45,7 @@
 每条规则：
 
 - 列出的 skill 必须存在对应目录，且目录内必须有 `SKILL.md` 与 `agents/openai.yaml`。
-- `agents/openai.yaml` 的 `default_prompt` 必须显式包含 `$<skill-name>`。
+- `agents/openai.yaml` 的实际 `interface.default_prompt` 必须唯一并显式包含完整 `$<skill-name>`；注释、其他字段及同名前缀的其他技能不能替代该字段。标量与缩进块格式受支持，完整 YAML 语法仍需独立校验。
 - 目录存在但未被 Local Skills 或 docs/SKILLS.md 收录 → 失败（防止"幽灵 skill"）。
 - 引用不存在的 skill → 失败（防止"失效路由"）。
 
@@ -72,3 +72,4 @@
 - 任一契约失败 → 非零退出码 + 明确失败条目，禁止静默通过。
 - 校验器只读：不得提供自动改写或自动删除规则的模式。
 - 压缩提交前必须运行 `check` + `test_agents_check.mjs`；两者结果写入交付证据。
+- 修改 metadata 检查时，用临时 Git 文档树验证有效 prompt、缺失/重复字段、注释误命中、技能前缀误命中与块文本；不能靠整文件字符串存在制造成功。

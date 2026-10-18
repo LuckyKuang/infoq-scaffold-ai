@@ -8,8 +8,8 @@ import {resolveRepoRoot, resolveTmpPath, runCommandChecked, timestampSlug} from 
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolveRepoRoot(scriptDir);
-const fixtureRoot = resolveTmpPath(repoRoot, 'release-cli', `fixture-${timestampSlug()}`, 'repo');
-const logFile = resolveTmpPath(repoRoot, 'release-cli', `test-${timestampSlug()}.log`);
+const fixtureRoot = resolveTmpPath(repoRoot, 'documentation-reaudit', 'release-cli', `fixture-${timestampSlug()}`, 'repo');
+const logFile = resolveTmpPath(repoRoot, 'documentation-reaudit', 'release-cli', `test-${timestampSlug()}.log`);
 
 const sqlDir = path.join(repoRoot, 'sql');
 const initSqlCandidates = fs

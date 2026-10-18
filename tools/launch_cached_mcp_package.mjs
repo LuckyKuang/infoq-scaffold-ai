@@ -48,11 +48,6 @@ function getNpmCacheDirs(repoRoot) {
 }
 
 function findPackageEntry(packageRoot) {
-  const candidate = path.join(packageRoot, 'dist', 'index.js');
-  if (fs.existsSync(candidate)) {
-    return candidate;
-  }
-
   const packageJsonPath = path.join(packageRoot, 'package.json');
   if (fs.existsSync(packageJsonPath)) {
     const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
@@ -64,9 +59,12 @@ function findPackageEntry(packageRoot) {
       if (fs.existsSync(binCandidate)) {
         return binCandidate;
       }
+      throw new Error(`Declared MCP executable is missing: ${binCandidate}`);
     }
   }
 
+  const candidate = path.join(packageRoot, 'dist', 'index.js');
+  if (fs.existsSync(candidate)) return candidate;
   const indexCandidate = path.join(packageRoot, 'index.js');
   return fs.existsSync(indexCandidate) ? indexCandidate : null;
 }

@@ -231,7 +231,7 @@ backend 工作区基线是 JDK 21 与 Maven 3.9.x。
 
 - `/AGENTS.md`
 - 相关工作区 `AGENTS.md`
-- `README.md`、`README_CN.md`
+- 四种根 README（English、简体中文、繁體中文、日本語）
 - 受影响的 `docs/*.md`
 
 其中 MCP 相关变更还要额外满足两条：

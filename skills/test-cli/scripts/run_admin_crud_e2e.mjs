@@ -18,6 +18,7 @@ import {
 } from '../../../tools/lib/skill_runtime.mjs';
 import {runAdminDevStack, stopAdminDevStackState} from '../../../tools/lib/admin_dev_stack.mjs';
 import {DEFAULT_CAPTCHA_LOGIN_OPTIONS, loginWithRealCaptcha} from './captcha_login.mjs';
+import {runTestLifecycle} from './test_run_lifecycle.mjs';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolveRepoRoot(scriptDir);
@@ -322,6 +323,7 @@ function parseArgs(argv) {
     }
   }
 
+  if (options.runId && !/^[A-Za-z0-9][A-Za-z0-9._-]{0,119}$/u.test(options.runId)) throw new Error('--run-id must be a simple slug without path separators.');
   if (!CLIENTS[options.client]) {
     throw new Error('--client must be one of: vue, react');
   }
@@ -480,7 +482,7 @@ public class AdminCrudDbTool {
     java.util.Map.entry("dictData", new Query("sys_dict_data", "dict_label", "dict_code", "", new String[]{"dict_code","dict_label","dict_value","dict_type"})),
     java.util.Map.entry("config", new Query("sys_config", "config_key", "config_id", "", new String[]{"config_id","config_name","config_key","config_value","config_type"})),
     java.util.Map.entry("notice", new Query("sys_notice", "notice_title", "notice_id", "", new String[]{"notice_id","notice_title","notice_type","status"})),
-    java.util.Map.entry("client", new Query("sys_client", "client_key", "id", "del_flag = \'0\'", new String[]{"id","client_id","client_key","status"})),
+    java.util.Map.entry("client", new Query("sys_client", "client_key", "id", "del_flag = \'0\'", new String[]{"id","client_id","client_key","active_timeout","status"})),
     java.util.Map.entry("invite", new Query("sys_invite_code", "remark", "invite_id", "", new String[]{"invite_id","invite_code","status","remark"})),
     java.util.Map.entry("ossConfig", new Query("sys_oss_config", "config_key", "oss_config_id", "", new String[]{"oss_config_id","config_key","bucket_name","status"})),
     java.util.Map.entry("job", new Query("sys_job", "job_name", "job_id", "del_flag = \'0\'", new String[]{"job_id","job_name","job_group","handler_key","status"}))
@@ -568,27 +570,33 @@ public class AdminCrudDbTool {
 `;
 }
 
-async function prepareDbTool(runDir) {
+async function prepareDbTool(runDir, signal) {
   const dbDir = ensureDir(path.join(runDir, 'db'));
   const sourcePath = path.join(dbDir, 'AdminCrudDbTool.java');
   const classPath = path.join(dbDir, 'AdminCrudDbTool.class');
   const connectorJar = resolveMysqlConnectorJar();
   fs.writeFileSync(sourcePath, dbToolSource(), 'utf8');
-  await runCommandChecked('javac', ['-encoding', 'UTF-8', '-cp', connectorJar, sourcePath], {cwd: dbDir, captureOutput: true});
+  await runCommandChecked('javac', ['-encoding', 'UTF-8', '-cp', connectorJar, sourcePath], {cwd: dbDir, captureOutput: true, timeoutMs: 30000, signal});
   if (!fs.existsSync(classPath)) throw new Error(`DB tool compilation did not produce ${classPath}`);
   return {dbDir, sourcePath, connectorJar};
 }
 
-async function runDbTool(dbTool, dbConfig, module, keys) {
+export async function runDbTool(dbTool, dbConfig, module, keys) {
   for (const key of keys) assertE2eKey(key);
   const result = await runCommandChecked('java', ['-cp', `${dbTool.dbDir}${path.delimiter}${dbTool.connectorJar}`, 'AdminCrudDbTool', module, ...keys], {
     cwd: dbTool.dbDir,
     env: {...process.env, INFOQ_E2E_JDBC_URL: dbConfig.jdbcUrl, INFOQ_E2E_DB_USER: dbConfig.username, INFOQ_E2E_DB_PASSWORD: dbConfig.password},
-    captureOutput: true
+    captureOutput: true,
+    timeoutMs: 30000,
+    signal: dbConfig.signal
   });
   const line = result.stdout.trim().split(/\r?\n/u).at(-1) || '{}';
   try {
-    return JSON.parse(line);
+    const payload = JSON.parse(line);
+    if (payload.module !== module || !Array.isArray(payload.rows) || payload.count !== payload.rows.length || payload.error) {
+      throw new Error(`Invalid DB result for ${module}: expected module, rows and matching count.`);
+    }
+    return payload;
   } catch (error) {
     throw new Error(`Failed to parse DB tool output: ${line}\n${error.message || error}`);
   }
@@ -600,7 +608,7 @@ function buildApiHeaders(options, token) {
 
 async function apiRequest(options, token, method, apiPath, body = undefined) {
   const headers = buildApiHeaders(options, token);
-  const requestOptions = {method, headers};
+  const requestOptions = {method, headers, signal: AbortSignal.any([AbortSignal.timeout(options.timeoutMs || 30000), ...(options.signal ? [options.signal] : [])])};
   if (body !== undefined) {
     headers['Content-Type'] = 'application/json;charset=UTF-8';
     requestOptions.body = JSON.stringify(body);
@@ -610,6 +618,7 @@ async function apiRequest(options, token, method, apiPath, body = undefined) {
   if (responseBody && Object.prototype.hasOwnProperty.call(responseBody, 'code') && responseBody.code !== 200) {
     throw new Error(`${method} ${apiPath} failed: code=${responseBody.code}, msg=${responseBody.msg || ''}`);
   }
+  if (method !== 'GET' && responseBody?.code !== 200) throw new Error(`${method} ${apiPath} failed: missing successful business response`);
   return responseBody;
 }
 
@@ -633,11 +642,11 @@ function flattenRows(rows) {
   return result;
 }
 
-function responseRows(body) {
+export function responseRows(body) {
   if (Array.isArray(body?.rows)) return body.rows;
   if (Array.isArray(body?.data)) return flattenRows(body.data);
   if (Array.isArray(body)) return flattenRows(body);
-  return [];
+  throw new Error('Invalid list response: expected rows, data array or array body.');
 }
 
 async function listByDefinition(options, token, definition, key) {
@@ -651,7 +660,7 @@ async function deleteByDefinition(options, token, definition, row) {
   await apiRequest(options, token, 'DELETE', `${definition.deletePath}/${encodeURIComponent(String(definition.id(row)))}`);
 }
 
-async function cleanupDefinition(options, token, definition, keys) {
+export async function cleanupDefinition(options, token, definition, keys) {
   const result = {module: definition.key, deleted: [], errors: [], skipped: []};
   for (const key of uniqueKeys(keys)) {
     try {
@@ -918,13 +927,13 @@ async function takeScreenshot(page, runDir, name) {
   return screenshotPath;
 }
 
-function makeTestData(client) {
+export function makeTestData(client) {
   const clientSlug = {vue: 'vue', react: 'react'}[client];
-  const unique = `${Date.now().toString(36)}_${crypto.randomBytes(3).toString('hex')}`;
-  const shortUnique = unique.replace(/_/g, '').slice(-8);
-  const base = (module, max = 48) => `e2e_${module}_a_${clientSlug}_${shortUnique}`.slice(0, max);
-  const edit = (module, max = 48) => `e2e_${module}_b_${clientSlug}_${shortUnique}`.slice(0, max);
-  const code = (module, max = 28) => `e2e_${module}_${clientSlug}_${shortUnique}`.slice(0, max);
+  const shortUnique = crypto.randomBytes(5).toString('hex');
+  // 截断可读前缀，保留完整随机尾部；短用户名也不能与其他 run 共用清理键。
+  const base = (module, max = 48) => `${`e2e_${clientSlug[0]}_a_${module}`.slice(0, max - shortUnique.length - 1)}_${shortUnique}`;
+  const edit = (module, max = 48) => `${`e2e_${clientSlug[0]}_b_${module}`.slice(0, max - shortUnique.length - 1)}_${shortUnique}`;
+  const code = (module, max = 28) => `${`e2e_${clientSlug[0]}_${module}`.slice(0, max - shortUnique.length - 1)}_${shortUnique}`;
   const ossConfigKey = code('oss', 19);
   return {
     role: {baseName: base('role', 28), editedName: edit('role', 28), key: code('role'), keyEdited: `${code('role')}b`.slice(0, 30)},
@@ -935,7 +944,7 @@ function makeTestData(client) {
     dict: {typeName: base('dict_type', 45), typeNameEdited: edit('dict_type', 45), dictType: code('dict'), label: base('dict_data', 45), labelEdited: edit('dict_data', 45), value: code('data')},
     config: {name: base('config', 45), nameEdited: edit('config', 45), key: code('config'), value: base('config_value', 45)},
     notice: {baseTitle: base('notice', 45), editedTitle: edit('notice', 45)},
-    client: {key: code('client'), keyEdited: `${code('client')}b`.slice(0, 30), secret: `E2eSecret_${shortUnique}`},
+    client: {key: code('client'), keyEdited: `${code('client')}b`.slice(0, 30), secret: `E2eSecret_${shortUnique}`, activeTimeout: 1800, activeTimeoutEdited: 1801},
     invite: {remark: base('invite', 60), reason: edit('invite_reason', 60)},
     ossConfig: {key: ossConfigKey, keyEdited: `${ossConfigKey}b`, bucket: `e2e-bucket-${shortUnique}`},
     job: {name: base('job', 45), nameEdited: edit('job', 45)},
@@ -943,7 +952,7 @@ function makeTestData(client) {
   };
 }
 
-function moduleDefinitions(data) {
+export function moduleDefinitions(data) {
   return {
     role: {key: 'role', label: '角色管理', listPath: '/system/role/list', deletePath: '/system/role', query: (key) => ({roleKey: key}), rowKey: (row) => row.roleKey, id: (row) => row.roleId, dbModule: 'role', dbKeys: [data.role.key, data.role.keyEdited]},
     user: {key: 'user', label: '用户管理', listPath: '/system/user/list', deletePath: '/system/user', query: (key) => ({userName: key}), rowKey: (row) => row.userName, id: (row) => row.userId, dbModule: 'user', dbKeys: [data.user.baseName, data.user.editedName]},
@@ -967,10 +976,19 @@ async function currentRows(options, token, definitions, key) {
   return listByDefinition(options, token, definition, definition.dbKeys[0]);
 }
 
-async function listAllRows(options, token, pathName, params = {}) {
-  const search = new URLSearchParams({pageNum: '1', pageSize: '100', ...params});
-  const body = await apiRequest(options, token, 'GET', `${pathName}?${search.toString()}`);
-  return responseRows(body);
+export async function listAllRows(options, token, pathName, params = {}) {
+  const rows = [];
+  for (let page = 1; page <= 100; page += 1) {
+    const search = new URLSearchParams({...params, pageNum: String(page), pageSize: '100'});
+    const body = await apiRequest(options, token, 'GET', `${pathName}?${search.toString()}`);
+    const current = responseRows(body);
+    rows.push(...current);
+    if (!Array.isArray(body?.rows)) return rows;
+    if (!Number.isSafeInteger(body.total) || body.total < rows.length) throw new Error(`${pathName}: invalid pagination total`);
+    if (rows.length === body.total) return rows;
+    if (current.length === 0) throw new Error(`${pathName}: incomplete pagination result`);
+  }
+  throw new Error(`${pathName}: exceeded 100 pages; narrow the isolated fixture scope`);
 }
 
 async function getDictTypeId(options, token, definitions, data) {
@@ -1000,7 +1018,7 @@ async function getConfigPanelItem(options, token, configKey) {
 async function revealConfigCard(page, options, configKey, groupName = '') {
   await page.getByText('参数设置').first().waitFor({state: 'visible', timeout: options.timeoutMs});
   await page.locator('.config-list-panel').first().waitFor({state: 'visible', timeout: options.timeoutMs});
-  await page.locator('.config-setting-row, .config-list-panel .ant-empty').first().waitFor({state: 'visible', timeout: options.timeoutMs});
+  await page.locator('.config-setting-row, .config-list-panel .ant-empty, .config-list-panel .el-empty').first().waitFor({state: 'visible', timeout: options.timeoutMs});
 
   if (groupName) {
     const groupButton = page.locator('.config-group-nav button').filter({hasText: groupName}).first();
@@ -1008,14 +1026,14 @@ async function revealConfigCard(page, options, configKey, groupName = '') {
       await groupButton.waitFor({state: 'visible', timeout: options.timeoutMs});
       await groupButton.click();
       await waitForSettled(page, options.timeoutMs);
-      await page.locator('.config-setting-row, .config-list-panel .ant-empty').first().waitFor({state: 'visible', timeout: options.timeoutMs});
+      await page.locator('.config-setting-row, .config-list-panel .ant-empty, .config-list-panel .el-empty').first().waitFor({state: 'visible', timeout: options.timeoutMs});
     }
   }
 
   const card = page.locator('.config-setting-row').filter({hasText: configKey}).first();
   for (let pageIndex = 0; pageIndex < 60; pageIndex += 1) {
     if (await card.isVisible().catch(() => false)) return card;
-    const nextButton = page.locator('.config-list-pagination .ant-pagination-next:not(.ant-pagination-disabled) button').first();
+    const nextButton = page.locator(options.client === 'vue' ? '.config-list-pagination .btn-next:not([disabled])' : '.config-list-pagination .ant-pagination-next:not(.ant-pagination-disabled) button').first();
     if ((await nextButton.count()) === 0 || !(await nextButton.isEnabled().catch(() => false))) break;
     await nextButton.click();
     await waitForSettled(page, options.timeoutMs);
@@ -1024,7 +1042,51 @@ async function revealConfigCard(page, options, configKey, groupName = '') {
   return card;
 }
 
-async function verifyApiDb(report, label, options, token, definitions, dbTool, dbConfig, moduleKey, keys) {
+export function expectedCrudRow(data, moduleKey, label) {
+  if (label.endsWith('after-delete')) return null;
+  const edited = label.endsWith('after-edit');
+  const expected = {
+    role: {roleKey: edited ? data.role.keyEdited : data.role.key, roleName: edited ? data.role.editedName : data.role.baseName, status: '1'},
+    user: {userName: data.user.baseName, nickName: edited ? data.user.editedName : data.user.baseName, status: '1'},
+    menu: {menuName: edited ? data.menu.editedName : data.menu.baseName, path: data.menu.path, status: '1', visible: '1'},
+    dept: {deptName: edited ? data.dept.editedName : data.dept.baseName, status: '1'},
+    post: {postCode: edited ? data.post.codeEdited : data.post.code, postName: edited ? data.post.editedName : data.post.baseName, status: '1'},
+    dictType: {dictType: data.dict.dictType, dictName: edited ? data.dict.typeNameEdited : data.dict.typeName},
+    dictData: {dictLabel: edited ? data.dict.labelEdited : data.dict.label, dictValue: data.dict.value, dictType: data.dict.dictType},
+    config: {configKey: data.config.key, configName: edited ? data.config.nameEdited : data.config.name, configValue: data.config.value, configType: 'N'},
+    notice: {noticeTitle: edited ? data.notice.editedTitle : data.notice.baseTitle, status: '0'},
+    client: {clientKey: data.client.key, activeTimeout: edited ? data.client.activeTimeoutEdited : data.client.activeTimeout, status: '1'},
+    invite: {remark: data.invite.remark, status: label.endsWith('after-cancel') ? '2' : '0'},
+    ossConfig: {configKey: edited ? data.ossConfig.keyEdited : data.ossConfig.key, bucketName: data.ossConfig.bucket, status: '1'},
+    job: {jobName: edited ? data.job.nameEdited : data.job.name, status: '1'},
+    onlineUser: {userName: data.onlineUser.name, nickName: data.onlineUser.name, status: '0'}
+  }[moduleKey];
+  if (!expected) throw new Error(`No CRUD expectations for ${moduleKey}:${label}`);
+  return expected;
+}
+
+export function assertCrudSnapshot(snapshot, definition, expected) {
+  const apiRows = Object.values(snapshot.api).flat();
+  if (snapshot.db?.error || !Array.isArray(snapshot.db?.rows)) throw new Error(`${snapshot.label}: DB verification unavailable`);
+  const dbRows = snapshot.db.rows;
+  const count = expected === null ? 0 : 1;
+  if (apiRows.length !== count || dbRows.length !== count) {
+    throw new Error(`${snapshot.label}: expected ${count} active row(s), API=${apiRows.length}, DB=${dbRows.length}`);
+  }
+  if (expected === null) return;
+  for (const [field, value] of Object.entries(expected)) {
+    const dbField = field.replace(/[A-Z]/gu, (letter) => `_${letter.toLowerCase()}`);
+    if (String(apiRows[0][field]) !== String(value) || String(dbRows[0][dbField]) !== String(value)) {
+      throw new Error(`${snapshot.label}: ${field} mismatch; expected=${JSON.stringify(value)}, API=${JSON.stringify(apiRows[0][field])}, DB=${JSON.stringify(dbRows[0][dbField])}`);
+    }
+  }
+  const idFields = {role: 'role_id', user: 'user_id', menu: 'menu_id', dept: 'dept_id', post: 'post_id', dictType: 'dict_id', dictData: 'dict_code', config: 'config_id', notice: 'notice_id', client: 'id', invite: 'invite_id', ossConfig: 'oss_config_id', job: 'job_id', onlineUser: 'user_id'};
+  const apiId = definition.id(apiRows[0]);
+  const dbId = dbRows[0][idFields[definition.key]];
+  if (apiId == null || dbId == null || String(apiId) !== String(dbId)) throw new Error(`${snapshot.label}: API/DB identity mismatch`);
+}
+
+async function verifyApiDb(report, label, options, token, definitions, dbTool, dbConfig, moduleKey, keys, expected) {
   const definition = definitions[moduleKey];
   const api = {};
   for (const key of keys) {
@@ -1036,8 +1098,16 @@ async function verifyApiDb(report, label, options, token, definitions, dbTool, d
     }
   }
   const db = await runDbTool(dbTool, dbConfig, definition.dbModule, definition.dbKeys);
-  const snapshot = {label, module: moduleKey, at: new Date().toISOString(), api, db};
+  const snapshot = {label, module: moduleKey, at: new Date().toISOString(), api, db, expected, status: 'running'};
   report.verification.push(snapshot);
+  try {
+    assertCrudSnapshot(snapshot, definition, expected);
+    snapshot.status = 'passed';
+  } catch (error) {
+    snapshot.status = 'failed';
+    snapshot.error = error.message;
+    throw error;
+  }
   return snapshot;
 }
 
@@ -1047,7 +1117,7 @@ async function createRole(page, options, data) {
   await fillField(modal, options.client, '角色名称', data.role.baseName, options.timeoutMs);
   await fillField(modal, options.client, '权限字符', data.role.key, options.timeoutMs);
   await fillField(modal, options.client, '角色顺序', 99, options.timeoutMs);
-  await chooseRadio(modal, options.client, '状态', '停用', options.timeoutMs).catch(() => undefined);
+  await chooseRadio(modal, options.client, '状态', '停用', options.timeoutMs);
   await fillField(modal, options.client, '备注', data.role.baseName, options.timeoutMs);
   await submitDialog(page, options.client, options.timeoutMs);
 }
@@ -1066,8 +1136,8 @@ async function createUser(page, options, data) {
   await fillField(modal, options.client, '用户昵称', data.user.baseName, options.timeoutMs);
   await fillField(modal, options.client, '用户名称', data.user.baseName, options.timeoutMs);
   await fillField(modal, options.client, '用户密码', data.user.password, options.timeoutMs);
-  await chooseRadio(modal, options.client, '状态', '停用', options.timeoutMs).catch(() => undefined);
-  await chooseSelect(modal, page, options.client, '角色', '仅本人', options.timeoutMs).catch(async () => chooseSelect(modal, page, options.client, '角色', undefined, options.timeoutMs));
+  await chooseRadio(modal, options.client, '状态', '停用', options.timeoutMs);
+  await chooseSelect(modal, page, options.client, '角色', '仅本人', options.timeoutMs);
   await fillField(modal, options.client, '备注', data.user.baseName, options.timeoutMs);
   await submitDialog(page, options.client, options.timeoutMs);
 }
@@ -1085,8 +1155,8 @@ async function createMenu(page, options, data) {
   await fillField(modal, options.client, '菜单名称', data.menu.baseName, options.timeoutMs);
   await fillField(modal, options.client, '显示排序', 99, options.timeoutMs);
   await fillField(modal, options.client, '路由地址', data.menu.path, options.timeoutMs);
-  await chooseRadio(modal, options.client, '显示状态', '隐藏', options.timeoutMs).catch(() => undefined);
-  await chooseRadio(modal, options.client, '菜单状态', '停用', options.timeoutMs).catch(() => undefined);
+  await chooseRadio(modal, options.client, '显示状态', '隐藏', options.timeoutMs);
+  await chooseRadio(modal, options.client, '菜单状态', '停用', options.timeoutMs);
   await submitDialog(page, options.client, options.timeoutMs);
 }
 
@@ -1103,7 +1173,7 @@ async function createDept(page, options, data) {
   await fillField(modal, options.client, '部门名称', data.dept.baseName, options.timeoutMs);
   await fillField(modal, options.client, '类别编码', `e2e_${data.dept.baseName}`.slice(0, 60), options.timeoutMs);
   await fillField(modal, options.client, '显示排序', 99, options.timeoutMs);
-  await chooseRadio(modal, options.client, '部门状态', '停用', options.timeoutMs).catch(() => undefined);
+  await chooseRadio(modal, options.client, '部门状态', '停用', options.timeoutMs);
   await submitDialog(page, options.client, options.timeoutMs);
 }
 
@@ -1122,7 +1192,7 @@ async function createPost(page, options, data) {
   await fillField(modal, options.client, '岗位编码', data.post.code, options.timeoutMs);
   await fillField(modal, options.client, '类别编码', data.post.code, options.timeoutMs);
   await fillField(modal, options.client, '岗位顺序', 99, options.timeoutMs);
-  await chooseRadio(modal, options.client, '岗位状态', '停用', options.timeoutMs).catch(() => undefined);
+  await chooseRadio(modal, options.client, '岗位状态', '停用', options.timeoutMs);
   await fillField(modal, options.client, '备注', data.post.baseName, options.timeoutMs);
   await submitDialog(page, options.client, options.timeoutMs);
 }
@@ -1174,9 +1244,9 @@ async function createConfig(page, options, data, groupName = '') {
   await fillField(drawer, options.client, '参数名称', data.config.name, options.timeoutMs);
   await fillField(drawer, options.client, '参数键名', data.config.key, options.timeoutMs);
   await fillField(drawer, options.client, '当前值', data.config.value, options.timeoutMs);
-  await fillField(drawer, options.client, '默认值', data.config.value, options.timeoutMs).catch(() => undefined);
+  await fillField(drawer, options.client, '默认值', data.config.value, options.timeoutMs);
   if (groupName) await chooseSelect(drawer, page, options.client, '分组', groupName, options.timeoutMs);
-  await chooseSelect(drawer, page, options.client, '系统内置', '否', options.timeoutMs).catch(() => undefined);
+  await chooseSelect(drawer, page, options.client, '系统内置', '否', options.timeoutMs);
   await fillField(drawer, options.client, '备注', data.config.name, options.timeoutMs);
   await drawer.locator('button').filter({hasText: '保存定义'}).first().click();
   await waitForSettled(page, options.timeoutMs);
@@ -1207,7 +1277,7 @@ async function createNotice(page, options, data) {
   const modal = activeContainer(page, options.client);
   await fillField(modal, options.client, '公告标题', data.notice.baseTitle, options.timeoutMs);
   await chooseSelect(modal, page, options.client, '公告类型', undefined, options.timeoutMs);
-  await chooseRadio(modal, options.client, '状态', '正常', options.timeoutMs).catch(() => undefined);
+  await chooseRadio(modal, options.client, '状态', '正常', options.timeoutMs);
   await submitDialog(page, options.client, options.timeoutMs);
 }
 
@@ -1221,18 +1291,19 @@ async function editNotice(page, options, data) {
 async function createClient(page, options, data) {
   await clickButton(page, '新增', options.timeoutMs);
   const modal = activeContainer(page, options.client);
-  await fillField(modal, options.client, '客户端Key', data.client.key, options.timeoutMs);
+  await fillField(modal, options.client, /客户端[Kk]ey/u, data.client.key, options.timeoutMs);
   await fillField(modal, options.client, '客户端秘钥', data.client.secret, options.timeoutMs);
   await chooseSelect(modal, page, options.client, '授权类型', undefined, options.timeoutMs);
-  await chooseSelect(modal, page, options.client, '设备类型', 'PC', options.timeoutMs).catch(async () => chooseSelect(modal, page, options.client, '设备类型', undefined, options.timeoutMs));
-  await chooseRadio(modal, options.client, '状态', '停用', options.timeoutMs).catch(() => undefined);
+  await chooseSelect(modal, page, options.client, '设备类型', 'PC', options.timeoutMs);
+  await fillField(modal, options.client, 'Token活跃超时时间', data.client.activeTimeout, options.timeoutMs);
+  await chooseRadio(modal, options.client, '状态', '停用', options.timeoutMs);
   await submitDialog(page, options.client, options.timeoutMs);
 }
 
 async function editClient(page, options, data) {
   await clickRowAction(page, options.client, data.client.key, 0, options.timeoutMs);
   const modal = activeContainer(page, options.client);
-  await chooseRadio(modal, options.client, '状态', '停用', options.timeoutMs).catch(() => undefined);
+  await fillField(modal, options.client, 'Token活跃超时时间', data.client.activeTimeoutEdited, options.timeoutMs);
   await submitDialog(page, options.client, options.timeoutMs);
 }
 
@@ -1278,7 +1349,7 @@ async function createJob(page, options, data) {
   await chooseSelect(modal, page, options.client, '处理器标识', undefined, options.timeoutMs);
   await fillField(modal, options.client, '处理器参数', '{}', options.timeoutMs);
   await fillField(modal, options.client, 'Cron表达式', '0 0/30 * * * ?', options.timeoutMs);
-  await chooseRadio(modal, options.client, '任务状态', '暂停', options.timeoutMs).catch(() => undefined);
+  await chooseRadio(modal, options.client, '任务状态', '暂停', options.timeoutMs);
   await fillField(modal, options.client, '备注', data.job.name, options.timeoutMs);
   await submitDialog(page, options.client, options.timeoutMs);
 }
@@ -1358,7 +1429,7 @@ async function runModuleFlow(ctx, key) {
   const {page, options, runDir, token, report, definitions, dbTool, dbConfig, data} = ctx;
   const moduleReport = {key, status: 'running', startedAt: new Date().toISOString(), finishedAt: '', screenshots: {}, notes: [], error: ''};
   report.modules.push(moduleReport);
-  const verify = async (label, moduleKey, keys) => verifyApiDb(report, `${key}:${label}`, options, token, definitions, dbTool, dbConfig, moduleKey, keys);
+  const verify = async (label, moduleKey, keys) => verifyApiDb(report, `${key}:${label}`, options, token, definitions, dbTool, dbConfig, moduleKey, keys, expectedCrudRow(data, moduleKey, label));
   try {
     if (key === 'role') {
       await page.goto(`${options.frontendOrigin}/system/role`, {waitUntil: 'domcontentloaded', timeout: options.timeoutMs});
@@ -1501,16 +1572,16 @@ async function runModuleFlow(ctx, key) {
       await verify('after-delete', 'notice', [data.notice.baseTitle, data.notice.editedTitle]);
     } else if (key === 'client') {
       await page.goto(`${options.frontendOrigin}/system/client`, {waitUntil: 'domcontentloaded', timeout: options.timeoutMs});
-      await page.getByPlaceholder('请输入客户端Key').first().waitFor({state: 'visible', timeout: options.timeoutMs});
+      await page.getByPlaceholder(/请输入客户端[Kk]ey/u).first().waitFor({state: 'visible', timeout: options.timeoutMs});
       await createClient(page, options, data);
-      await searchByPlaceholder(page, '请输入客户端Key', data.client.key, options.timeoutMs, true);
+      await searchByPlaceholder(page, /请输入客户端[Kk]ey/u, data.client.key, options.timeoutMs, true);
       moduleReport.screenshots.afterCreate = await takeScreenshot(page, runDir, `${key}-after-create`);
       await verify('after-create', 'client', [data.client.key]);
       await editClient(page, options, data);
-      await searchByPlaceholder(page, '请输入客户端Key', data.client.key, options.timeoutMs, true);
+      await searchByPlaceholder(page, /请输入客户端[Kk]ey/u, data.client.key, options.timeoutMs, true);
       await verify('after-edit', 'client', [data.client.key]);
       await deleteSelected(page, options, data.client.key);
-      await searchByPlaceholder(page, '请输入客户端Key', data.client.key, options.timeoutMs, true);
+      await searchByPlaceholder(page, /请输入客户端[Kk]ey/u, data.client.key, options.timeoutMs, true);
       await waitForNoRow(page, options.client, data.client.key, options.timeoutMs);
       await verify('after-delete', 'client', [data.client.key]);
     } else if (key === 'invite') {
@@ -1640,23 +1711,39 @@ function writeMarkdownReport(reportPath, report) {
   }
   lines.push('', '## Cleanup', '');
   for (const item of report.cleanup.api || []) lines.push(`- ${item.module}: deleted=${item.deleted.length}, errors=${item.errors.length}`);
-  lines.push(`- Final DB residue rows: ${report.cleanup.finalDbResidue}`);
+  lines.push(`- Final DB residue rows: ${report.cleanup.finalDbResidue ?? 'unknown (not verified)'}`);
+  for (const error of report.cleanupErrors || []) lines.push(`- Cleanup error: ${error}`);
+  lines.push('- Manual recovery: use this run\'s test-data.json exact keys, verify the same API/JDBC instance, and follow docs/DATA-OPS.md; do not rerun to delete another run\'s data.');
   if (report.error) lines.push('', '## Error', '', `- ${report.error}`);
   fs.writeFileSync(reportPath, `${lines.join('\n')}\n`, 'utf8');
 }
 
-async function runBrowser(options, runDir, token, dbTool, dbConfig, data, definitions, report) {
+export async function runBrowser(options, runDir, token, dbTool, dbConfig, data, definitions, report) {
   let chromium;
   try {
     ({chromium} = browserRequire('playwright'));
   } catch (error) {
     throw new Error(`Playwright runtime is required. Install with pnpm --dir skills/test-cli/scripts install. ${error.message || error}`);
   }
-  const browser = await chromium.launch({headless: !options.headed});
+  let browser;
+  let closePromise;
+  let failure;
+  const closeBrowser = () => {
+    if (browser) closePromise ||= browser.close();
+    return closePromise;
+  };
+  const interruptBrowser = () => { void closeBrowser()?.catch(() => undefined); };
+  options.signal?.addEventListener('abort', interruptBrowser, {once: true});
   const consoleEntries = [];
   const consoleLogPath = path.join(runDir, 'console', 'admin-crud.json');
   ensureDir(path.dirname(consoleLogPath));
+  const stateFile = path.join(runDir, 'browser-state.json');
+  markRunState(stateFile, {status: 'starting', pid: process.pid, port: null, log: consoleLogPath, transport: 'pipe', owned: true, browserClosed: false});
   try {
+    options.signal?.throwIfAborted();
+    browser = await chromium.launch({headless: !options.headed, timeout: options.timeoutMs, handleSIGINT: false, handleSIGTERM: false, handleSIGHUP: false});
+    options.signal?.throwIfAborted();
+    markRunState(stateFile, {status: 'running'});
     const context = await browser.newContext({viewport: {width: 1440, height: 900}});
     await context.addInitScript(({key, value}) => window.localStorage.setItem(key, value), {key: 'Admin-Token', value: token});
     const page = await context.newPage();
@@ -1666,18 +1753,25 @@ async function runBrowser(options, runDir, token, dbTool, dbConfig, data, defini
       console.log(`[admin-crud] module: ${moduleKey}`);
       await runModuleFlow({page, options, runDir, token, report, definitions, dbTool, dbConfig, data}, moduleKey);
     }
+    const badEntries = consoleEntries.filter((entry) => entry.type === 'error' || entry.type === 'pageerror');
+    if (!options.allowConsoleErrors && badEntries.length) throw new Error(`Console check failed with ${badEntries.length} bad entries. See ${consoleLogPath}`);
   } catch (error) {
+    failure = error;
     fs.writeFileSync(consoleLogPath, `${JSON.stringify(consoleEntries, null, 2)}\n`, 'utf8');
     report.browser.consoleLogPath = consoleLogPath;
     report.browser.consoleEntries = consoleEntries.length;
     report.browser.badConsoleEntries = consoleEntries.filter((entry) => entry.type === 'error' || entry.type === 'pageerror').length;
     throw error;
   } finally {
-    await browser.close();
+    options.signal?.removeEventListener('abort', interruptBrowser);
+    let closeError;
+    try { await closeBrowser(); } catch (error) { closeError = error; }
     fs.writeFileSync(consoleLogPath, `${JSON.stringify(consoleEntries, null, 2)}\n`, 'utf8');
     report.browser.consoleLogPath = consoleLogPath;
     report.browser.consoleEntries = consoleEntries.length;
     report.browser.badConsoleEntries = consoleEntries.filter((entry) => entry.type === 'error' || entry.type === 'pageerror').length;
+    markRunState(stateFile, {status: options.signal?.aborted ? 'interrupted' : (failure || closeError) ? 'failed' : 'passed', browserClosed: !closeError, error: failure?.message || '', cleanupError: closeError?.message || ''});
+    if (closeError) throw new AggregateError([failure, closeError].filter(Boolean), [failure?.message, `Browser cleanup failed: ${closeError.message}`].filter(Boolean).join('; '));
   }
 }
 
@@ -1717,14 +1811,21 @@ async function cleanupAll(options, token, definitions, data) {
   return results;
 }
 
-async function finalDbResidue(definitions, dbTool, dbConfig) {
+export async function finalDbResidue(definitions, dbTool, dbConfig, query = runDbTool) {
   const result = [];
   for (const definition of Object.values(definitions)) {
-    const db = await runDbTool(dbTool, dbConfig, definition.dbModule, definition.dbKeys).catch((error) => ({error: error.message || String(error), rows: []}));
-    if (db.error || db.rows?.length) result.push({module: definition.key, db});
+    const db = await query(dbTool, dbConfig, definition.dbModule, definition.dbKeys).catch((error) => ({error: error.message || String(error), rows: null}));
+    if (!Array.isArray(db.rows) && !db.error) db.error = 'DB query returned no rows array';
+    result.push({module: definition.key, db});
   }
   return result;
 }
+
+export function summarizeDbResidue(results) {
+  if (!results.length || results.some((item) => item.db?.error || !Array.isArray(item.db?.rows))) return null;
+  return results.reduce((sum, item) => sum + item.db.rows.length, 0);
+}
+
 
 async function main() {
   const options = parseArgs(normalizeForwardedArgs(process.argv.slice(2)));
@@ -1738,9 +1839,10 @@ async function main() {
   if (!options.frontendOrigin) options.frontendOrigin = buildFrontendOrigin(options);
 
   const dbConfig = readApplicationDbConfig(options.profile);
-  const dbTool = await prepareDbTool(runDir);
+  let dbTool;
   const data = makeTestData(options.client);
-  const definitions = moduleDefinitions(data);
+  const selected = new Set(options.modules.flatMap((key) => key === 'dict' ? ['dictType', 'dictData'] : key === 'online' ? ['onlineUser'] : [key]));
+  const definitions = Object.fromEntries(Object.entries(moduleDefinitions(data)).filter(([key]) => selected.has(key)));
   const moduleMatrix = buildModuleMatrix(options.modules);
   writeJson(path.join(runDir, 'module-matrix.json'), moduleMatrix);
   writeJson(path.join(runDir, 'test-data.json'), data);
@@ -1774,73 +1876,68 @@ async function main() {
     if (shouldStop) await stopAdminDevStackState(stackConfig, {status: 'stopped', reason: 'stale-before-admin-crud'});
   };
   let token = '';
-  let finalStatus = 'stopped';
-  let stopReason = 'admin-crud-complete';
-  const stopStackIfNeeded = async (status, reason) => {
-    if (options.startStack && (options.stopStackAfter || status !== 'stopped')) await stopAdminDevStackState(stackConfig, {status, reason});
-  };
-  const handleInterrupt = async (signal) => {
-    await stopStackIfNeeded('interrupted', signal);
-    process.exit(signal === 'SIGINT' ? 130 : signal === 'SIGHUP' ? 129 : 143);
-  };
-  const handleSigint = () => handleInterrupt('SIGINT');
-  const handleSigterm = () => handleInterrupt('SIGTERM');
-  const handleSighup = () => handleInterrupt('SIGHUP');
-  process.once('SIGINT', handleSigint);
-  process.once('SIGTERM', handleSigterm);
-  process.once('SIGHUP', handleSighup);
-
-  try {
-    console.log(`[admin-crud] DB target: ${dbConfig.host}:${dbConfig.port}/${dbConfig.database} via ${path.relative(repoRoot, dbConfig.configPath)}`);
-    console.log(`[admin-crud] modules: ${options.modules.join(', ')}`);
-    console.log(`[admin-crud] evidence: ${runDir}`);
-    if (options.startStack) {
-      await stopStaleStackBeforeRun();
-      await runAdminDevStack(stackConfig, buildStackArgs(options, clientConfig));
+  await runTestLifecycle({
+    report,
+    execute: async (signal) => {
+      options.signal = signal;
+      dbConfig.signal = signal;
+      console.log(`[admin-crud] DB target: ${dbConfig.host}:${dbConfig.port}/${dbConfig.database} via ${path.relative(repoRoot, dbConfig.configPath)}`);
+      console.log(`[admin-crud] modules: ${options.modules.join(', ')}`);
+      console.log(`[admin-crud] evidence: ${runDir}`);
+      dbTool = await prepareDbTool(runDir, signal);
+      if (options.startStack) {
+        await stopStaleStackBeforeRun();
+        await runAdminDevStack({...stackConfig, signal}, buildStackArgs(options, clientConfig));
+      }
+      signal.throwIfAborted();
+      const login = await loginWithRealCaptcha({...options, logPrefix: 'admin-crud'}, runDir);
+      token = login.token;
+      report.username = login.username;
+      report.loginAttempts = login.attempts;
+      signal.throwIfAborted();
+      // 新run不删除既有精确键：即使发生碰撞，也不能清理另一个run的数据。
+      report.preflightDb = await finalDbResidue(definitions, dbTool, dbConfig);
+      if (summarizeDbResidue(report.preflightDb) !== 0) throw new Error('Fixture keys already exist or DB preflight failed; no business writes started.');
+      report.businessWritesStarted = true;
+      await runBrowser(options, runDir, token, dbTool, dbConfig, data, definitions, report);
+    },
+    cleanup: async () => {
+      // 收到中断后，恢复请求使用独立超时，不能复用已经取消的signal。
+      const cleanupSignal = AbortSignal.timeout(30000);
+      const cleanupOptions = {...options, signal: cleanupSignal};
+      const cleanupDbConfig = {...dbConfig, signal: cleanupSignal};
+      const errors = [];
+      if (token && report.businessWritesStarted) {
+        report.cleanup.api = await cleanupAll(cleanupOptions, token, definitions, data);
+        errors.push(...report.cleanup.api.flatMap((item) => item.errors || []).map((item) => item.error));
+      }
+      if (dbTool) {
+        report.cleanup.finalDb = await finalDbResidue(definitions, dbTool, cleanupDbConfig);
+        report.cleanup.finalDbResidue = summarizeDbResidue(report.cleanup.finalDb);
+        if (report.cleanup.finalDbResidue === null) errors.push('Final DB verification unavailable: inspect cleanup.finalDb[].db.error');
+        else if (report.cleanup.finalDbResidue > 0) errors.push(`Final DB residue rows: ${report.cleanup.finalDbResidue}`);
+      }
+      if (errors.length) throw new Error(errors.join('; '));
+    },
+    stop: async (status) => {
+      if (options.startStack && (options.stopStackAfter || status !== 'passed')) {
+        await stopAdminDevStackState(stackConfig, {status: status === 'passed' ? 'stopped' : status, reason: report.error || 'admin-crud-complete'});
+      } else if (options.startStack && status === 'passed') {
+        markRunState(stackConfig.stateFile, {status: 'running', validationStatus: 'passed', keepAlive: true, keepReason: '--keep-stack-after', context: stackConfig.stateContext});
+      }
+    },
+    persist: () => {
+      writeJson(path.join(runDir, 'report.json'), report);
+      writeMarkdownReport(path.join(runDir, 'report.md'), report);
+      console.log(`[admin-crud] report: ${path.join(runDir, 'report.md')}`);
     }
-    const login = await loginWithRealCaptcha({...options, logPrefix: 'admin-crud'}, runDir);
-    token = login.token;
-    report.username = login.username;
-    report.loginAttempts = login.attempts;
-    report.cleanup.api = await cleanupAll(options, token, definitions, data);
-    const cleanupErrors = report.cleanup.api.flatMap((item) => item.errors || []);
-    if (cleanupErrors.length > 0) throw new Error(`Pre-run API cleanup failed: ${JSON.stringify(cleanupErrors)}`);
-    await runBrowser(options, runDir, token, dbTool, dbConfig, data, definitions, report);
-    const finalCleanup = await cleanupAll(options, token, definitions, data);
-    report.cleanup.api = finalCleanup;
-    const finalCleanupErrors = finalCleanup.flatMap((item) => item.errors || []);
-    if (finalCleanupErrors.length > 0) throw new Error(`Final API cleanup failed: ${JSON.stringify(finalCleanupErrors)}`);
-    report.cleanup.finalDb = await finalDbResidue(definitions, dbTool, dbConfig);
-    report.cleanup.finalDbResidue = report.cleanup.finalDb.reduce((sum, item) => sum + (item.db?.rows?.length || 0), 0);
-    if (report.cleanup.finalDbResidue > 0) throw new Error(`Final DB residue rows found: ${JSON.stringify(report.cleanup.finalDb)}`);
-    if (!options.allowConsoleErrors && report.browser.badConsoleEntries > 0) throw new Error(`Console check failed with ${report.browser.badConsoleEntries} bad entries. See ${report.browser.consoleLogPath}`);
-    report.status = 'passed';
-    if (options.startStack && !options.stopStackAfter) markRunState(stackConfig.stateFile, {status: 'running', validationStatus: 'passed', keepAlive: true, keepReason: '--keep-stack-after', context: stackConfig.stateContext});
-    console.log('[admin-crud] completed successfully');
-  } catch (error) {
-    finalStatus = 'failed';
-    stopReason = error.message || String(error);
-    report.status = 'failed';
-    report.error = stopReason;
-    if (token) {
-      report.cleanup.api = await cleanupAll(options, token, definitions, data).catch((cleanupError) => [{module: 'all', deleted: [], skipped: [], errors: [{error: cleanupError.message || String(cleanupError)}]}]);
-    }
-    report.cleanup.finalDb = await finalDbResidue(definitions, dbTool, dbConfig).catch((dbError) => [{module: 'all', db: {error: dbError.message || String(dbError), rows: []}}]);
-    report.cleanup.finalDbResidue = report.cleanup.finalDb.reduce((sum, item) => sum + (item.db?.rows?.length || 0), 0);
-    throw error;
-  } finally {
-    report.finishedAt = new Date().toISOString();
-    writeJson(path.join(runDir, 'report.json'), report);
-    writeMarkdownReport(path.join(runDir, 'report.md'), report);
-    console.log(`[admin-crud] report: ${path.join(runDir, 'report.md')}`);
-    process.removeListener('SIGINT', handleSigint);
-    process.removeListener('SIGTERM', handleSigterm);
-    process.removeListener('SIGHUP', handleSighup);
-    await stopStackIfNeeded(finalStatus, stopReason);
-  }
+  });
+  console.log('[admin-crud] completed successfully');
 }
 
-main().catch((error) => {
-  console.error(error.message || error);
-  process.exit(1);
-});
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  main().catch((error) => {
+    console.error(error.message || error);
+    process.exitCode ||= 1;
+  });
+}

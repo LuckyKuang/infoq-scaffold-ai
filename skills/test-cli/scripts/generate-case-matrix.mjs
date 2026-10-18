@@ -436,7 +436,7 @@ function classifyPriority(source, menu, operation) {
   if (menu.menu_type === 'C' && menu.visible === '0') {
     return 'P0';
   }
-  if (operation === 'danger') {
+  if (operation === 'danger' || (operation === 'write' && /^(?:monitor\.(?:job|cache)|system\.oss)(?:\.|$)/u.test(menu.moduleKey))) {
     return 'P2';
   }
   return 'P1';
@@ -481,7 +481,7 @@ function buildCase({source, menu, parent, routePath, component, clients, reactEx
   const inheritedComponent = component || parent?.component || '';
   const moduleKey = menu.moduleKey || componentToModuleKey(inheritedComponent || routePath);
   const operation = operationFromPermission(menu.perms, menu.menu_name);
-  const priority = classifyPriority(source, {...menu, routePath}, operation);
+  const priority = classifyPriority(source, {...menu, routePath, moduleKey}, operation);
   const automationType = classifyAutomationType(menu, operation);
   const sideEffect = ['write', 'danger'].includes(operation);
   const id = source === 'fixed-route'

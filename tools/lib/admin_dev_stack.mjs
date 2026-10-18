@@ -19,17 +19,19 @@ function resolveDefaultProfile(repoRoot) {
   return resolveBackendConfigSelection(repoRoot).profile;
 }
 
-async function canFetch(url) {
+async function canFetch(url, signal) {
   try {
-    const {response} = await fetchText(url, {redirect: 'manual'});
+    signal?.throwIfAborted();
+    const {response} = await fetchText(url, {redirect: 'manual', signal: AbortSignal.any([AbortSignal.timeout(2000), ...(signal ? [signal] : [])])});
     return response.status >= 200 && response.status < 500;
   } catch {
+    signal?.throwIfAborted();
     return false;
   }
 }
 
-async function waitForUrl(url, waitSeconds) {
-  return waitFor(() => canFetch(url), {
+async function waitForUrl(url, waitSeconds, signal) {
+  return waitFor(() => canFetch(url, signal), {
     attempts: waitSeconds,
     intervalMs: 1000
   });
@@ -162,6 +164,7 @@ function parseArgs(argv, config) {
 }
 
 export async function runAdminDevStack(config, argv) {
+  config.signal?.throwIfAborted();
   const options = parseArgs(argv, config);
   const backendDir = path.join(config.repoRoot, 'backend');
   const frontendDir = path.join(config.repoRoot, config.frontendDirName);
@@ -225,31 +228,37 @@ export async function runAdminDevStack(config, argv) {
     await stopRecordedRunState(config.stateFile, {status, reason});
   };
 
-  const handleInterrupt = async (signal) => {
-    await cleanupStartedProcesses('interrupted', signal);
-    process.exit(signal === 'SIGINT' ? 130 : signal === 'SIGHUP' ? 129 : 143);
+  const controller = new AbortController();
+  const signal = config.signal || controller.signal;
+  const handleInterrupt = (name) => {
+    controller.abort(new Error(`Interrupted by ${name}`));
+    process.exitCode = name === 'SIGINT' ? 130 : name === 'SIGHUP' ? 129 : 143;
   };
   const handleSigint = () => handleInterrupt('SIGINT');
   const handleSigterm = () => handleInterrupt('SIGTERM');
   const handleSighup = () => handleInterrupt('SIGHUP');
-  process.once('SIGINT', handleSigint);
-  process.once('SIGTERM', handleSigterm);
-  process.once('SIGHUP', handleSighup);
+  if (!config.signal) {
+    process.on('SIGINT', handleSigint);
+    process.on('SIGTERM', handleSigterm);
+    process.on('SIGHUP', handleSighup);
+  }
   syncState(baseState);
 
   try {
+    signal.throwIfAborted();
     if (!options.frontendOnly) {
       const backendUrl = `http://127.0.0.1:${options.backendPort}/auth/code`;
       if (options.buildBackend || !fs.existsSync(backendJar)) {
         console.log(`[${config.label}] building backend jar...`);
-        await runBackendMavenChecked(config.repoRoot, ['-pl', 'infoq-admin', '-am', '-DskipTests', 'package']);
+        await runBackendMavenChecked(config.repoRoot, ['-pl', 'infoq-admin', '-am', '-DskipTests', 'package'], {signal});
+        signal.throwIfAborted();
       }
 
       if (!fs.existsSync(backendJar)) {
         throw new Error(`[${config.label}] backend jar not found: ${backendJar}`);
       }
 
-      if (await canFetch(backendUrl)) {
+      if (await canFetch(backendUrl, signal)) {
         if (options.forceRestart) {
           throw new Error(`[${config.label}] backend is still running on :${options.backendPort} after stopping recorded processes.`);
         }
@@ -290,7 +299,7 @@ export async function runAdminDevStack(config, argv) {
         baseState.processes.push(backendRecord);
         syncState({processes: baseState.processes});
 
-        const ready = await waitForUrl(backendUrl, options.waitSeconds);
+        const ready = await waitForUrl(backendUrl, options.waitSeconds, signal);
         if (!ready) {
           throw new Error(`[${config.label}] backend failed to become ready. log=${backendLog}\n${tailFile(backendLog, 120)}`);
         }
@@ -301,7 +310,7 @@ export async function runAdminDevStack(config, argv) {
     if (!options.backendOnly) {
       const frontendUrl = `http://${options.frontendHost}:${options.frontendPort}/`;
       const frontendProxyTarget = process.env.VITE_APP_PROXY_TARGET || `http://127.0.0.1:${options.backendPort}`;
-      if (await canFetch(frontendUrl)) {
+      if (await canFetch(frontendUrl, signal)) {
         if (options.forceRestart) {
           throw new Error(`[${config.label}] ${config.frontendDisplayName} is still running on :${options.frontendPort} after stopping recorded processes.`);
         }
@@ -344,7 +353,7 @@ export async function runAdminDevStack(config, argv) {
         baseState.processes.push(frontendRecord);
         syncState({processes: baseState.processes});
 
-        const ready = await waitForUrl(frontendUrl, options.waitSeconds);
+        const ready = await waitForUrl(frontendUrl, options.waitSeconds, signal);
         if (!ready) {
           throw new Error(`[${config.label}] ${config.frontendDisplayName} failed to become ready. log=${frontendLog}\n${tailFile(frontendLog, 120)}`);
         }
@@ -352,6 +361,7 @@ export async function runAdminDevStack(config, argv) {
       }
     }
 
+    signal.throwIfAborted();
     syncState({
       status: 'running',
       readyAt: new Date().toISOString(),
@@ -366,7 +376,7 @@ export async function runAdminDevStack(config, argv) {
       console.log(`[${config.label}] frontend log: ${frontendLog}`);
     }
   } catch (error) {
-    await cleanupStartedProcesses('failed', error.message || String(error));
+    await cleanupStartedProcesses(signal.aborted ? 'interrupted' : 'failed', error.message || String(error));
     throw error;
   } finally {
     process.removeListener('SIGINT', handleSigint);

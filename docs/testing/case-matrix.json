@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-18T07:01:10.364Z",
+  "generatedAt": "2026-10-18T08:01:19.710Z",
   "repoRoot": ".",
   "sources": {
     "sqlFiles": [
@@ -239,8 +239,8 @@
   "summary": {
     "totalCases": 115,
     "p0": 24,
-    "p1": 70,
-    "p2": 21,
+    "p1": 64,
+    "p2": 27,
     "reactCases": 115,
     "vueCases": 115,
     "sideEffectCases": 51,
@@ -928,7 +928,7 @@
       "permissions": [
         "monitor:job:add"
       ],
-      "priority": "P1",
+      "priority": "P2",
       "automationType": "CRUD",
       "sideEffect": true,
       "dependencies": [
@@ -980,7 +980,7 @@
       "permissions": [
         "monitor:job:edit"
       ],
-      "priority": "P1",
+      "priority": "P2",
       "automationType": "CRUD",
       "sideEffect": true,
       "dependencies": [
@@ -1136,7 +1136,7 @@
       "permissions": [
         "monitor:job:changeStatus"
       ],
-      "priority": "P1",
+      "priority": "P2",
       "automationType": "CRUD",
       "sideEffect": true,
       "dependencies": [
@@ -4443,7 +4443,7 @@
       "permissions": [
         "system:oss:upload"
       ],
-      "priority": "P1",
+      "priority": "P2",
       "automationType": "CRUD",
       "sideEffect": true,
       "dependencies": [
@@ -4652,7 +4652,7 @@
       "permissions": [
         "system:ossConfig:add"
       ],
-      "priority": "P1",
+      "priority": "P2",
       "automationType": "CRUD",
       "sideEffect": true,
       "dependencies": [
@@ -4705,7 +4705,7 @@
       "permissions": [
         "system:ossConfig:edit"
       ],
-      "priority": "P1",
+      "priority": "P2",
       "automationType": "CRUD",
       "sideEffect": true,
       "dependencies": [

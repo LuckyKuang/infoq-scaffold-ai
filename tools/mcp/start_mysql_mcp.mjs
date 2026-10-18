@@ -1,4 +1,5 @@
 import path from 'node:path';
+import os from 'node:os';
 import {fileURLToPath} from 'node:url';
 import {launchCachedMcpPackage} from '../launch_cached_mcp_package.mjs';
 import {resolveBackendConfigSelection, resolveMysqlEnv} from '../resolve_backend_local_mcp_env.mjs';
@@ -18,13 +19,9 @@ function relayExit(child) {
     });
   }
 
-  child.on('exit', (code, signal) => {
-    if (signal) {
-      process.kill(process.pid, signal);
-      return;
-    }
-
-    process.exit(code ?? 0);
+  child.on('close', (code, signal) => {
+    // Re-sending a signal to this wrapper would hit its forwarding listener and lose the failure.
+    process.exitCode = signal ? 128 + (os.constants.signals[signal] ?? 1) : (code ?? 1);
   });
 }
 

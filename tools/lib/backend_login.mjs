@@ -12,7 +12,7 @@ export function randomAesKey(length = 32) {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   let value = '';
   for (let i = 0; i < length; i += 1) {
-    value += chars[Math.floor(Math.random() * chars.length)];
+    value += chars[crypto.randomInt(chars.length)];
   }
   return value;
 }
