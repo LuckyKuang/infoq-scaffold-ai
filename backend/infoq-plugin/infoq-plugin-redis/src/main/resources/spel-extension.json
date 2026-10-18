@@ -1,0 +1,7 @@
+{
+  "cc.infoq.common.redis.annotation.RateLimiter@key": {
+    "method": {
+      "parameters": true
+    }
+  }
+}

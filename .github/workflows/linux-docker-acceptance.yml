@@ -1,0 +1,58 @@
+name: Linux Docker Isolated Acceptance
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: linux-docker-acceptance-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  isolated-acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 100
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          package_json_file: package.json
+          run_install: false
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .node-version
+      - name: Validate UTF-8
+        run: node tools/validate_utf8.mjs
+      - name: Install browser verifier
+        working-directory: skills/test-cli/scripts
+        run: pnpm install --frozen-lockfile
+      - name: Install Chromium
+        working-directory: skills/test-cli/scripts
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Preview exact isolated targets
+        run: node tools/verify/linux_acceptance.mjs --run-id ci-${{ github.run_id }}
+      - name: Real Linux build, TLS, authorization, browser, storage, restore and rollback
+        run: node tools/verify/linux_acceptance.mjs --run-id ci-${{ github.run_id }} --execute
+      - name: OAuth and unsafe redirects on the four real artifacts with controlled Provider fixtures
+        run: node skills/test-cli/scripts/test_admin_routing.mjs --artifact-root tmp/production-readiness/linux-ci-${{ github.run_id }}/artifacts --output-dir tmp/production-readiness/linux-ci-${{ github.run_id }}/routing
+      - name: Require successful cleanup evidence
+        if: always()
+        env:
+          ACCEPTANCE_RUN_ID: ci-${{ github.run_id }}
+        run: node tools/verify/check_linux_acceptance.mjs
+      # Only the redacted state and screenshots are uploaded. Never upload tmp/**,
+      # generated env/keys/SQL/object backups or raw application/container logs.
+      - name: Preserve redacted acceptance state
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-docker-acceptance-${{ github.run_id }}
+          path: |
+            tmp/production-readiness/linux-ci-${{ github.run_id }}/acceptance.state.json
+          if-no-files-found: error
+          retention-days: 7

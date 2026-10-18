@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>cc.infoq</groupId>
+    <artifactId>infoq-core-bom</artifactId>
+    <version>${revision}</version>
+    <packaging>pom</packaging>
+
+    <description>
+        infoq-core-bom 依赖项
+    </description>
+
+    <properties>
+        <revision>3.0.0-rc1</revision>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- 核心模块 -->
+            <dependency>
+                <groupId>cc.infoq</groupId>
+                <artifactId>infoq-core-common</artifactId>
+                <version>${revision}</version>
+            </dependency>
+
+            <!-- 数据模块 -->
+            <dependency>
+                <groupId>cc.infoq</groupId>
+                <artifactId>infoq-core-data</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <!-- excel -->
+            <dependency>
+                <groupId>cc.infoq</groupId>
+                <artifactId>infoq-plugin-excel</artifactId>
+                <version>${revision}</version>
+            </dependency>
+
+            <!-- Elasticsearch 官方客户端插件 -->
+            <dependency>
+                <groupId>cc.infoq</groupId>
+                <artifactId>infoq-plugin-elasticsearch</artifactId>
+                <version>${revision}</version>
+            </dependency>
+
+            <!-- 日志记录 -->
+            <dependency>
+                <groupId>cc.infoq</groupId>
+                <artifactId>infoq-plugin-log</artifactId>
+                <version>${revision}</version>
+            </dependency>
+
+            <!-- 邮件服务 -->
+            <dependency>
+                <groupId>cc.infoq</groupId>
+                <artifactId>infoq-plugin-mail</artifactId>
+                <version>${revision}</version>
+            </dependency>
+
+            <!-- MQTT 双协议插件 -->
+            <dependency>
+                <groupId>cc.infoq</groupId>
+                <artifactId>infoq-plugin-mqtt</artifactId>
+                <version>${revision}</version>
+            </dependency>
+
+            <!-- 数据库服务 -->
+            <dependency>
+                <groupId>cc.infoq</groupId>
+                <artifactId>infoq-plugin-mybatis</artifactId>
+                <version>${revision}</version>
+            </dependency>
+
+            <!-- OAuth 登录 -->
+            <dependency>
+                <groupId>cc.infoq</groupId>
+                <artifactId>infoq-plugin-oauth</artifactId>
+                <version>${revision}</version>
+            </dependency>
+
+            <!-- Push 通道抽象 -->
+            <dependency>
+                <groupId>cc.infoq</groupId>
+                <artifactId>infoq-plugin-push</artifactId>
+                <version>${revision}</version>
+            </dependency>
+
+            <!-- 文档服务 -->
+            <dependency>
+                <groupId>cc.infoq</groupId>
+                <artifactId>infoq-plugin-doc</artifactId>
+                <version>${revision}</version>
+            </dependency>
+
+            <!-- OSS -->
+            <dependency>
+                <groupId>cc.infoq</groupId>
+                <artifactId>infoq-plugin-oss</artifactId>
+                <version>${revision}</version>
+            </dependency>
+
+            <!-- 缓存服务 -->
+            <dependency>
+                <groupId>cc.infoq</groupId>
+                <artifactId>infoq-plugin-redis</artifactId>
+                <version>${revision}</version>
+            </dependency>
+
+            <!-- 安全模块 -->
+            <dependency>
+                <groupId>cc.infoq</groupId>
+                <artifactId>infoq-plugin-security</artifactId>
+                <version>${revision}</version>
+            </dependency>
+
+            <!-- web服务 -->
+            <dependency>
+                <groupId>cc.infoq</groupId>
+                <artifactId>infoq-plugin-web</artifactId>
+                <version>${revision}</version>
+            </dependency>
+
+            <!-- 翻译模块 -->
+            <dependency>
+                <groupId>cc.infoq</groupId>
+                <artifactId>infoq-plugin-translation</artifactId>
+                <version>${revision}</version>
+            </dependency>
+
+            <!-- 脱敏模块 -->
+            <dependency>
+                <groupId>cc.infoq</groupId>
+                <artifactId>infoq-plugin-sensitive</artifactId>
+                <version>${revision}</version>
+            </dependency>
+
+            <!-- 序列化模块 -->
+            <dependency>
+                <groupId>cc.infoq</groupId>
+                <artifactId>infoq-plugin-jackson</artifactId>
+                <version>${revision}</version>
+            </dependency>
+
+            <!-- 数据库加解密模块 -->
+            <dependency>
+                <groupId>cc.infoq</groupId>
+                <artifactId>infoq-plugin-encrypt</artifactId>
+                <version>${revision}</version>
+            </dependency>
+
+            <!-- WebSocket模块 -->
+            <dependency>
+                <groupId>cc.infoq</groupId>
+                <artifactId>infoq-plugin-websocket</artifactId>
+                <version>${revision}</version>
+            </dependency>
+
+            <!-- SSE模块 -->
+            <dependency>
+                <groupId>cc.infoq</groupId>
+                <artifactId>infoq-plugin-sse</artifactId>
+                <version>${revision}</version>
+            </dependency>
+
+            <!-- Quartz 模块 -->
+            <dependency>
+                <groupId>cc.infoq</groupId>
+                <artifactId>infoq-plugin-quartz</artifactId>
+                <version>${revision}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+</project>

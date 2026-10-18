@@ -1,0 +1,91 @@
+---
+name: test-cli
+description: 本仓库 Web 侧自动化测试与前端运行态验证的统一 skill，覆盖通用浏览器流程与 DevTools 诊断、管理端 Redis 种子验证码登录、动态路由 smoke、case matrix、CRUD E2E、真实页面运维门禁，以及前端单测/coverage/lint/build 与本地栈启停。适用于网页交互、受保护路由验证、浏览器证据采集、管理端 E2E 和前端运行态回归。
+---
+
+# InfoQ Web 自动化测试
+
+本技能统一管理 Web 侧测试与运行态验证。后端 smoke、数据运维与容器部署验证不在本技能范围，分别见 `tools/verify/`、`docs/DATA-OPS.md`、`deploy-cli`。
+
+## 模式选择
+
+1. 通用页面流程、截图、console/pageerror 采集：`references/modes/browser.md`，入口 `scripts/playwright_cli.mjs`。
+2. DevTools 深度诊断（Network / Console / Performance）：`scripts/chrome_devtools_cli.mjs`。
+3. 受保护管理端路由快速探测：`scripts/playwright_cli.mjs admin-route-probe`；内部调用 `scripts/admin_route_probe.mjs` 与 `scripts/captcha_login.mjs`，后两者分别承担探测实现和 Redis 种子验证码登录。
+4. 验证码种子登录与动态路由矩阵：`scripts/run_admin_e2e.mjs`；矩阵生成与校验用 `scripts/generate-case-matrix.mjs`、`scripts/validate-case-matrix.mjs`。
+5. 写入型 CRUD E2E：`scripts/run_admin_crud_e2e.mjs`（`--modules` 缩小范围）。
+6. 真实页面运营维护、权限巡检与写入型操作门禁：`references/ops/page-ops-guardrails.md`。
+7. 前端单测 / coverage / lint / build 与运行态验证：`references/modes/frontend.md`；本地栈由 `scripts/run_admin_e2e.mjs` 自管，手动启动命令见 `references/runtime/admin-commands.md`。
+8. 测试政策、case 集合、选择器与清理策略：`docs/TESTING.md`、`references/matrix/*`、`references/crud/*`。
+
+## 执行顺序
+
+1. 判定范围：确认是页面流程、受保护路由探测、验证码登录、矩阵 smoke、CRUD E2E、页面运维，还是前端单测/构建/本地栈。
+2. 只读探测：先读取配置、package scripts、已有矩阵和状态文件；需要静态矩阵预览时用 `generate-case-matrix.mjs --output-dir tmp/test-cli/matrix-preview`。`admin-route-probe --list-routes` 会执行验证码种子登录，写 Redis 并创建会话，只能在已授权测试环境执行，不是只读预览。
+3. 最小闭环：先跑单一路由 / 单客户端 / 单模块，再扩展到完整矩阵。
+4. 写入门禁：涉及 `.env`、客户端 ID、测试数据、导出、端口或共享环境写入时，先列出目标、影响范围、cleanup 与回滚。
+5. 执行验证：检查退出码、截图、console/pageerror、状态文件与 owned 端口收口。
+6. 失败处理：浏览器缺失、后端不可达、验证码种子写入失败（Redis 不可达或与后端实例/DB 不一致）、客户端 ID 配置错误、console error 与 pageerror 都必须显式失败，禁止伪造通过。
+
+## 默认命令
+
+```bash
+node skills/test-cli/scripts/playwright_cli.mjs flow --url "https://example.com" --wait-for-text "Example Domain"
+# 以下登录与路由命令只用于已授权的测试环境，会写入验证码种子和会话
+node skills/test-cli/scripts/playwright_cli.mjs admin-route-probe --list-routes
+# 验证码登录使用 Redis 种子答案；先配置 INFOQ_TEST_REDIS_* 或 --redis-*
+node skills/test-cli/scripts/captcha_login.mjs --backend-url http://127.0.0.1:8080 --json
+node skills/test-cli/scripts/run_admin_e2e.mjs --client vue --route-limit 1
+node skills/test-cli/scripts/run_admin_crud_e2e.mjs --client vue --modules notice
+node skills/test-cli/scripts/generate-case-matrix.mjs
+node skills/test-cli/scripts/validate-case-matrix.mjs docs/testing/case-matrix.json
+```
+
+`generate-case-matrix.mjs` 不带输出参数时会更新受管矩阵文档；只做审计/预览时必须指定 `--output-dir tmp/test-cli/matrix-preview`。矩阵存在不表示用例已执行，runner 的覆盖边界及账号候选、RSA、实例一致性、CRUD 断言/清理条件见 `docs/TESTING.md` 第 6.5–6.6 节。CRUD 只接受 local profile，没有 dry-run；执行前必须确认隔离实例与人工恢复条件。
+
+登录 CLI 只输出脱敏摘要，旧 `--print-token` 显式拒绝；内部 runner 直接复用登录函数，并通过同源 CSRF 引导/绑定资源建立 HttpOnly 浏览器会话，不注入 `Admin-Token` 存储。管理端浏览器入口使用 `--client react|vue`，代理前缀通过 `--api-prefix /dev-api|/prod-api` 明确，必须匹配后端允许 Origin 和 Cookie Path。
+
+Playwright 依赖安装在 `skills/test-cli/scripts/`（自带 `package.json` / `pnpm-lock.yaml`）：
+
+```bash
+pnpm --dir skills/test-cli/scripts install
+pnpm --dir skills/test-cli/scripts exec playwright install chromium
+```
+
+## 证据目录
+
+- 浏览器流程与 route probe：`tmp/test-cli/browser/`
+- 通用 Playwright 状态：`tmp/test-cli/browser/states/`；DevTools 状态与日志：`tmp/test-cli/browser/chrome-devtools-mcp/`
+- E2E 运行与验证码登录：`tmp/test-cli/e2e/`
+- CRUD 浏览器状态：当前 E2E run 的 `browser-state.json`
+- E2E 自管栈状态：`tmp/test-cli/e2e/stack/<client>/state.json`
+- 页面运维与权限巡检：`tmp/test-cli/e2e/page-ops/`
+
+## 护栏
+
+- 禁止默认关闭验证码、禁止伪造 token 或跳过 `/auth/login`。
+- console error、pageerror、真实登录失败、空白截图、状态文件缺失或 owned 端口未收口时，不能标记通过。
+- 不对共享环境执行写入型测试；写入型用例必须先列出目标、测试数据、cleanup、权限边界与回滚条件。
+- 禁止通过弱化断言、放宽 mock、伪造成功路径来硬凑覆盖率或通过率。
+- 当后端路由 API 可查询时，禁止猜测 admin 路由。
+- 前端单测与运行态 smoke 不能互相替代；覆盖率不达标不得用运行态结果顶替。
+- 页面运维写入前必须列出环境、账号角色、目标 ID、影响范围、cleanup、回滚与验证方式；没有目标集确认时不执行删除、批量、权限或任务启停操作。
+- 定时任务启停必须说明任务名称、执行计划、影响窗口与恢复方式；权限变更必须用拥有权限与不应拥有权限的两个角色分别核对。
+- 不把 E2E 通过当成真实运营操作完成，也不把接口 smoke 当成后台权限巡检。
+- 任何长生命周期进程必须写入 `tmp/test-cli/` 状态文件，并在完成、失败或中断后关闭 owned 端口。
+- Playwright 状态记录 runner PID、`port=null`、pipe 通信和 `browserClosed`；DevTools 记录子进程 PID 与进程树关闭结果。不得把 runner PID 当 Chromium PID；关闭失败必须保留为失败。
+- CRUD 在写入前拒绝精确键冲突；新增/编辑/删除同时核对 API 与 DB 预期。DB 查询失败或未执行必须显示未知，不能算零残留。SIGINT/SIGTERM/SIGHUP 走独立 30 秒数据清理、owned 进程关闭与报告落盘；硬终止和清理超时按当前 run 证据人工恢复。
+
+## 参考
+
+- 浏览器模式 SOP：`references/modes/browser.md`
+- 管理端 E2E SOP：`references/modes/e2e.md`
+- 前端验证 SOP：`references/modes/frontend.md`
+- 页面运维门禁：`references/ops/page-ops-guardrails.md`
+- 矩阵 schema 与路由来源：`references/matrix/`（`case-schema.md`、`module-taxonomy.md`、`route-source-rules.md`）
+- 验证码场景矩阵：`references/captcha/scenario-matrix.md`
+- CRUD 模式、测试数据、清理与选择器策略：`references/crud/`（`crud-patterns.md`、`test-data-policy.md`、`cleanup-policy.md`、`selector-policy.md`）
+- 前端单测与运行态命令：`references/runtime/admin-commands.md`
+- React admin 单测：`references/react/unit/admin/`（`commands.md`、`mock-patterns.md`、`priority-matrix.md`、`setup-baseline.md`）
+- Vue admin 单测：`references/vue/unit/admin/`（`commands.md`、`mock-patterns.md`、`priority-matrix.md`、`setup-baseline.md`）
+- 测试政策：`docs/TESTING.md`

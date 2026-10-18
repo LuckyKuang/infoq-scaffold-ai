@@ -7,8 +7,8 @@ Own requirement clarification for the current task.
 Before writing, read:
 - the user request
 - AGENTS.md
-- openspec/project.md
-- relevant openspec/specs/ files when they already exist
+- openspec/config.yaml（context 段）
+- relevant docs/specs/ files when they already exist
 - relevant repository files
 
 Create or update only these active change artifacts unless the parent agent explicitly asks for another path:

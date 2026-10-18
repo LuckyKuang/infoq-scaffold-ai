@@ -1,0 +1,58 @@
+# infoq-plugin-security
+
+## 1. 模块职责
+
+提供 backend 的请求鉴权入口，负责 Spring Security 过滤链、JWT access token 签发与校验、Redis session / revocation / online index、客户端 ID 一致性校验，以及健康检查等免鉴权路径的统一排除。
+
+浏览器恢复使用独立 `BrowserSessionService`、有界 Redis opaque 映射、按 React/Vue 隔离的 HttpOnly cookie 和 Spring CSRF；普通业务接口继续只认 Bearer。精确 HTTP 合同、受控配置、故障与测试 SOP 见 [浏览器恢复会话](../../doc/browser-session.md)。用户安全变更及角色数据范围变更在事务提交前撤销会话，批量撤销以 500 个索引/会话为组使用 Redisson OSS 批处理。
+
+## 2. 关键入口
+
+- [`SecurityConfig`](./src/main/java/cc/infoq/common/security/config/SecurityConfig.java)
+- `SpringSecurityAutoConfiguration`
+- `SecurityTokenService` / `SecurityTokenStore` / `SecurityTokenResolver`
+- `CurrentUserService`
+- [`SecurityProperties`](./src/main/java/cc/infoq/common/security/config/properties/SecurityProperties.java)
+- [`SseProperties`](./src/main/java/cc/infoq/common/security/config/properties/SseProperties.java)
+
+## 3. 核心类 / 文件
+
+- 自动装配入口：[`AutoConfiguration.imports`](./src/main/resources/META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports)
+
+## 4. 上游依赖
+
+- 所有进入 backend 的受保护 HTTP 请求都会经过这个模块。
+- SSE / WebSocket 的 query token 解析复用这里的 token resolver 与 token service。
+
+## 5. 下游依赖
+
+- 编译期依赖 `infoq-core-common`、`infoq-plugin-redis`
+
+## 6. 关键配置
+
+- `security.*`
+- `security.token.*`
+- `sse.*`
+- `security.spring-security.strict-authentication` 默认 `true`。显式设置为 `false` 时，配置类不再向 `SecurityFilterChain` 主动添加 token filter，并将其余 URL 规则改为 permitAll；方法权限仍可能拒绝请求。该开关不能作为生产登录故障或公开路径遗漏的修复方式。
+
+## 7. 关键数据流
+
+1. `SpringSecurityAutoConfiguration` 注册 `SecurityFilterChain`、401/403 JSON handler 和 token filter。
+2. 公开路径由 `security.excludes` 与默认 public matcher 合并，`/auth/logout` 与 SSE close 保持受保护。
+3. 请求进入后解析 `Authorization: Bearer <token>`，校验 JWT、Redis session、revocation marker 和 `clientid`。
+4. 认证成功后把 `LoginUser` 与 token session 写入 Spring Security context，业务侧通过 `CurrentUserService` 读取。
+
+## 8. 扩展点
+
+- `SecurityProperties` 排除路径
+- `SecurityTokenProperties` token 名称、前缀、TTL、active timeout、query token 与 clientId 配置
+
+## 9. 日志 / 监控切入点
+
+- 登录态异常、token 撤销、clientId 不一致、权限不足都要从这里切入。
+- 当前实现里它是唯一鉴权主入口。
+
+## 10. 已知边界
+
+- 不负责业务权限数据本身，那部分仍在 `infoq-system`。
+- 严格认证默认仅公开精确 `GET /auth/wechat-miniapp/enabled`，返回能力布尔值；POST、该前缀其他路径和管理数据仍要求认证。该 GET 例外独立于通用字符串公开列表，不扩展整个小程序前缀。

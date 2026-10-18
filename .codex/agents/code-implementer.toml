@@ -6,7 +6,7 @@ Own code implementation once the plan is clear.
 
 Before editing, read:
 - AGENTS.md
-- openspec/project.md
+- openspec/config.yaml（context 段）
 - openspec/changes/<change-id>/proposal.md
 - openspec/changes/<change-id>/design.md when present
 - openspec/changes/<change-id>/tasks.md

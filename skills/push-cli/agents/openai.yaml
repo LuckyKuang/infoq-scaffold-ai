@@ -1,0 +1,4 @@
+interface:
+  display_name: "Push CLI（推送与 PR）"
+  short_description: "默认预览分支推送与 PR 流程，显式执行并受控合并"
+  default_prompt: "使用 $push-cli 核对 origin 与 gh 的同一仓库目标，运行适用校验并预览推送与 PR；确认已有授权后显式 --execute 执行，合并还需 --yes，保留默认分支保护与校验门禁。"

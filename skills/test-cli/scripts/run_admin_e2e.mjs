@@ -1,0 +1,666 @@
+#!/usr/bin/env node
+import fs from 'node:fs';
+import path from 'node:path';
+import {fileURLToPath, pathToFileURL} from 'node:url';
+import {resolveBackendConfigSelection} from '../../../tools/resolve_backend_local_mcp_env.mjs';
+import {
+    ensureDir,
+    fetchJson,
+    markRunState,
+    normalizeForwardedArgs,
+    readJsonFile,
+    resolveRepoRoot,
+    resolveTmpPath,
+    timestampSlug
+} from '../../../tools/lib/skill_runtime.mjs';
+import {runAdminDevStack, stopAdminDevStackState} from '../../../tools/lib/admin_dev_stack.mjs';
+import {DEFAULT_CAPTCHA_LOGIN_OPTIONS, loginWithRealCaptcha} from './captcha_login.mjs';
+import {runTestLifecycle} from './test_run_lifecycle.mjs';
+
+const scriptDir = path.dirname(fileURLToPath(import.meta.url));
+const repoRoot = resolveRepoRoot(scriptDir);
+const playwrightCorePath = path.join(repoRoot, 'skills', 'test-cli', 'scripts', 'playwright_core.mjs');
+const defaultProfile = (() => {
+  try {
+    return resolveBackendConfigSelection(repoRoot).profile;
+  } catch {
+    return 'dev';
+  }
+})();
+const DEFAULT_ROUTE_SMOKE_LOGIN_CANDIDATES = 'admin:admin123,dept:666666,admin:123456';
+
+const CLIENTS = {
+  vue: {
+    label: 'admin-e2e-vue',
+    frontendDirName: 'frontend-vue',
+    frontendDisplayName: 'Vue admin',
+    frontendLogPrefix: 'frontend-vue',
+    frontendPortFlag: '--vue-port',
+    frontendPortEnv: 'VUE_PORT',
+    defaultFrontendPort: 5173
+  },
+  react: {
+    label: 'admin-e2e-react',
+    frontendDirName: 'frontend-react',
+    frontendDisplayName: 'React admin',
+    frontendLogPrefix: 'frontend-react',
+    frontendPortFlag: '--react-port',
+    frontendPortEnv: 'REACT_PORT',
+    defaultFrontendPort: 5174
+  },
+};
+
+const DEFAULTS = {
+  backendUrl: DEFAULT_CAPTCHA_LOGIN_OPTIONS.backendUrl,
+  backendPort: '8080',
+  frontendHost: '127.0.0.1',
+  profile: defaultProfile,
+  clientId: DEFAULT_CAPTCHA_LOGIN_OPTIONS.clientId,
+  loginCandidates: DEFAULT_ROUTE_SMOKE_LOGIN_CANDIDATES,
+  maxCaptchaAttempts: DEFAULT_CAPTCHA_LOGIN_OPTIONS.maxCaptchaAttempts,
+  timeoutMs: 45000,
+  rsaPublicKey: DEFAULT_CAPTCHA_LOGIN_OPTIONS.rsaPublicKey,
+  captchaAnswer: DEFAULT_CAPTCHA_LOGIN_OPTIONS.captchaAnswer,
+  captchaTtlMs: DEFAULT_CAPTCHA_LOGIN_OPTIONS.captchaTtlMs,
+  redisHost: DEFAULT_CAPTCHA_LOGIN_OPTIONS.redisHost,
+  redisPort: DEFAULT_CAPTCHA_LOGIN_OPTIONS.redisPort,
+  redisUsername: DEFAULT_CAPTCHA_LOGIN_OPTIONS.redisUsername,
+  redisPassword: DEFAULT_CAPTCHA_LOGIN_OPTIONS.redisPassword,
+  redisDatabase: DEFAULT_CAPTCHA_LOGIN_OPTIONS.redisDatabase,
+  redisTls: DEFAULT_CAPTCHA_LOGIN_OPTIONS.redisTls,
+  redisKeyPrefix: DEFAULT_CAPTCHA_LOGIN_OPTIONS.redisKeyPrefix
+};
+
+function printHelp() {
+  console.log(`Usage:
+  node skills/test-cli/scripts/run_admin_e2e.mjs --client <vue|react> [options]
+
+Examples:
+  node skills/test-cli/scripts/run_admin_e2e.mjs --client vue
+  node skills/test-cli/scripts/run_admin_e2e.mjs --client react --route-limit 1
+  node skills/test-cli/scripts/run_admin_e2e.mjs --client vue --no-start-stack --backend-url http://127.0.0.1:8080 --frontend-origin http://127.0.0.1:5173
+
+Options:
+  --client <vue|react>    Required admin client.
+  --backend-url <url>               Backend base URL. Default: ${DEFAULTS.backendUrl}
+  --frontend-origin <url>           Frontend origin. Default follows --client.
+  --api-prefix <path>               Same-origin API prefix: /dev-api (default) or /prod-api.
+  --start-stack                     Start or reuse backend + frontend dev stack. Default.
+  --no-start-stack                  Reuse existing services only.
+  --build-backend                   Build backend jar before startup.
+  --force-restart                   Stop recorded stack processes before startup.
+  --stop-stack-after                Stop processes started by this skill after the run. Default.
+  --keep-stack-after                Keep processes started by this skill after a successful run.
+  --backend-port <port>             Backend port when starting stack. Default: ${DEFAULTS.backendPort}
+  --frontend-port <port>            Frontend port when starting stack.
+  --frontend-host <host>            Frontend host when starting stack. Default: ${DEFAULTS.frontendHost}
+  --profile <name>                  Spring profile when starting backend. Default: ${DEFAULTS.profile}
+  --username <name>                 Preferred username.
+  --password <pwd>                  Preferred password.
+  --login-candidates <csv>          Candidate accounts. Default: ${DEFAULTS.loginCandidates}
+  --client-id <id>                  Login client id. Default: ${DEFAULTS.clientId}
+  --rsa-public-key <base64>         Request encryption public key.
+  --max-captcha-attempts <n>        Captcha attempts per account. Default: ${DEFAULTS.maxCaptchaAttempts}
+  --captcha-answer <code>           Answer seeded into Redis. Default: ${DEFAULTS.captchaAnswer}
+  --captcha-ttl-ms <ms>             Seeded captcha TTL in milliseconds. Default: ${DEFAULTS.captchaTtlMs}
+  --redis-host <host>               Redis host for the seeded captcha. Default: ${DEFAULTS.redisHost}
+  --redis-port <port>               Redis port for the seeded captcha. Default: ${DEFAULTS.redisPort}
+  --redis-username <name>           Redis ACL username.
+  --redis-password <pwd>            Redis password. Default: INFOQ_TEST_REDIS_PASSWORD or REDIS_PASSWORD
+  --redis-database <n>              Redis database. Default: ${DEFAULTS.redisDatabase}
+  --redis-tls                       Connect to Redis with TLS.
+  --redis-key-prefix <prefix>       Captcha key prefix. Default: ${DEFAULTS.redisKeyPrefix}
+  --route-limit <n>                 Limit route smoke count.
+  --include-route <pattern>         Include route pattern. Repeatable. '*' wildcard supported.
+  --exclude-route <pattern>         Exclude route pattern. Repeatable. '*' wildcard supported.
+  --timeout-ms <ms>                 Per-route timeout. Default: ${DEFAULTS.timeoutMs}
+  --headed                          Show browser.
+  --allow-console-errors            Do not fail route smoke on console errors.
+  --run-id <slug>                   Evidence run id.
+  -h, --help                        Show help.`);
+}
+
+function readValue(args, index, flag) {
+  const value = args[index + 1];
+  if (!value || value.startsWith('--')) {
+    throw new Error(`Missing value for ${flag}.`);
+  }
+  return value;
+}
+
+function parseArgs(argv) {
+  const options = {
+    client: '',
+    backendUrl: process.env.BACKEND_URL || DEFAULTS.backendUrl,
+    frontendOrigin: process.env.FRONTEND_ORIGIN || '',
+    apiPrefix: process.env.INFOQ_TEST_API_PREFIX || '/dev-api',
+    startStack: true,
+    buildBackend: false,
+    forceRestart: false,
+    stopStackAfter: true,
+    backendPort: String(process.env.BACKEND_PORT || DEFAULTS.backendPort),
+    frontendPort: '',
+    frontendHost: String(process.env.FRONTEND_HOST || DEFAULTS.frontendHost),
+    profile: String(process.env.PROFILE || DEFAULTS.profile),
+    username: process.env.USERNAME || '',
+    password: process.env.PASSWORD || '',
+    loginCandidates: process.env.LOGIN_CANDIDATES || DEFAULTS.loginCandidates,
+    clientId: process.env.CLIENT_ID || DEFAULTS.clientId,
+    rsaPublicKey: process.env.RSA_PUBLIC_KEY || DEFAULTS.rsaPublicKey,
+    maxCaptchaAttempts: DEFAULTS.maxCaptchaAttempts,
+    captchaAnswer: DEFAULTS.captchaAnswer,
+    captchaTtlMs: DEFAULTS.captchaTtlMs,
+    redisHost: DEFAULTS.redisHost,
+    redisPort: DEFAULTS.redisPort,
+    redisUsername: DEFAULTS.redisUsername,
+    redisPassword: DEFAULTS.redisPassword,
+    redisDatabase: DEFAULTS.redisDatabase,
+    redisTls: DEFAULTS.redisTls,
+    redisKeyPrefix: DEFAULTS.redisKeyPrefix,
+    routeLimit: 0,
+    includeRoutes: [],
+    excludeRoutes: [],
+    timeoutMs: DEFAULTS.timeoutMs,
+    headed: false,
+    allowConsoleErrors: false,
+    runId: ''
+  };
+
+  for (let index = 0; index < argv.length; index += 1) {
+    const arg = argv[index];
+    switch (arg) {
+      case '--client':
+        options.client = readValue(argv, index, arg);
+        index += 1;
+        break;
+      case '--backend-url':
+        options.backendUrl = readValue(argv, index, arg).replace(/\/+$/, '');
+        index += 1;
+        break;
+      case '--frontend-origin':
+        options.frontendOrigin = readValue(argv, index, arg).replace(/\/+$/, '');
+        index += 1;
+        break;
+      case '--api-prefix':
+        options.apiPrefix = readValue(argv, index, arg);
+        index += 1;
+        break;
+      case '--start-stack':
+        options.startStack = true;
+        break;
+      case '--no-start-stack':
+        options.startStack = false;
+        break;
+      case '--build-backend':
+        options.buildBackend = true;
+        break;
+      case '--force-restart':
+        options.forceRestart = true;
+        break;
+      case '--stop-stack-after':
+        options.stopStackAfter = true;
+        break;
+      case '--keep-stack-after':
+        options.stopStackAfter = false;
+        break;
+      case '--backend-port':
+        options.backendPort = readValue(argv, index, arg);
+        index += 1;
+        break;
+      case '--frontend-port':
+        options.frontendPort = readValue(argv, index, arg);
+        index += 1;
+        break;
+      case '--frontend-host':
+        options.frontendHost = readValue(argv, index, arg);
+        index += 1;
+        break;
+      case '--profile':
+        options.profile = readValue(argv, index, arg);
+        index += 1;
+        break;
+      case '--username':
+        options.username = readValue(argv, index, arg);
+        index += 1;
+        break;
+      case '--password':
+        options.password = readValue(argv, index, arg);
+        index += 1;
+        break;
+      case '--login-candidates':
+        options.loginCandidates = readValue(argv, index, arg);
+        index += 1;
+        break;
+      case '--client-id':
+        options.clientId = readValue(argv, index, arg);
+        index += 1;
+        break;
+      case '--rsa-public-key':
+        options.rsaPublicKey = readValue(argv, index, arg);
+        index += 1;
+        break;
+      case '--max-captcha-attempts':
+        options.maxCaptchaAttempts = Number(readValue(argv, index, arg));
+        index += 1;
+        break;
+      case '--captcha-answer':
+        options.captchaAnswer = readValue(argv, index, arg);
+        index += 1;
+        break;
+      case '--captcha-ttl-ms':
+        options.captchaTtlMs = Number(readValue(argv, index, arg));
+        index += 1;
+        break;
+      case '--redis-host':
+        options.redisHost = readValue(argv, index, arg);
+        index += 1;
+        break;
+      case '--redis-port':
+        options.redisPort = Number(readValue(argv, index, arg));
+        index += 1;
+        break;
+      case '--redis-username':
+        options.redisUsername = readValue(argv, index, arg);
+        index += 1;
+        break;
+      case '--redis-password':
+        options.redisPassword = readValue(argv, index, arg);
+        index += 1;
+        break;
+      case '--redis-database':
+        options.redisDatabase = Number(readValue(argv, index, arg));
+        index += 1;
+        break;
+      case '--redis-tls':
+        options.redisTls = true;
+        break;
+      case '--redis-key-prefix':
+        options.redisKeyPrefix = readValue(argv, index, arg);
+        index += 1;
+        break;
+      case '--route-limit':
+        options.routeLimit = Number(readValue(argv, index, arg));
+        index += 1;
+        break;
+      case '--include-route':
+        options.includeRoutes.push(readValue(argv, index, arg));
+        index += 1;
+        break;
+      case '--exclude-route':
+        options.excludeRoutes.push(readValue(argv, index, arg));
+        index += 1;
+        break;
+      case '--timeout-ms':
+        options.timeoutMs = Number(readValue(argv, index, arg));
+        index += 1;
+        break;
+      case '--headed':
+        options.headed = true;
+        break;
+      case '--allow-console-errors':
+        options.allowConsoleErrors = true;
+        break;
+      case '--run-id':
+        options.runId = readValue(argv, index, arg);
+        index += 1;
+        break;
+      case '-h':
+      case '--help':
+        printHelp();
+        process.exit(0);
+        break;
+      default:
+        throw new Error(`Unknown option: ${arg}`);
+    }
+  }
+
+  if (options.runId && !/^[A-Za-z0-9][A-Za-z0-9._-]{0,119}$/u.test(options.runId)) throw new Error('--run-id must be a simple slug without path separators.');
+  if (!CLIENTS[options.client]) {
+    throw new Error('--client must be one of: vue, react');
+  }
+  if (!['/dev-api', '/prod-api'].includes(options.apiPrefix)) throw new Error('--api-prefix must be /dev-api or /prod-api.');
+  if (!Number.isInteger(options.maxCaptchaAttempts) || options.maxCaptchaAttempts <= 0) {
+    throw new Error('--max-captcha-attempts must be a positive integer.');
+  }
+  if (options.routeLimit && (!Number.isInteger(options.routeLimit) || options.routeLimit <= 0)) {
+    throw new Error('--route-limit must be a positive integer.');
+  }
+  if (!Number.isInteger(options.timeoutMs) || options.timeoutMs <= 0) {
+    throw new Error('--timeout-ms must be a positive integer.');
+  }
+
+  return options;
+}
+
+function buildStackConfig(options, runDir) {
+  const clientConfig = CLIENTS[options.client];
+  const stateDir = resolveTmpPath(repoRoot, 'test-cli', 'e2e', 'stack', options.client);
+  return {
+    ...clientConfig,
+    repoRoot,
+    defaultProfile,
+    scriptPath: 'skills/test-cli/scripts/run_admin_e2e.mjs',
+    stateSlug: `test-cli/e2e/stack/${options.client}`,
+    stateFile: path.join(stateDir, 'state.json'),
+    stateContext: {
+      runId: path.basename(runDir),
+      evidenceDir: runDir
+    },
+    defaultBackendPort: 8080,
+    defaultFrontendPort: clientConfig.defaultFrontendPort
+  };
+}
+
+function buildStackArgs(options, clientConfig) {
+  const args = [
+    '--backend-port',
+    options.backendPort,
+    clientConfig.frontendPortFlag,
+    options.frontendPort || String(clientConfig.defaultFrontendPort),
+    '--frontend-host',
+    options.frontendHost,
+    '--profile',
+    options.profile
+  ];
+  if (options.buildBackend) {
+    args.push('--build-backend');
+  }
+  if (options.forceRestart) {
+    args.push('--force-restart');
+  }
+  return args;
+}
+
+function buildFrontendOrigin(options) {
+  if (options.frontendOrigin) {
+    return options.frontendOrigin;
+  }
+  const clientConfig = CLIENTS[options.client];
+  const frontendPort = options.frontendPort || String(clientConfig.defaultFrontendPort);
+  return `http://${options.frontendHost}:${frontendPort}`;
+}
+
+function writeJson(filePath, data) {
+  ensureDir(path.dirname(filePath));
+  fs.writeFileSync(filePath, `${JSON.stringify(data, null, 2)}\n`, 'utf8');
+}
+
+function sanitizeName(value) {
+  return String(value || 'item')
+    .replace(/^\/+/, '')
+    .replace(/[^a-zA-Z0-9._-]+/g, '_')
+    .replace(/^_+|_+$/g, '') || 'root';
+}
+
+async function fetchProtectedJson(options, token, apiPath, label) {
+  const {response, body} = await fetchJson(`${options.backendUrl}${apiPath}`, {
+    signal: AbortSignal.any([AbortSignal.timeout(options.timeoutMs), ...(options.signal ? [options.signal] : [])]),
+    headers: {
+      Authorization: `Bearer ${token}`,
+      clientid: options.clientId,
+      'Content-Language': 'zh-CN'
+    }
+  });
+  if (response.status !== 200 || body.code !== 200) {
+    throw new Error(`${label} failed: http=${response.status}, code=${body.code}, msg=${body.msg || ''}`);
+  }
+  return body.data;
+}
+
+function joinRoutePath(prefix, pathValue) {
+  if (!pathValue) {
+    return prefix || '/';
+  }
+  if (pathValue.startsWith('/')) {
+    return pathValue;
+  }
+  const base = (prefix || '').replace(/\/+$/, '');
+  return `${base}/${pathValue}`.replace(/\/+/g, '/') || '/';
+}
+
+function collectRoutes(nodes, prefix = '') {
+  const results = [];
+  for (const node of nodes || []) {
+    const fullPath = joinRoutePath(prefix, node?.path || '');
+    if (node?.component && node.component !== 'Layout') {
+      results.push({
+        path: fullPath,
+        name: node.name || '',
+        component: node.component,
+        hidden: Boolean(node.hidden),
+        meta: node.meta || {}
+      });
+    }
+    if (Array.isArray(node?.children) && node.children.length > 0) {
+      results.push(...collectRoutes(node.children, fullPath));
+    }
+  }
+  return results;
+}
+
+function patternToRegExp(pattern) {
+  const escaped = String(pattern)
+    .replace(/[.+?^${}()|[\]\\]/g, '\\$&')
+    .replace(/\*/g, '.*');
+  return new RegExp(`^${escaped}$`);
+}
+
+function routeMatches(routePath, patterns) {
+  if (patterns.length === 0) {
+    return true;
+  }
+  return patterns.some((pattern) => {
+    if (pattern.includes('*')) {
+      return patternToRegExp(pattern).test(routePath);
+    }
+    return routePath.includes(pattern);
+  });
+}
+
+function filterRoutes(routes, options) {
+  let filtered = routes
+    .filter((route) => route.path && !route.path.includes(':'))
+    .filter((route) => routeMatches(route.path, options.includeRoutes))
+    .filter((route) => options.excludeRoutes.length === 0 || !routeMatches(route.path, options.excludeRoutes));
+
+  const indexRoute = filtered.find((route) => route.path === '/index');
+  if (indexRoute) {
+    filtered = [indexRoute, ...filtered.filter((route) => route.path !== '/index')];
+  }
+
+  if (options.routeLimit > 0) {
+    filtered = filtered.slice(0, options.routeLimit);
+  }
+  return filtered;
+}
+
+async function loadPlaywrightFlow() {
+  try {
+    const module = await import(pathToFileURL(playwrightCorePath).href);
+    return module.runPlaywrightFlow;
+  } catch (error) {
+    throw new Error(
+      `Playwright runtime is required. Install it with:\n` +
+      `pnpm --dir skills/test-cli/scripts install\n` +
+      `pnpm --dir skills/test-cli/scripts exec playwright install chromium\n` +
+      `${error.message || error}`
+    );
+  }
+}
+
+async function runRouteSmoke(options, runDir, token, routes, results = []) {
+  const runPlaywrightFlow = await loadPlaywrightFlow();
+
+  for (const route of routes) {
+    options.signal?.throwIfAborted();
+    const routeName = sanitizeName(route.path);
+    const screenshotPath = path.join(runDir, 'screenshots', `${routeName}.png`);
+    const consoleLogPath = path.join(runDir, 'console', `${routeName}.json`);
+    const targetUrl = `${buildFrontendOrigin(options)}${route.path}`;
+    const startedAt = new Date().toISOString();
+    console.log(`[admin-e2e] route smoke: ${route.path}`);
+    try {
+      await runPlaywrightFlow({
+        targetUrl,
+        browserSession: {token, client: options.client, clientId: options.clientId, apiPrefix: options.apiPrefix},
+        waitForUrl: route.path,
+        screenshotPath,
+        consoleLogPath,
+        failOnConsoleErrors: !options.allowConsoleErrors,
+        timeoutMs: options.timeoutMs,
+        headed: options.headed,
+        signal: options.signal
+      });
+      results.push({
+        ...route,
+        targetUrl,
+        status: 'passed',
+        startedAt,
+        finishedAt: new Date().toISOString(),
+        screenshotPath,
+        consoleLogPath
+      });
+    } catch (error) {
+      results.push({
+        ...route,
+        targetUrl,
+        status: 'failed',
+        startedAt,
+        finishedAt: new Date().toISOString(),
+        screenshotPath,
+        consoleLogPath,
+        error: error.message || String(error)
+      });
+      if (options.signal?.aborted) break;
+    }
+  }
+
+  return results;
+}
+
+function writeMarkdownReport(reportPath, report) {
+  const lines = [
+    `# InfoQ Admin E2E Captcha Report`,
+    ``,
+    `- Run ID: ${report.runId}`,
+    `- Client: ${report.client}`,
+    `- Backend: ${report.backendUrl}`,
+    `- Frontend: ${report.frontendOrigin}`,
+    `- User: ${report.username}`,
+    `- Status: ${report.status}`,
+    `- Routes: ${report.summary.passedRoutes}/${report.summary.totalRoutes} passed`,
+    `- Evidence: ${report.runDir}`,
+    ``,
+    `## Failed Routes`,
+    ``
+  ];
+
+  const failed = report.routes.filter((route) => route.status !== 'passed');
+  if (failed.length === 0) {
+    lines.push('- None');
+  } else {
+    for (const route of failed) {
+      lines.push(`- ${route.path}: ${route.error || route.status}`);
+    }
+  }
+
+  lines.push('', '## Captcha Attempts', '');
+  for (const attempt of report.loginAttempts) {
+    lines.push(`- #${attempt.sequence} ${attempt.username}: status=${attempt.status}, seedKey="${attempt.seedKey}", code="${attempt.captchaCode}"`);
+  }
+  if (report.error) lines.push('', `- Error: ${report.error}`);
+  for (const error of report.cleanupErrors || []) lines.push(`- Cleanup error: ${error}`);
+
+  fs.writeFileSync(reportPath, `${lines.join('\n')}\n`, 'utf8');
+}
+
+async function main() {
+  const options = parseArgs(normalizeForwardedArgs(process.argv.slice(2)));
+  const clientConfig = CLIENTS[options.client];
+  const runId = options.runId || `${options.client}-${timestampSlug()}`;
+  const runDir = resolveTmpPath(repoRoot, 'test-cli', 'e2e', runId);
+  ensureDir(runDir);
+  options.backendUrl = options.backendUrl.replace(/\/+$/, '');
+  if (options.backendUrl === DEFAULTS.backendUrl && options.backendPort !== DEFAULTS.backendPort) {
+    options.backendUrl = `http://127.0.0.1:${options.backendPort}`;
+  }
+
+  if (!options.frontendPort) {
+    options.frontendPort = String(clientConfig.defaultFrontendPort);
+  }
+  if (!options.frontendOrigin) {
+    options.frontendOrigin = buildFrontendOrigin(options);
+  }
+
+  console.log(`[admin-e2e] stack profile default: ${defaultProfile}`);
+
+  const stackConfig = buildStackConfig(options, runDir);
+  const stopStaleStackBeforeRun = async () => {
+    const state = readJsonFile(stackConfig.stateFile, null);
+    const shouldStop =
+      ['starting', 'interrupted'].includes(state?.status) ||
+      (state?.status === 'running' && state.keepAlive !== true);
+    if (!shouldStop) {
+      return;
+    }
+    console.log(`[admin-e2e] cleaning recorded stack state before run: ${stackConfig.stateFile}`);
+    await stopAdminDevStackState(stackConfig, {status: 'stopped', reason: 'stale-before-e2e'});
+  };
+  const report = {
+    runId, runDir, client: options.client, backendUrl: options.backendUrl, frontendOrigin: options.frontendOrigin,
+    username: '', user: null, status: 'running', startedAt: new Date().toISOString(),
+    summary: {totalRoutes: 0, passedRoutes: 0, failedRoutes: 0, captchaAttempts: 0},
+    loginAttempts: [], routes: [], error: ''
+  };
+  await runTestLifecycle({
+    report,
+    execute: async (signal) => {
+      options.signal = signal;
+      if (options.startStack) {
+        await stopStaleStackBeforeRun();
+        console.log(`[admin-e2e] starting/reusing stack for ${options.client}`);
+        await runAdminDevStack({...stackConfig, signal}, buildStackArgs(options, clientConfig));
+      }
+      signal.throwIfAborted();
+      console.log(`[admin-e2e] backend: ${options.backendUrl}`);
+      console.log(`[admin-e2e] frontend: ${options.frontendOrigin}`);
+      console.log(`[admin-e2e] evidence: ${runDir}`);
+      const login = await loginWithRealCaptcha(options, runDir);
+      report.username = login.username;
+      report.loginAttempts = login.attempts;
+      report.summary.captchaAttempts = login.attempts.length;
+      const userInfo = await fetchProtectedJson(options, login.token, '/system/user/getInfo', 'GET /system/user/getInfo');
+      report.user = userInfo?.user || null;
+      const routeTree = await fetchProtectedJson(options, login.token, '/system/menu/getRouters', 'GET /system/menu/getRouters');
+      const allRoutes = Array.from(new Map(collectRoutes(routeTree).map((route) => [route.path, route])).values()).sort((a, b) => a.path.localeCompare(b.path));
+      const routes = filterRoutes(allRoutes, options);
+      if (routes.length === 0) throw new Error('No routes selected for smoke. Check --include-route / --exclude-route / --route-limit.');
+      writeJson(path.join(runDir, 'routes.json'), {total: allRoutes.length, selected: routes.length, routes});
+      report.routes = await runRouteSmoke(options, runDir, login.token, routes, report.routes);
+      const failedRoutes = report.routes.filter((route) => route.status !== 'passed');
+      report.summary.totalRoutes = report.routes.length;
+      report.summary.passedRoutes = report.routes.length - failedRoutes.length;
+      report.summary.failedRoutes = failedRoutes.length;
+      if (failedRoutes.length > 0) throw new Error(`[admin-e2e] route smoke failed: ${failedRoutes.length}/${report.routes.length}`);
+    },
+    cleanup: async () => {},
+    stop: async (status) => {
+      if (options.startStack && (options.stopStackAfter || status !== 'passed')) {
+        await stopAdminDevStackState(stackConfig, {status: status === 'passed' ? 'stopped' : status, reason: report.error || 'e2e-complete'});
+      } else if (options.startStack && status === 'passed') {
+        markRunState(stackConfig.stateFile, {status: 'running', validationStatus: 'passed', keepAlive: true, keepReason: '--keep-stack-after', context: stackConfig.stateContext});
+      }
+    },
+    persist: () => {
+      writeJson(path.join(runDir, 'report.json'), report);
+      writeMarkdownReport(path.join(runDir, 'report.md'), report);
+      console.log(`[admin-e2e] report: ${path.join(runDir, 'report.md')}`);
+    }
+  });
+  console.log(`[admin-e2e] completed successfully: ${report.routes.length} route(s) passed`);
+}
+
+main().catch((error) => {
+  console.error(error.message || error);
+  process.exitCode ||= 1;
+});

@@ -1,4 +1,0 @@
-interface:
-  display_name: "InfoQ 项目参考"
-  short_description: "加载仓库结构、命令、规范和交付规则"
-  default_prompt: "使用 $infoq-project-reference 在实施前加载本仓库的目录结构、常用命令、工程规范和交付规则。"

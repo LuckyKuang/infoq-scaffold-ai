@@ -1,0 +1,4 @@
+interface:
+  display_name: "Release CLI（版本与发布）"
+  short_description: "同步正式与 RC 版本，预览 tag 和 Release，并核验渠道与资产"
+  default_prompt: "使用 $release-cli 核对版本和 Git/gh 目标，经 PR、CI 与保护审批合并后显式 --execute 推 tag，等待自动 workflow 按 RC 源码或正式三资产策略发布，再 verify。"

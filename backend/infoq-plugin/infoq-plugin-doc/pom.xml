@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <groupId>cc.infoq</groupId>
+        <artifactId>infoq-plugin</artifactId>
+        <version>${revision}</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>infoq-plugin-doc</artifactId>
+
+    <description>
+        infoq-plugin-doc 系统接口文档
+    </description>
+
+    <dependencies>
+        <dependency>
+            <groupId>cc.infoq</groupId>
+            <artifactId>infoq-core-common</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.github.vpelikh</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-api</artifactId>
+        </dependency>
+
+    </dependencies>
+
+</project>

@@ -1,0 +1,55 @@
+# Root Docker context hygiene.
+# The compose stack uses the repository root context; builds must
+# never ship Git metadata, local secrets, dependencies, or validation output.
+
+.git
+.gitignore
+.gitattributes
+.github
+.idea
+.codex
+.vscode
+.DS_Store
+Thumbs.db
+
+**/node_modules
+**/target
+**/dist
+**/coverage
+**/.pnpm-store
+.pnpm-store
+tmp
+logs
+**/*.log
+**/*.tmp
+**/*.bak
+
+.env
+.env.*
+**/.env
+**/.env.*
+!.env.example
+deploy/.env
+deploy/docker/.env
+**/application-local*.yml
+**/application-local*.yaml
+**/application-*.local.yml
+**/application-*.local.yaml
+**/*.pem
+**/*.key
+**/*.p12
+**/*.pfx
+**/*.jks
+**/credentials.txt
+**/deploy.env
+**/production.env
+deploy/docker/server/config
+deploy/docker/nginx/cert
+
+openspec/changes
+docs/plan
+docs/ui-demos
+
+# Tracked public build settings only; .env.*.local and deployment credentials stay excluded.
+!frontend-react/.env.production
+!frontend-vue/.env.production

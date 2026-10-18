@@ -1,0 +1,76 @@
+{
+  "name": "infoq-scaffold-frontend-react",
+  "private": true,
+  "version": "3.0.0-rc1",
+  "type": "module",
+  "packageManager": "pnpm@10.34.1",
+  "scripts": {
+    "dev": "vite serve --mode development",
+    "build": "vite build --mode production",
+    "build:prod": "vite build --mode production",
+    "build:dev": "vite build --mode development",
+    "preview": "vite preview",
+    "lint": "eslint .",
+    "lint:fix": "eslint --fix .",
+    "test": "vitest --run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest --run --coverage"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/luckykuang/infoq-scaffold-ai.git"
+  },
+  "dependencies": {
+    "@ant-design/icons": "^6.2.5",
+    "antd": "^6.4.3",
+    "axios": "^1.20.0",
+    "crypto-js": "^4.2.0",
+    "dayjs": "^1.11.21",
+    "echarts": "^6.1.0",
+    "file-saver": "^2.0.5",
+    "i18next": "^26.3.0",
+    "jsencrypt": "^3.5.4",
+    "nprogress": "^0.2.0",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "react-easy-crop": "^5.5.7",
+    "react-i18next": "^17.0.8",
+    "react-router-dom": "^7.18.2",
+    "zustand": "^5.0.14"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@types/node": "^22.19.19",
+    "@types/react": "^19.2.16",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.2",
+    "@vitest/coverage-v8": "^4.1.11",
+    "eslint": "^10.4.1",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.2",
+    "globals": "^17.6.0",
+    "jsdom": "^29.1.1",
+    "prettier": "^3.8.3",
+    "sass": "^1.100.0",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.60.1",
+    "vite": "^8.0.16",
+    "vitest": "^4.1.11"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@parcel/watcher",
+      "esbuild"
+    ],
+    "overrides": {
+      "flatted": "3.4.2"
+    }
+  },
+  "engines": {
+    "node": "24.18.0",
+    "pnpm": ">=10.34.1 <11"
+  }
+}

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Compress CLI（AGENTS 规约）"
+  short_description: "压缩根 AGENTS.md 并校验路由、引用与受保护类别存在性"
+  default_prompt: "使用 $compress-cli 更新或校验仓库根 AGENTS.md：检查格式、路由、实际 default_prompt 字段、引用路径、本地计划目录的 Git 忽略策略与受保护类别存在性，并结合上下文人工评审规则语义是否保持。"

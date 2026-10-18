@@ -1,0 +1,117 @@
+{
+  "$schema": "https://json.schemastore.org/package",
+  "name": "infoq-scaffold-frontend-vue",
+  "version": "3.0.0-rc1",
+  "description": "infoq-scaffold-frontend-vue后台管理系统",
+  "author": "Pontus",
+  "license": "MIT",
+  "type": "module",
+  "packageManager": "pnpm@10.34.1",
+  "scripts": {
+    "dev": "vite serve --mode development",
+    "build:prod": "vite build --mode production",
+    "build:dev": "vite build --mode development",
+    "preview": "vite preview",
+    "test:unit": "vitest --config vitest.config.ts --run",
+    "test:unit:watch": "vitest --config vitest.config.ts",
+    "test:unit:coverage": "vitest --config vitest.config.ts --run --coverage",
+    "lint:eslint": "eslint",
+    "lint:eslint:fix": "eslint --fix",
+    "prettier": "prettier --write ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/luckykuang/infoq-scaffold-ai.git"
+  },
+  "dependencies": {
+    "@element-plus/icons-vue": "2.3.2",
+    "@highlightjs/vue-plugin": "2.1.2",
+    "@vueup/vue-quill": "1.4.0",
+    "@vueuse/core": "14.3.0",
+    "animate.css": "4.1.1",
+    "await-to-js": "3.0.0",
+    "axios": "1.20.0",
+    "crypto-js": "4.2.0",
+    "echarts": "6.1.0",
+    "element-plus": "2.14.1",
+    "file-saver": "2.0.5",
+    "highlight.js": "11.11.1",
+    "image-conversion": "2.1.1",
+    "jsencrypt": "3.5.4",
+    "nprogress": "0.2.0",
+    "pinia": "3.0.4",
+    "vue": "3.5.42",
+    "vue-cropper": "1.1.4",
+    "vue-i18n": "11.4.4",
+    "vue-json-pretty": "2.6.0",
+    "vue-router": "5.1.0",
+    "vue-types": "6.0.0",
+    "vxe-table": "4.19.6"
+  },
+  "devDependencies": {
+    "@iconify-json/ep": "^1.2.3",
+    "@types/crypto-js": "4.2.2",
+    "@types/file-saver": "2.0.7",
+    "@types/node": "^22.19.19",
+    "@types/nprogress": "0.2.3",
+    "@vitejs/plugin-vue": "6.0.7",
+    "@vitest/coverage-v8": "4.1.11",
+    "@vue/compiler-dom": "3.5.42",
+    "@vue/compiler-sfc": "3.5.42",
+    "@vue/eslint-config-prettier": "10.2.0",
+    "@vue/test-utils": "^2.4.10",
+    "autoprefixer": "10.5.0",
+    "eslint": "10.4.1",
+    "eslint-plugin-prettier": "5.5.6",
+    "eslint-plugin-vue": "10.9.1",
+    "globals": "17.6.0",
+    "jsdom": "^29.1.1",
+    "prettier": "3.8.3",
+    "sass": "1.100.0",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "8.60.1",
+    "unocss": "66.7.0",
+    "unplugin-auto-import": "21.0.0",
+    "unplugin-icons": "23.0.1",
+    "unplugin-vue-components": "32.1.0",
+    "unplugin-vue-setup-extend-plus": "1.0.1",
+    "vite": "8.0.16",
+    "vite-plugin-compression": "0.5.1",
+    "vite-plugin-svg-icons-ng": "^1.9.1",
+    "vite-plugin-vue-devtools": "8.1.2",
+    "vitest": "4.1.11",
+    "vue-eslint-parser": "10.4.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@parcel/watcher"
+    ],
+    "overrides": {
+      "quill": "2.0.2",
+      "typescript-eslint": "8.60.1",
+      "@typescript-eslint/eslint-plugin": "8.60.1",
+      "@typescript-eslint/parser": "8.60.1",
+      "@typescript-eslint/typescript-estree": "8.60.1",
+      "@typescript-eslint/project-service": "8.60.1",
+      "@typescript-eslint/tsconfig-utils": "8.60.1",
+      "@typescript-eslint/type-utils": "8.60.1",
+      "@typescript-eslint/utils": "8.60.1",
+      "@vue/compiler-core": "3.5.42",
+      "@vue/compiler-dom": "3.5.42",
+      "vite-plugin-inspect": "11.4.1"
+    },
+    "patchedDependencies": {
+      "@vueuse/core@14.3.0": "patches/@vueuse__core@14.3.0.patch"
+    }
+  },
+  "engines": {
+    "node": "24.18.0",
+    "pnpm": ">=10.34.1 <11"
+  },
+  "browserslist": [
+    "Chrome >= 87",
+    "Edge >= 88",
+    "Safari >= 14",
+    "Firefox >= 78"
+  ]
+}

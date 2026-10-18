@@ -1,0 +1,197 @@
+x-infoq-sql-baseline: sql/infoq_scaffold_3.0.0.sql
+
+services:
+  mysql:
+    image: mysql:8.0.42
+    container_name: mysql
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Shanghai
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD before starting mysql}
+      MYSQL_DATABASE: infoq
+    ports:
+      - target: 3306
+        published: "3306"
+        host_ip: ${INFOQ_INTERNAL_BIND_HOST:-127.0.0.1}
+    volumes:
+      - ${INFOQ_DEPLOY_ROOT:-/infoq}/mysql/data:/var/lib/mysql
+      - ${INFOQ_DEPLOY_ROOT:-/infoq}/mysql/conf:/etc/mysql/conf.d
+      - ../../sql:/docker-entrypoint-initdb.d:ro
+    command:
+      - --default-authentication-plugin=mysql_native_password
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_general_ci
+      - --explicit_defaults_for_timestamp=true
+      - --lower_case_table_names=1
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$${MYSQL_ROOT_PASSWORD} --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  redis:
+    image: redis:7.2.8
+    container_name: redis
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Shanghai
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD before starting redis}
+    ports:
+      - target: 6379
+        published: "6379"
+        host_ip: ${INFOQ_INTERNAL_BIND_HOST:-127.0.0.1}
+    volumes:
+      - ${INFOQ_DEPLOY_ROOT:-/infoq}/redis/conf:/redis/config:ro
+      - ${INFOQ_DEPLOY_ROOT:-/infoq}/redis/data:/redis/data:rw
+      # redis image declares VOLUME /data; bind it to avoid anonymous volumes.
+      - ${INFOQ_DEPLOY_ROOT:-/infoq}/redis/data:/data:rw
+    command: ["redis-server", "/redis/config/redis.conf", "--requirepass", "${REDIS_PASSWORD:?Set REDIS_PASSWORD before starting redis}"]
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$${REDIS_PASSWORD}\" ping | grep -q '^PONG$'"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+  minio:
+    image: pgsty/minio:RELEASE.2026-06-18T00-00-00Z
+    container_name: minio
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Shanghai
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?Set MINIO_ROOT_USER before starting minio}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?Set MINIO_ROOT_PASSWORD before starting minio}
+      MINIO_BROWSER_REDIRECT_URL: ${INFOQ_PUBLIC_BASE_URL:?Set INFOQ_PUBLIC_BASE_URL before starting minio}/console-oss/
+      MINIO_SERVER_URL: ${INFOQ_OSS_PUBLIC_ORIGIN:?Set INFOQ_OSS_PUBLIC_ORIGIN before starting minio}
+    ports:
+      - target: 9000
+        published: "9000"
+        host_ip: ${INFOQ_INTERNAL_BIND_HOST:-127.0.0.1}
+      - target: 9001
+        published: "9001"
+        host_ip: ${INFOQ_INTERNAL_BIND_HOST:-127.0.0.1}
+    volumes:
+      - ${INFOQ_DEPLOY_ROOT:-/infoq}/minio/data:/data
+    command: server /data --console-address ":9001"
+
+  infoq-admin:
+    build:
+      context: ../../backend
+      dockerfile: infoq-admin/Dockerfile
+    image: infoq/infoq-admin:3.0.0-rc1
+    container_name: infoq-admin
+    restart: unless-stopped
+    stop_grace_period: 45s
+    environment:
+      TZ: Asia/Shanghai
+      SERVER_PORT: 9090
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_CONFIG_ADDITIONAL_LOCATION: file:/infoq/server/config/,file:/infoq/server/config/managed-security.yml
+      DEPLOY_ID: ${DEPLOY_ID:-}
+      SECURITY_TOKEN_SECRET: ${SECURITY_TOKEN_SECRET:?Set SECURITY_TOKEN_SECRET before starting infoq-admin}
+      INFOQ_DEPLOY_MODE: ${INFOQ_DEPLOY_MODE:-production}
+      INFOQ_PUBLIC_BASE_URL: ${INFOQ_PUBLIC_BASE_URL:?Set INFOQ_PUBLIC_BASE_URL}
+      INFOQ_BROWSER_SESSION_ORIGINS: ${INFOQ_BROWSER_SESSION_ORIGINS:-}
+      INFOQ_BROWSER_SESSION_COOKIE_PATH: ${INFOQ_BROWSER_SESSION_COOKIE_PATH:?Set INFOQ_BROWSER_SESSION_COOKIE_PATH}
+      INFOQ_BROWSER_SESSION_SECURE: ${INFOQ_BROWSER_SESSION_SECURE:?Set INFOQ_BROWSER_SESSION_SECURE}
+      INFOQ_BROWSER_SESSION_TTL_SECONDS: ${INFOQ_BROWSER_SESSION_TTL_SECONDS:-2592000}
+      INFOQ_DB_USERNAME: ${INFOQ_DB_USERNAME:?Set INFOQ_DB_USERNAME before starting infoq-admin}
+      INFOQ_DB_PASSWORD: ${INFOQ_DB_PASSWORD:?Set INFOQ_DB_PASSWORD before starting infoq-admin}
+      INFOQ_API_REQUEST_PRIVATE_KEY: ${INFOQ_API_REQUEST_PRIVATE_KEY:?Set INFOQ_API_REQUEST_PRIVATE_KEY}
+      INFOQ_API_RESPONSE_PUBLIC_KEY: ${INFOQ_API_RESPONSE_PUBLIC_KEY:?Set INFOQ_API_RESPONSE_PUBLIC_KEY}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD before starting infoq-admin}
+      INFOQ_IP2REGION_V6_PATH: /infoq/server/ip2region/ip2region_v6.xdb
+      JAVA_OPTS: -Xms512m -Xmx1024m
+    ports:
+      - target: 9090
+        published: "9090"
+        host_ip: ${INFOQ_INTERNAL_BIND_HOST:-127.0.0.1}
+    volumes:
+      - ${INFOQ_DEPLOY_ROOT:-/infoq}/server/config:/infoq/server/config:ro
+      - ${INFOQ_DEPLOY_ROOT:-/infoq}/server/logs:/infoq/server/logs
+      - ${INFOQ_DEPLOY_ROOT:-/infoq}/server/ip2region:/infoq/server/ip2region:ro
+    healthcheck:
+      test: ["CMD-SHELL", "timeout 5 bash -c 'exec 3<>/dev/tcp/127.0.0.1/$${SERVER_PORT:-9090}; printf \"GET /monitor/health/readiness HTTP/1.1\\r\\nHost: 127.0.0.1\\r\\nConnection: close\\r\\n\\r\\n\" >&3; head -n 1 <&3 | grep -q \" 200 \"'"]
+      interval: 10s
+      timeout: 6s
+      retries: 12
+      start_period: 40s
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_started
+
+  infoq-frontend-vue:
+    build:
+      context: ../..
+      dockerfile: frontend-vue/Dockerfile
+      secrets:
+        - production_config
+      args:
+        VITE_APP_CONTEXT_PATH: ${INFOQ_VUE_CONTEXT_PATH:-/vue/}
+        INFOQ_FRONTEND_CONFIG_DIGEST: ${INFOQ_FRONTEND_CONFIG_DIGEST:-}
+        VITE_APP_BASE_API: /prod-api
+        VITE_APP_PORT: 9091
+    image: infoq/infoq-frontend-vue:3.0.0-rc1
+    container_name: infoq-frontend-vue
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Shanghai
+      NGINX_PORT: 9091
+    ports:
+      - target: 9091
+        published: "9091"
+        host_ip: ${INFOQ_INTERNAL_BIND_HOST:-127.0.0.1}
+    volumes:
+      - ${INFOQ_DEPLOY_ROOT:-/infoq}/vue/logs:/var/log/nginx
+
+  infoq-frontend-react:
+    build:
+      context: ../..
+      dockerfile: frontend-react/Dockerfile
+      secrets:
+        - production_config
+      args:
+        VITE_APP_CONTEXT_PATH: ${INFOQ_REACT_CONTEXT_PATH:-/react/}
+        INFOQ_FRONTEND_CONFIG_DIGEST: ${INFOQ_FRONTEND_CONFIG_DIGEST:-}
+        VITE_APP_BASE_API: /prod-api
+        VITE_APP_PORT: 9092
+    image: infoq/infoq-frontend-react:3.0.0-rc1
+    container_name: infoq-frontend-react
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Shanghai
+      NGINX_PORT: 9092
+    ports:
+      - target: 9092
+        published: "9092"
+        host_ip: ${INFOQ_INTERNAL_BIND_HOST:-127.0.0.1}
+    volumes:
+      - ${INFOQ_DEPLOY_ROOT:-/infoq}/react/logs:/var/log/nginx
+
+  nginx-web:
+    image: nginx:1.30.3
+    container_name: nginx-web
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Shanghai
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ${INFOQ_DEPLOY_ROOT:-/infoq}/nginx/cert:/etc/nginx/cert:ro
+      - ${INFOQ_DEPLOY_ROOT:-/infoq}/nginx/conf/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ${INFOQ_DEPLOY_ROOT:-/infoq}/nginx/log:/var/log/nginx
+    depends_on:
+      - infoq-admin
+      - minio
+      - infoq-frontend-vue
+      - infoq-frontend-react
+
+secrets:
+  production_config:
+    file: ${INFOQ_PRODUCTION_CONFIG_FILE:?Set INFOQ_PRODUCTION_CONFIG_FILE to a controlled config file}

@@ -1,0 +1,72 @@
+# infoq-plugin
+
+## 1. 模块定位
+
+`infoq-plugin` 是 backend 的横切基础设施父层，负责聚合 Web、安全、Redis、MyBatis、日志、文档、加解密、SSE、WebSocket、Quartz、OSS、Excel、翻译、脱敏等能力。
+
+## 2. 子模块清单
+
+| 子模块 | 形态 | 主要职责 |
+| --- | --- | --- |
+| [`infoq-plugin-web`](./infoq-plugin-web/README.md) | 自动装配 | Web 基础配置、异常处理、XSS、验证码、静态资源 |
+| [`infoq-plugin-security`](./infoq-plugin-security/README.md) | 自动装配 | Spring Security 鉴权、JWT token、在线会话与健康检查路径放行 |
+| [`infoq-plugin-oauth`](./infoq-plugin-oauth/README.md) | 自动装配、业务开关控制 | OAuth/OIDC Provider、state/PKCE 和一次性 ticket；`oauth.enabled=false` 时业务入口不可用 |
+| [`infoq-plugin-redis`](./infoq-plugin-redis/README.md) | 自动装配 | Redisson、缓存、防重、限流、序列号 |
+| [`infoq-plugin-mybatis`](./infoq-plugin-mybatis/README.md) | 自动装配 | MyBatis-Plus、多数据源、分页、数据权限、审计元字段 |
+| [`infoq-plugin-doc`](./infoq-plugin-doc/README.md) | 自动装配 | Springdoc OpenAPI |
+| [`infoq-plugin-encrypt`](./infoq-plugin-encrypt/README.md) | 自动装配 | API 请求解密、字段加解密、MyBatis 加解密拦截 |
+| [`infoq-plugin-elasticsearch`](./infoq-plugin-elasticsearch/README.md) | 条件自动装配 | 默认关闭的 Elastic 官方客户端连接、状态、中性索引定义与 Alias 原子切换边界 |
+| [`infoq-plugin-log`](./infoq-plugin-log/README.md) | 自动装配 | `@Log` 切面、登录/操作日志事件 |
+| [`infoq-plugin-mail`](./infoq-plugin-mail/README.md) | 自动装配 | 邮件配置与发送工具 |
+| [`infoq-plugin-quartz`](./infoq-plugin-quartz/README.md) | 自动装配 | Quartz 托管任务调度 |
+| [`infoq-plugin-sse`](./infoq-plugin-sse/README.md) | 自动装配 | SSE 控制器、Emitter 管理、Redis topic 监听 |
+| [`infoq-plugin-websocket`](./infoq-plugin-websocket/README.md) | 自动装配 | WebSocket 端点、会话管理、集群广播 |
+| [`infoq-plugin-push`](./infoq-plugin-push/README.md) | 条件自动装配 | 关闭态默认的实时 Push 契约、通道选择和提交后提醒 |
+| [`infoq-plugin-mqtt`](./infoq-plugin-mqtt/README.md) | 条件自动装配 | 默认关闭的 MQTT 3.1.1/MQTT 5 中性发布、订阅与状态管理 |
+| [`infoq-plugin-jackson`](./infoq-plugin-jackson/README.md) | 自动装配 | Jackson 3 定制与 JSON 校验 |
+| [`infoq-plugin-translation`](./infoq-plugin-translation/README.md) | 自动装配 | 返回值翻译与字典/用户/部门/OSS 名称补全 |
+| [`infoq-plugin-oss`](./infoq-plugin-oss/README.md) | 库模块 | OSS 客户端与工厂 |
+| [`infoq-plugin-excel`](./infoq-plugin-excel/README.md) | 库模块 | Excel 导入导出注解、监听器、转换器、工具 |
+| [`infoq-plugin-sensitive`](./infoq-plugin-sensitive/README.md) | 库模块 | 字段脱敏注解与 Jackson 序列化处理 |
+
+## 3. 子模块职责摘要
+
+- 自动装配型插件通过 `META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports` 进入 Spring Boot 运行时。
+- 库模块没有独立自动装配入口，通常由 `infoq-system`、`infoq-core-data` 或其他插件直接调用。
+
+## 4. 依赖方向
+
+- 箭头表示“依赖于”：`jackson -> core-common`、`redis -> jackson + core-common`、`security -> redis + core-common`、`web -> jackson`、`mybatis -> security + core-common`。
+- `infoq-system` 按业务需要依赖 `oss`、`security`、`oauth`、`web`、`doc`、`encrypt`、`sse`、`push`、`quartz`、`mail`、`websocket`、`mqtt`、`elasticsearch`。
+- `infoq-core-data` 则在数据层直接接入 `mybatis`、`log`、`sensitive`、`translation`、`excel`、`jackson`。
+
+## 5. 典型调用链
+
+1. `infoq-admin` 启动 Spring Boot。
+2. 自动装配型插件先注册容器级能力，例如 Web、鉴权、缓存、MyBatis、日志、OpenAPI。
+3. `infoq-system` Controller / Service 在业务流里调用这些能力。
+4. 库型插件如 `oss`、`excel`、`sensitive` 再被业务层或数据层直接引用。
+
+## 6. 公共约束
+
+- 不是所有插件都意味着“开关式 runtime feature”；有些只是代码库模块。
+- 插件是否真正生效，要同时看依赖声明、自动装配入口和配置开关。
+- Redis 相关能力必须保持 Redisson OSS 兼容，不引入 PRO-only API。
+
+## 7. 已知边界
+
+- 本文档只做聚合，不代替每个插件的叶子模块真值文档。
+- 某条插件链路若未被源码直接证实，应该回退为“当前实现说明”，不要在这里做跨模块脑补。
+
+## 8. 下钻阅读路径
+
+1. 先判断目标插件是自动装配型还是库模块。
+2. 再进入对应叶子 README 查看职责、开关、入口、依赖和边界。
+3. 最终若要理解业务接线，回到 [`../infoq-modules/infoq-system/README.md`](../infoq-modules/infoq-system/README.md)。
+
+
+## 生产边界
+
+浏览器恢复由 security 插件提供有限 scope opaque 映射与框架 CSRF，web 插件在 SecurityFilterChain 前执行优先严格 CORS；业务 API 的 Bearer 边界保持。配置、cookie/503 语义及回归见 [浏览器恢复会话](../doc/browser-session.md)。
+
+安全插件仅精确公开小程序能力 GET；OAuth 插件按受控部署 base 选择 callback；翻译插件采用字段独立 contextual serializer 并在失败时明确终止序列化；Push 逐通道报告 published/失败而不证明客户端送达；OSS 区分内部 endpoint 与外部签名 origin，生产 API RSA 由环境注入并核最少 2048 位。各叶子 README 与 [验证 SOP](../doc/production-verification.md) 是配置和测试入口。
