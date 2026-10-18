@@ -34,6 +34,7 @@ const config = {
   clientId: process.env.SMOKE_CLIENT_ID || 'e5cd7e4891bf95d1d19206ce24a7b32e',
   username: process.env.SMOKE_USERNAME || '',
   password: process.env.SMOKE_PASSWORD || '',
+  loginMode: process.env.SMOKE_LOGIN_MODE || 'encrypted',
   loginCandidates: process.env.SMOKE_LOGIN_CANDIDATES || 'dept:666666,owner:666666,admin:123456',
   rsaPublicKey:
     process.env.SMOKE_RSA_PUBLIC_KEY ||
@@ -60,6 +61,7 @@ Options:
   --client-id <id>           Client ID for login.
   --username <name>          Preferred login username.
   --password <pwd>           Preferred login password.
+  --login-mode <mode>        encrypted (default), or plain only for api-decrypt.enabled=false.
   --login-candidates <list>  Comma list like "dept:666666,owner:666666".
   --jar <path>               Jar path relative to repo root.
   -h, --help                 Show help.`);
@@ -118,6 +120,10 @@ for (let index = 0; index < args.length; index += 1) {
       config.loginCandidates = readValue(index, arg);
       index += 1;
       break;
+    case '--login-mode':
+      config.loginMode = readValue(index, arg);
+      index += 1;
+      break;
     case '--jar':
       config.jarRelPath = readValue(index, arg);
       index += 1;
@@ -130,6 +136,10 @@ for (let index = 0; index < args.length; index += 1) {
     default:
       throw new Error(`Unknown option: ${arg}`);
   }
+}
+
+if (!['encrypted', 'plain'].includes(config.loginMode)) {
+  throw new Error('--login-mode must be encrypted or plain.');
 }
 
 const backendConfigSelection = resolveBackendConfigSelection(repoRoot);
@@ -294,6 +304,7 @@ async function main() {
       CLIENT_ID: config.clientId,
       USERNAME: config.username,
       PASSWORD: config.password,
+      LOGIN_MODE: config.loginMode,
       LOGIN_CANDIDATES: config.loginCandidates,
       RSA_PUBLIC_KEY: config.rsaPublicKey
     }

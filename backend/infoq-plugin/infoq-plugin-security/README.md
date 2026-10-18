@@ -31,6 +31,7 @@
 - `security.*`
 - `security.token.*`
 - `sse.*`
+- `security.spring-security.strict-authentication` 默认 `true`。显式设置为 `false` 时，配置类不再向 `SecurityFilterChain` 主动添加 token filter，并将其余 URL 规则改为 permitAll；方法权限仍可能拒绝请求。该开关不能作为生产登录故障或公开路径遗漏的修复方式。
 
 ## 7. 关键数据流
 
@@ -52,3 +53,4 @@
 ## 10. 已知边界
 
 - 不负责业务权限数据本身，那部分仍在 `infoq-system`。
+- 当前 `/auth/wechat-miniapp/enabled` 不在默认公开列表，匿名登录前探测会被严格认证拦截；这是待独立修复的业务装配缺口，见 [认证规范](../../../docs/specs/auth/spec.md) 的实现符合性说明。

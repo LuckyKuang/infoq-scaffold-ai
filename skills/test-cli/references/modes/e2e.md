@@ -15,7 +15,7 @@
 ## 执行顺序
 
 1. 判定范围：先确认本次是矩阵、验证码 smoke、只读路由巡检，还是写入型 CRUD 模式设计。
-2. 只读优先：先生成/校验矩阵，或用真实登录 smoke 只巡检路由；不要从写入型 case 开始。
+2. 只读优先：先读取/校验已有矩阵，或把新矩阵输出到 `tmp/test-cli/matrix-preview`；验证码登录与路由 smoke 虽不改业务表，仍会写 Redis、会话及登录记录，必须限定在已授权测试环境。
 3. 目标枚举：涉及 CRUD、批量、删除、导出、权限按钮或 cleanup 时，先列出模块、目标数据、账号角色、影响范围和回滚/清理方式。
 4. 门禁确认：共享环境默认禁止写入型 E2E；确需写入时必须有测试数据隔离、cleanup 策略和危险动作门禁。
 5. 执行验证：运行后检查退出码、截图、console/pageerror、路由结果和状态文件，不用口头判断代替证据。
@@ -37,7 +37,7 @@ node skills/test-cli/scripts/run_admin_e2e.mjs --client vue
 node skills/test-cli/scripts/run_admin_e2e.mjs --client react
 ```
 
-全模块 CRUD E2E（仅限 `application-local.yml` 指向且已授权的测试数据库；默认覆盖 `role,user,menu,dept,post,dict,config,notice,client,invite,ossConfig,job,online`，使用 `e2e_` 隔离数据并自动 cleanup）：
+全模块 CRUD E2E（仅接受 `--profile local`，其他 profile 在执行前失败；必须确认 `application-local.yml` 指向已授权的隔离测试数据库。默认覆盖 `role,user,menu,dept,post,dict,config,notice,client,invite,ossConfig,job,online`，使用 `e2e_` 隔离数据并执行 cleanup）：
 
 ```bash
 node skills/test-cli/scripts/run_admin_crud_e2e.mjs --client vue
@@ -54,17 +54,23 @@ node skills/test-cli/scripts/captcha_login.mjs --backend-url http://127.0.0.1:80
 
 `captcha_login.mjs` 是 `/auth/code` + Redis 种子答案 + 加密 `/auth/login` 的共享入口，`run_admin_e2e.mjs` 与 `test-cli` 的 `admin-route-probe` 都直接复用它。种子模式要求测试进程与后端使用同一个 Redis 实例/DB，通过 `INFOQ_TEST_REDIS_HOST`、`INFOQ_TEST_REDIS_PORT`、`INFOQ_TEST_REDIS_DATABASE`、`INFOQ_TEST_REDIS_PASSWORD` 或对应 `--redis-*` 参数提供连接；禁止指向生产 Redis。证据默认写入 `tmp/test-cli/e2e/captcha-login/<run-id>/`。
 
+CRUD 的 API、浏览器和 JDBC 只读核对必须指向同一测试实例；使用 `--no-start-stack` 或覆盖 URL 时尤其要核对 `application-local.yml` 的数据库。该 runner 依赖 PATH 中的 JDK 21（`java` / `javac`）和 `~/.m2/repository` 中的 MySQL Connector/J；其简化配置解析器不能展开任意 Spring env 占位符或识别运行实例的配置覆盖。缺少依赖或目标无法一致确认时停止。`--print-token` 输出及登录证据含敏感测试信息，不上传到共享日志或提交到仓库。
+
 `run_admin_e2e.mjs` 默认只使用有管理端动态菜单的 route smoke 候选账号（`admin`、`dept`）；`captcha_login.mjs` 可继续通过 `--login-candidates` 做独立账号登录诊断。不要把无动态路由权限的账号作为 route smoke 默认候选，否则会出现登录成功但无路由可巡检的假失败。
 
 `run_admin_e2e.mjs` 默认会在完成、失败或中断后停止本 skill 启动的 backend/admin dev server；只有成功且显式传 `--keep-stack-after` 才保留联调栈，失败或中断仍必须收口。栈状态按 client 稳定记录在 `tmp/test-cli/e2e/stack/<vue|react>/state.json`，必须包含 pid、port、log、owned/reused 和 `running`/`stopped`/`failed`/`interrupted` 状态。
 
-`run_admin_crud_e2e.mjs` 会启动或复用 backend + 指定管理端、通过验证码种子登录，按安全模块顺序执行 UI 新增/查询/编辑/删除或模块可用的行删除/选择删除入口，并用 API 与 MySQL 直连只读查询核对 create/edit/delete；在线用户模块会创建本轮专属 `e2e_` 用户、真实登录生成会话，只强退该会话后清理用户。它只清理当前 run 创建的精确 `e2e_` 数据，不删除内置 admin、默认角色、默认菜单、默认部门、默认配置或非本轮数据；失败、中断和完成后都会收口 owned 栈并保留 `report.md`、`report.json`、`module-matrix.json`、截图、console 和 cleanup 结果。
+`run_admin_crud_e2e.mjs` 会启动或复用 backend + 指定管理端、通过验证码种子登录，按模块顺序执行 UI 新增/查询/编辑/删除或模块可用的行删除/选择删除入口，并记录 API 与 MySQL 直连查询快照；在线用户模块会创建本轮专属 `e2e_` 用户、真实登录生成会话，只强退该会话后清理用户。cleanup 按当前 run 的精确键操作，正常完成和普通异常时尝试清理并保存报告；信号中断仅收口 owned 栈，不能保证数据清理和最终报告。
+
+当前 API/DB 快照没有逐项业务预期比较，最终残留计数也不能排除查询错误；必须审阅 `verification` 与 `cleanup.finalDb[].db.error`。账号候选重试、RSA 覆盖、实例一致性及中断恢复等已确认限制见 `docs/TESTING.md` 第 6.6 节，不能凭 runner 退出码宣布 CRUD 或无残留验收通过。
 
 只跑少量路由：
 
 ```bash
 node skills/test-cli/scripts/run_admin_e2e.mjs --client vue --route-limit 1
 ```
+
+当前 runner 从实时 `/system/menu/getRouters` 选择路由，尚未读取 `case-matrix.json`。固定入口、浏览器登录表单、权限角色矩阵、空白/错误页 DOM 等仍需额外业务断言；不能把动态路由 smoke 成功当作完整矩阵通过。详见 `docs/TESTING.md` 第 6.5 节。
 
 ## 证据目录
 

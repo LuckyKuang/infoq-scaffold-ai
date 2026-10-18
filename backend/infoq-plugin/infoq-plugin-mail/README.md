@@ -29,8 +29,8 @@
 
 ## 7. 关键数据流
 
-1. Spring Boot 启动时检查 `mail.enabled`。
-2. 开启后装配 `MailConfig` 和相关属性。
+1. Spring Boot 加载 `MailConfig` 与 `MailProperties`。
+2. 仅 `mail.enabled=true` 时创建 `MailAccount`；关闭开关不代表配置类与属性 Bean 从 classpath 消失。
 3. 业务层通过 `MailUtils` 发送邮件。
 
 ## 8. 扩展点

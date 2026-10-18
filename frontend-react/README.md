@@ -56,6 +56,14 @@
 - 请求加密、SSE、WebSocket 都受环境变量控制；文档里只记录当前代码中已经能直接确认的行为，不把可选链路写成默认能力。
 - `AGENTS.md` 只负责登记阅读入口和同步门禁，不代替这些正文说明。
 
+## 开发与生产验证前置
+
+从仓库根目录执行 `pnpm --dir frontend-react install`、`pnpm --dir frontend-react run dev`；Node 使用 `24.18.0`，pnpm 使用根 `packageManager` 固定版本。开发服务默认端口 `80`、代理后端 `8080`；端口覆盖与测试命令见 [本层规约](./AGENTS.md) 和 [测试政策](../docs/TESTING.md)。
+
+`VITE_APP_ENCRYPT=true` 时，dev/build 进程必须取得与目标后端对应的 `VITE_APP_RSA_PUBLIC_KEY` / `VITE_APP_RSA_PRIVATE_KEY`。浏览器中的私钥不能保护服务端秘密，生产仍须 HTTPS 与受控凭据。构建前执行 `node tools/validate_utf8.mjs`。
+
+当前 `BrowserRouter` 未设置 `basename`，`/react/` 子路径部署存在路由风险；OAuth 绑定页当前提交绝对 redirect，与后端相对路径校验冲突。两项均需独立修复和运行验证，不能把构建成功或路由 smoke 当作生产验收。具体证据边界见 [测试政策](../docs/TESTING.md) 第 6.5–6.6 节。
+
 ## P1-P3 身份与消息边界
 
 - 个人中心通过 `/system/user/profile/oauth/*` 管理当前用户的第三方身份。绑定操作先向后端取得 Provider 授权地址并消费一次性绑定 ticket；客户端不会提交外部 identity ID 或目标用户 ID。是否需要当前密码由服务端列表项的 `passwordConfirmationRequired` 返回值决定。

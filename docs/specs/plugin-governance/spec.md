@@ -14,14 +14,14 @@
 - 当维护者调整插件依赖或文档时
 - 则必须继续把 `infoq-plugin-web`、`infoq-plugin-security`、`infoq-plugin-mybatis`、`infoq-plugin-redis`、`infoq-plugin-jackson`、`infoq-plugin-oss` 视为固定保留
 - 并且必须继续把 `translation`、`sensitive`、`excel`、`log` 视为通用复用插件
-- 并且必须继续把 `encrypt`、`mail`、`sse`、`websocket`、`doc` 视为可配置插件
+- 并且必须继续把 `encrypt`、`mail`、`sse`、`websocket`、`doc`、`quartz`、`oauth`、`push`、`mqtt`、`elasticsearch` 视为可配置插件
 
 ### 要求：软开关策略
 可配置插件必须保持“依赖保留、配置控开关”的治理方式。
 
 #### 场景：启停可配置插件
 
-- 当维护者启停 `encrypt`、`mail`、`sse`、`websocket` 或 `doc` 时
+- 当维护者启停上述可配置插件时
 - 则必须保留对应依赖
 - 并且必须通过配置键控制启停
 - 并且 `encrypt`、`sse`、`websocket` 的前后端开关必须同步调整
@@ -34,6 +34,10 @@
 - 并且 `websocket.enabled` 必须默认为 `false`
 - 并且 `mail.enabled` 必须默认为 `false`
 - 并且 `springdoc.api-docs.enabled` 必须默认为 `true`
+- 并且 `infoq.quartz.enabled` 必须默认为 `true`
+- 并且 `oauth.enabled`、`infoq.auth.wechat-miniapp.enabled`、`infoq.push.enabled`、`infoq.mqtt.enabled`、`infoq.elasticsearch.enabled` 必须默认为 `false`
+
+关闭不等于所有配置 Bean 都消失：OAuth 协议 Bean 仍装配，业务入口按开关拒绝；MQTT 保留会显式返回未启用错误的 `MqttPublisher`，不创建客户端或健康 provider。Push 和 Elasticsearch 的条件自动配置关闭时不创建对应服务。开关组合依据 `application.yml`、各插件 `AutoConfiguration.imports` 和配置类；启用 Push 还要求选择并启用至少一种 SSE / WebSocket 通道。`mybatis-encryptor.enable` 与 API 请求解密是独立开关，当前默认 `false`。
 
 ### 要求：硬删除守则
 只有在明确不再需要某插件时，才允许走硬删除。

@@ -10,7 +10,7 @@
 - [ ] frontend-react：<是否受影响及原因>
 - [ ] frontend-vue：<是否受影响及原因>
 - [ ] docs：<是否受影响及原因>
-- [ ] deploy：<是否受影响及原因>
+- [ ] script / deploy：<是否受影响及原因>
 - [ ] skills：<是否受影响及原因>
 
 ## 实施任务

@@ -30,9 +30,11 @@
 | `sys_login_info` | 登录审计日志 | `SysLoginInfoServiceImpl` |
 | `sys_oper_log` | 操作审计日志 | `LogAspect`、`SysOperLogServiceImpl` |
 | `QRTZ_*` | Quartz JDBC 任务存储 | `application.yml` |
-| `global:captcha_codes:*` | 图形验证码、邮箱验证码 | `CaptchaController`、`PasswordAuthStrategy`、`EmailAuthStrategy` |
+| `global:captcha_codes:{uuid}`、`global:captcha_codes:{scene}:{email}` | 图形验证码、按 `register` / `forgot_password` / `email_login` 隔离的邮箱验证码 | `CaptchaController`、`PasswordAuthStrategy`、`AuthEmailCodeServiceImpl` |
 | `pwd_err_cnt:*` | 登录失败次数与锁定窗口 | `SysLoginServiceImpl.checkLogin` |
-| `online_tokens:*` | 在线用户快照 | `UserActionListener` |
+| `online_tokens:*` | 在线用户快照 | `SecurityTokenStore`；`UserActionListener` 构建元数据 |
+| `security:token:session:*` / `security:token:revoked:*` | token digest 对应的会话与撤销标记 | `SecurityAuthNames`、`SecurityTokenStore` |
+| `security:token:login:*` / `security:token:user:*` / `security:token:role:*` | 登录身份、用户、角色维度的 token digest 索引 | `SecurityTokenStore` |
 | `global:repeat_submit:*` | 防重提交 | `RepeatSubmit` 相关 Redis 插件 |
 | `global:rate_limit:*` | 限流 | `RateLimiter` 相关 Redis 插件 |
 
@@ -45,7 +47,7 @@
 这意味着登录链路不是“浏览器直接把明文 JSON 交给控制器”，而是先经过 [CryptoFilter](../infoq-plugin/infoq-plugin-encrypt/src/main/java/cc/infoq/common/encrypt/filter/CryptoFilter.java)：
 
 - Filter 会先定位当前 handler method 是否带 `@ApiEncrypt`。
-- 对带注解的 `POST/PUT`，如果缺少 `encrypt-key` 头，会直接返回 `403`，请求不会进入控制器。
+- 对带注解的 `POST/PUT`，如果缺少 `encrypt-key` 头，会通过异常处理器返回业务码 `403`，请求不会进入控制器；业务码不等于 HTTP 状态，必须分别核验。
 - 如果头存在，则 Filter 先解密请求体，控制器收到的才是解密后的 JSON 字符串。
 - `@ApiEncrypt` 默认 `response=false`，所以登录响应本身不会因为这个注解自动加密。
 
@@ -111,7 +113,8 @@ sequenceDiagram
     LoginSvc-->>Strategy: LoginUser(roles/perms/posts/dept)
     Strategy->>Listener: buildOnlineUser(loginUser, clientId, deviceType)
     Strategy->>Security: issue(loginUser, onlineUser, clientId, deviceType)
-    Listener->>Redis: SET online_tokens:{token}
+    Security->>Redis: 写 session / online_tokens / digest 索引
+    Strategy->>Listener: recordLoginSuccess(loginUser)
     Listener->>LoginInfo: publish LoginInfoEvent
     Listener->>UserMapper: update sys_user.login_ip/login_date
     Strategy-->>Auth: accessToken + expireIn + clientId
@@ -141,22 +144,20 @@ sequenceDiagram
 
 ### 3.1 邮箱验证码发送
 
-入口是 `GET /resource/email/code`：
+当前公开页面使用 `POST /auth/email/code`（带 `@ApiEncrypt`）：
 
-- `CaptchaController.emailCode()` 先检查 `OptionalMailHelper.isEnabled()`。
-- 若 `mail.enabled=false`，直接返回“当前系统没有开启邮箱功能”。
-- 若开启，则走 `emailCodeImpl()`：
-  - 生成 4 位数字验证码；
-  - 写入 `global:captcha_codes:{email}`；
-  - 通过 `OptionalMailHelper.sendText(...)` 反射调用邮件插件发送。
-- 若 `scene=register` 且 `sys.account.inviteRegister=true`，控制器会先校验邀请码可用，再允许发送注册验证码。
+- `CaptchaController.sendEmailCode()` 先检查 `OptionalMailHelper.isEnabled()`；未启用邮件时显式拒绝。
+- 请求 `scene` 必须为 `register`、`forgot_password` 或 `email_login`。注册和忘记密码分别校验功能开关；邀请码注册启用时还校验邀请码。
+- 图形验证码启用时校验并消费 `code` / `uuid`；已注册邮箱不能重复申请注册验证码，忘记密码场景对不存在邮箱返回相同成功结果以避免枚举。
+- `sendEmailCodeImpl()` 按 scene + email 每分钟限流一次，再交给 `AuthEmailCodeServiceImpl` 生成 4 位数字、保存到 `global:captcha_codes:{scene}:{email}`（2 分钟）并调用邮件插件发送。
+- `GET /resource/email/code?email=...` 是旧客户端的邮件登录入口，只使用 `email_login` 场景，不承载注册场景和邀请码参数。
 
 ### 3.2 邮箱登录
 
 如果登录请求里的 `grantType=email`，`AuthStrategy.login(...)` 会分发到 [EmailAuthStrategy](../infoq-modules/infoq-system/src/main/java/cc/infoq/system/service/impl/EmailAuthStrategy.java)：
 
 - 按邮箱查询用户；
-- 从 `global:captcha_codes:{email}` 读取验证码；
+- 通过 `AuthEmailCodeService` 从 `global:captcha_codes:email_login:{email}` 读取并删除验证码，失败与成功都会消费该次验证码；
 - 沿用 `SysLoginServiceImpl.checkLogin(...)` 做失败计数；
 - 后续 token 建立、在线用户记录、登录日志落库流程与密码登录一致。
 
@@ -299,11 +300,12 @@ sequenceDiagram
 
 ### 6.1 登录成功后的副作用
 
-[UserActionListener](../infoq-modules/infoq-system/src/main/java/cc/infoq/system/listener/UserActionListener.java) 是认证行为辅助组件，token 签发成功后会触发三件事：
+[UserActionListener](../infoq-modules/infoq-system/src/main/java/cc/infoq/system/listener/UserActionListener.java) 是认证行为辅助组件。认证策略先调用 `buildOnlineUser` 构建 `UserOnlineDTO`，再由 `SecurityTokenService -> SecurityTokenStore` 签发 token、写入会话、`online_tokens:{token}` 和 digest 索引。签发成功后，认证策略调用 `recordLoginSuccess`：
 
-1. 组装 `UserOnlineDTO` 并写入 `online_tokens:{token}`。
-2. 发布 `LoginInfoEvent`。
-3. 回写 `sys_user.login_ip` 和 `sys_user.login_date`。
+1. 发布 `LoginInfoEvent`。
+2. 回写 `sys_user.login_ip` 和 `sys_user.login_date`。
+
+密码和邮箱策略若在这一步出现运行时异常，会撤销刚签发的 token 后向上抛出，不保留一个已失败登录的有效会话。
 
 因此“用户登录成功”在当前实现里并不是只返回 token，而是会同时刷新在线态、审计态和用户最近登录信息。
 
@@ -417,4 +419,4 @@ POST /system/notice
 -> SSE / WebSocket 仅发送 { type: "message", messageId }
 ```
 
-Push 默认关闭。开启 `infoq.push.enabled` 后，必须至少选择并同时开启一个底层 SSE/WebSocket 通道；错误配置会在启动期显式失败。推送异常只记录 correlation ID、消息 ID、通道、接收人数和失败类别，不记录正文，也不会回滚已提交的消息。接收人软删除至少保留 30 天；默认暂停的 `system.message.cleanup` 任务还要求 `infoq.message.cleanup.enabled=true` 才会删除过期软删除记录及无接收人的过期消息壳。
+Push 默认关闭。开启 `infoq.push.enabled` 后，必须至少选择并同时开启一个底层 SSE/WebSocket 通道；错误配置会在启动期显式失败。`SysMessagePushListener` 推送异常日志包含 correlation ID、消息 ID、接收人数和失败类别，当前缺少失败通道，尚不满足通知规格中的通道可观测性要求；日志不记录正文，也不会回滚已提交的消息。`infoq.message.cleanup.soft-delete-retention-days` 默认 30，配置校验下限为 1 天，并非强制至少保留 30 天；默认暂停的 `system.message.cleanup` 任务还要求 `infoq.message.cleanup.enabled=true` 才会删除过期软删除记录及无接收人的过期消息壳。

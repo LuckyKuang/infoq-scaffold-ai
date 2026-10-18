@@ -102,7 +102,9 @@ createIfMissing(path.join(changeDir, 'tasks.md'), `# Tasks: ${changeId}
 - [ ] backend：
 - [ ] frontend-react：
 - [ ] frontend-vue：
+- [ ] docs：
 - [ ] script / deploy：
+- [ ] skills：
 
 ## 实施任务
 

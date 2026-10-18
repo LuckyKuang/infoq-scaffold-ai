@@ -32,7 +32,7 @@
 ## 6. 关键配置
 
 - `ApplicationConfig` 带 `@EnableAsync(proxyTargetClass = true)`，说明公共异步能力从这里打开。
-- 该模块没有独立 `resources` 目录真值文件，更多是 Java 配置与工具类集合。
+- 自动装配入口位于 [`AutoConfiguration.imports`](./src/main/resources/META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports)，注册公共应用、线程池与校验配置；该模块没有独立业务 `application.yml`。
 
 ## 7. 关键数据流
 

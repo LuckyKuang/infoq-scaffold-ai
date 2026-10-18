@@ -6,6 +6,8 @@
 
 ## 模板
 
+以下是结构示意，`Xxx*`、`bo` 和业务方法须替换为目标真实类型与有效输入；它不是可直接编译的完整测试文件。可复用实例见 `backend/infoq-modules/infoq-system/src/test/java/cc/infoq/system/controller/system/SysMenuControllerTest.java`。
+
 ```java
 @ExtendWith(MockitoExtension.class)
 @Tag("dev")

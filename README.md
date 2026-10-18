@@ -33,6 +33,10 @@ service interruption.
 application code, verification, and delivery evidence in one repository. It
 ships a runnable Spring Boot backend plus Vue and React admin consoles.
 
+Task plans stay local: `docs/plan/` and `openspec/changes/` are Git-ignored.
+Continue writing execution plans under `docs/plan/`, creating it as needed;
+the user removes local plans manually.
+
 Supported workspaces:
 
 - `backend`: Spring Boot 4.1 multi-module backend
@@ -85,7 +89,10 @@ pnpm run dev
 ```
 
 Both admin apps default to port `80`. Set `VITE_APP_PORT` before starting a
-second console. Local setup details are in [`DEV_GUIDE.md`](DEV_GUIDE.md).
+second console. Run each workspace example from the repository root. Prepare
+the ignored local backend profile first; when `VITE_APP_ENCRYPT=true`, supply
+both RSA key environment variables matching the backend. See
+[`DEV_GUIDE.md`](DEV_GUIDE.md) for these prerequisites.
 
 Use skills for admin route smoke or captcha login:
 
@@ -95,7 +102,7 @@ Use skills for admin route smoke or captcha login:
 node skills/test-cli/scripts/run_admin_e2e.mjs --client vue --route-limit 1
 node skills/test-cli/scripts/captcha_login.mjs --backend-url http://127.0.0.1:8080 --print-token
 
-# Local deployment smoke (Apple container / WSL2 Docker / Linux Docker)
+# Deployment status: macOS selects Apple; Linux/WSL2 selects Docker
 node skills/deploy-cli/scripts/deploy_cli.mjs status
 ```
 
@@ -123,16 +130,19 @@ node skills/deploy-cli/scripts/deploy_cli.mjs status
 Images are built from source on the target host. The repository does not publish prebuilt application images: Docker builds the backend jar and admin bundles inside their images, while the Apple container path builds the jar on the host and starts a backend-only stack (MySQL, Redis, admin API; no Vue/React or Nginx gateway). Release artifacts are the jar and admin `dist` tarballs, not container images.
 
 ```bash
-# Linux / WSL2 full stack: remote installer (pin a tag for production)
-curl -sSL https://raw.githubusercontent.com/LuckyKuang/infoq-scaffold-ai/main/deploy/install.sh \
-  | sudo env INFOQ_FRONTEND_TARGET=all INFOQ_PUBLIC_BASE_URL=http://SERVER_IP bash
-
-# Or deploy from a local checkout
+# Linux / WSL2: from a reviewed checkout of the intended release tag
 sudo env INFOQ_SOURCE_DIR="$(pwd)" INFOQ_FRONTEND_TARGET=all \
   INFOQ_PUBLIC_BASE_URL=http://SERVER_IP bash deploy/install.sh
 ```
 
 `INFOQ_FRONTEND_TARGET` is required: `all`, `vue`, or `react`. Nginx routes for the `all` target: `/vue/`, `/react/`, `/console-oss/`, `/oss/`.
+
+Use the deployment guide for a pinned remote installer that is downloaded and
+reviewed before execution. macOS Colima uses the shell deployment scripts;
+the Node CLI selects Apple on macOS, and Apple `status` can start its daemon.
+Production also requires independent credentials, matching build keys, HTTPS,
+monitoring and tested backup/rollback procedures. Example keys and build success
+do not establish production readiness.
 
 <!-- readme-section:documentation -->
 ## Documentation
@@ -143,6 +153,7 @@ detailed configuration and maintenance.
 | Document | Description |
 | --- | --- |
 | [Documentation index](docs/README.md) | User-doc navigation |
+| [Documentation audit](docs/DOCUMENTATION-AUDIT.md) | Coverage, corrections, checks, and remaining production blockers |
 | [Contributing](CONTRIBUTING.md) | Toolchain, checks, and PR flow |
 | [Developer guide](DEV_GUIDE.md) | Local setup and troubleshooting |
 | [Security policy](SECURITY.md) | Vulnerability reporting |

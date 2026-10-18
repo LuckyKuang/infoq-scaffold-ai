@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {resolveBackendConfigSelection, resolveRedisEnv} from '../resolve_backend_local_mcp_env.mjs';
+import {parseSmokeAuthenticationOutput} from './smoke_output.mjs';
 import {
     canConnect,
     fetchText,
@@ -64,6 +65,7 @@ const config = {
   clientId: process.env.CLUSTER_SMOKE_CLIENT_ID || 'e5cd7e4891bf95d1d19206ce24a7b32e',
   username: process.env.CLUSTER_SMOKE_USERNAME || '',
   password: process.env.CLUSTER_SMOKE_PASSWORD || '',
+  loginMode: process.env.CLUSTER_SMOKE_LOGIN_MODE || 'encrypted',
   loginCandidates: process.env.CLUSTER_SMOKE_LOGIN_CANDIDATES || 'dept:666666,owner:666666,admin:123456',
   rsaPublicKey:
     process.env.CLUSTER_SMOKE_RSA_PUBLIC_KEY ||
@@ -103,11 +105,12 @@ Options:
   --client-id <id>           Client ID for login.
   --username <name>          Preferred login username.
   --password <pwd>           Preferred login password.
+  --login-mode <mode>        encrypted (default), or plain only for api-decrypt.enabled=false.
   --login-candidates <list>  Comma list like "dept:666666,owner:666666".
-  --redis-host <host>        Redis host used by resolved backend config (local first, else dev).
-  --redis-port <port>        Redis port used by resolved backend config (local first, else dev).
-  --redis-db <db>            Redis db used by resolved backend config (local first, else dev).
-  --redis-password <pwd>     Redis password used by resolved backend config (local first, else dev).
+  --redis-host <host>        Python verifier Redis host (default: resolved local/dev config).
+  --redis-port <port>        Python verifier Redis port; does not configure Java.
+  --redis-db <db>            Python verifier Redis database; must match both Java nodes.
+  --redis-password <pwd>     Python verifier password (prefer CLUSTER_SMOKE_REDIS_PASSWORD).
   --jar <path>               Jar path relative to repo root.
   -h, --help                 Show help.`);
 }
@@ -172,6 +175,10 @@ for (let index = 0; index < args.length; index += 1) {
       config.loginCandidates = readValue(index, arg);
       index += 1;
       break;
+    case '--login-mode':
+      config.loginMode = readValue(index, arg);
+      index += 1;
+      break;
     case '--redis-host':
       config.redisHost = readValue(index, arg);
       index += 1;
@@ -200,6 +207,10 @@ for (let index = 0; index < args.length; index += 1) {
     default:
       throw new Error(`Unknown option: ${arg}`);
   }
+}
+
+if (!['encrypted', 'plain'].includes(config.loginMode)) {
+  throw new Error('--login-mode must be encrypted or plain.');
 }
 
 const backendConfigSelection = resolveBackendConfigSelection(repoRoot);
@@ -437,7 +448,7 @@ async function main() {
   await waitNode(`http://${config.host}:${config.portB}`, logB);
   writeState({readyAt: new Date().toISOString()});
 
-  console.log('[cluster-smoke] both nodes are ready, running node-a HTTP smoke and encrypted login...');
+  console.log(`[cluster-smoke] both nodes are ready, running node-a HTTP smoke and ${config.loginMode} login...`);
   const smokeOutput = await runCommand(process.execPath, [path.join(scriptDir, 'smoke_checks.mjs')], {
     cwd: scriptDir,
     captureOutput: true,
@@ -447,6 +458,7 @@ async function main() {
       CLIENT_ID: config.clientId,
       USERNAME: config.username,
       PASSWORD: config.password,
+      LOGIN_MODE: config.loginMode,
       LOGIN_CANDIDATES: config.loginCandidates,
       RSA_PUBLIC_KEY: config.rsaPublicKey,
       PRINT_TOKEN: '1',
@@ -454,15 +466,10 @@ async function main() {
     }
   });
   if (smokeOutput.signal || smokeOutput.code !== 0) {
-    throw new Error(smokeOutput.stderr || smokeOutput.stdout || '[cluster-smoke] smoke_checks failed');
+    throw new Error(`[cluster-smoke] smoke_checks failed, code=${smokeOutput.code}, signal=${smokeOutput.signal || 'none'}`);
   }
-  process.stdout.write(smokeOutput.stdout);
-
-  const token = smokeOutput.stdout.match(/^TOKEN=(.+)$/m)?.[1]?.trim() || '';
-  const userId = smokeOutput.stdout.match(/^USER_ID=(.+)$/m)?.[1]?.trim() || '';
-  if (!token || !userId) {
-    throw new Error('[cluster-smoke] failed to extract TOKEN/USER_ID from smoke output');
-  }
+  const {token, userId, publicOutput} = parseSmokeAuthenticationOutput(smokeOutput.stdout);
+  process.stdout.write(publicOutput);
 
   console.log('[cluster-smoke] running websocket cluster verification...');
   const pythonArgs = [

@@ -15,20 +15,21 @@ function usage() {
   console.log(`Usage: node skills/push-cli/scripts/push_cli.mjs <command> [options]
 
 Commands:
-  ensure                     校验 gh 登录、仓库身份、默认分支与 git 传输配置
+  ensure                     读取 gh 登录、仓库信息、默认分支与写权限
   status                     输出当前分支、脏文件、open PR 与默认分支落后情况
   check [--profile docs|ci|full]   运行本地校验矩阵（默认 docs）
-  push [--dry-run] [--force-with-lease]
+  push [--execute | --dry-run] [--force-with-lease]
                              推送当前分支（拒绝默认分支、脏工作区与危险推送形式）
-  submit-pr --message <msg> [--branch <name>] [--profile docs|ci|full] [--dry-run]
+  submit-pr --message <msg> [--branch <name>] [--profile docs|ci|full] [--execute | --dry-run]
                              默认分支自动新建工作分支 -> 本地校验 -> 提交 -> 推送 -> 创建或复用 PR
   watch [--pr <number>] [--timeout-min <n>]
                              轮询 GitHub 校验；失败时输出失败 check 与日志摘要
-  merge --pr <number> --yes [--method squash|merge|rebase]
+  merge --pr <number> --yes [--execute | --dry-run] [--method squash|merge|rebase]
                              校验全绿后合并 PR 到默认分支
 
 Options:
-  --dry-run       只打印将要执行的命令，不产生远程写入
+  --execute       执行远程写入；push/submit-pr/merge 默认仅预览
+  --dry-run       显式预览；与 --execute 互斥，不新建分支或提交
   --json          以 JSON 输出结果摘要
   --yes           显式确认（merge 必需）
   --skip-check    submit-pr 时跳过本地校验矩阵（仅限已单独跑过 check 的场景）
@@ -43,7 +44,8 @@ const EXPECTED_REMOTE_REPO = 'LuckyKuang/infoq-scaffold-ai';
 function parseArgs(argv) {
   const options = {
     command: '',
-    dryRun: false,
+    dryRun: true,
+    execute: false,
     json: false,
     yes: false,
     forceWithLease: false,
@@ -56,13 +58,19 @@ function parseArgs(argv) {
     skipCheck: false,
     noWatch: false
   };
+  let explicitDryRun = false;
+  const valueOptions = new Set(['--profile', '--message', '--branch', '--pr', '--method', '--timeout-min']);
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
     if (arg === '-h' || arg === '--help') {
       usage();
       process.exit(0);
     }
-    if (arg === '--dry-run') options.dryRun = true;
+    if (valueOptions.has(arg) && (!argv[index + 1] || argv[index + 1].startsWith('-'))) {
+      throw new Error(`missing value for ${arg}`);
+    }
+    if (arg === '--dry-run') explicitDryRun = true;
+    else if (arg === '--execute') options.execute = true;
     else if (arg === '--json') options.json = true;
     else if (arg === '--yes') options.yes = true;
     else if (arg === '--force-with-lease') options.forceWithLease = true;
@@ -74,7 +82,7 @@ function parseArgs(argv) {
     else if (arg === '--pr') options.pr = argv[++index];
     else if (arg === '--method') options.method = argv[++index];
     else if (arg === '--timeout-min') options.timeoutMin = Number(argv[++index]);
-    else if (arg === '--repo') index += 1;
+    else if (arg.startsWith('-')) throw new Error(`unknown option: ${arg}`);
     else if (!options.command) options.command = arg;
     else throw new Error(`unexpected argument: ${arg}`);
   }
@@ -88,6 +96,14 @@ function parseArgs(argv) {
   if (!PROFILES.includes(options.profile)) {
     throw new Error(`unknown profile: ${options.profile}`);
   }
+  if (options.execute && explicitDryRun) throw new Error('--execute 与 --dry-run 不能同时使用');
+  if (options.execute && !['push', 'submit-pr', 'merge'].includes(options.command)) {
+    throw new Error('--execute 只适用于 push、submit-pr、merge');
+  }
+  if (!['squash', 'merge', 'rebase'].includes(options.method)) throw new Error(`unknown merge method: ${options.method}`);
+  if (options.pr && !/^[1-9]\d*$/.test(options.pr)) throw new Error('--pr 必须是正整数');
+  if (!Number.isFinite(options.timeoutMin) || options.timeoutMin <= 0) throw new Error('--timeout-min 必须是大于 0 的有限数字');
+  options.dryRun = !options.execute;
   return options;
 }
 
@@ -236,9 +252,9 @@ function commandStatus() {
   const info = repoInfo();
   const branch = currentBranch();
   const entries = worktreeEntries();
-  git(['fetch', 'origin', info.defaultBranchRef.name], true);
-  const behind = git(['rev-list', '--count', `HEAD..origin/${info.defaultBranchRef.name}`], true).stdout.trim();
-  const prs = ghJson(['pr', 'list', '--state', 'open', '--json', 'number,title,headRefName,baseRefName,url']) ?? [];
+  git(['fetch', 'origin', info.defaultBranchRef.name]);
+  const behind = git(['rev-list', '--count', `HEAD..origin/${info.defaultBranchRef.name}`]).stdout.trim();
+  const prs = ghJson(['pr', 'list', '--state', 'open', '--json', 'number,title,headRefName,baseRefName,url']);
   const summary = {
     branch,
     dirtyFiles: entries.length,
@@ -297,10 +313,11 @@ function commandPush() {
 }
 
 function commandSubmitPr() {
+  const startingBranch = currentBranch();
+  if (startingBranch === 'HEAD') fail('detached HEAD，拒绝提交或推送；请先切换工作分支');
   const info = ensureEnvironment();
   assertNoUnfinishedGitOp();
   const defaultBranch = info.defaultBranchRef.name;
-  const startingBranch = currentBranch();
   let branch = startingBranch;
 
   if (startingBranch === defaultBranch) {
@@ -350,6 +367,7 @@ function commandSubmitPr() {
   const existing = ghJson(['pr', 'list', '--head', branch, '--state', 'open', '--json', 'number,url,baseRefName,headRefOid']) ?? [];
   let prNumber = '';
   if (existing.length === 1) {
+    if (existing[0].baseRefName !== defaultBranch) fail(`分支 ${branch} 的 PR 目标不是默认分支 ${defaultBranch}；拒绝复用`);
     prNumber = String(existing[0].number);
     log(`[push] 复用已打开的 PR #${prNumber} ${existing[0].url}`);
   } else if (existing.length > 1) {
@@ -396,7 +414,11 @@ function commandWatch(prNumberInput) {
   }
   const deadline = Date.now() + options.timeoutMin * 60 * 1000;
   while (true) {
-    const checks = ghJson(['pr', 'checks', pr, '--json', 'name,state,bucket,link,description']) ?? [];
+    const result = exec('gh', ['pr', 'checks', pr, '--json', 'name,state,bucket,link,description'], {allowFailure: true});
+    if (![0, 8].includes(result.status)) fail(`无法读取 PR #${pr} 校验（exit=${result.status}）：${(result.stderr || result.stdout || '').trim()}`);
+    let checks;
+    try { checks = JSON.parse(result.stdout); } catch (error) { fail(`无法解析 PR #${pr} 校验：${error.message}`); }
+    if (!Array.isArray(checks)) fail(`PR #${pr} 校验响应必须是数组`);
     if (checks.length === 0) {
       fail(`PR #${pr} 没有任何 check；请确认仓库 required checks 配置与 PR 是否已触发工作流`);
     }
@@ -406,6 +428,9 @@ function commandWatch(prNumberInput) {
     const failed = checks.filter(
       (item) => item.bucket === 'fail' || ['FAILURE', 'CANCELLED', 'TIMED_OUT', 'ACTION_REQUIRED', 'STARTUP_FAILURE', 'ERROR'].includes(String(item.state).toUpperCase())
     );
+    const unknown = checks.filter((item) => !pending.includes(item) && !failed.includes(item) &&
+      !['pass', 'skipping'].includes(item.bucket) && !['SUCCESS', 'NEUTRAL', 'SKIPPED'].includes(String(item.state).toUpperCase()));
+    if (unknown.length > 0) fail(`PR #${pr} 存在无法识别的校验状态：${unknown.map(item => `${item.name} (${item.state}/${item.bucket})`).join(', ')}`);
     if (failed.length > 0) {
       for (const item of failed) {
         console.error(`\n[FIX REQUEST] 校验失败：${item.name}（${item.state}）`);
@@ -421,7 +446,7 @@ function commandWatch(prNumberInput) {
     }
     if (pending.length === 0) {
       log(`[push] PR #${pr} 全部 ${checks.length} 个校验通过`);
-      log(`[push] 下一步：node skills/push-cli/scripts/push_cli.mjs merge --pr ${pr} --yes`);
+      log(`[push] 下一步先预览：node skills/push-cli/scripts/push_cli.mjs merge --pr ${pr} --yes；确认后追加 --execute`);
       return;
     }
     if (Date.now() > deadline) {
@@ -436,7 +461,8 @@ function commandMerge() {
   if (!options.pr) {
     fail('merge 需要 --pr <number>');
   }
-  const view = ghJson(['pr', 'view', options.pr, '--json', 'number,state,isDraft,baseRefName,mergeable,statusCheckRollup,url']);
+  const info = repoInfo();
+  const view = ghJson(['pr', 'view', options.pr, '--json', 'number,state,isDraft,baseRefName,headRefOid,mergeable,statusCheckRollup,url']);
   if (!view) {
     fail(`无法读取 PR #${options.pr}`);
   }
@@ -446,14 +472,17 @@ function commandMerge() {
   if (view.isDraft) {
     fail(`PR #${options.pr} 仍是 draft，不可合并`);
   }
+  if (view.baseRefName !== info.defaultBranchRef.name) fail(`PR #${options.pr} 目标不是默认分支 ${info.defaultBranchRef.name}`);
+  if (view.mergeable !== 'MERGEABLE') fail(`PR #${options.pr} 合并状态为 ${view.mergeable}；请先解决冲突或等待 GitHub 计算`);
+  if (!/^[0-9a-f]{40,64}$/i.test(view.headRefOid || '')) fail(`PR #${options.pr} 缺少有效 head SHA`);
   const rollup = view.statusCheckRollup ?? [];
+  if (rollup.length === 0) fail(`PR #${options.pr} 没有任何校验；拒绝合并`);
   const bad = rollup.filter((item) =>
-    ['FAILURE', 'CANCELLED', 'TIMED_OUT', 'ACTION_REQUIRED', 'ERROR', 'STARTUP_FAILURE'].includes(String(item.conclusion ?? '').toUpperCase())
+    ['FAILURE', 'CANCELLED', 'TIMED_OUT', 'ACTION_REQUIRED', 'ERROR', 'STARTUP_FAILURE'].includes(String(item.conclusion ?? item.state ?? '').toUpperCase())
   );
   const pending = rollup.filter((item) => {
-    const conclusion = String(item.conclusion ?? '').toUpperCase();
-    const status = String(item.status ?? '').toUpperCase();
-    return ['', 'NULL', 'UNDEFINED'].includes(conclusion) && ['IN_PROGRESS', 'QUEUED', 'PENDING', 'WAITING', 'REQUESTED', ''].includes(status);
+    const conclusion = String(item.conclusion ?? item.state ?? '').toUpperCase();
+    return !['SUCCESS', 'NEUTRAL', 'SKIPPED'].includes(conclusion);
   });
   if (bad.length > 0) {
     fail(`PR #${options.pr} 存在失败校验：${bad.map((item) => item.name ?? item.context).join(', ')}`);
@@ -464,7 +493,7 @@ function commandMerge() {
   if (!options.yes) {
     fail('合并属于高危操作，必须显式传入 --yes');
   }
-  const mergeArgs = ['pr', 'merge', options.pr, `--${options.method}`, '--delete-branch'];
+  const mergeArgs = ['pr', 'merge', options.pr, `--${options.method}`, '--delete-branch', '--match-head-commit', view.headRefOid];
   if (options.dryRun) {
     log(`[push] dry-run: gh ${mergeArgs.join(' ')}`);
     log('[push] 合并后的下一步：node skills/release-cli/scripts/release_cli.mjs plan');

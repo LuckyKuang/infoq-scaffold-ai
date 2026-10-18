@@ -9,13 +9,15 @@
 ### 要求：验证码与登录入口
 后台会话必须通过统一的验证码与登录接口建立。
 
-#### 场景：管理端或小程序发起登录
+#### 场景：管理端密码或邮箱登录页初始化
 
 - 当客户端需要建立后台会话时
 - 则必须先调用 `GET /auth/code`
 - 并且必须调用 `POST /auth/login`
 - 并且登录请求体必须包含 `clientId` 与 `grantType`
-- 并且当前默认 `grantType=password`
+- 并且密码登录使用 `grantType=password`，邮箱登录使用 `grantType=email`；后端不替缺失的 `grantType` 填默认值
+
+微信小程序 code 登录按下文场景先探测功能开关；该场景不要求调用图形验证码接口。
 
 #### 场景：加密登录请求
 
@@ -81,3 +83,9 @@
 - 当 `infoq.auth.wechat-miniapp.enabled=false` 时
 - 则系统不得创建微信认证客户端或执行远端调用
 - 并且小程序客户端不得展示可用的微信登录入口
+
+## 核查依据与验证边界
+
+当前接口与会话依据为 `AuthController`、`CaptchaController`、`PasswordAuthStrategy`、`EmailAuthStrategy`、`WechatMiniAppAuthStrategy` 及 `SecurityTokenService` / `SecurityTokenStore`。受保护请求须提交与登录一致的 `clientid`，公开 SSE 连接路径由控制器再次校验 token 与 clientId。文档核查不代表已执行真实 Provider、验证码登录或 Redis OSS 运行验证。
+
+当前 `GET /auth/wechat-miniapp/enabled` 虽已在 `AuthController` 暴露，但未进入 `SpringSecurityAutoConfiguration` 默认公开路径或受管 `application.yml` 的排除项。严格认证默认开启时，匿名小程序无法完成登录前的功能探测；因此该场景尚未满足，需独立修复公开路径并补匿名请求回归。不能通过关闭整体严格认证来绕过，本次文档审计不修改 Java 或弱化认证要求。

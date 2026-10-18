@@ -8,12 +8,14 @@
 
 真实验证码登录和动态路由 smoke 使用仓库 runner：
 
+这些命令会写 Redis 验证码种子并创建会话，只用于已授权测试环境。下表是验收设计，不是 runner 已实现或已通过的清单；当前 runner 的 API 登录注入、动态菜单选择及 DOM/进程证据缺口见 [测试政策](../TESTING.md) 第 6.5 节。
+
 ```bash
 node skills/test-cli/scripts/run_admin_e2e.mjs --client react --route-limit 1
 node skills/test-cli/scripts/run_admin_e2e.mjs --client vue --route-limit 1
 ```
 
-已授权测试数据库上的全模块 CRUD（可用 `--modules` 子集，如仅公告 `--modules notice`）使用写入型 runner；其中 `job` 和 `ossConfig` 覆盖可隔离的任务/OSS 配置新增、编辑、删除和选择型删除入口，`online` 只强退当前 run 创建的 `e2e_` 用户会话：
+已授权隔离测试数据库上的全模块 CRUD（只接受 local profile，可用 `--modules` 子集，如仅公告 `--modules notice`）使用写入型 runner；其中 `job` 和 `ossConfig` 执行可隔离的任务/OSS 配置新增、编辑、删除和选择型删除入口，`online` 只强退当前 run 创建的 `e2e_` 用户会话。API/DB 结果当前只记录快照，信号中断无法保证数据 cleanup，最终残留计数也不能排除查询失败；执行前必须阅读 [测试政策](../TESTING.md) 第 6.6 节，并安排结果审阅与人工恢复：
 
 ```bash
 node skills/test-cli/scripts/run_admin_crud_e2e.mjs --client react
@@ -33,7 +35,7 @@ node skills/test-cli/scripts/validate-case-matrix.mjs docs/testing/case-matrix.j
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | WEB-AUTH-LOGIN-SMOKE | react, vue | P0 smoke | /login | 前端已启动，后端 /auth/code 可用 | 打开登录页；加载验证码；通过真实验证码登录入口获取 token；确认登录后可进入首页 | 登录页首屏可渲染；验证码接口真实调用；登录失败时错误可见；成功后不误跳 401/404；无 pageerror 和默认 console error | 只读，无业务数据 cleanup | screenshot、console、captcha attempt、report |
 | WEB-HOME-INDEX-SMOKE | react, vue | P0 smoke | /index | 已通过真实验证码登录；Admin-Token 写入浏览器存储 | 打开 /index；等待动态菜单和首页内容渲染 | 首页可见；用户信息接口和菜单接口成功；不出现空白页；不误跳登录页、401 或 404 | 只读，无业务数据 cleanup | screenshot、console、route report |
-| WEB-DYNAMIC-ROUTE-SMOKE | react, vue | P0/P1 route | case-matrix.json 中所有非参数化只读路由 | 已通过真实验证码登录；后端 /system/menu/getRouters 可用 | 从后端读取动态路由；按矩阵逐条打开路由；等待页面首屏 | 页面非空；路由与菜单组件可匹配；无 pageerror；默认不允许 console error；失败时报告 client、route、component | 只读；跳过需要业务 ID 的参数化路由，除非提供隔离 fixture | 每路由 screenshot、console、report.json |
+| WEB-DYNAMIC-ROUTE-SMOKE | react, vue | P0/P1 route | 后端实时菜单中所有非参数化只读路由 | 已通过真实验证码登录；后端 /system/menu/getRouters 可用 | 从后端读取动态路由；逐条打开并与设计矩阵核对覆盖差异；等待页面首屏 | 页面非空；路由与菜单组件可匹配；无 pageerror；默认不允许 console error；失败时报告 client、route、component | 业务只读；跳过需要业务 ID 的参数化路由，除非提供隔离 fixture | 每路由 screenshot、console、report.json |
 | WEB-SYSTEM-USER-READONLY | react, vue | P1 readonly | /system/user | 账号具备用户查询权限；共享环境禁止写入 | 打开用户管理；执行查询；执行重置；切换分页或每页条数；查看权限按钮状态 | 查询请求参数符合表单；重置恢复默认条件；分页状态和表格数据一致；新增/编辑/删除/导入按钮只校验可见性，不点击写入动作 | 只读，不创建用户；无需 cleanup | screenshot、console、clicked-elements 或 blocker |
 | WEB-SYSTEM-ROLE-READONLY | react, vue | P1 readonly | /system/role | 账号具备角色查询权限 | 打开角色管理；执行查询/重置；打开分配用户入口但不提交；检查角色权限按钮 | 列表渲染稳定；分配用户入口可打开或跳转；未提交授权动作；权限按钮与当前账号权限一致 | 只读；禁止分配或取消分配用户；无需 cleanup | screenshot、console、clicked-elements 或 blocker |
 | WEB-SYSTEM-DICT-READONLY | react, vue | P1 readonly | /system/dict | 账号具备字典查询权限 | 打开字典管理；查询字典名称或类型；重置；进入字典数据入口 | 查询/重置行为一致；字典数据入口可达；不误跳 401/404 | 只读；不新增、不修改字典 | screenshot、console、route report |

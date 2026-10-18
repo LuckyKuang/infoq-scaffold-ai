@@ -18,11 +18,15 @@
 - `.github/workflows/ci.yml` 在候选提交上为绿。
 - `node tools/validate_utf8.mjs`、`node tools/check_readme_sync.mjs`、
   `node tools/check_release_version.mjs`、`node tools/check_doc_links.mjs` 通过。
-- `node skills/compress-cli/scripts/agents_check.mjs check` 与
-  `node skills/release-cli/scripts/test_bump_version.mjs` 通过。
+- `node skills/compress-cli/scripts/agents_check.mjs check`、
+  `node skills/release-cli/scripts/test_bump_version.mjs`、
+  `node skills/release-cli/scripts/test_release_cli.mjs` 与
+  `node skills/push-cli/scripts/test_push_cli.mjs` 通过。
 - 依赖版本与 lockfile 一致；SQL 基线 `sql/infoq_scaffold_3.0.0.sql` 未被修改。
 - 发布说明已准备：变更摘要、兼容性、迁移、已知问题、回滚方式。
 - 发布操作者具备 tag 与 Release 权限，且已完成 `gh auth status` 核验。
+- 发布前人工确认最新远程版本、候选 SHA 和该 SHA 的 CI 结果；tag CLI 不自动查询 CI 或读取分支保护配置。
+- 所有远程写默认预览，显式 `--execute` 才执行；合并还需 `--yes`。`--execute` 与 `--dry-run` 不能同时使用。`bump` 默认修改本地文件，预览需显式 `--dry-run`。
 
 ## 3. 发布流程
 
@@ -34,6 +38,7 @@ bump -> PR -> 合并 -> tag -> Release workflow -> verify
 
 ```bash
 node skills/release-cli/scripts/release_cli.mjs plan
+node skills/release-cli/scripts/release_cli.mjs bump --version 3.0.1 --dry-run
 node skills/release-cli/scripts/release_cli.mjs bump --version 3.0.1
 node skills/release-cli/scripts/release_cli.mjs plan --version 3.0.1
 ```
@@ -48,6 +53,7 @@ node skills/release-cli/scripts/release_cli.mjs plan --version 3.0.1
 ```bash
 node skills/push-cli/scripts/push_cli.mjs check --profile full
 node skills/push-cli/scripts/push_cli.mjs submit-pr --message "chore(release): prepare v3.0.1"
+node skills/push-cli/scripts/push_cli.mjs submit-pr --message "chore(release): prepare v3.0.1" --execute
 ```
 
 PR 合并后再执行 tag；不允许在未合并的发布分支上打 tag。
@@ -55,8 +61,8 @@ PR 合并后再执行 tag；不允许在未合并的发布分支上打 tag。
 ### 3.3 Tag
 
 ```bash
-node skills/release-cli/scripts/release_cli.mjs tag --version 3.0.1 --dry-run
 node skills/release-cli/scripts/release_cli.mjs tag --version 3.0.1
+node skills/release-cli/scripts/release_cli.mjs tag --version 3.0.1 --execute
 ```
 
 `tag` 校验 `HEAD == origin/<default>`、版本一致性与 tag 是否已存在。
@@ -71,10 +77,11 @@ node skills/release-cli/scripts/release_cli.mjs tag --version 3.0.1
 4. 上传 `infoq-admin.jar`、`vue-dist.tar.gz`、`react-dist.tar.gz`。
 5. 使用 GitHub 自动生成说明创建正式 Release。
 
-如需人工补充说明：
+自动 workflow 是本仓库默认发布路径，不要在 tag 推送后并发运行 `publish`；这会与自动创建 Release 竞争。已发布 Release 补充说明属于独立的 `gh release edit` 写操作，应先审查具体内容并取得对应授权。仅在确认自动发布未运行、确需独立手工发布时，使用以下预览与执行；它不会构建或上传 jar/dist：
 
 ```bash
 node skills/release-cli/scripts/release_cli.mjs publish --version 3.0.1 --notes-file tmp/release-notes.md
+node skills/release-cli/scripts/release_cli.mjs publish --version 3.0.1 --notes-file tmp/release-notes.md --execute
 ```
 
 ### 3.5 发布后校验
@@ -83,7 +90,7 @@ node skills/release-cli/scripts/release_cli.mjs publish --version 3.0.1 --notes-
 node skills/release-cli/scripts/release_cli.mjs verify --version 3.0.1
 ```
 
-校验远端 tag、Release 状态（非 draft、非 prerelease）与版本字段一致。
+CLI 校验工作区版本与请求一致、远端 tag 存在及 Release 非 draft/prerelease；不会校验 tag 提交 SHA 或资产完整性。另需核对远端 tag 指向候选提交、Release workflow 成功、资产名称/大小/来源和部署准备条件。出现身份、网络或 API 错误须停止，不能当作“Release 不存在”继续创建。
 
 ## 4. 发布说明结构
 
@@ -108,17 +115,35 @@ node skills/release-cli/scripts/release_cli.mjs verify --version 3.0.1
 
 Tag workflow 只发布源码与构建产物；镜像推送与实际部署是独立动作。
 
+### 5.1 生产构建配置边界
+
+当前 workflow 未注入 `VITE_APP_RSA_PUBLIC_KEY` / `VITE_APP_RSA_PRIVATE_KEY`，前端构建使用仓库 `.env.production`，其中的密钥是示例值。构建通过及资产发布不能证明这些包可用于生产；在确认独立受控密钥、与后端匹配及 HTTPS 前，生产部署保持阻塞。
+
+受控重新构建时，由密钥管理器或受控 runner 将 `VITE_APP_ENCRYPT=true`、`VITE_APP_RSA_PUBLIC_KEY`、`VITE_APP_RSA_PRIVATE_KEY` 注入实际运行 pnpm 的进程环境，优先于 Vite 的 `.env.production`。两项 RSA 值沿用对应工作区示例的密钥内容格式，使用独立生产值，不在命令行或日志打印。无需改写受管 `.env.production`；也不要把新值提交到仓库。在同一受控终端核验字段存在后构建：
+
+```bash
+node -e "for (const key of ['VITE_APP_RSA_PUBLIC_KEY','VITE_APP_RSA_PRIVATE_KEY']) { if (!process.env[key]?.trim()) throw new Error('missing '+key); } if (process.env.VITE_APP_ENCRYPT !== 'true') throw new Error('VITE_APP_ENCRYPT must be true');"
+pnpm --dir frontend-vue install --frozen-lockfile
+pnpm --dir frontend-react install --frozen-lockfile
+node tools/validate_utf8.mjs
+pnpm --dir frontend-vue run build:prod
+pnpm --dir frontend-react run build:prod
+```
+
+上述字段存在检查不证明密钥有效、独立或匹配；部署前仍须按 `deploy/VERIFICATION.md` 验证真实登录、请求/响应加解密与 HTTPS。浏览器包中包含的私钥不能承担服务端秘密保护。受控构建产物需要单独保留候选 SHA、配置来源标识和校验摘要，不覆盖已发布历史资产。
+
 ## 6. 失败与回滚
 
 | 阶段 | 处理 |
 | --- | --- |
-| bump 未合并 | 重新 `bump` 到正确版本，走新 PR |
-| tag 已推送、Release 未创建 | 删除远端与本地 tag，修正后重打 |
-| Release 已创建但版本错误 | `gh release delete <tag>` 撤回 Release，再删除 tag，重新发布 |
-| 发布后发现缺陷 | 不回滚历史 tag；发布新的 patch 版本 |
-| Release workflow 失败 | 修复 workflow 或版本字段后重新推送新 tag；禁止重推同一 tag |
+| bump 未合并 | 审查本次受管文件差异，纠正版本或定向恢复本次修改，走修正 PR；不覆盖他人修改 |
+| tag 推送失败 | 本地 tag 可能已创建；记录错误与 SHA，确认远端是否接收，禁止盲目重试或覆盖 |
+| Release workflow 失败 | 读失败 job 日志与公开发布状态；同一提交的临时环境故障可重跑失败 job，代码/版本变更须经 PR 与新 tag 发布 |
+| Release 已公开且存在错误 | 保留历史 tag/Release，补充问题说明并发布修正 patch；不覆盖历史产物 |
+| 运行部署后发现缺陷 | 按既有部署方案切回已验证旧产物和匹配配置；数据恢复单独使用备份/迁移回滚方案 |
 
 回滚不得删除已发布的历史 Release 来说明“未发布”；发布状态必须真实可审计。
+删除远端 tag/Release 仅适用于已确认无人消费且已枚举影响、得到明确额外授权的独立撤销任务。`bump` 降版本只改文本，不能恢复应用、配置或数据；数据操作见 `docs/DATA-OPS.md`，部署恢复见 `deploy/DEPLOYMENT_LIFECYCLE.md`。
 
 ## 7. 权限与安全
 

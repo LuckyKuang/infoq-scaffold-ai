@@ -1,136 +1,77 @@
 # WSL2 / Debian Docker Compose 部署验证
 
-## 适用场景
+本文件补充 [完整栈部署验证](VERIFICATION.md) 的 Windows/WSL2 边界；命令是待执行 SOP，不是当前部署成功的记录。先读取 [运行时矩阵](runtime-matrix.md) 与 [生产准备阻塞](DEPLOYMENT_LIFECYCLE.md#9-当前生产准备阻塞)，只使用已选定的 WSL2 Docker CE/Moby，不能把 Windows Docker Desktop context 当作默认路径。
 
-用户要求“开始部署”“验证部署文档和脚本”“在 WSL2 Debian 中部署本项目”“MySQL/Redis 用 Docker 安装”时使用本参考。目标是用真实脚本跑完整后端、数据库、缓存、对象存储、两个管理端前端、MinIO 控制台和 nginx，不用手工替代脚本主流程。执行前先读取 `runtime-matrix.md`，确认当前运行时属于免费商用基线。
+## 预检
 
-## 预检清单
+- 用 `wsl.exe --list --verbose` 确认实际发行版与 WSL 版本 2；发行版名字不一定是 `Debian`，必须替换示例。
+- 仓库可在 `/mnt/c/...`，持久化数据应在 WSL Linux 文件系统（通常 `/infoq`），不能把 MySQL/ES 数据放在 DrvFS。原生 Linux/Colima 使用各自平台规则。
+- 在 WSL 内确认 `docker info`、Compose、Buildx、镜像拉取能力，当前账号具有必要权限；Compose 构建不要求宿主 JDK/Maven。
+- 检查基础端口 `80/443/3306/6379/9000/9001/9090` 和所选前端 `9091/9092`，确认容器、挂载、环境文件属主/权限及实际部署目录。`443` 映射不等于已启用 TLS。
+- 由授权管理员预创建 `/tmp/infoq-deploy` 与 `${INFOQ_DEPLOY_ROOT}/server/temp`，生成的 `deploy.env` / `credentials.txt` 保持 `600`；读取受控文件需要属主/root 权限，不能为了 smoke 放宽权限。
 
-- 当前 repo 路径在 Windows 侧通常是 `C:\DevTools\code\github\infoq-scaffold-ai`，WSL 内对应 `/mnt/c/DevTools/code/github/infoq-scaffold-ai`。
-- Docker daemon 必须已启动，`docker ps` 能返回。
-- 部署根目录默认使用 Linux 文件系统 `/infoq`；不要把 `INFOQ_DEPLOY_ROOT` 指到 `/mnt/c/...`。macOS Colima 不使用本 WSL2 专项默认值，按 `runtime-matrix.md` 选择 `$HOME/infoq`。
-- 执行 deploy 前必须提醒并确认服务器已存在 `/tmp/infoq-deploy` 和 `/infoq/server/temp`；权限允许时先执行 `mkdir -p /tmp/infoq-deploy /infoq/server/temp`，权限不足时请用户手动创建后继续。
-- 一键安装会生成或复用 `/etc/infoq-scaffold-ai/deploy.env`，不要再使用固定 MySQL、Redis、MinIO 或管理员密码。
-- Docker Compose 部署不要求宿主机安装 JDK 或 Maven；后端 Maven 打包在 `maven:3.9.12-eclipse-temurin-21` Docker builder 中执行，运行镜像保持 `bellsoft/liberica-openjdk-rocky:21.0.12-cds`。
-- 若 WSL2 没有常驻会话，先启动 keepalive：
-
-```bash
-nohup bash -c 'while true; do sleep 3600; done' >/tmp/infoq-wsl-keepalive.log 2>&1 &
-```
-
-- 端口占用要先只读检查：基础端口 `80`、`443`、`3306`、`6379`、`9000`、`9001`、`9090`，以及 `INFOQ_FRONTEND_TARGET` 对应的前端直连端口；`all` 目标才需要同时检查 `9091`、`9092`。
-
-## 一键部署
-
-从 Windows 侧执行：
+WSL 验证期间保持一个专用前台会话，在另一个终端执行部署/验证；结束后在本会话 `exit`，无需创建无归属的后台 keepalive：
 
 ```powershell
-wsl.exe -d Debian -- bash -lc 'cd /mnt/c/DevTools/code/github/infoq-scaffold-ai && mkdir -p tmp/deploy-verify/wsl2-run /tmp/infoq-deploy /infoq/server/temp && export INFOQ_DEPLOY_ROOT=/infoq && sudo env INFOQ_SOURCE_DIR="$(pwd)" INFOQ_FRONTEND_TARGET=all INFOQ_PUBLIC_BASE_URL=http://127.0.0.1 INFOQ_DEPLOY_ROOT="${INFOQ_DEPLOY_ROOT}" bash deploy/install.sh > tmp/deploy-verify/wsl2-run/install.log 2>&1; status=$?; echo $status > tmp/deploy-verify/wsl2-run/install.exit; tail -n 120 tmp/deploy-verify/wsl2-run/install.log; exit $status'
+wsl.exe -d Debian -- bash
 ```
 
-成功后验证：
+若自动化确需后台保活，启动方必须在仓库 `tmp/deploy-verify/<run-id>/` 记录其 PID、日志、端口（无则 null）、状态与 ownership，并在成功、失败或中断后结束自己创建的进程；禁止按名称杀其他 WSL 会话。此 SOP 不自动创建后台进程。
 
-```bash
-curl --noproxy '*' -i --max-time 15 http://127.0.0.1:9090/monitor/health/readiness
-curl --noproxy '*' -i --max-time 15 http://127.0.0.1:9090/monitor/health/liveness
-```
+## 执行部署
 
-readiness 需要返回 `200 OK`，body 中 `database.status` 和 `redis.status` 都为 `UP`。成功信号还包括安装日志中输出前端入口、`/console-oss/`、`/oss/` 和凭据文件路径。
-
-## 完整 smoke
-
-将所有输出保存为证据：
-
-```bash
-{
-  date -Is
-  export INFOQ_ENV_FILE=/etc/infoq-scaffold-ai/deploy.env
-  set -a
-  . "${INFOQ_ENV_FILE}"
-  set +a
-  echo '# docker ps'
-  docker ps -a --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}'
-  echo '# backend readiness'
-  curl --noproxy '*' -sS -i --max-time 15 http://127.0.0.1:9090/monitor/health/readiness
-  echo '# nginx prod-api readiness'
-  curl --noproxy '*' -sS -i --max-time 15 http://127.0.0.1/prod-api/monitor/health/readiness
-  echo '# frontend gateway status'
-  if [[ "${INFOQ_FRONTEND_TARGET}" == "all" ]]; then
-    curl --noproxy '*' -sS -o /dev/null -w '%{http_code}\n' --max-time 15 http://127.0.0.1/vue/
-    curl --noproxy '*' -sS -o /dev/null -w '%{http_code}\n' --max-time 15 http://127.0.0.1/react/
-  else
-    curl --noproxy '*' -sS -o /dev/null -w '%{http_code}\n' --max-time 15 http://127.0.0.1/
-  fi
-  echo '# minio gateway'
-  curl --noproxy '*' -sS -o /dev/null -w '%{http_code}\n' --max-time 15 http://127.0.0.1/console-oss/
-  curl --noproxy '*' -sS -i --max-time 15 http://127.0.0.1/oss/minio/health/live
-  echo '# frontend direct status'
-  case "${INFOQ_FRONTEND_TARGET}" in
-    all)
-      curl --noproxy '*' -sS -o /dev/null -w '%{http_code}\n' --max-time 15 http://127.0.0.1:9091/
-      curl --noproxy '*' -sS -o /dev/null -w '%{http_code}\n' --max-time 15 http://127.0.0.1:9092/
-      ;;
-    vue)
-      curl --noproxy '*' -sS -o /dev/null -w '%{http_code}\n' --max-time 15 http://127.0.0.1:9091/
-      ;;
-    react)
-      curl --noproxy '*' -sS -o /dev/null -w '%{http_code}\n' --max-time 15 http://127.0.0.1:9092/
-      ;;
-  esac
-  echo '# mysql sys_menu count'
-  docker exec mysql mysql -uroot -p"${MYSQL_ROOT_PASSWORD}" -Nse 'SELECT COUNT(*) FROM infoq.sys_menu;'
-  echo '# oss config'
-  docker exec mysql mysql -uroot -p"${MYSQL_ROOT_PASSWORD}" -Nse "SELECT COUNT(*) FROM infoq.sys_oss_config WHERE config_key IN ('minio','image') AND access_key='${MINIO_ROOT_USER}' AND secret_key='${MINIO_ROOT_PASSWORD}' AND bucket_name='${INFOQ_OSS_BUCKET}' AND endpoint='minio:9000' AND domain='${INFOQ_PUBLIC_BASE_URL}/oss' AND is_https=IF(LEFT('${INFOQ_PUBLIC_BASE_URL}', 6)='https:', 'Y', 'N');"
-  echo '# admin account'
-  docker exec mysql mysql -uroot -p"${MYSQL_ROOT_PASSWORD}" -Nse "SELECT COUNT(*) FROM infoq.sys_user WHERE user_id=1 AND user_name='${INFOQ_ADMIN_USERNAME}' AND status='0' AND del_flag='0';"
-  echo '# redis ping'
-  docker exec redis redis-cli -a "${REDIS_PASSWORD}" ping
-} > tmp/deploy-verify/wsl2-run/smoke-verify.log 2>&1
-```
-
-Windows 主机侧也要验证 `localhost`，因为用户通常从 Windows 浏览器访问：
-
-`INFOQ_FRONTEND_TARGET=all` 时验证两个前端路径：
+先进入实际发行版与已审阅 checkout，推荐在 WSL shell 执行以避免 PowerShell 5.1 / WSL 多层引号漂移：
 
 ```powershell
-curl.exe --noproxy * -sS -o NUL -w "%{http_code}\n" --max-time 15 http://localhost/vue/
-curl.exe --noproxy * -sS -o NUL -w "%{http_code}\n" --max-time 15 http://localhost/react/
-curl.exe --noproxy * -i --max-time 15 http://localhost/prod-api/monitor/health/readiness
-curl.exe --noproxy * -sS -o NUL -w "%{http_code}\n" --max-time 15 http://localhost/console-oss/
+wsl.exe -d Debian
 ```
 
-`INFOQ_FRONTEND_TARGET=react|vue` 时验证根路径：
+随后在 WSL Bash（以下路径必须替换为实际位置）执行：
+
+```bash
+cd /mnt/c/DevTools/code/github/infoq-scaffold-ai
+export INFOQ_DEPLOY_ROOT=/infoq
+# 若当前账号不可写，由授权管理员执行目录创建。
+mkdir -p tmp/deploy-verify/wsl2-run
+sudo mkdir -p /tmp/infoq-deploy "${INFOQ_DEPLOY_ROOT}/server/temp"
+sudo env INFOQ_SOURCE_DIR="$(pwd)" INFOQ_FRONTEND_TARGET=all INFOQ_PUBLIC_BASE_URL=http://127.0.0.1 INFOQ_DEPLOY_ROOT="${INFOQ_DEPLOY_ROOT}" INFOQ_PRINT_SECRETS=0 bash deploy/install.sh > tmp/deploy-verify/wsl2-run/install.log 2>&1
+INFOQ_INSTALL_EXIT=$?
+printf '%s\n' "${INFOQ_INSTALL_EXIT}" > tmp/deploy-verify/wsl2-run/install.exit
+tail -n 120 tmp/deploy-verify/wsl2-run/install.log
+```
+
+`install.exit` 必须为 `0`；外层若使用 `set -e`，由调用方保留失败退出码。安装日志和只显示的凭据文件路径不是健康证明。安装器生成随机凭据但不生成 RSA，不自动完成 TLS/权限/bucket/ownership 治理；默认值与覆盖时序见生命周期。
+
+## Smoke 与 Windows 访问
+
+在有权读取部署 env 的 WSL shell 按 [部署后检查](VERIFICATION.md#部署后检查) 执行严格 HTTP/结构/Redis 验证并保存退出码。不要在 SQL 中拼接 MinIO 密钥或管理员密码到日志；实际凭据匹配、登录和上传/下载按受控数据操作另行验证。WSL 内通过还须检查 Windows 用户访问路径。
+
+下面在 Windows PowerShell 5.1 中执行（按实际目标设置 `all`、`vue` 或 `react`），每个无条件 GET 显式要求 `200`；不跟随跳转，不用 `-k` 绕过证书：
 
 ```powershell
-curl.exe --noproxy * -sS -o NUL -w "%{http_code}\n" --max-time 15 http://localhost/
-curl.exe --noproxy * -i --max-time 15 http://localhost/prod-api/monitor/health/readiness
-curl.exe --noproxy * -sS -o NUL -w "%{http_code}\n" --max-time 15 http://localhost/console-oss/
+$infoqTarget = 'all'
+$infoqPaths = if ($infoqTarget -eq 'all') { @('/vue/', '/react/') } elseif ($infoqTarget -eq 'vue' -or $infoqTarget -eq 'react') { @('/') } else { throw 'Invalid frontend target' }
+$infoqPaths += @('/prod-api/monitor/health/readiness', '/console-oss/', '/oss/minio/health/live')
+foreach ($infoqPath in $infoqPaths) {
+    $infoqStatus = & curl.exe --noproxy '*' --silent --show-error --max-time 15 -o NUL -w '%{http_code}' "http://localhost$infoqPath"
+    if ($LASTEXITCODE -ne 0 -or $infoqStatus -ne '200') { throw "HTTP check failed: $infoqPath ($infoqStatus)" }
+    Write-Output "PASS $infoqPath $infoqStatus"
+}
 ```
 
-## 常见阻断与处理
+真实公网/HTTPS 入口另按实际域名验证。WSL localhost 转发、防火墙、浏览器登录/静态资源均需当前机器实测，不能从容器 `Up` 推断。
 
-| 现象 | 判断 | 处理 |
-| --- | --- | --- |
-| `set: pipefail\r: invalid option name` | shell 脚本是 CRLF | 将 `deploy/bin/*.sh` 转 LF，新增或确认 `.gitattributes` 包含 `*.sh text eol=lf` |
-| MySQL 初始化报 private key chmod / errno 1 | 数据目录在 `/mnt/c` 等 DrvFS | 改用 `/infoq` 或其他 Linux 文件系统目录 |
-| 部署前目录不存在或不可写 | 缺少 `/tmp/infoq-deploy` 或 `/infoq/server/temp` | 执行前提醒并创建；没有权限时请用户在服务器上创建后继续 |
-| 容器一直显示 `Up 3 seconds` | WSL distro 退出导致 Docker daemon 重启 | 启动 keepalive，保持 WSL 会话存在 |
-| `curl 127.0.0.1` 得到 proxy 502 | 代理环境拦截 localhost | 使用 `curl --noproxy '*'` |
-| Redis 反复重启且日志报无法打开 `/redis/config/redis.conf` | 安装入口泄漏严格 `umask` 或渲染后的 Redis 配置文件对容器用户不可读 | 让 `deploy/install.sh` 的 `umask 077` 只作用于密钥文件写入，并确保 `deploy/bin/infoq.sh` 渲染后设置 Redis 配置为容器可读，然后复跑部署 |
-| `/vue/`、`/react/` 或单前端 `/` 网关返回 404，但目标直连端口返回 200 | 前端容器重建后 `nginx-web` 未重建，Nginx 仍持有旧 upstream 解析 | 让 `deploy/bin/deploy-frontend.sh deploy "${INFOQ_FRONTEND_TARGET}"` 在目标前端容器启动后 `--force-recreate nginx-web`，再复跑 gateway smoke |
-| BellSoft/OpenJDK 基础镜像 EOF | Docker mirror 不稳定 | 直拉 `registry-1.docker.io/bellsoft/liberica-openjdk-rocky:21.0.12-cds` 后 tag 回 `bellsoft/liberica-openjdk-rocky:21.0.12-cds`；确认 `IMAGE ID` 一致且无容器引用长名后，删除 `registry-1.docker.io/...` 辅助 tag |
-| 镜像列表同时出现短名和 `registry-1.docker.io/...` | 直拉后又 tag 回短名，长名只是辅助 tag | 保留 Dockerfile/Compose 引用的短名；确认两者 `IMAGE ID` 一致且没有容器引用长名后，执行 `docker rmi <registry-1完整tag>` |
-| 前端 build 中 Corepack/packageManager 激活失败 | Node 24 builder 内 Corepack 或工作区 packageManager 激活异常 | 确认 Dockerfile 使用固定 `node:24.18.0`，再按工作区 `packageManager` 与 lockfile 定位；不要降回 Node 20/22 标记通过 |
-| Debian 13 找不到 `openjdk-21-jdk` | 发行版 apt 源不提供 JDK 21，但 Compose 部署不使用宿主机 JDK | 不要把它作为 Docker Compose 部署 blocker；只确认 Docker 能拉取 Maven builder 和 BellSoft runtime 镜像 |
+## 常见阻断与恢复
 
-## 收口报告要点
+| 现象 | 核查与处理 |
+| --- | --- |
+| `pipefail` 带 `\r` | `.sh` 须为 LF，按 `.gitattributes` 修复并重跑语法；不只临时 dos2unix |
+| MySQL/ES 权限错误 | 确认数据在 WSL Linux 文件系统、UID/GID 与挂载权限；不删除数据重试 |
+| 容器反复短暂 Up | 核对 WSL 发行版/Docker daemon 生命周期，保持本轮专用前台会话 |
+| localhost 代理 502 | `curl --noproxy '*'`，区分代理失败与服务失败 |
+| Redis 配置 Permission denied | 检查容器用户可读性及 owner；helper 的含密码配置 `644`/目录 `777` 是生产阻塞，不作为生产修复方案 |
+| 前端直连 200、网关 404/502 | 核对 context 与 upstream；受控前端部署会重建网关刷新 DNS，也会覆盖配置 |
+| 镜像 EOF / Corepack 失败 | 按 `DOCKER.md` 区分网络和版本；固定 Node 24.18.0 / pnpm 10.34.1，不降版本伪造通过 |
+| Debian 未提供宿主 JDK 21 | Compose 不依赖宿主 JDK；手动/Apple Maven 构建才需宿主工具链 |
 
-最终回复至少说明：
-
-- 使用的 `INFOQ_DEPLOY_ROOT`、WSL distro、Docker/Compose 前置条件，以及 Maven builder / BellSoft runtime 镜像拉取情况。
-- 后端部署是否成功，readiness/liveness 结果。
-- 目标前端、nginx 是否启动，gateway 与目标直连端口 smoke 结果；`all` 目标再覆盖 Vue、React 两个前端。
-- MySQL 初始化数据、OSS 配置、随机管理员账号与 Redis ping 结果。
-- 修复过的部署脚本或 Dockerfile diff 摘要。
-- 残余风险和是否需要用户介入。
-- 停止命令，但不要主动删除 `/infoq` 或 Docker 数据。
+恢复旧镜像/配置前确认数据库兼容，保留日志与数据；readiness、登录、代理和关键 API 再通过后恢复流量。停止或卸载只作用本次获授权栈，按 `VERIFICATION.md` 的逐项确认执行；不得主动删除 `/infoq` 或其他项目资源。收口列出发行版、root、镜像/构建、各层 smoke、权限/TLS/凭据与未验证项。

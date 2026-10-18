@@ -1,6 +1,6 @@
 # Admin 命令
 
-以下命令优先使用 `pnpm`。若当前环境不可用，可替换为等价 `npm` 命令。
+各代码块独立从仓库根目录开始；进入工作区后使用本地 pnpm 依赖。仅 pnpm 不可用时才使用等价 npm 命令。
 
 ## 安装与初始化
 
@@ -13,14 +13,14 @@ pnpm install
 
 ```bash
 cd frontend-react
-npx vitest --run tests/utils/request.test.ts
+pnpm exec vitest --run tests/utils/request.test.ts
 ```
 
 ## 运行 P0 基线批次
 
 ```bash
 cd frontend-react
-npx vitest --run \
+pnpm exec vitest --run \
   tests/utils/auth.test.ts \
   tests/utils/crypto.test.ts \
   tests/utils/request.test.ts \
@@ -36,7 +36,7 @@ npx vitest --run \
 
 ```bash
 cd frontend-react
-npx vitest --run \
+pnpm exec vitest --run \
   tests/components/bridge-components.test.tsx \
   tests/components/common-components.test.tsx \
   tests/components/svg-icon.test.tsx \
@@ -50,7 +50,7 @@ npx vitest --run \
 
 ```bash
 cd frontend-react
-npx vitest --run \
+pnpm exec vitest --run \
   tests/pages/login.test.tsx \
   tests/pages/home.test.tsx \
   tests/pages/cache-page.test.tsx \
@@ -60,6 +60,8 @@ npx vitest --run \
 ```
 
 ## 运行态后续验证
+
+回到仓库根目录执行；以下命令会写 Redis 验证码种子与会话，只用于已授权测试环境。
 
 ```bash
 node skills/test-cli/scripts/run_admin_e2e.mjs --client react --route-limit 1
@@ -80,3 +82,5 @@ pnpm run test:coverage
 pnpm run lint
 pnpm run build:prod
 ```
+
+构建前先从仓库根目录执行 `node tools/validate_utf8.mjs`，并在 `VITE_APP_ENCRYPT=true` 时提供与后端对应的 `VITE_APP_RSA_PUBLIC_KEY` / `VITE_APP_RSA_PRIVATE_KEY`。完整前置与验收边界见 `docs/TESTING.md`。

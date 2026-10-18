@@ -12,6 +12,7 @@
 - `permission.ts` 是全局前置守卫，负责 token 检查、`getInfo()`、`generateRoutes()` 和白名单跳转。
 - `src/store/modules/permission.ts` 通过 `import.meta.glob('./../../views/**/*.vue')` 把后端菜单组件名解析为真实页面组件。
 - `src/api/login.ts` 的登录、OAuth ticket 和注册请求默认携带 `clientId`，并通过 `utils/request.ts` 统一加密、401 和重复提交处理。
+- `/forgot-password` 是固定公开入口；登录、自助注册与密码重置页面通过 `GET /auth/code` 的能力位控制可用流程，邮件验证码和密码重置接口统一由 `src/api/login.ts` 提供。
 - `src/store/modules/user.ts` 负责 password/OAuth ticket 登录态与用户资料；SSE 关闭动作也挂在登出流程里，并且 `/auth/logout` 失败也会清理本地会话。
 
 ## 模块导航
@@ -52,6 +53,16 @@
 - 后端菜单返回的 `component` 字符串必须能在 `src/views` 里解析到真实 `.vue` 页面；否则权限 store 只能返回空组件映射。
 - 登录、注册与部分写请求是否加密，取决于 `VITE_APP_ENCRYPT` 和 RSA/AES 环境变量。
 - 本工作区的动态路由装配放在 Pinia + Vue Router 里完成，不能直接套用 React admin 的路径解析实现。
+
+## 开发与生产验证前置
+
+从仓库根目录执行 `pnpm --dir frontend-vue install`、`pnpm --dir frontend-vue run dev`；Node 使用 `24.18.0`，pnpm 使用根 `packageManager` 固定版本。开发服务默认端口 `80`、代理后端 `8080`；端口覆盖与测试命令见 [本层规约](./AGENTS.md) 和 [测试政策](../docs/TESTING.md)。
+
+`bin/*.bat` 是遗留 Yarn 包装脚本，尚未与当前 pnpm 基线同步，不作为受支持的安装、开发或构建入口。Windows 同样使用上面的 pnpm 命令；生产构建使用 `pnpm --dir frontend-vue run build:prod`，先准备下述 RSA 配置。本次仅静态核查这些遗留入口，未在 Windows 执行。
+
+`VITE_APP_ENCRYPT=true` 时，dev/build 进程必须取得与目标后端对应的 `VITE_APP_RSA_PUBLIC_KEY` / `VITE_APP_RSA_PRIVATE_KEY`。浏览器中的私钥不能保护服务端秘密，生产仍须 HTTPS 与受控凭据。构建前执行 `node tools/validate_utf8.mjs`。
+
+OAuth 绑定页当前提交绝对 redirect，与后端相对路径校验冲突，需要独立修复和真实 Provider 回归。Vue Router 的 history base 已使用 `VITE_APP_CONTEXT_PATH`，但子路径刷新、登录回跳及代理仍需分别实测；构建、静态矩阵和路由 smoke 不能替代这些证据。具体边界见 [测试政策](../docs/TESTING.md) 第 6.5–6.6 节。
 
 ## P1-P3 身份与消息边界
 

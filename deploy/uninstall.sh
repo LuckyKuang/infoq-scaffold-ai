@@ -142,7 +142,7 @@ ask_yes_no() {
     suffix="[Y/n]"
   fi
 
-  printf '%s %s ' "${prompt}" "${suffix}"
+  printf '%s %s ' "${prompt}" "${suffix}" >&2
   IFS= read -r answer
   if [[ -z "${answer}" ]]; then
     answer="${default_answer}"

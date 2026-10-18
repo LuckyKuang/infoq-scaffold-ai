@@ -46,6 +46,10 @@
 - 显式环境变量优先级高于解析出的 backend 配置值
 - 共享文档示例统一使用本地依赖基线：MySQL `127.0.0.1:3306/infoq`、Redis `127.0.0.1:6379/0`
 
+这里是文件选择顺序，不是 Spring profile 合并：本地文件存在时只解析该文件，缺字段不会再从 `dev` 补齐。解析器只支持当前配置所用的标量/缩进结构，不执行 Spring `${...}` 占位符解析，也不自动继承 JDBC TLS、Redis Sentinel/Cluster 配置；适用的 TLS/拓扑字段必须显式通过白名单环境变量提供并核验。
+
+共享 helper 的仓库缓存位于 `tmp/mcp/npm-cache/`。缓存命中或 `npx` 下载的版本未被锁定，不属于生产应用依赖；首次启用前需检查包来源、实际版本及暴露的工具，不能把启动成功当作安全审计通过。
+
 推荐关系：
 
 - 默认浏览器主流程：先用 repo-owned CLI
@@ -74,5 +78,9 @@
 
 - 不在仓库内保存真实 token、账号或私有本机路径。
 - `mysql` 与 `redis` 只保留只读能力。
+- 工具白名单和 `MYSQL_READONLY` / `REDIS_READONLY` 是客户端/服务端配置约束，不替代数据库权限；显式环境变量也可覆盖解析结果。共享环境必须使用独立最小权限只读账号、可信 MCP 包及网络访问控制，不能复用应用写账号或 root。
+- Redis `keys` 虽只读，仍可能阻塞大实例；先限定 key 前缀、数量与耗时预算，不对生产执行全库 `KEYS *`。当前白名单没有 `SCAN`，需要安全批量扫描时走 `docs/DATA-OPS.md` 的受控只读方案。
 - 默认启用的仓库级 MCP 只有 `playwright`、`chrome-devtools`。
 - 文档与 skill 中出现的 server / tool 名称，必须与 `.codex/config.toml` 保持一致。
+
+官方配置字段参考：[MCP server 与工具审批配置](https://learn.chatgpt.com/docs/config-file/config-reference)。这里列出的配置不意味着其他宿主或插件已加载同一配置，实际可用工具以当前会话为准。

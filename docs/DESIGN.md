@@ -1,134 +1,62 @@
-# Design System: Cohere Editorial Design
+# 设计系统与组件选型
 
-本脚手架采用 **Cohere 风格的编辑感设计 (Editorial Design)**。这种风格强调极简主义、高对比度排版、宽裕的呼吸感空间以及细腻的交互反馈，旨在为后台管理系统提供如同精品期刊般的阅读与操作体验。
+本文记录两套 Web 管理端的现有样式来源与设计约束。页面以简洁排版、明确层级和可见状态反馈为目标；具体值由各工作区代码决定，不能把设计目标当作所有页面已实现的结论。重大布局变更遵循 [UI 工作流](./UI-WORKFLOW.md) 的布局、静态演示、实现和运行态验证门禁。
 
-## 1. 核心设计原则 (Design Principles)
+## 1. 核心设计原则
 
-- **极简主义 (Minimalism)**: 移除不必要的装饰，专注于内容。
-- **编辑感排版 (Editorial Typography)**: 通过字体大小、粗细和间距建立清晰的信息层级。
-- **呼吸感空间 (Airy Spacing)**: 慷慨的留白，防止界面拥挤。
-- **细腻交互 (Subtle Interaction)**: 柔和的阴影切换与平滑的过渡动画 (0.3s ease)。
+- 用标题、间距和分组区分信息层级，优先内容与操作可辨认性。
+- 复用各端现有组件、主题变量和表单/列表模式。
+- 明确加载、空、错误、禁用及破坏性操作状态；有意义的反馈优先于装饰动效。
 
-## 2. 色彩系统 (Color Palette)
+## 2. 色彩与主题来源
 
-系统支持动态主题切换，核心色彩基于 Ant Design 和 Element Plus 的 Token 系统，并通过 Vanilla CSS 进行极简编辑感定制。
+| 项目 | React | Vue |
+| --- | --- | --- |
+| 主题入口 | `frontend-react/src/RootProviders.tsx` | `frontend-vue/src/layout/components/Settings/index.vue`、`src/utils/theme.ts` |
+| 全局样式 | `frontend-react/src/styles/index.scss` | `frontend-vue/src/assets/styles/index.scss`、`variables.scss`、`element-ui.scss`、`scaffold.scss` |
+| 品牌色默认值 | settings store 的 `#409EFF` | `src/settings.ts` 的 `#409EFF` |
+| 主题机制 | Ant Design token 与 `theme.defaultAlgorithm` / `theme.darkAlgorithm` | Element Plus CSS variables；`handleThemeStyle` 更新主色明暗阶 |
+| 表头颜色 | `--table-header-bg` / `--table-header-text` | `--tableHeaderBg` / `--tableHeaderTextColor` |
 
-### 2.1 模式基准 (Theme Modes)
+两端浅色表头的现有值为 `#f8f8f9` / `#515a6e`，深色值由各端主题变量覆盖。React 的布局背景在 `RootProviders` 中使用浅色 `#f5f7f9` 或暗色 token；不要把 stylesheet 中的初始 body 值当作最终运行值。
 
-| 资源 / 模式 | Light Mode (默认) | Dark Mode |
-| :--- | :--- | :--- |
-| **Layout Background** | `#f5f7fb` | `#141414` (Antd Default Dark) |
-| **Container Background** | `#ffffff` | `#1f1f1f` |
-| **Primary Text** | `#303133` | `rgba(255, 255, 255, 0.88)` |
-| **Regular Text** | `#606266` | `rgba(255, 255, 255, 0.65)` |
-| **Border Color** | `#e4e7ed` | `rgba(255, 255, 255, 0.15)` |
-| **Table Header BG** | `#f8f8f9` | `#28282a` |
+侧栏的 `theme-light` / `theme-dark` 是壳层偏好，与整站深色模式有区别。React 菜单使用 `--menu-*` 变量，Vue 使用 `--menuBg` / `--menuColor` 等；不得直接在另一端复用变量名或声称两端每个颜色完全一致。
 
-### 2.2 导航系统专用色 (Navigation)
+## 3. 排版
 
-导航项 (Nav Items) 统一采用 `8px` 圆角。
+两端全局字体栈均以 `Helvetica Neue, Helvetica, PingFang SC, Hiragino Sans GB, Microsoft YaHei, Arial, sans-serif` 为基础，全局 label 加粗为 `700`。具体标题字号、行高和控件间距仍由页面/组件样式决定；新增页面应沿用所在工作区的相邻实现。
 
-| 导航元素 | Light Theme (Shell) | Dark Theme (Shell) |
-| :--- | :--- | :--- |
-| **Menu Background** | `#ffffff` | `#1f2d3d` |
-| **Menu Text** | `#303133` | `rgba(255, 255, 255, 0.85)` |
-| **Hover Background** | `#f5f7fa` | `#263445` |
-| **Selected Background** | `#ecf5ff` | `var(--current-color)` |
-| **Selected Text** | `var(--current-color)` | `#ffffff` |
+## 4. 布局与容器
 
-### 2.3 品牌与语义 (Brand & Semantics)
-- **Primary Color**: `#409eff` (品牌蓝，支持运行时自定义)
-- **Success**: `#67c23a` | **Warning**: `#e6a23c` | **Danger**: `#f56c6c`
+两端全局 `.app-container` 当前内边距为 `20px`，`.panel` / `.search` 使用 `0.75rem` 内边距和圆角，hover 阴影为 `0 4px 16px rgba(0, 0, 0, 0.08)`。React 全局卡片与 Vue Element Plus 卡片覆盖有 `12px` 圆角；控件圆角和页面专属容器以真实组件/样式为准，不假定存在统一 `.app-card`。
 
-## 3. 排版系统 (Typography)
+TagsView 位于导航栏下方，用于切换访问过的页面。是否缓存由路由 metadata、标签状态和各端缓存实现共同决定。
 
-### 3.1 字体栈
-```css
-font-family: Helvetica Neue, Helvetica, PingFang SC, Hiragino Sans GB, Microsoft YaHei, Arial, sans-serif;
-```
+## 5. 组件样式边界
 
-### 3.2 规范
-- **标题**: 加粗 (`700`)，使用深炭灰。
-- **标签**: 表单 Label 统一加粗 (`700`)。
-- **间距**: 列表行高通常为 `1.4` 至 `1.6`。
+- React `ConfigProvider` 设置 `form={{ colon: false }}`；Vue 按 `el-form` 的真实属性配置，不能套用 Ant Design 的 `colon` API。
+- Vue 按钮可使用 `plain`；React 复用现有 `btn-plain-*` 样式或 Ant Design 对应属性，不假定两端 API 相同。
+- 表格与表单优先复用当前页面的查询、操作栏、分页及错误反馈方式，保留横向滚动与窄屏可用性。
 
-## 4. 布局与容器 (Layout & Containers)
+## 6. 动效与缓存
 
-### 4.1 页面容器 (.app-container)
-- 标准内边距: `24px`，确保充足的呼吸感。
-- 底层背景: `#f6f8fb` (Light) / `#141414` (Dark)，为悬浮卡片提供层次基础。
+路由进度条由 React `AppRouter.tsx` 和 Vue `permission.ts` 接入 NProgress；这不等于所有异步数据请求都有进度条。
 
-### 4.2 卡片面板与组件载体 (.panel, .app-card)
-- **视觉特征**: 
-  - 边框: 极淡或隐藏（例如 `1px solid rgba(15, 23, 42, 0.08)` 或通过背景色区分）。
-  - 圆角: 内容卡片统一 `12px`，内部表单/按钮控件统一 `8px`。
-  - 背景: 纯白 `#ffffff` (Light) / `#1f1f1f` (Dark)。
-- **状态反馈**: 
-  - 静态阴影: 极柔和的底层投影 `box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06)`。
-  - Hover 阴影: 提升悬浮感 `box-shadow: 0 12px 32px rgba(15, 23, 42, 0.10)`。
-  - 交互过渡: 全局卡片交互必须包含 `transition: all 0.3s ease`。
+React 认证页使用 `AuthPageShell`；Vue 认证页使用各自 SFC 中的布局。React `KeepAliveView` 保存访问页节点并隐藏非激活视图，Vue `AppMain.vue` 使用 `keep-alive` 与 `cachedViews`。缓存不保证所有页面无重载或无闪烁，须对具体页面验证。现有 panel 动画使用 `0.3s cubic-bezier(0.4, 0, 0.2, 1)`，不要要求每张卡片统一添加 `transition: all`。
 
-### 4.3 标签栏 (TagsViewBar)
-- 位于 Header 下方的窄条，用于快速切换历史页面。
-- 激活状态使用品牌色填充，非激活状态保持淡雅。
+## 7. 深色模式与无障碍
 
-## 5. 组件规范 (Components)
+React 在 `RootProviders.tsx` 同时切换 `html.dark`、`data-theme-mode` 和 `color-scheme`，并更新 Ant Design token；自定义覆盖主要使用 `html[data-theme-mode='dark']`。Vue 通过 `useDark` 切换 `html.dark`，并从 `src/main.ts` 引入 Element Plus 的 `dark/css-vars.css`。
 
-### 5.1 按钮 (Buttons)
-- **Plain 模式**: 推荐在非主操作时使用 Plain 模式（白底带边框），保持页面清爽。
-- **圆角**: 统一 `8px`。
+当前没有仓库级 WCAG 达标报告，不能宣称已符合 WCAG。交付受影响页面前需核对明暗主题对比度、键盘操作、焦点可见性、表单标签与错误提示；组件库默认能力不能替代页面验收。
 
-### 5.2 表格 (Tables)
-- **Header**: 背景色 `#f8f8f9`，文字色 `#515a6e`，加粗。
-- **单元格**: 紧凑但清晰，移除多余的纵向分割线。
+## 8. 小屏 Web 范围
 
-### 5.3 表单 (Forms)
-- **配置**: 关闭冒号显示 (`colon: false`)。
-- **Label**: 位于输入框左侧或上方，统一右对齐且加粗。
-
-## 6. 页面动效与交互体验 (Page Effects & UX)
-
-本系统不仅追求视觉的编辑感，更通过细腻的动效提升操作的确定感与流畅度。
-
-### 6.1 全局进度反馈 (Loading Progress)
-- **nprogress**: 在路由跳转与大数据量加载时，顶部显示细窄的品牌色进度条，消除等待焦虑。
-
-### 6.2 沉浸式认证页面 (Immersive Auth)
-- **AuthPageShell**: 登录与注册页面采用独立于主框架的沉浸式布局，强调视觉重心。
-- **表单交互**: 
-  - 输入框 Prefix 图标采用中性灰 (`#bfbfbf`)，减少干扰。
-  - 按钮加载状态 (`loading`): 提交时按钮文字平滑切换为 Loading 图标，提供即时反馈。
-
-### 6.3 页面缓存与平滑切换
-- **Keep-Alive**: 支持多标签页状态保持，切换标签时无闪烁加载，维持用户操作上下文。
-- **字间距微调**: 关键标题 (如首页 H2) 应用 `letter-spacing: 0.2px`，增强编辑排版的精致感。
-
-## 7. 暗黑模式 (Dark Mode)
-
-脚手架原生支持暗黑模式，通过 `html[data-theme-mode='dark']` 切换。
-- **背景**: 自动调整为深色调，减少高频对比，保护视力。
-- **对比度**: 保持文字与背景间的足够对比度，符合 WCAG 标准。
-
-## 8. 移动端设计 (Mobile & Mini-program)
-
-移动端设计在延续编辑感的同时，针对触摸交互和小屏显示进行了优化。
-
-### 8.1 核心特征
-- **背景**: 使用更柔和的背景色 `#f7f8fa`。
-- **圆角**: 采用适中的圆角 `12rpx` (6px)，保持精致且犀利的视觉张力。
-- **阴影**: 使用极柔和的投影 `0 4rpx 20rpx rgba(0, 0, 0, 0.04)`，模拟物理层级而不增加视觉负担。
-
-### 8.2 关键组件
-- **卡片 (.card-container, .record-card-modern)**: 
-  - 侧边状态条: 使用 `status-accent` 提供直观的状态反馈。
-  - 呼吸感: 内边距统一采用 `32rpx`，确保文字不拥挤。
-- **状态标签 (Status Tags)**: 药丸形状，配合浅色背景与深色文字。
-- **悬浮按钮 (FAB)**: 使用品牌渐变色，增强视觉吸引力，并提供明确的主操作入口。
+本仓库维护 React / Vue Web 管理端，没有小程序前端工作区。样式使用 CSS 单位（如 `px`、`rem`、百分比）；不在本规范引入不存在的 `rpx` 卡片或 FAB 组件约定。
 
 ## 9. 响应式与适配
 
-- **桌面端**: 侧边栏支持折叠，在不同分辨率下自动调整内容宽度。
-- **移动端**: 自动切换为抽屉式导航，卡片布局由多列转为单列，优化触控热区。
+两端主布局均以 `992px` 为设备模式断点，窄屏时使用覆盖式侧栏与遮罩；具体行为见 React `MainLayout.tsx` 与 Vue `layout/index.vue`。页面表格、弹窗、筛选区和卡片仍需逐页验证，不把壳层适配表述为所有页面自动完成移动端适配。按 [测试政策](./TESTING.md) 在实际 DOM 与截图中核对受影响视口。
 
 ## 10. 组件选型与 API 核验 (Component Selection)
 
@@ -158,10 +86,10 @@ font-family: Helvetica Neue, Helvetica, PingFang SC, Hiragino Sans GB, Microsoft
 - 需要严格表单校验：使用 `Form` 校验规则与官方状态反馈模式，不要手写错误态。
 - 需要破坏性操作保护：行内操作使用 `Popconfirm` / `el-popconfirm`，阻塞确认使用 `Modal.confirm` / `ElMessageBox.confirm`。
 - 需要异步调用后的全局反馈：短成功 / 失败用 `message` / `ElMessage`，较长通知用 `notification` / `ElNotification`。
-- 需要超大列表性能：优先使用 `Table`、`Tree`、`TreeSelect`、`Select` 的内建虚拟滚动模式。
-- 需要列表流式 UI：新需求优先 `Table` / `Card` 组合；Ant Design 中 `List` 已标记 deprecated。
+- 需要超大列表性能：先确认组件及本地版本的虚拟滚动能力和限制。Ant Design 的对应组件按官方 API 配置；Element Plus 的 `el-table-v2`、`el-tree-v2` 等是独立组件，不能假定普通 `el-table` / `el-tree` 具有同样 API。
+- 需要列表流式 UI：按业务语义选择列表、`Table` 或 `Card`，先核对本地版本及官方迁移说明，不以未经核实的弃用判断替换现有组件。
 - 需要全局主题或国际化行为：在应用边界使用 `ConfigProvider` / `el-config-provider`。
-- 需要高级图表、地图或 AI UI：直接转向重型组件生态（Ant Design Charts、AntV L7 / G2 / S2、Ant Design X），不要强塞核心组件。
+- 需要图表时优先复用仓库 ECharts 封装；地图、AI UI 等新依赖先评估业务需求、包体和兼容性，不把未安装的组件生态当作现有能力。
 
 ### 10.4 编码检查清单
 

@@ -11,7 +11,6 @@ export const stateFile = path.join(stateDir, 'state.json');
 export const logFile = path.join(stateDir, 'deploy.log');
 const appleScript = path.join(repoRoot, 'deploy', 'apple-container.sh');
 const deployEnvFile = path.join(repoRoot, 'deploy', '.env');
-const dockerComposeFile = path.join(repoRoot, 'deploy', 'docker', 'docker-compose.yml');
 const DEFAULT_APPLE_PORT = 19090;
 const DEFAULT_DOCKER_BACKEND_PORT = 9090;
 export const DOCKER_COMMANDS = new Set(['up', 'down', 'logs']);
@@ -37,12 +36,12 @@ export function resolveRuntime(platform = process.platform) {
 export function parseEnvFile(text) {
   const result = {};
   const lines = text.split(/\r?\n/u);
-  for (const rawLine of lines) {
+  for (const [index, rawLine] of lines.entries()) {
     const line = rawLine.trim();
     if (!line || line.startsWith('#')) continue;
     const separator = line.indexOf('=');
     if (separator <= 0) {
-      throw new Error(`Invalid env line: ${rawLine}`);
+      throw new Error(`Invalid env line ${index + 1}: expected KEY=value`);
     }
     const key = line.slice(0, separator).trim();
     let value = line.slice(separator + 1).trim();
@@ -57,9 +56,16 @@ export function parseEnvFile(text) {
   return result;
 }
 
-export function readDeployEnv() {
-  if (!fs.existsSync(deployEnvFile)) return {};
-  return parseEnvFile(fs.readFileSync(deployEnvFile, 'utf8'));
+export function readDeployEnv(runtime = resolveRuntime(), environment = process.env, allowMissing = false) {
+  const envFile = environment.INFOQ_ENV_FILE || (runtime === 'apple'
+    ? deployEnvFile
+    : '/etc/infoq-scaffold-ai/deploy.env');
+  if (!fs.existsSync(envFile)) {
+    if (environment.INFOQ_ENV_FILE && !allowMissing) throw new Error(`Deployment env file does not exist: ${envFile}`);
+    return {...environment};
+  }
+  // Match the shell helpers: sourced file values override inherited variables.
+  return {...environment, ...parseEnvFile(fs.readFileSync(envFile, 'utf8'))};
 }
 
 export function parseArgs(argv) {
@@ -102,21 +108,16 @@ export function parseArgs(argv) {
 }
 
 export function parsePort(value, fallback) {
-  const port = Number.parseInt(value ?? '', 10);
+  if (value === undefined || value === '') return fallback;
+  const port = /^\d+$/u.test(String(value)) ? Number(value) : NaN;
   if (Number.isInteger(port) && port >= 1 && port <= 65535) return port;
-  return fallback;
+  throw new Error(`Invalid TCP port: ${value}`);
 }
 
 export function normalizeBindHost(value) {
   if (!value) return '127.0.0.1';
   if (value === '0.0.0.0' || value === '::' || value === '[::]') return '127.0.0.1';
   return value;
-}
-
-export function withPort(baseUrl, port) {
-  const url = new URL(baseUrl);
-  if (!url.port) url.port = String(port);
-  return url.origin;
 }
 
 export function buildSmokeChecks({runtime, baseUrl, frontendTarget = 'all'}) {
@@ -128,17 +129,21 @@ export function buildSmokeChecks({runtime, baseUrl, frontendTarget = 'all'}) {
       {name: 'captcha', url: `${base}/auth/code`},
     ];
   }
-  const backend = withPort(base, DEFAULT_DOCKER_BACKEND_PORT);
+  if (!['all', 'vue', 'react'].includes(frontendTarget)) {
+    throw new Error(`Invalid INFOQ_FRONTEND_TARGET: ${frontendTarget}`);
+  }
+  // This CLI checks a local Compose stack; the public gateway may terminate TLS elsewhere.
+  const backend = `http://127.0.0.1:${DEFAULT_DOCKER_BACKEND_PORT}`;
   const checks = [
     {name: 'backend-readiness', url: `${backend}/monitor/health/readiness`},
     {name: 'backend-liveness', url: `${backend}/monitor/health/liveness`},
     {name: 'gateway-readiness', url: `${base}/prod-api/monitor/health/readiness`},
   ];
   if (frontendTarget === 'all' || frontendTarget === 'vue') {
-    checks.push({name: 'vue-console', url: `${base}/vue/`});
+    checks.push({name: 'vue-console', url: `${base}${frontendTarget === 'all' ? '/vue/' : '/'}`});
   }
   if (frontendTarget === 'all' || frontendTarget === 'react') {
-    checks.push({name: 'react-console', url: `${base}/react/`});
+    checks.push({name: 'react-console', url: `${base}${frontendTarget === 'all' ? '/react/' : '/'}`});
   }
   return checks;
 }
@@ -235,7 +240,7 @@ async function probe(check, timeoutMs) {
       signal: AbortSignal.timeout(timeoutMs),
       headers: {'cache-control': 'no-cache'},
     });
-    const ok = response.status >= 200 && response.status < 400;
+    const ok = response.status >= 200 && response.status < 300;
     return {...check, ok, status: response.status, durationMs: Date.now() - startedAt};
   } catch (error) {
     return {...check, ok: false, status: null, durationMs: Date.now() - startedAt, error: error.message};
@@ -243,11 +248,11 @@ async function probe(check, timeoutMs) {
 }
 
 export async function smoke(runtime, options = {}) {
-  const timeoutMs = Number.parseInt(options.timeoutMs ?? '10000', 10);
+  const timeoutMs = Number(options.timeoutMs ?? '10000');
   if (!Number.isInteger(timeoutMs) || timeoutMs <= 0) {
     throw new Error('--timeout-ms must be a positive integer');
   }
-  const env = readDeployEnv();
+  const env = readDeployEnv(runtime);
   const appleHost = normalizeBindHost(env.APPLE_CONTAINER_BIND_HOST);
   const applePort = parsePort(env.APPLE_CONTAINER_HOST_PORT, DEFAULT_APPLE_PORT);
   const baseUrl = options.baseUrl ?? (runtime === 'apple'
@@ -339,7 +344,7 @@ async function main() {
   }
   const runtime = resolveRuntime();
   ensureStateDir();
-  const env = readDeployEnv();
+  const env = readDeployEnv(runtime, process.env, command === 'init' || command === 'up');
   const port = runtime === 'apple'
     ? parsePort(env.APPLE_CONTAINER_HOST_PORT, DEFAULT_APPLE_PORT)
     : DEFAULT_DOCKER_BACKEND_PORT;
@@ -407,11 +412,11 @@ async function main() {
         throw new Error(`${command} is Apple-only; use deploy/VERIFICATION.md for Docker lifecycle operations.`);
       }
       const plan = command === 'up'
-        ? ['bash deploy/install.sh']
+        ? ['INFOQ_PRINT_SECRETS=0 bash deploy/install.sh']
         : command === 'down'
           ? [
               'bash deploy/bin/infoq.sh stop',
-              `bash deploy/bin/deploy-frontend.sh stop ${process.env.INFOQ_FRONTEND_TARGET ?? env.INFOQ_FRONTEND_TARGET ?? 'all'}`
+              `bash deploy/bin/deploy-frontend.sh stop ${env.INFOQ_FRONTEND_TARGET ?? 'all'}`
             ]
           : [`bash deploy/bin/infoq.sh ${command}`];
       if (command === 'logs' && values.service) plan[0] += ` ${values.service}`;
@@ -420,7 +425,7 @@ async function main() {
         return;
       }
       if (command === 'up') {
-        await runOrThrow('bash', [path.join(repoRoot, 'deploy', 'install.sh')]);
+        await runOrThrow('bash', [path.join(repoRoot, 'deploy', 'install.sh')], {env: {INFOQ_PRINT_SECRETS: '0'}});
         const result = await smoke(runtime, {timeoutMs: values['timeout-ms']});
         printSmoke(result);
         writeState({status: result.passed ? 'passed' : 'failed', port: result.port});
@@ -432,7 +437,7 @@ async function main() {
         await runOrThrow('bash', [
           path.join(repoRoot, 'deploy', 'bin', 'deploy-frontend.sh'),
           'stop',
-          process.env.INFOQ_FRONTEND_TARGET ?? env.INFOQ_FRONTEND_TARGET ?? 'all',
+          env.INFOQ_FRONTEND_TARGET ?? 'all',
         ]);
         writeState({status: 'stopped'});
         return;
@@ -446,8 +451,8 @@ async function main() {
     }
 
     requireApple(runtime, command);
-    if ((command === 'up' || command === 'build') && !fs.existsSync(deployEnvFile) && !flags['from-existing-jar']) {
-      throw new Error('deploy/.env is missing. Run `node skills/deploy-cli/scripts/deploy_cli.mjs init` first.');
+    if ((command === 'up' || command === 'build') && !fs.existsSync(process.env.INFOQ_ENV_FILE || deployEnvFile)) {
+      throw new Error('Apple deployment env file is missing. Run `node skills/deploy-cli/scripts/deploy_cli.mjs init` first.');
     }
     if (command === 'up') {
       if (!flags['no-build']) {
@@ -480,12 +485,12 @@ function printUsage() {
 Commands:
   init                 Generate deploy/.env (Apple container only)
   build                Package the backend and build the runtime image (Apple only)
-  up                   Build if needed, start the stack, then smoke test
+  up                   Build/start the stack, then smoke (Apple builds unless --no-build)
   down                 Stop owned containers and preserve data
   restart              Restart the stack in dependency order (Apple only)
   status               Show runtime state and run bounded HTTP probes
   smoke                Run bounded HTTP probes only
-  logs                 Follow one service log (--service mysql|redis|admin)
+  logs                 Apple: mysql|redis|admin; Docker: mysql|redis|minio|infoq-admin (--execute)
   destroy              Delete owned containers/network (requires --yes; Apple only)
   pull                 Pull runtime images (Apple container only)
   help                 Show this help
@@ -500,11 +505,14 @@ Options:
   --yes                Confirm destroy
   --follow             Follow logs
   --service <name>     Service for logs
-  --base-url <url>     Override the smoke base URL
+  --base-url <url>     Override Apple API / Docker gateway URL (Docker API stays local :9090)
   --timeout-ms <n>     Per-probe timeout (default 10000)
 
 State: tmp/deploy-cli/state.json
-Log:   tmp/deploy-cli/deploy.log`);
+Log:   tmp/deploy-cli/deploy.log
+Env:   INFOQ_ENV_FILE; default deploy/.env (Apple), /etc/infoq-scaffold-ai/deploy.env (Docker)
+macOS wrapper uses Apple; use deploy/install.sh and deploy/VERIFICATION.md for Colima.
+Successful up keeps the deployment running; verification tasks must explicitly down their owned stack.`);
 }
 
 const invokedDirectly = process.argv[1]

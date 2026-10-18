@@ -18,7 +18,7 @@
 
 ## 依赖
 
-在 `infoq-modules/infoq-system/pom.xml` 添加测试依赖：
+`backend/infoq-modules/infoq-system/pom.xml` 已包含以下测试依赖。复用现有配置，不要重复添加；MyBatis starter 与当前 Spring Boot 4 基线配套使用 `4.0.0`：
 
 ```xml
 <dependency>
@@ -29,18 +29,20 @@
 <dependency>
   <groupId>org.mybatis.spring.boot</groupId>
   <artifactId>mybatis-spring-boot-starter</artifactId>
-  <version>3.0.4</version>
+  <version>4.0.0</version>
   <scope>test</scope>
 </dependency>
 <dependency>
   <groupId>org.mybatis.spring.boot</groupId>
   <artifactId>mybatis-spring-boot-starter-test</artifactId>
-  <version>3.0.4</version>
+  <version>4.0.0</version>
   <scope>test</scope>
 </dependency>
 ```
 
 ## 模板
+
+组合注解已在 `backend/infoq-modules/infoq-system/src/test/java/cc/infoq/system/mapper/support/MapperXmlIT.java` 实现，以下为其结构说明。新增测试直接复用 `@MapperXmlIT`，无需再建一份注解。
 
 ```java
 // src/test/java/cc/infoq/system/mapper/support/MapperXmlIT.java

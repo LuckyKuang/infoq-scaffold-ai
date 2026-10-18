@@ -20,10 +20,8 @@
   - `![Version](https://img.shields.io/badge/Version-x.y.z-...)`
 - `deploy/DOCKER.md`
   - `当前文档对应项目基线版本为 \`x.y.z\`。`
-- `deploy/MANUAL.md`
-  - `DEPLOY_ID=x.y.z-YYYYMMDDHHMMSS` 示例中的版本前缀
-- `deploy/examples/systemd/infoq-admin.service`
-  - `Environment="DEPLOY_ID=x.y.z-YYYYMMDDHHMMSS"`
+- `deploy/.env.example`
+  - `INFOQ_VERSION=x.y.z`，与版本一致性门禁的模板来源同步
 - `deploy/docker/docker-compose.yml`
   - `infoq/infoq-admin:x.y.z`
   - `infoq/infoq-frontend-vue:x.y.z`
@@ -57,7 +55,10 @@
 
 `skills/` 下的文档不再作为版本受管目标；版本真值集中在四套 README、`deploy/` 文档与后端配置。
 
+systemd 示例从受控 `EnvironmentFile` 读取实际 `DEPLOY_ID`，手动部署文档也要求注入真实批次值；这两份文件已无静态版本字段，因此不属于版本同步目标。运行批次值由部署者设置，不能由 bump 改写。
+
 若这些引用与 `sql/` 下真实文件不一致，脚本会失败，并要求显式后续任务处理。
+所有替换与断言先在内存中校验，通过后才写入；dry-run 同样核验替换目标且不写入。实际写盘时的权限或 IO 失败仍可能造成部分更新，必须审查差异并仅恢复本次受管修改。
 
 ## 非目标
 

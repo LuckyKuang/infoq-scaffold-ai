@@ -2,7 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {normalizeForwardedArgs, resolveRepoRoot, runCommandChecked} from '../../../tools/lib/skill_runtime.mjs';
+import {normalizeForwardedArgs, resolveRepoRoot} from '../../../tools/lib/skill_runtime.mjs';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const args = normalizeForwardedArgs(process.argv.slice(2));
@@ -73,8 +73,7 @@ const readmeCnFile = path.join(repoRoot, 'README_CN.md');
 const readmeJaFile = path.join(repoRoot, 'README_JA.md');
 const readmeZhTwFile = path.join(repoRoot, 'README_ZH_TW.md');
 const deployDoc = path.join(repoRoot, 'deploy', 'DOCKER.md');
-const manualDeployDoc = path.join(repoRoot, 'deploy', 'MANUAL.md');
-const systemdExample = path.join(repoRoot, 'deploy', 'examples', 'systemd', 'infoq-admin.service');
+const envExample = path.join(repoRoot, 'deploy', '.env.example');
 const composeFile = path.join(repoRoot, 'deploy', 'docker', 'docker-compose.yml');
 const backendDeployScript = path.join(repoRoot, 'deploy', 'bin', 'infoq.sh');
 const appYaml = path.join(repoRoot, 'backend', 'infoq-admin', 'src', 'main', 'resources', 'application.yml');
@@ -158,8 +157,7 @@ const filesToCheck = [
   readmeJaFile,
   readmeZhTwFile,
   deployDoc,
-  manualDeployDoc,
-  systemdExample,
+  envExample,
   composeFile,
   backendDeployScript,
   appYaml,
@@ -171,14 +169,13 @@ const filesToCheck = [
 ];
 
 const deployIdExampleFiles = [
-  [manualDeployDoc, 'manual deploy doc deploy-id example'],
-  [systemdExample, 'systemd deploy-id example'],
   [appYaml, 'application.yml deploy-id comment'],
   [appProdYaml, 'application-prod.yml deploy-id comment'],
   [quartzManagedProperties, 'QuartzManagedProperties deploy-id comment'],
   [quartzBootstrapCoordinatorTest, 'Quartz bootstrap coordinator deploy-id assertions']
 ];
 
+const pendingChanges = new Map();
 
 function assertFileExists(filePath) {
   if (!fs.existsSync(filePath)) {
@@ -187,14 +184,14 @@ function assertFileExists(filePath) {
 }
 
 function assertContainsFixed(filePath, text, description) {
-  const content = fs.readFileSync(filePath, 'utf8');
+  const content = pendingChanges.get(filePath) ?? fs.readFileSync(filePath, 'utf8');
   if (!content.includes(text)) {
     fail(`verification failed for ${description} in ${filePath}`);
   }
 }
 
 function replaceOrThrow(filePath, pattern, replacement, description) {
-  const content = fs.readFileSync(filePath, 'utf8');
+  const content = pendingChanges.get(filePath) ?? fs.readFileSync(filePath, 'utf8');
   const matcher = pattern instanceof RegExp ? new RegExp(pattern.source, pattern.flags.replace(/g/g, '')) : pattern;
   const matched = matcher instanceof RegExp ? matcher.test(content) : content.includes(matcher);
   const updated = content.replace(pattern, replacement);
@@ -202,7 +199,7 @@ function replaceOrThrow(filePath, pattern, replacement, description) {
     fail(`replacement failed for ${description} in ${filePath}`);
   }
   if (updated !== content) {
-    fs.writeFileSync(filePath, updated, 'utf8');
+    pendingChanges.set(filePath, updated);
   }
 }
 
@@ -210,23 +207,8 @@ function replaceDeployIdVersionExamples(filePath, description) {
   replaceOrThrow(filePath, /\b\d+\.\d+\.\d+(?=-\d{14}\b)/g, targetVersion, description);
 }
 
-function updateJsonTopLevel(filePath, updates) {
-  const parsed = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-  for (const [key, value] of Object.entries(updates)) {
-    parsed[key] = value;
-  }
-  fs.writeFileSync(filePath, `${JSON.stringify(parsed, null, 2)}\n`, 'utf8');
-}
-
-function assertJsonTopLevel(filePath, key, expected, description) {
-  const parsed = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-  if (parsed[key] !== expected) {
-    fail(`verification failed for ${description} in ${filePath}; expected ${expected}, got ${parsed[key]}`);
-  }
-}
-
 function assertDeployIdVersionExamples(filePath, description) {
-  const content = fs.readFileSync(filePath, 'utf8');
+  const content = pendingChanges.get(filePath) ?? fs.readFileSync(filePath, 'utf8');
   const matches = content.match(/\b\d+\.\d+\.\d+(?=-\d{14}\b)/g) ?? [];
   if (matches.length === 0) {
     fail(`verification failed for ${description} in ${filePath}; no deploy-id version examples found`);
@@ -281,8 +263,7 @@ for (const filePath of [
   readmeJaFile,
   readmeZhTwFile,
   deployDoc,
-  manualDeployDoc,
-  systemdExample,
+  envExample,
   composeFile,
   appYaml,
   appProdYaml,
@@ -294,11 +275,6 @@ for (const filePath of [
   console.log(`  - ${path.relative(repoRoot, filePath).replace(/\\/g, '/')}`);
 }
 
-if (dryRun) {
-  console.log('[version-bump] dry-run complete; no files modified.');
-  process.exit(0);
-}
-
 replaceOrThrow(rootPom, /<revision>[^<]+<\/revision>/, `<revision>${targetVersion}</revision>`, 'backend revision');
 replaceOrThrow(bomPom, /<revision>[^<]+<\/revision>/, `<revision>${targetVersion}</revision>`, 'bom revision');
 replaceOrThrow(reactPackage, /("version"\s*:\s*")[^"]+(")/, `$1${targetVersion}$2`, 'react package version');
@@ -308,6 +284,7 @@ replaceOrThrow(readmeCnFile, /(!\[Version\]\(https:\/\/img\.shields\.io\/badge\/
 replaceOrThrow(readmeJaFile, /(!\[Version\]\(https:\/\/img\.shields\.io\/badge\/Version-)\d+\.\d+\.\d+(-[^)]*\))/, `$1${targetVersion}$2`, 'README_JA version badge');
 replaceOrThrow(readmeZhTwFile, /(!\[Version\]\(https:\/\/img\.shields\.io\/badge\/Version-)\d+\.\d+\.\d+(-[^)]*\))/, `$1${targetVersion}$2`, 'README_ZH_TW version badge');
 replaceOrThrow(deployDoc, /(当前文档对应项目基线版本为 `)[^`]+(`。)/, `$1${targetVersion}$2`, 'deploy doc baseline version');
+replaceOrThrow(envExample, /^INFOQ_VERSION=\d+\.\d+\.\d+$/mu, `INFOQ_VERSION=${targetVersion}`, 'environment template version');
 for (const [filePath, description] of deployIdExampleFiles) {
   replaceDeployIdVersionExamples(filePath, description);
 }
@@ -329,6 +306,7 @@ assertContainsFixed(readmeCnFile, `![Version](https://img.shields.io/badge/Versi
 assertContainsFixed(readmeJaFile, `![Version](https://img.shields.io/badge/Version-${targetVersion}-`, 'README_JA version badge');
 assertContainsFixed(readmeZhTwFile, `![Version](https://img.shields.io/badge/Version-${targetVersion}-`, 'README_ZH_TW version badge');
 assertContainsFixed(deployDoc, `当前文档对应项目基线版本为 \`${targetVersion}\`。`, 'deploy doc baseline version');
+assertContainsFixed(envExample, `INFOQ_VERSION=${targetVersion}`, 'environment template version');
 for (const [filePath, description] of deployIdExampleFiles) {
   assertDeployIdVersionExamples(filePath, description);
 }
@@ -339,6 +317,14 @@ assertContainsFixed(springDocConfigTest, `info.setVersion("${targetVersion}");`,
 assertContainsFixed(springDocConfigTest, `assertEquals("${targetVersion}", openAPI.getInfo().getVersion());`, 'springdoc config test assert');
 assertContainsFixed(springDocPropertiesTest, `info.setVersion("${targetVersion}");`, 'springdoc properties test setVersion');
 assertContainsFixed(springDocPropertiesTest, `assertEquals("${targetVersion}", properties.getInfo().getVersion());`, 'springdoc properties test assert');
+
+if (dryRun) {
+  console.log('[version-bump] dry-run complete; all replacements validated, no files modified.');
+  process.exit(0);
+}
+for (const [filePath, content] of pendingChanges) {
+  fs.writeFileSync(filePath, content, 'utf8');
+}
 
 console.log('[version-bump] version bump completed successfully.');
 console.log('[version-bump] suggested follow-up:');

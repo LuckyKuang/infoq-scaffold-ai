@@ -33,6 +33,10 @@
 アプリケーションコード、検証、デリバリー証跡を 1 つのリポジトリにまとめ、実行可能な
 Spring Boot バックエンドと Vue / React の管理コンソールを提供します。
 
+タスク計画はローカルに保存し、`docs/plan/` と `openspec/changes/` は Git の対象外です。
+今後の実行計画も `docs/plan/` に記録し、必要に応じてディレクトリを作成します。
+ローカル計画の削除はユーザーが手動で行います。
+
 現在は 3 つのワークスペースを維持しています。
 
 - `backend`：Spring Boot 4.1 マルチモジュール・バックエンド
@@ -87,7 +91,9 @@ pnpm run dev
 
 両方の管理コンソールは既定でポート `80` を使用します。同時に起動する場合は、
 どちらかの `VITE_APP_PORT` を変更してください。ローカル開発の詳細は
-[`DEV_GUIDE.md`](DEV_GUIDE.md) を参照してください。
+[`DEV_GUIDE.md`](DEV_GUIDE.md) を参照してください。各例はリポジトリのルートから
+個別に実行します。無視対象の backend local 設定を先に準備し、`VITE_APP_ENCRYPT=true`
+ではバックエンドと対応する RSA 公開鍵・秘密鍵の環境変数を指定してください。
 
 管理コンソールのルート smoke または CAPTCHA ログインには skill を使用します。
 
@@ -97,7 +103,7 @@ pnpm run dev
 node skills/test-cli/scripts/run_admin_e2e.mjs --client vue --route-limit 1
 node skills/test-cli/scripts/captcha_login.mjs --backend-url http://127.0.0.1:8080 --print-token
 
-# ローカルデプロイ smoke（Apple container / WSL2 Docker / Linux Docker）
+# デプロイ状態：macOS は Apple、Linux/WSL2 は Docker を選択
 node skills/deploy-cli/scripts/deploy_cli.mjs status
 ```
 
@@ -130,17 +136,19 @@ jar と管理コンソールの成果物をビルドし、Apple container パス
 コンソールの `dist` アーカイブであり、コンテナイメージではありません。
 
 ```bash
-# Linux / WSL2 フルスタック：リモートインストーラー（本番環境では tag を固定）
-curl -sSL https://raw.githubusercontent.com/LuckyKuang/infoq-scaffold-ai/main/deploy/install.sh \
-  | sudo env INFOQ_FRONTEND_TARGET=all INFOQ_PUBLIC_BASE_URL=http://SERVER_IP bash
-
-# またはローカルソースからデプロイ
+# Linux / WSL2：確認済みの対象 release tag のソースからデプロイ
 sudo env INFOQ_SOURCE_DIR="$(pwd)" INFOQ_FRONTEND_TARGET=all \
   INFOQ_PUBLIC_BASE_URL=http://SERVER_IP bash deploy/install.sh
 ```
 
 `INFOQ_FRONTEND_TARGET` は必須です：`all`、`vue`、`react` のいずれかを指定します。
 `all` ターゲットの Nginx ルート：`/vue/`、`/react/`、`/console-oss/`、`/oss/`。
+
+リモートインストールはデプロイガイドに従い、tag を固定してダウンロード後に確認
+してください。macOS Colima は shell スクリプトを使用し、Node CLI は macOS で Apple
+を選択します。Apple `status` は daemon を起動する場合があります。本番では独立した
+認証情報、ビルド鍵の一致、HTTPS、監視、検証済みのバックアップと復旧手順が必要です。
+サンプル鍵やビルド成功だけでは本番運用の準備完了を意味しません。
 
 <!-- readme-section:documentation -->
 ## ドキュメント
@@ -151,6 +159,7 @@ README はプロジェクト概要とクイックスタートのみを提供し�
 | ドキュメント | 説明 |
 | --- | --- |
 | [ドキュメントセンター](docs/README.md) | ユーザードキュメントのナビゲーション |
+| [ドキュメント監査](docs/DOCUMENTATION-AUDIT.md) | 対象範囲、修正、検証、運用環境の未解決事項 |
 | [コントリビューションガイド](CONTRIBUTING.md) | ツールチェーン、検証、PR フロー |
 | [開発ガイド](DEV_GUIDE.md) | ローカル設定とトラブルシューティング |
 | [セキュリティポリシー](SECURITY.md) | 脆弱性の報告 |

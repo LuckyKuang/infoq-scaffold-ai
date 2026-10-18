@@ -18,8 +18,8 @@
 - 配置按 `application.yml + application-{dev,prod,local}.yml` 叠加：
   - `application.yml` 承载通用运行时行为配置，包括 Tomcat、captcha、Spring Security token、`api-decrypt`、SpringDoc、SSE、WebSocket、默认关闭的 MQTT/Elasticsearch、`infoq.quartz`、MyBatis-Plus、Jackson 3、XSS、lock4j、security excludes 等。
   - `application-dev.yml` 是默认激活 profile，主要补充/覆写 datasource、Redis、Redisson、Quartz 开发环境差异、`infoq.quartz.bootstrap` 和 mail。
-  - `application-prod.yml` 补充/覆写 datasource、Redis、Redisson、Quartz 生产环境差异、`infoq.quartz.bootstrap`、graceful shutdown 和 mail；`application-local.yml` 补充/覆写 datasource、Redis、Redisson、mail，但不重写 Quartz。
-- 第三方身份、微信小程序登录、实时 Push、MQTT、Elasticsearch 与消息清理均是关闭态默认能力：`infoq.auth.wechat-miniapp.enabled=false`、`infoq.push.enabled=false`、`infoq.mqtt.enabled=false`、`infoq.elasticsearch.enabled=false`、`infoq.message.cleanup.enabled=false`；启用微信登录必须同时提供部署侧 AppID/Secret 并启用 Provider，启用 Push 必须显式选择已开启的 SSE 或 WebSocket 通道，启用 MQTT/Elasticsearch 必须注入各自连接配置。
+  - `application-prod.yml` 补充/覆写 datasource、Redis、Redisson、Quartz 生产环境差异、`infoq.quartz.bootstrap`、graceful shutdown 和 mail；`application-local.yml` 是可选且被 Git 忽略的本机覆盖文件，其存在性和具体覆盖项须以本机为准。
+- 第三方身份、微信小程序登录、实时 Push、MQTT、Elasticsearch 与消息清理均是关闭态默认能力：`oauth.enabled=false`、`infoq.auth.wechat-miniapp.enabled=false`、`infoq.push.enabled=false`、`infoq.mqtt.enabled=false`、`infoq.elasticsearch.enabled=false`、`infoq.message.cleanup.enabled=false`；启用微信登录必须同时提供部署侧 AppID/Secret 并启用 Provider，启用 Push 必须显式选择已开启的 SSE 或 WebSocket 通道，启用 MQTT/Elasticsearch 必须注入各自连接配置。
 
 ## 模块导航
 
@@ -57,7 +57,6 @@
   [infoq-admin/src/main/resources/application.yml](./infoq-admin/src/main/resources/application.yml)
   [infoq-admin/src/main/resources/application-dev.yml](./infoq-admin/src/main/resources/application-dev.yml)
   [infoq-admin/src/main/resources/application-prod.yml](./infoq-admin/src/main/resources/application-prod.yml)
-  [infoq-admin/src/main/resources/application-local.yml](./infoq-admin/src/main/resources/application-local.yml)
   [infoq-admin/src/main/resources/logback-plus.xml](./infoq-admin/src/main/resources/logback-plus.xml)
 - 认证与首页：
   [AuthController](./infoq-modules/infoq-system/src/main/java/cc/infoq/system/controller/login/AuthController.java)
@@ -85,6 +84,6 @@
 ## 当前实现提醒
 
 - 这里的“插件”是当前仓库内的模块化基础设施，不等于一定在运行时全量启用。
-- 对可选链路，本文档只记录代码里已经能直接确认的状态：`application-dev.yml`、`application-prod.yml`、`application-local.yml` 均显式设置 `mail.enabled=false`；`application.yml` 中 `sse.enabled=true`、`websocket.enabled=false`。
+- 对可选链路，受管的 `application-dev.yml`、`application-prod.yml` 显式设置 `mail.enabled=false`；本机 local 覆盖可能不同。`application.yml` 中 `sse.enabled=true`、`websocket.enabled=false`。这些开发默认值不是生产安全推荐值，生产前置条件见 [部署验证说明](../deploy/VERIFICATION.md)。
 - 个人消息盒子使用 MySQL 作为正文和接收人状态真值。实时事件只用于提示客户端刷新，Push 关闭、用户离线或实时通道失败均不得影响消息已提交的读取、已读和软删除操作。
 - 如果你要改动登录、权限、Redis、Quartz、日志或 Mapper XML，建议先把上面两份文档看完再动手。

@@ -7,7 +7,7 @@ import {fileURLToPath} from 'node:url';
 import {normalizeForwardedArgs, resolveRepoRoot} from '../../../tools/lib/skill_runtime.mjs';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
-const repoRoot = resolveRepoRoot(scriptDir);
+let repoRoot = resolveRepoRoot(scriptDir);
 const args = normalizeForwardedArgs(process.argv.slice(2));
 
 function usage() {
@@ -15,17 +15,20 @@ function usage() {
 
 Commands:
   plan [--version x.y.z]                核对当前版本、最新远程 tag、是否必须先 bump
-  bump --version x.y.z                  同步受管文件版本字段（内部调用 bump_version.mjs）
-  tag --version x.y.z [--dry-run]       在已合并的默认分支上创建并推送标注 tag
-  publish --version x.y.z [--notes-file <path>] [--dry-run]
+  bump --version x.y.z [--dry-run]      本地同步受管文件版本；默认写入，不提交或推送
+  tag --version x.y.z [--execute | --dry-run]
+                                        预览标注 tag；显式 --execute 才创建并推送
+  publish --version x.y.z [--notes-file <path>] [--execute | --dry-run]
                                         创建 GitHub Release（无 notes-file 时使用 GitHub 生成说明）
   verify --version x.y.z                校验远端 tag、Release 状态与版本字段一致
 
 Options:
   --repo-root <path>   指定仓库根（默认自动解析）
   --remote <name>      远端名，默认 origin
+  --tag <name>         覆盖默认 tag 名 v<x.y.z>（自动 workflow 仍要求 v<x.y.z>）
   --json               以 JSON 输出结果
-  --dry-run            只打印将要执行的命令
+  --execute            执行 tag/publish 远程写入；默认仅预览
+  --dry-run            显式预览（bump 也不写入）；与 --execute 互斥
   -h, --help           显示帮助`);
 }
 
@@ -35,23 +38,31 @@ const options = {
   tag: '',
   notesFile: '',
   remote: 'origin',
-  dryRun: false,
+  dryRun: true,
+  execute: false,
   json: false
 };
 
+let explicitDryRun = false;
+const valueOptions = new Set(['--version', '--tag', '--notes-file', '--remote', '--repo-root']);
 for (let index = 0; index < args.length; index += 1) {
   const arg = args[index];
   if (arg === '-h' || arg === '--help') {
     usage();
     process.exit(0);
   }
-  if (arg === '--dry-run') options.dryRun = true;
+  if (valueOptions.has(arg) && (!args[index + 1] || args[index + 1].startsWith('-'))) {
+    throw new Error(`missing value for ${arg}`);
+  }
+  if (arg === '--dry-run') explicitDryRun = true;
+  else if (arg === '--execute') options.execute = true;
   else if (arg === '--json') options.json = true;
   else if (arg === '--version') options.version = args[++index];
   else if (arg === '--tag') options.tag = args[++index];
   else if (arg === '--notes-file') options.notesFile = args[++index];
   else if (arg === '--remote') options.remote = args[++index];
-  else if (arg === '--repo-root') index += 1;
+  else if (arg === '--repo-root') repoRoot = path.resolve(args[++index]);
+  else if (arg.startsWith('-')) throw new Error(`unknown option: ${arg}`);
   else if (!options.command) options.command = arg;
   else throw new Error(`unexpected argument: ${arg}`);
 }
@@ -66,6 +77,9 @@ if (!['plan', 'bump', 'tag', 'publish', 'verify'].includes(options.command)) {
 if (options.version && !/^\d+\.\d+\.\d+$/.test(options.version)) {
   throw new Error(`--version 必须匹配 x.y.z，收到：${options.version}`);
 }
+if (options.execute && explicitDryRun) throw new Error('--execute 与 --dry-run 不能同时使用');
+if (options.execute && !['tag', 'publish'].includes(options.command)) throw new Error('--execute 只适用于 tag、publish');
+options.dryRun = options.command === 'bump' ? explicitDryRun : !options.execute;
 
 function fail(message) {
   console.error(`[release] FAIL ${message}`);
@@ -117,7 +131,7 @@ function assertVersionsConsistent(versions) {
 }
 
 function parseSemver(value) {
-  const match = String(value).replace(/^v/, '').match(/^(\d+)\.(\d+)\.(\d+)/);
+  const match = String(value).replace(/^v/, '').match(/^(\d+)\.(\d+)\.(\d+)$/);
   if (!match) {
     return null;
   }
@@ -176,12 +190,13 @@ function defaultBranchName() {
 function releaseView(name) {
   const result = exec('gh', ['release', 'view', name, '--json', 'tagName,isDraft,isPrerelease,url'], {allowFailure: true});
   if (result.status !== 0) {
-    return null;
+    if (/release not found/i.test(`${result.stderr || ''}\n${result.stdout || ''}`)) return null;
+    fail(`无法读取 Release ${name}（exit=${result.status}）：${(result.stderr || result.stdout || '').trim()}`);
   }
   try {
     return JSON.parse(result.stdout);
   } catch (error) {
-    return null;
+    fail(`Release ${name} 返回无效 JSON：${error.message}`);
   }
 }
 
@@ -222,7 +237,7 @@ function commandBump() {
     fail('bump 需要 --version x.y.z');
   }
   const bumper = path.join(scriptDir, 'bump_version.mjs');
-  const bumpArgs = [bumper, ...(options.dryRun ? ['--dry-run'] : []), options.version];
+  const bumpArgs = [bumper, '--repo-root', repoRoot, ...(options.dryRun ? ['--dry-run'] : []), options.version];
   exec(process.execPath, bumpArgs, {capture: false});
   console.log('[release] 下一步：通过 push-cli 提交并推送版本升级，合并到默认分支后再执行 tag。');
 }
@@ -255,7 +270,7 @@ function commandTag() {
   }
   exec('git', ['tag', '-a', name, '-m', `Release ${name}`], {capture: false});
   exec('git', ['push', options.remote, name], {capture: false});
-  console.log(`[release] tag ${name} 已推送；下一步：publish --version ${options.version}`);
+  console.log(`[release] tag ${name} 已推送；仓库 Release workflow 将构建并发布，等待成功后执行 verify --version ${options.version}；不要并发 publish。`);
 }
 
 function commandPublish() {

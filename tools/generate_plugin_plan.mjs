@@ -69,6 +69,11 @@ if (!pluginName || !pluginClass) {
   process.exit(1);
 }
 
+if (!/^infoq-plugin-[a-z0-9]+(?:-[a-z0-9]+)*$/u.test(pluginName)) {
+  console.error('Error: --name must match infoq-plugin-<lowercase-name>.');
+  process.exit(1);
+}
+
 if (!['fixed', 'reusable', 'toggle'].includes(pluginClass)) {
   console.error('Error: --class must be one of fixed|reusable|toggle.');
   process.exit(1);
@@ -86,7 +91,7 @@ function renderClassNote() {
     case 'reusable':
       return '- `reusable`：通用能力插件。目标是模块按需依赖，保持接口通用与低耦合。';
     default:
-      return '- `toggle`：可配置软关闭插件。目标是保留依赖，默认 `enabled=false`，按配置启停。';
+      return '- `toggle`：可配置软关闭插件。新增插件默认 `enabled=false`；现有插件以 `docs/SKILLS.md` 开关矩阵和实际配置为准，不自动改写已有默认值。';
   }
 }
 
@@ -144,23 +149,23 @@ function renderValidationCommands() {
       return 'node tools/backend_mvn.mjs -- clean package -P dev -pl infoq-modules/infoq-system -am';
     case 'vue':
       return `node tools/backend_mvn.mjs -- clean package -P dev -pl infoq-modules/infoq-system -am
-cd frontend-vue && pnpm run build:prod`;
+pnpm --dir frontend-vue run build:prod`;
     case 'react':
       return `node tools/backend_mvn.mjs -- clean package -P dev -pl infoq-modules/infoq-system -am
-cd frontend-react && pnpm run build:prod`;
+pnpm --dir frontend-react run build:prod`;
     case 'both':
       return `node tools/backend_mvn.mjs -- clean package -P dev -pl infoq-modules/infoq-system -am
-cd frontend-vue && pnpm run build:prod
-cd frontend-react && pnpm run build:prod`;
+pnpm --dir frontend-vue run build:prod
+pnpm --dir frontend-react run build:prod`;
     default:
       return `node tools/backend_mvn.mjs -- clean package -P dev -pl infoq-modules/infoq-system -am
-# If frontend impact is confirmed, run the affected frontend build(s); if impact is ambiguous, run both.
-cd frontend-vue && pnpm run build:prod
-cd frontend-react && pnpm run build:prod`;
+# 确认前端影响后执行受影响端；无法确定时执行两端。
+pnpm --dir frontend-vue run build:prod
+pnpm --dir frontend-react run build:prod`;
   }
 }
 
-const planContent = `# Plugin Onboarding Plan
+const planContent = `# 插件接入计划
 
 ## 输入
 - 插件名：\`${pluginName}\`
@@ -187,6 +192,7 @@ ${renderConfigNote()}
 ${renderFrontendNote()}
 
 ## 验证命令
+以下命令从仓库根目录分别执行；前端加密构建需预先提供与后端匹配的 RSA 环境变量，详见 \`DEV_GUIDE.md\`。
 优先使用 \`pnpm\`；如果当前环境没有 \`pnpm\`，则回退为等价的 \`npm\` 命令。
 \`\`\`bash
 ${renderValidationCommands()}

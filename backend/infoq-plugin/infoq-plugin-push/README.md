@@ -23,7 +23,7 @@ infoq:
 
 - 默认关闭时不创建 PushService 或通道适配器。
 - 启用时必须至少选择一个通道；`sse-enabled=true` 要求 `sse.enabled=true`，`websocket-enabled=true` 要求 `websocket.enabled=true`。任一组合不一致均在启动期明确失败。
-- 当前 `DefaultPushService` 只在传输边界映射接收人用户 ID，并记录 correlation ID、message ID、通道、接收人数、结果和失败类别。消息正文与事件业务 payload 不进入日志。
+- 当前 `DefaultPushService` 在传输边界映射接收人用户 ID，成功日志包含 correlation ID、message ID、通道和接收人数；该成功仅表示向传输层发布，不证明终端已收到。`SysMessagePushListener` 捕获发送异常并记录 correlation ID、message ID、接收人数和异常类别，当前不包含失败通道；Push 关闭时直接跳过。消息正文与事件业务 payload 不进入这些日志。失败通道观测尚未满足通知规格要求，不能宣称已覆盖。
 
 ## 4. 边界
 

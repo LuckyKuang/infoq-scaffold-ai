@@ -2,7 +2,7 @@
 
 ## 目标
 
-定义当前仓库的通知公告管理、公告创建后的实时广播，以及管理端的 SSE / WebSocket 提醒入口。
+定义当前仓库的通知公告管理、公告创建后的持久化消息与提交后实时刷新，以及管理端的 SSE / WebSocket 提醒入口。
 
 ## 要求
 
@@ -73,3 +73,9 @@
 - 当 `infoq.push.enabled=false` 时
 - 则系统不得创建 Push 通道适配器
 - 并且个人消息盒子读取、已读和删除能力必须仍可用
+
+## 实现符合性与待补证据
+
+`SysNoticeServiceImpl`、`SysMessageServiceImpl` 与 `SysMessagePushListener` 已采用公告事务内持久化和 `AFTER_COMMIT` 异步 Push；正常用户集合为空时不会创建无接收人的消息。当前 `SysMessagePushListener` 的异常日志含 correlation ID、消息 ID、接收人数与异常类别，缺少失败通道；Push 关闭时直接跳过，不记录失败分类。因此上文完整失败可观测性要求尚未满足，不能据此宣称通知链路已达生产验收。该业务实现缺口需单独修复及验证，本次文档审计不修改 Java 或弱化要求。
+
+消息接口以当前登录用户限制范围：`GET /system/message/list`、`GET /system/message/unread-count`、`POST /system/message/{messageId}/read`、`POST /system/message/read-all`、`DELETE /system/message/{messageIds}`。真实离线读取、通道故障、容量与告警演练仍需在隔离运行环境补证据。

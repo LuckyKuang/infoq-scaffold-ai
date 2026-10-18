@@ -1,6 +1,6 @@
 # Admin 命令
 
-以下命令优先使用 `pnpm`。若当前环境不可用，可替换为等价 `npm` 命令。
+各代码块独立从仓库根目录开始；进入工作区后使用本地 pnpm 依赖。仅 pnpm 不可用时才使用等价 npm 命令。
 
 ## 安装与初始化
 
@@ -13,14 +13,14 @@ pnpm install
 
 ```bash
 cd frontend-vue
-npx vitest --config vitest.config.ts --run tests/utils/request.test.ts
+pnpm exec vitest --config vitest.config.ts --run tests/utils/request.test.ts
 ```
 
 ## 运行 P1 插件与实时能力批次
 
 ```bash
 cd frontend-vue
-npx vitest --config vitest.config.ts --run \
+pnpm exec vitest --config vitest.config.ts --run \
   tests/plugins/download.test.ts \
   tests/plugins/modal.test.ts \
   tests/plugins/tab.test.ts \
@@ -32,7 +32,7 @@ npx vitest --config vitest.config.ts --run \
 
 ```bash
 cd frontend-vue
-npx vitest --config vitest.config.ts --run \
+pnpm exec vitest --config vitest.config.ts --run \
   tests/components/Breadcrumb.test.ts \
   tests/components/Pagination.test.ts \
   tests/components/RightToolbar.test.ts \
@@ -48,7 +48,7 @@ npx vitest --config vitest.config.ts --run \
 
 ```bash
 cd frontend-vue
-npx vitest --config vitest.config.ts --run \
+pnpm exec vitest --config vitest.config.ts --run \
   tests/views/system/menu/index.test.ts \
   tests/views/system/user/index.test.ts \
   tests/views/system/notice/index.test.ts \
@@ -64,6 +64,8 @@ npx vitest --config vitest.config.ts --run \
 ```
 
 ## 运行态后续验证
+
+回到仓库根目录执行；以下命令会写 Redis 验证码种子与会话，只用于已授权测试环境。
 
 ```bash
 node skills/test-cli/scripts/run_admin_e2e.mjs --client vue --route-limit 1
@@ -84,3 +86,5 @@ pnpm run test:unit:coverage
 pnpm run lint:eslint
 pnpm run build:prod
 ```
+
+构建前先从仓库根目录执行 `node tools/validate_utf8.mjs`，并在 `VITE_APP_ENCRYPT=true` 时提供与后端对应的 `VITE_APP_RSA_PUBLIC_KEY` / `VITE_APP_RSA_PRIVATE_KEY`。完整前置与验收边界见 `docs/TESTING.md`。

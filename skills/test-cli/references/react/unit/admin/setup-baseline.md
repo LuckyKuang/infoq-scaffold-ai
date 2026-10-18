@@ -15,8 +15,8 @@
 - `test.globals: true`
 - `test.include: ['tests/**/*.test.ts', 'tests/**/*.test.tsx']`
 - `test.css: false`
-- `test.mockReset`, `test.clearMocks`, and `test.restoreMocks` enabled
-- Alias: `@ -> ./src`
+- 启用 `test.mockReset`、`test.clearMocks`、`test.restoreMocks`
+- 别名：`@ -> ./src`
 
 ## `setup.ts` 关键项
 

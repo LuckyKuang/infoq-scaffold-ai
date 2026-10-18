@@ -23,7 +23,7 @@
 
 ## P2
 
-- 鉴权与入口页面：`pages/login`, `pages/home`
+- 鉴权与入口页面：`pages/login.tsx`, `pages/index.tsx`
 - 代表性监控页面：`pages/monitor/cache`
 - 再扩展到 mock 稳定的分组业务页：`pages/system/*`, `pages/monitor/*`
 

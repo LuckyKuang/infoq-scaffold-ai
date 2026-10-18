@@ -15,7 +15,7 @@ ADMIN_CONTAINER="infoq-apple-admin"
 MYSQL_VOLUME="infoq-apple-mysql-data"
 REDIS_VOLUME="infoq-apple-redis-data"
 PLATFORM="linux/arm64"
-BUILD_DIR="${SCRIPT_DIR}/.apple-build"
+BUILD_DIR="${REPO_ROOT}/tmp/deploy-cli/apple-build"
 SQL_INIT_FILE="${REPO_ROOT}/sql/infoq_scaffold_3.0.0.sql"
 RUNTIME_DOCKERFILE="${SCRIPT_DIR}/Dockerfile.apple"
 

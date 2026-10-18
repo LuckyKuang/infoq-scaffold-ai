@@ -16,7 +16,7 @@ docs/testing/case-matrix.md
 docs/testing/gaps.md
 ```
 
-本 skill 当前执行 P0 只读 smoke；如需模块级 CRUD 模式，读取 `references/crud/` 并继续使用 `test-cli`。
+`run_admin_e2e.mjs` 默认执行动态菜单的业务只读 smoke，不按矩阵优先级筛选；验证码种子与会话仍有 Redis 写入副作用。模块级 CRUD 使用独立 runner，执行前读取 `references/crud/`。静态矩阵没有执行结果含义。
 
 ## P0 默认覆盖
 

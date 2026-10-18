@@ -14,6 +14,13 @@
 @Tag("dev")
 class MapperDefaultMethodTest {
 
+    @BeforeEach
+    void registerTableInfo() {
+        MapperBuilderAssistant assistant = new MapperBuilderAssistant(new Configuration(), "test");
+        TableInfoHelper.remove(SysMenu.class);
+        TableInfoHelper.initTableInfo(assistant, SysMenu.class);
+    }
+
     @Test
     void shouldDelegateToBaseMapperMethod() {
         SysMenuMapper mapper = mock(SysMenuMapper.class, withSettings().defaultAnswer(CALLS_REAL_METHODS));
@@ -41,4 +48,5 @@ class MapperDefaultMethodTest {
 ## 项目特定说明
 
 - 稳定的 `default` 方法已在 `MapperDefaultMethodTest` 中覆盖。
-- 部分方法因 MyBatis lambda 缓存耦合，刻意不在纯单测范围内，应通过集成测试验证。
+- MyBatis-Plus `3.5.17` 的 lambda 列解析依赖实体 `TableInfo`；模板中的初始化不可省略。完整示例见 `backend/infoq-modules/infoq-system/src/test/java/cc/infoq/system/mapper/MapperDefaultMethodTest.java`。
+- 单测只验证 Java 分支或委派；分页拦截器、XML SQL、事务与数据库方言仍通过集成测试验证，不能由 Mockito 委派断言替代。

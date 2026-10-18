@@ -17,6 +17,8 @@
 
 ## 失败处理
 
+当前 CRUD runner 的正常/普通异常路径尝试 API cleanup；信号中断仅停止 owned 栈，不能保证清理数据或落盘最终报告。最终 DB 查询错误也可能被汇总为零 rows，必须审阅 `cleanup.finalDb[].db.error`。恢复时使用上次 run 的 `test-data.json` 唯一键，不要期待新 run 自动清理旧 fixture。完整实现限制见 `docs/TESTING.md` 第 6.6 节。
+
 清理失败不得被静默忽略。报告必须包含：
 
 - 模块名。

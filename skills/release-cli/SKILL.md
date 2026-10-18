@@ -1,31 +1,34 @@
 ---
 name: release-cli
-description: 在 PR 合并到默认分支后发布 GitHub release 版本。覆盖版本现状核对（当前版本与最新远程 tag 对比）、必要时先升级版本、版本受管文件同步与 SQL 基线保护、标注 tag 创建与推送、GitHub Release 发布与校验，以及发布前检查与回滚条件。适用于版本升级、发布 release、确认版本是否为最新，或发布失败后的恢复。
+description: 核对发布版本、同步受管版本文件、预览或执行标注 tag 与 GitHub Release 操作，并验证发布状态。适用于版本升级、发布与失败恢复；tag/publish 默认预览且需 --execute，生产部署由 deploy-cli 负责。
 ---
 
 # InfoQ 版本与 Release 发布
 
-本技能只负责一件事：从「合并后的默认分支」到「已发布且可验证的 GitHub Release」。
+本技能负责版本同步和合并后的 GitHub Release 发布。`tag`、`publish` 默认 dry-run，显式 `--execute` 才写入；预览不创建本地 tag。`--execute` 与 `--dry-run` 互斥，未知或缺值参数显式失败。`bump` 是本地写操作，使用 `--dry-run` 才不修改文件。
 
 ## 执行顺序
 
 1. `plan`：读取当前版本（后端 `pom.xml` `<revision>` 与两个前端 `package.json`）、最新远程 tag、待发布的提交清单，判断是否必须先 bump。
-2. **版本不是最新版时先升级**：`plan` 会显式失败并要求先执行 `bump --version <x.y.z>`；`bump` 走 `bump_version.mjs` 的受管文件同步与 SQL 基线校验。
-3. `bump`：同步后端 revision、BOM revision、React/Vue package 版本、README 徽标、deploy 文档基线、Docker 镜像 tag、SpringDoc 测试与 DEPLOY_ID 示例；完成后提交（提交与推送走 `push-cli`）。
-4. `tag`：在合并后的默认分支上创建标注 tag（默认 `v<x.y.z>`）并推送；tag 必须指向已通过校验的合并提交。
-5. `publish`：用 `gh release create` 创建 Release，附发布说明（变更提交清单 + 校验结论），并校验 Release 已发布。
-6. `verify`：确认远端 tag、Release 状态与版本字段一致；不一致即失败并输出回滚步骤。
+2. **当前版本不高于最新远程 tag 时先升级**：`plan` 显式失败并建议新版本；`--version` 只覆盖建议值，不执行升级，也不替代版本高于最新 tag 的人工确认。
+3. `bump`：同步后端 revision、BOM revision、React/Vue package 版本、README 徽标、deploy 文档基线、`deploy/.env.example` 的 `INFOQ_VERSION`、Docker 镜像 tag、SpringDoc 测试与 DEPLOY_ID 示例；所有替换先在内存预检，再写入。完成后提交（提交与推送走 `push-cli`）。
+4. `tag`：预览目标，确认 CI 在候选提交通过且版本高于最新 tag 后，用 `--execute` 创建并推送标注 tag（默认 `v<x.y.z>`）。CLI 检查 HEAD 与最新远端默认分支一致及 tag 不存在，不查询 CI 状态。
+5. 当前仓库推送 `v*` tag 会自动触发 Release workflow 构建和发布。等待成功后 `verify`；不要再并发手动 `publish`。仅在自动发布未运行且明确需要独立发布时，预览并显式 `publish --execute`；它不会构建或上传 jar/dist 产物。
+6. `verify`：确认工作区版本、远端 tag 存在、Release 非 draft/prerelease；失败时定位错误并按 `references/release-flow.md` 恢复。它不校验产物完整性、tag 的提交 SHA 或生产可用性，必须另行核对。
 
 ## 默认命令
 
 ```bash
 node skills/release-cli/scripts/release_cli.mjs plan
 node skills/release-cli/scripts/release_cli.mjs plan --version 3.0.1
+node skills/release-cli/scripts/release_cli.mjs bump --version 3.0.1 --dry-run
 node skills/release-cli/scripts/release_cli.mjs bump --version 3.0.1
-node skills/release-cli/scripts/release_cli.mjs tag --version 3.0.1 --dry-run
 node skills/release-cli/scripts/release_cli.mjs tag --version 3.0.1
-node skills/release-cli/scripts/release_cli.mjs publish --version 3.0.1 --notes-file <path>
+node skills/release-cli/scripts/release_cli.mjs tag --version 3.0.1 --execute
 node skills/release-cli/scripts/release_cli.mjs verify --version 3.0.1
+# 仅独立手动发布场景，先确认自动 workflow 没有运行或发布
+node skills/release-cli/scripts/release_cli.mjs publish --version 3.0.1 --notes-file <path>
+node skills/release-cli/scripts/release_cli.mjs publish --version 3.0.1 --notes-file <path> --execute
 ```
 
 版本同步内核与回归测试（受管文件清单见 `references/targets.md`）：
@@ -33,6 +36,7 @@ node skills/release-cli/scripts/release_cli.mjs verify --version 3.0.1
 ```bash
 node skills/release-cli/scripts/bump_version.mjs --dry-run 3.0.1
 node skills/release-cli/scripts/test_bump_version.mjs
+node skills/release-cli/scripts/test_release_cli.mjs
 ```
 
 ## SQL 策略
@@ -43,13 +47,13 @@ node skills/release-cli/scripts/test_bump_version.mjs
 ## 护栏
 
 - 目标版本必须匹配 `x.y.z`；tag 名默认 `v<x.y.z>`，已存在的 tag 一律拒绝复用。
-- 远程写操作（推 tag、创建 Release）默认 dry-run，必须显式去掉 `--dry-run` 才真正执行。
+- 远程写操作（推 tag、创建 Release）默认 dry-run，必须显式 `--execute` 才执行；省略 `--dry-run` 仍是预览。tag 预览会 fetch 更新本地远端跟踪引用，但不创建本地 tag。
 - 版本不是最新时必须先 bump 再发布，不允许用旧版本重复发布。
 - 依赖版本与 lockfile 必须一致；受管文件缺一即失败。
 - 执行前先枚举目标：版本号、受管文件、`DEPLOY_ID` 示例、SQL 策略、依赖/lockfile 影响与回滚条件；写入后检查变更文件与脚本输出，不手工散改版本字段。
 - docs 同步、版本断言、lockfile 不一致或 SQL 策略冲突时必须显式失败并停止发布。
 - 发布前检查 config、SQL、dependency、rollback 与 observability 影响；未检查项列入 residual risk。
-- 发布失败不得通过手工散改部分文件伪造一致性；回滚路径 = 删除远端 tag/Release + 用 `bump` 回到上一版本。
+- 发布失败保留原 tag、Release 和日志证据；先确认公开状态、workflow 与消费者，再决定修复重跑或新 patch。禁止把删除公开历史记录或 `bump` 降版本当作默认回滚。应用回滚使用已验证旧产物，数据恢复按独立迁移/备份方案执行；本 CLI 不回滚部署或数据库。
 
 ## 参考
 

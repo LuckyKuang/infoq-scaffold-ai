@@ -16,7 +16,7 @@
 
 ### 2.1 默认策略
 
-Phase 1 和只读 smoke 不创建测试数据。所有写入型 E2E 默认延期，只有在隔离环境或显式授权后才允许执行。
+静态矩阵检查和业务只读 smoke 不创建业务 fixture。验证码种子登录（包括 `admin-route-probe --list-routes`）仍会写 Redis、创建会话并产生登录记录，必须限定在已授权测试环境；不能把它当成生产只读探测。写入型 E2E 只有在隔离且已授权的测试环境、目标与 cleanup 明确后才允许执行。
 
 ### 2.2 命名规则
 
@@ -102,15 +102,18 @@ node skills/test-cli/scripts/captcha_login.mjs --backend-url http://127.0.0.1:80
 约束：
 
 - 测试进程与后端必须使用同一个 Redis 实例和 DB。
-- 如果后端配置了 `redisson.keyPrefix`，`--redis-key-prefix` 必须包含相同前缀。
+- `--redis-key-prefix` 是完整验证码键前缀，默认 `global:captcha_codes:`。如果后端 `redisson.keyPrefix=example`，应使用 `example:global:captcha_codes:`；脚本会在该值之后拼接 `uuid`，不能只传 `example`。
 - 该模式只允许在已授权的测试环境使用，禁止指向生产 Redis。
 - 种子 key 与后端校验一致，TTL 默认 120 秒，只能消费一次。
+- `--print-token` 和登录证据包含有效会话信息；证据留在 `tmp/` 并限制访问，不粘贴到共享日志或提交到仓库。运行后按测试账号生命周期撤销会话。
 
 ## 6. 前端单测与界面测试
 
 前端单测与界面测试是两条独立门禁，不能互相替代。
 
 ### 6.1 前置
+
+从仓库根目录执行以下带工作区路径的命令。Node 必须为 `24.18.0`，pnpm 版本由根 `package.json` 的 `pnpm@10.34.1` 固定。纯单测、lint 与构建不需要启动 backend/dev server；浏览器 E2E 需要真实 MySQL/Redis、正确的测试账号与加密配置。
 
 首次运行界面测试，或 Playwright 升级后，先安装 Chromium：
 
@@ -122,13 +125,10 @@ pnpm --dir skills/test-cli/scripts exec playwright install chromium
 ### 6.2 单元测试
 
 ```bash
-cd frontend-vue
-pnpm run test:unit
-pnpm run test:unit:coverage
-
-cd ../frontend-react
-pnpm run test
-pnpm run test:coverage
+pnpm --dir frontend-vue run test:unit
+pnpm --dir frontend-vue run test:unit:coverage
+pnpm --dir frontend-react run test
+pnpm --dir frontend-react run test:coverage
 ```
 
 ### 6.3 界面测试
@@ -144,12 +144,35 @@ node skills/test-cli/scripts/run_admin_e2e.mjs --client react --route-limit 3
 
 ### 6.4 lint 与生产构建
 
-```bash
-cd frontend-vue
-pnpm run lint:eslint
-pnpm run build:prod
+构建前执行编码门禁，并确认 `VITE_APP_ENCRYPT=true` 时构建进程可读取与后端对应的 `VITE_APP_RSA_PUBLIC_KEY`、`VITE_APP_RSA_PRIVATE_KEY`。不要在缺失密钥时通过关闭加密制造构建成功。
 
-cd ../frontend-react
-pnpm run lint
-pnpm run build:prod
+```bash
+node tools/validate_utf8.mjs
+pnpm --dir frontend-vue run lint:eslint
+pnpm --dir frontend-vue run build:prod
+pnpm --dir frontend-react run lint
+pnpm --dir frontend-react run build:prod
 ```
+
+### 6.5 当前自动化边界与交付证据
+
+- `generate-case-matrix.mjs` 生成设计清单，不执行测试；默认更新 `docs/testing/`。审计预览用 `--output-dir tmp/test-cli/matrix-preview`，确认变更后才更新受管产物。`gaps.md` 只报告静态组件/菜单匹配缺口，不代表完整运行态覆盖率。
+- `run_admin_e2e.mjs` 从实时菜单接口选取非参数化路由，支持 `--include-route`、`--exclude-route`、`--route-limit`；尚未读取 `case-matrix.json`，不会自动覆盖固定公开页、消息中心、浏览器登录表单和多角色权限矩阵。它通过 API 登录后注入 `Admin-Token`。
+- `playwright_core.mjs` 当前检查 URL、可选可见文本和 console/pageerror，并采集截图；没有自动断言 HTTP 错误状态、空白截图或 401/404 页面 DOM。`networkidle` 超时会继续取证。业务验收必须补可见内容断言和截图审阅，不能仅依据 runner 退出码宣布这些检查通过。
+- E2E 自管栈记录 backend/frontend 的 `state.json` 并清理 owned 进程；`--no-start-stack` 复用的服务由其所有者管理。通用浏览器执行器在 `finally` 关闭浏览器，但未记录同等状态文件，DevTools 服务也需由调用者明确管理生命周期。状态和清理证据缺失必须报告。
+- 自管栈的 HTTP 就绪探针接受 2xx–4xx；它不能证明验证码、数据库与 Redis 真正可用，也不能确认已复用服务的 profile/身份。`VITE_APP_PROXY_TARGET` 若已设置会优先于 `--backend-port` 推导值；执行前必须把 API 登录地址、浏览器代理和目标实例核对为同一环境。成功保留栈用 `--keep-stack-after`，退出时仍需清理记录为 owned 的资源。
+- React coverage 在 `vite.config.ts` 配置了 lines/functions/branches/statements 阈值；Vue `vitest.config.ts` 当前只生成 coverage 报告，未设置阈值。不能把 Vue coverage 命令成功描述为达到某个自动阈值。
+- OAuth Provider、邮件收件链路、OSS、部署子路径和生产监控/灾备必须分别具备真实环境证据；单测、静态矩阵及路由 smoke 无法替代。当前两端 OAuth 绑定页面提交绝对 redirect，而后端只接受安全相对路径，是已确认的业务实现阻塞，不能宣称绑定流程已验收。
+
+### 6.6 CRUD 与登录执行限制
+
+以下是当前源码可确认的限制，属于生产验收阻塞，不是已完成的自动门禁：
+
+- CRUD runner 只接受 `--profile local`，直接解析 `application-local.yml` 并依赖 PATH 中的 JDK 21 与 `~/.m2/repository` 的 MySQL Connector/J。它不识别运行后端的 env 覆盖；覆盖 URL 或复用服务时必须人工确认 API/UI/JDBC 同一实例。该命令没有 dry-run，不能为查目标而裸运行。
+- CRUD 的 `verifyApiDb` 记录各阶段快照，没有逐项比较新增/编辑/删除后的业务预期。`finalDbResidue` 会把查询异常保存为 `db.error` 和空 rows，当前汇总只计 rows，存在查询失败却显示零残留的路径。验收必须逐项审阅 `verification`、`cleanup.finalDb` 和 `db.error`，不能把退出码 0 当作数据一致性或无残留证明。
+- 正常完成和普通异常路径会尝试 API cleanup；SIGINT/SIGTERM/SIGHUP 处理器只停止 owned 栈后退出，不能保证数据 cleanup 和最终报告落盘。中断后按 `test-data.json` 的当前 run 唯一键，通过受控 API/数据运维核对并清理，记录结果；不要依靠下一次运行清理前次数据。硬终止和掉电也须人工恢复。
+- `captcha_login.mjs` 与 route smoke 中显式 `--username` / `--password` 只是优先账号，失败后仍会尝试候选列表。隔离测试必须显式配置 `--login-candidates` 或 `LOGIN_CANDIDATES` 为已授权测试账号集合，不能依赖脚本内置示例候选；重试可能产生登录失败记录或锁定账号。
+- 登录脚本始终发送加密请求，`--rsa-public-key` 或 `RSA_PUBLIC_KEY` 必须与目标后端的请求解密私钥匹配。`admin-route-probe` 不透传该 flag，应通过 `RSA_PUBLIC_KEY` 环境变量配置。前端构建密钥另由 `VITE_APP_RSA_*` 提供，不能认为覆盖登录脚本就同时覆盖了前端。
+- `--print-token` 会输出真实会话；截图、测试数据与报告还可能包含个人数据、验证码答案和生成的 fixture 凭据。证据限本地受控 `tmp/`，不得公开上传。`--run-id` 只用简单 slug，`--run-dir` 仅指定 `tmp/` 下目录；解析器目前未强制此目录约束。停止进程不等于撤销测试登录会话，需另行退出/撤销。
+
+恢复步骤与禁止事项仍遵循第 2–4 节及 [数据运维](./DATA-OPS.md)。这些 runner 限制需要独立实现与真实环境回归，本次文档审计没有执行 Redis/数据库写入或 E2E。

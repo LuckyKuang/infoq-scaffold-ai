@@ -6,18 +6,20 @@
 
 ## 要求
 
-### 要求：固定公开路由
-两个管理端都必须继续保留稳定的公开入口和基础错误页。
+### 要求：固定路由与公开边界
+两个管理端都必须保留稳定的公开认证入口、受保护固定页面和基础错误页。固定定义不代表免登录；访问边界由各端守卫决定。
 
 #### 场景：Vue 管理端固定路由
 
 - 当 Vue 管理端启动时
-- 则必须继续保留 `/login`、`/register`、`/index`、`/user/profile`、`/401`、`404` 等固定路由壳
+- 则必须继续保留 `/login`、`/oauth/callback`、`/register`、`/forgot-password`、`/index`、`/user/profile`、`/message-center`、`/401`、重定向与 catch-all 404 等固定路由壳
+- 并且 `permission.ts` 的免登录白名单只放行公开认证入口；首页、个人中心、消息中心等仍需会话
 
 #### 场景：React 管理端固定路由
 
 - 当 React 管理端启动时
-- 则必须继续保留 `/login`、`/register`、`/401`、`/redirect/*`、`/index`、`/user/profile` 等固定路由壳
+- 则必须继续保留 `/login`、`/oauth/callback`、`/register`、`/forgot-password`、`/401`、`/redirect/*`、`/index`、`/user/profile`、`/message-center` 与 catch-all 404 等固定路由壳
+- 并且 `/index`、`/user/profile`、`/message-center` 必须位于 `AuthGuard` 保护的布局内
 
 ### 要求：登录后动态路由装配
 动态业务页必须在登录后按会话与菜单数据装配。

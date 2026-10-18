@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-22T21:44:03.807Z",
+  "generatedAt": "2026-10-18T07:01:10.364Z",
   "repoRoot": ".",
   "sources": {
     "sqlFiles": [
@@ -237,14 +237,14 @@
     ]
   },
   "summary": {
-    "totalCases": 114,
+    "totalCases": 115,
     "p0": 24,
-    "p1": 69,
+    "p1": 70,
     "p2": 21,
-    "reactCases": 114,
-    "vueCases": 114,
+    "reactCases": 115,
+    "vueCases": 115,
     "sideEffectCases": 51,
-    "gaps": 2,
+    "gaps": 0,
     "safetyGates": 6
   },
   "cases": [
@@ -426,7 +426,7 @@
     {
       "id": "FE-ERROR-401",
       "source": "fixed-route",
-      "menuId": "fixed-7",
+      "menuId": "fixed-8",
       "parentMenuId": "",
       "moduleKey": "error.401",
       "menuName": "401",
@@ -468,7 +468,7 @@
     {
       "id": "FE-ERROR-404",
       "source": "fixed-route",
-      "menuId": "fixed-8",
+      "menuId": "fixed-9",
       "parentMenuId": "",
       "moduleKey": "error.404",
       "menuName": "404",
@@ -568,6 +568,46 @@
         "frontend-vue/tests/views/system/user/index.test.ts",
         "frontend-vue/tests/views/system/user/profile/index.test.ts"
       ],
+      "gaps": [],
+      "sourceFile": ""
+    },
+    {
+      "id": "FE-MESSAGE-CENTER",
+      "source": "fixed-route",
+      "menuId": "fixed-7",
+      "parentMenuId": "",
+      "moduleKey": "message.center",
+      "menuName": "消息中心",
+      "menuType": "fixed",
+      "routePath": "/message-center",
+      "component": "message-center/index",
+      "clients": [
+        "react",
+        "vue"
+      ],
+      "permissions": [],
+      "priority": "P1",
+      "automationType": "smoke",
+      "sideEffect": false,
+      "dependencies": [
+        "backend"
+      ],
+      "preconditions": [
+        "前端应用已启动",
+        "公开路由无需登录；受保护固定路由需要有效登录态"
+      ],
+      "steps": [
+        "打开 /message-center",
+        "等待 消息中心 首屏渲染"
+      ],
+      "assertions": [
+        "消息中心 路由可访问",
+        "无阻断性 console error",
+        "无 pageerror"
+      ],
+      "testData": "只读或固定入口数据。",
+      "cleanup": "无需业务数据清理。",
+      "existingTests": [],
       "gaps": [],
       "sourceFile": ""
     },
@@ -2183,7 +2223,7 @@
     {
       "id": "FE-ROUTE-REDIRECT",
       "source": "fixed-route",
-      "menuId": "fixed-9",
+      "menuId": "fixed-10",
       "parentMenuId": "",
       "moduleKey": "route.redirect",
       "menuName": "路由跳转",
@@ -6014,18 +6054,7 @@
       "sourceFile": ""
     }
   ],
-  "gaps": [
-    {
-      "type": "react-page-without-menu",
-      "component": "message-center/index",
-      "message": "React 页面未直接匹配菜单组件"
-    },
-    {
-      "type": "vue-view-without-menu",
-      "component": "message-center/index",
-      "message": "Vue 页面未直接匹配菜单组件"
-    }
-  ],
+  "gaps": [],
   "safetyGates": [
     "不自动删除非 e2e_ 数据。",
     "不清空日志。",

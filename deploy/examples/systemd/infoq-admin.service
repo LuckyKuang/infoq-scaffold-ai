@@ -10,9 +10,10 @@ Group=infoq
 WorkingDirectory=/infoq/server/app
 Environment="SPRING_PROFILES_ACTIVE=prod"
 Environment="SPRING_CONFIG_ADDITIONAL_LOCATION=file:/infoq/server/config/"
-Environment="DEPLOY_ID=3.0.0-20260920120000"
-Environment="SECURITY_TOKEN_SECRET=replace-with-at-least-32-chars-secret"
+# Required operator-owned file; use systemd EnvironmentFile syntax, not a shell script.
+EnvironmentFile=/etc/infoq-scaffold-ai/backend.env
 Environment="INFOQ_IP2REGION_V6_PATH=/infoq/server/ip2region/ip2region_v6.xdb"
+Environment="INFOQ_LOG_PATH=/infoq/server/logs"
 ExecStart=/usr/bin/java -Djava.security.egd=file:/dev/./urandom -Dserver.port=9090 -XX:+HeapDumpOnOutOfMemoryError -Xms512m -Xmx1024m -jar /infoq/server/app/infoq-admin.jar
 SuccessExitStatus=143
 KillSignal=SIGTERM

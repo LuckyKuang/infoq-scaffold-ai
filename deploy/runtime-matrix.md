@@ -35,15 +35,22 @@ systemctl is-active docker || service docker status || true
 
 要求 `docker info` 能连到 WSL2 内 Docker daemon。不要把 Windows Docker Desktop 暴露进来的 context 当作默认合规路径。
 
-3. 如果是 macOS：
+3. 如果是 macOS，先只读核对已安装的 Colima、当前 context 与 daemon：
 
 ```bash
 uname -s
 command -v colima
-colima status || colima start --runtime docker --cpu 4 --memory 8 --disk 80
-docker context use colima
+colima status
+docker context show
 docker info
 docker compose version
+```
+
+未启动时，在任务已授权启动该运行时后执行；切换 context 也会修改用户配置，先记录原 context，结束一次性验证时恢复：
+
+```bash
+colima start --runtime docker --cpu 4 --memory 8 --disk 80
+docker context use colima
 ```
 
 要求当前 Docker context 是 `colima`，且 Compose 可用。macOS 默认 `INFOQ_DEPLOY_ROOT=$HOME/infoq`，因为 Colima 默认更容易挂载用户 home；只有用户明确配置并验证 `/infoq` 可被 Colima VM 挂载时才使用 `/infoq`。
@@ -67,10 +74,10 @@ docker compose version || docker-compose version
 
 要求 Docker daemon 为本机 Docker CE/Moby Engine 路径，并且当前用户有权限执行 Docker 命令。
 
-## 必须停止并询问的情况
+## 必须先解决的阻塞
 
-- `docker context show` 或 `docker info` 显示 Docker Desktop，且用户没有明确允许使用它。
-- 运行时是 Rancher Desktop、Podman、OrbStack 或其他未在本矩阵列出的方案。
+- `docker context show` 或 `docker info` 显示 Docker Desktop，且用户没有明确允许使用它；本次不自动切换或安装。
+- 运行时是 Rancher Desktop、Podman、OrbStack 或其他未在本矩阵列出的方案；已有明确选定/授权时按其目标核验，不能仅因矩阵未列出而重复索要相同授权。
 - macOS Colima 未安装，且用户没有授权安装依赖。
 - Docker Compose 不可用。
 - `/tmp/infoq-deploy` 或 `${INFOQ_DEPLOY_ROOT}/server/temp` 无法创建。
@@ -107,12 +114,12 @@ docker run --rm -v /infoq:/infoq alpine:3.20 sh -lc 'test -d /infoq/server/temp 
 
 ```bash
 cd /path/to/infoq-scaffold-ai
-export INFOQ_DEPLOY_ROOT=<runtime-specific-root>
+export INFOQ_DEPLOY_ROOT=/infoq # WSL2/Linux；macOS Colima 改为 "${HOME}/infoq"
 mkdir -p /tmp/infoq-deploy "${INFOQ_DEPLOY_ROOT}/server/temp"
 sudo env INFOQ_SOURCE_DIR="$(pwd)" INFOQ_FRONTEND_TARGET=all INFOQ_PUBLIC_BASE_URL=http://127.0.0.1 INFOQ_DEPLOY_ROOT="${INFOQ_DEPLOY_ROOT}" bash deploy/install.sh
 ```
 
-安装脚本会生成或复用 `/etc/infoq-scaffold-ai/deploy.env` 和 `/etc/infoq-scaffold-ai/credentials.txt`。后续 smoke 命令与 `wsl2-docker-compose.md` 相同，必须从 `INFOQ_ENV_FILE` 读取随机 MySQL/Redis/MinIO/Admin 凭据。
+安装脚本会生成或复用 `/etc/infoq-scaffold-ai/deploy.env` 和 `/etc/infoq-scaffold-ai/credentials.txt`。后续严格 smoke 按 [VERIFICATION.md](VERIFICATION.md#部署后检查) 执行，Windows 访问按 [WSL2 专项](wsl2-docker-compose.md)。环境文件保持 `600`，不打印秘密或带秘密的 SQL。安装不意味着已完成权限、TLS、网络、bucket 和 RSA 治理，生产须先关闭 [当前阻塞](DEPLOYMENT_LIFECYCLE.md#9-当前生产准备阻塞)。
 
 macOS Colima 使用 `sudo` 执行安装脚本时，应把用户态 Colima socket 显式传给 root 进程：
 
@@ -127,8 +134,10 @@ sudo env DOCKER_CONFIG="${DOCKER_CONFIG:-$HOME/.docker}" DOCKER_HOST="${DOCKER_H
 Apple `container` 不是本流程的默认运行时。只有用户明确要求“用 Apple Container 验证”时才允许使用，并且必须满足：
 
 - 使用仓库脚本 `deploy/apple-container.sh`，不要手写一组会和 Compose 默认名冲突的容器名。
-- 网络固定为 `infoq-apple` / `192.168.66.0/24`，容器名前缀固定为 `infoq-apple-`。
+- 网络名固定 `infoq-apple`，默认子网 `192.168.66.0/24`（可通过 Apple env 配置，必须与已有网络一致），容器名前缀固定 `infoq-apple-`。
 - 默认只发布 `127.0.0.1:19090`，不要占用 `8080`、`9000`、`9001`。
 - 数据目录默认 `$HOME/infoq-apple`，禁止复用 `$HOME/infoq` 或 `/infoq`。
 - 禁止停止、删除、重建或改写其他项目或未打 `org.infoq.stack=apple-container` 标签的资源。
-- 官方后端 Dockerfile 的 BuildKit cache mount 失败时，记录 blocker 并改走 `deploy/Dockerfile.apple` 运行时镜像，不得伪造成功。
+- 默认直接通过宿主 Maven 打包，再使用 `deploy/Dockerfile.apple`；不先尝试不兼容的 Docker BuildKit 构建。Apple 只含 MySQL/Redis/后端，不替代完整生产栈。
+
+Node 入口在 macOS 固定选择 Apple，没有 `--runtime` 参数；Colima 必须走 Docker shell 入口。Apple `status` 在 daemon 停止时可能启动服务；严格只读使用 `container system status` / `container list` 和 `smoke`。Apple 的安装、资源归属与回滚细节见 [APPLE_CONTAINER.md](APPLE_CONTAINER.md)。

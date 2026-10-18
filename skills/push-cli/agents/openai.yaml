@@ -1,4 +1,4 @@
 interface:
   display_name: "Push CLI（推送与 PR）"
-  short_description: "分支推送、PR 创建、校验回流与受控合并"
-  default_prompt: "使用 $push-cli 把本地改动推送到 GitHub：先 ensure 校验 gh 登录与仓库身份，再用 check 跑本地校验矩阵；处于默认分支时 submit-pr 会自动拉取最新默认分支并新建工作分支，提交后推送、创建或复用 PR；watch 轮询 GitHub 校验并在失败时输出失败 check 与日志摘要供修复；全部校验通过后才用 merge --yes 合并。禁止直推默认分支、禁止 --force/--all/--tags、禁止 --admin 绕过保护。"
+  short_description: "默认预览分支推送与 PR 流程，显式执行并受控合并"
+  default_prompt: "使用 $push-cli 检查登录和目标、运行适用校验并预览推送与 PR；确认已有授权后显式 --execute 执行，合并还需 --yes，保留默认分支保护与校验门禁。"

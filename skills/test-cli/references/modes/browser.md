@@ -17,7 +17,7 @@
 
 1. 判定范围：先确认任务是页面流程、受保护路由探测、截图、console/pageerror 采集、渲染校验，还是 DevTools 深度诊断。
 2. CLI-first：优先运行 `playwright-cli` 或 `chrome-devtools-cli`；MCP 只作为明确 fallback 或交互探索。
-3. 只读探测：涉及管理端路由时先 `--list-routes`，确认 backend、frontend、token、验证码状态和目标 URL 后再打开页面。
+3. 只读探测：先检查配置、已有矩阵、状态文件及目标 URL；`--list-routes` 会写验证码种子和登录会话，确认已授权测试环境后才执行。
 4. 目标枚举：涉及批量路由、截图矩阵、登录态注入或导出证据时，先列出路由、账号、storage key、输出目录和失败门禁。
 5. 执行验证：检查退出码、等待条件、截图路径、console 日志、pageerror 和网络/性能证据。
 6. 失败处理：CLI 失败时保留命令、错误摘要和证据路径；不要静默切换 MCP 或把空白截图当作通过。
@@ -46,7 +46,7 @@ pnpm --dir skills/test-cli/scripts run playwright-cli flow --url "https://exampl
 
 该命令是快速路由探测。它直接调用 `test-cli/scripts/captcha_login.mjs`（Redis 连接通过 `INFOQ_TEST_REDIS_*` 环境变量提供），走 `/auth/code` + Redis 种子答案 + `/auth/login` 获取真实 token。完整验证码路由矩阵和 CRUD E2E 仍使用 `test-cli`。
 
-先只列出后端真实返回路由：
+在已授权测试环境获取登录态并列出后端真实返回路由（不启动浏览器，但会写 Redis 并创建会话）：
 
 ```bash
 pnpm --dir skills/test-cli/scripts run playwright-cli admin-route-probe --backend-url "http://127.0.0.1:8080" --list-routes
@@ -63,10 +63,12 @@ pnpm --dir skills/test-cli/scripts run playwright-cli admin-route-probe --fronte
 该命令会：
 
 1. 直接调用 `skills/test-cli/scripts/captcha_login.mjs --print-token`，通过 Redis 种子答案获取真实 token，并把证据写入 `tmp/test-cli/e2e/captcha-login/`。
-3. 在页面加载前写入 `Admin-Token`。
-4. 打开目标前端路由。
-5. 输出截图与 console 日志路径。
-6. 默认把 `console error` / `pageerror` 视为失败。
+2. 在页面加载前写入 `Admin-Token`。
+3. 打开目标前端路由。
+4. 输出截图与 console 日志路径。
+5. 默认把 `console error` / `pageerror` 视为失败。
+
+当前执行器不自动判定截图空白、HTTP 错误状态或错误页 DOM；必须补充业务可见元素断言并审阅截图。URL 匹配与 console 无错不足以证明页面正确。完整边界见 `docs/TESTING.md` 第 6.5 节。
 
 ### 4. DevTools CLI
 
@@ -74,7 +76,7 @@ pnpm --dir skills/test-cli/scripts run playwright-cli admin-route-probe --fronte
 pnpm --dir skills/test-cli/scripts run chrome-devtools-cli --help
 ```
 
-该入口是本地 `chrome-devtools-mcp` 的 repo-owned 包装器，用于在需要时直接启用 DevTools 级诊断。
+该入口是本地 `chrome-devtools-mcp` 的服务启动包装器，启动后通过 MCP 协议接收调用；它不是带截图/性能子命令的交互 CLI。由 `.codex/config.toml` 配置的 MCP 客户端调用实际诊断工具，手动启动会保持进程等待客户端连接。
 
 ## 前置条件
 
@@ -105,7 +107,7 @@ pnpm --dir skills/test-cli/scripts run chrome-devtools-cli --help
 - `--backend-url`：后端地址，默认 `http://127.0.0.1:8080`。
 - `--client-id`：登录 client id。
 - `--username` / `--password`：显式覆盖默认候选账号。
-- `--list-routes`：只输出路由列表，不启动浏览器。
+- `--list-routes`：真实登录后输出路由列表，不启动浏览器；仍会写验证码种子与登录会话。
 
 ## MCP Fallback 条件
 

@@ -39,7 +39,7 @@ Page / Store
 ## 6. 公共约束
 
 - 登录与注册请求默认补齐 `clientId` 和 `grantType`。
-- OAuth ticket 登录请求固定补齐 `grantType=oauth`，并沿用公开加密请求头。
+- OAuth ticket 登录请求默认补齐 `grantType=oauth`（调用方可显式提供），并沿用公开加密请求头。
 - `GET /auth/code` 同时承载图形验证码与 `registerEnabled`、`forgotPasswordEnabled`、`mailEnabled` 等公开能力位。
 - `GET /auth/oauth/providers` 是登录页第三方入口的公开真值；`POST /auth/oauth/ticket` 只消费后端回调签出的短期 ticket。
 - 公开认证页的邮件验证码发送与忘记密码调用统一收敛在 `login.ts`，避免页面层自行拼接接口。

@@ -57,15 +57,17 @@ main.tsx
 `AppRouter.tsx` 当前内建了这些固定入口：
 
 - `/login`
+- `/oauth/callback`
 - `/register`
 - `/forgot-password`
 - `/401`
 - `/redirect/*`
 - `/index`
 - `/user/profile`
+- `/message-center`
 - `*` -> 404
 
-它们不是全部业务路由，只是登录前后都需要稳定存在的基础入口。
+其中 `/index`、`/user/profile`、`/message-center` 位于 `AuthGuard` 保护的布局内。固定路由不等于公开路由；登录前白名单以 `public-routes.ts` 为准。
 
 ### 3.2 动态菜单路由
 
@@ -91,7 +93,7 @@ main.tsx
 
 同时，`GET /auth/code` 也是登录前公开认证能力的真值来源，除了验证码图片本身，还会驱动注册和忘记密码入口的展示与公开页停留条件。
 
-对应地，`utils/request.ts` 会在环境变量开启时为 `POST/PUT` 请求追加 `encrypt-key` 请求头并加密请求体。
+对应地，`utils/request.ts` 仅在 `VITE_APP_ENCRYPT=true` 且请求声明 `isEncrypt: true` 时，为 `POST/PUT` 请求追加 `encrypt-key` 请求头并加密请求体。公开 GET 请求不继承这些写请求头。
 
 ### 4.2 统一请求出口
 

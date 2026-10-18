@@ -6,7 +6,7 @@
 
 ## 2. 子模块清单
 
-- `login.vue`、`oauth-callback.vue`、`register.vue`、`index.vue`
+- `login.vue`、`oauth-callback.vue`、`register.vue`、`forgot-password.vue`、`index.vue`
 - `system/*`
 - `monitor/*`
 - `redirect/*`
@@ -16,7 +16,7 @@
 
 | 页面分组 | 当前职责 |
 | --- | --- |
-| `login`、`oauth-callback`、`register` | 登录前公开入口、第三方登录回调；`register` 会根据 backend 能力位决定是否展示邀请码校验与验证码发送门禁 |
+| `login`、`oauth-callback`、`register`、`forgot-password` | 登录前公开入口、第三方登录回调、自助注册与密码重置；自助页根据 backend 能力位控制入口，`register` 还包含邀请码校验与验证码发送门禁 |
 | `index` | 登录后的首页入口 |
 | `system/*` | 用户、角色、菜单、部门、岗位、字典、配置、邀请码、公告、客户端、OSS、个人中心；`system/config` 使用后端 `panel` 接口渲染类型化配置中心，OSS 页面读取 `sys.oss.previewListResource` 保持预览开关一致 |
 | `monitor/*` | 在线用户、登录日志、操作日志、缓存、数据源、服务、任务与任务日志 |
@@ -52,7 +52,7 @@ Route match
 
 ## 8. 下钻阅读路径
 
-1. 公开入口：`login.vue`、`oauth-callback.vue`、`register.vue`（含邀请码注册门禁）
+1. 公开入口：`login.vue`、`oauth-callback.vue`、`register.vue`（含邀请码注册门禁）、`forgot-password.vue`
 2. 首页：`index.vue`
 3. 业务页：`system/*`（重点关注 `system/config/index.vue`、`system/invite/index.vue`）
 4. 监控页：`monitor/*`

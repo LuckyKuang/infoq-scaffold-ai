@@ -32,7 +32,7 @@ main.ts
 
 ## 6. 公共约束
 
-- `/login`、`/oauth/callback`、`/register`、`/401`、`/index` 等固定路由必须稳定存在。
+- `/login`、`/oauth/callback`、`/register`、`/forgot-password`、`/401`、`/index` 等固定路由必须稳定存在；是否免登录由 `src/permission.ts` 白名单决定。
 - 本目录只维护固定路由，不在这里手写完整后台菜单树。
 - 动态路由映射依赖 `src/views` 的实际文件路径。
 
@@ -49,4 +49,4 @@ main.ts
 
 ## 9. 固定消息中心路由
 
-`/message-center` 是与 `/profile` 同类的固定受保护路由，不依赖后端菜单。全局守卫仍会先恢复用户资料和权限，因此匿名访问不能查询个人消息。
+`/message-center` 是与 `/user/profile` 同类的固定受保护路由，不依赖后端菜单。全局守卫仍会先恢复用户资料和权限，因此匿名访问不能查询个人消息。

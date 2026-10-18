@@ -13,6 +13,8 @@
 - [部署指南](README.md)（前置条件、端口与目录准备）
 - [Docker Compose](DOCKER.md)（容器化部署对照）
 
+下文构建、复制与安装命令均从仓库根目录执行；服务启动块单独切换工作目录。目标主机需 JDK 21，构建机需 JDK 21 / Maven 3.9.x 与 Node 24.18.0 / pnpm 10.34.1。应用账号、文件 owner/权限、配置、数据库备份、TLS 与日志采集未准备完成时，不进入生产启动。
+
 ## 1. 部署目标
 
 手动部署的最终形态通常是：
@@ -31,7 +33,7 @@
 推荐交付结构：
 
 ```text
-release-cli/
+release-bundle/
 ├── backend/
 │   └── infoq-admin.jar
 ├── config/
@@ -66,10 +68,12 @@ release-cli/
 在仓库根目录执行：
 
 ```bash
-node tools/backend_mvn.mjs -- clean package -P prod -pl infoq-admin -am
+node tools/backend_mvn.mjs -- -DskipTests clean package -P prod -pl infoq-admin -am
 ```
 
 构建产物：`backend/infoq-admin/target/infoq-admin.jar`。
+
+打包不代替测试：发布前按 `tools/verify/README.md` 完成相关定向测试并保留结果，后端单测总时长控制在 60 秒内。构建前执行 `node tools/validate_utf8.mjs`。
 
 ### 3.2 准备运行目录
 
@@ -82,6 +86,8 @@ mkdir -p /infoq/server/logs
 mkdir -p /infoq/server/temp
 mkdir -p /infoq/server/ip2region
 ```
+
+上述系统路径由授权管理员创建。预先创建专用 `infoq` 用户/组；jar 与配置由受控部署账号拥有，服务账号只读，配置目录及秘密文件限制为必要用户可读。仅 `logs`、`temp` 等运行写入目录授予服务账号写权限，禁止递归 `chmod 777`；Nginx 的用户需能遍历静态资源父目录并读取文件。
 
 复制 jar 与 IPv6 地址库：
 
@@ -121,33 +127,45 @@ spring.servlet.multipart.location: /your/path/server/temp
 
 ### 3.4 初始化数据库
 
-首次部署导入初始化 SQL 和当前增量 SQL：
+确认目标库为空后，首次导入冻结基线和当前适用增量；使用有权限的 DBA 账号，以下命令会修改数据库，任一步失败立即停止：
 
 ```bash
-mysql -u root -p < sql/infoq_scaffold_3.0.0.sql
-for file in sql/infoq_scaffold_update_*.sql; do
-  mysql -u root -p infoq < "$file"
-done
+(
+  set -euo pipefail
+  mysql -u root -p < sql/infoq_scaffold_3.0.0.sql
+  for file in sql/infoq_scaffold_update_*.sql; do
+    mysql -u root -p infoq < "$file"
+  done
+)
 ```
 
-如果目标库已经有业务数据，先做备份，不要直接覆盖导入。多节点滚动发布前必须先完成增量 SQL；当前版本至少应校验 `sys_job`、`QRTZ_LOCKS`、`sys_oauth_provider`、`sys_oauth_identity`，以及 `sys_client` 中 `e5cd7e4891bf95d1d19206ce24a7b32e` 客户端包含 `oauth` 授权类型。
+已有环境不得重新导入基线或盲跑全部增量；先备份并按 [DATA-OPS.md](../docs/DATA-OPS.md) 确认已应用状态、仅执行缺失迁移及其回滚条件。多节点滚动发布前必须先完成增量 SQL；当前版本至少应校验 `sys_job`、`QRTZ_LOCKS`、`sys_oauth_provider`、`sys_oauth_identity`，以及 `sys_client` 中 `e5cd7e4891bf95d1d19206ce24a7b32e` 客户端包含 `oauth` 授权类型。创建最小权限应用账号并将独立受控凭据写入外部配置；本手动流程不会像安装器那样自动替换基线管理员和 OSS 凭据，必须另外完成并验证。
 
 ### 3.5 启动后端
 
 推荐显式指定生产 profile、附加配置目录和端口：
 
+先在私密终端或受控服务管理器注入真实 `DEPLOY_ID`、`SECURITY_TOKEN_SECRET`，并准备数据库/Redis/RSA 外部配置；下面的启动块拒绝缺失值，不使用示例 token：
+
 ```bash
+(
+set -euo pipefail
+: "${DEPLOY_ID:?必须先注入当前发布批次}"
+: "${SECURITY_TOKEN_SECRET:?必须先注入受控生产 token secret}"
 cd /infoq/server/app
 SPRING_PROFILES_ACTIVE=prod \
 SPRING_CONFIG_ADDITIONAL_LOCATION=file:/infoq/server/config/ \
-DEPLOY_ID=3.0.0-20260920120000 \
-SECURITY_TOKEN_SECRET=replace-with-at-least-32-chars-secret \
+DEPLOY_ID="${DEPLOY_ID}" \
+SECURITY_TOKEN_SECRET="${SECURITY_TOKEN_SECRET}" \
+INFOQ_LOG_PATH=/infoq/server/logs \
 INFOQ_IP2REGION_V6_PATH=/infoq/server/ip2region/ip2region_v6.xdb \
 nohup java \
   -Dserver.port=9090 \
   -Xms512m -Xmx1024m \
   -jar /infoq/server/app/infoq-admin.jar \
   > /infoq/server/logs/console.log 2>&1 &
+echo "backend pid=$!"
+)
 ```
 
 直接运行适合临时验证；正式环境更建议用 systemd 托管。
@@ -163,6 +181,8 @@ nohup java \
 
 推荐安装方式：
 
+先准备 `/etc/infoq-scaffold-ai/backend.env`（root 拥有、`600`），至少包含 `DEPLOY_ID` 与 `SECURITY_TOKEN_SECRET` 的真实赋值。该文件遵循 systemd `EnvironmentFile` 语法，不能含 shell 的 `export`、命令替换或 `${...}` 展开；缺失文件会让示例服务明确失败。数据库/Redis/RSA 由外部 `application-prod.yml` 或适用环境变量配置，不把秘密直接写入世界可读的 unit。服务账号必须存在且可读必要配置、可写日志/临时目录。
+
 ```bash
 cp deploy/examples/systemd/infoq-admin.service /etc/systemd/system/infoq-admin.service
 systemctl daemon-reload
@@ -176,22 +196,23 @@ systemctl start infoq-admin
 systemctl status infoq-admin
 systemctl restart infoq-admin
 journalctl -u infoq-admin -n 200 --no-pager
+tail -n 200 /infoq/server/logs/console.log
 ```
 
-使用前至少调整两项：
+使用前逐项调整：
 
 - `User` / `Group`
 - `ExecStart` 中的 Java 路径、JVM 参数和 jar 路径
-- `Environment="DEPLOY_ID=..."` 与 `Environment="SECURITY_TOKEN_SECRET=..."`
+- `EnvironmentFile` 路径与当前发布批次/秘密来源
+- 日志轮转与保留：示例 `StandardOutput/StandardError=append:...` 写文件，应用输出不全部进入 journal；目标 systemd 必须支持 `append:`，先用 `systemd-analyze verify` 检查
 
 ## 4. 前端部署
 
 ### 4.1 构建 Vue 管理端
 
 ```bash
-cd frontend-vue
-pnpm install
-VITE_APP_CONTEXT_PATH=/vue/ pnpm run build:prod
+pnpm --dir frontend-vue install --frozen-lockfile
+VITE_APP_CONTEXT_PATH=/vue/ pnpm --dir frontend-vue run build:prod
 ```
 
 构建产物目录：`frontend-vue/dist/`。
@@ -199,9 +220,8 @@ VITE_APP_CONTEXT_PATH=/vue/ pnpm run build:prod
 ### 4.2 构建 React 管理端
 
 ```bash
-cd frontend-react
-pnpm install
-VITE_APP_CONTEXT_PATH=/react/ pnpm run build:prod
+pnpm --dir frontend-react install --frozen-lockfile
+VITE_APP_CONTEXT_PATH=/react/ pnpm --dir frontend-react run build:prod
 ```
 
 构建产物目录：`frontend-react/dist/`。
@@ -233,8 +253,10 @@ cp -R frontend-react/dist/* /infoq/nginx/html/react/
 
 当前仓库默认是：
 
-- Vue：`/vue/` + `/prod-api`
-- React：`/react/` + `/prod-api`
+- `.env.production` 默认 context 为 `/`、API 为 `/prod-api`
+- 本文双管理端构建命令显式覆盖为 Vue `/vue/`、React `/react/`；改变 context 后必须重建
+
+两端默认 `VITE_APP_ENCRYPT=true`；构建前配置受控 `.env.production.local` 或构建环境变量，并与后端 `api-decrypt` 两组 RSA 配对。密钥方向、前端私钥可见性及 HTTPS 要求见 [README.md 第 1.4 节](README.md#14-配置检查项)。只复制静态文件不会更新产物中的变量。发布使用空的新版本目录，完整复制 `dist/.` 后受控切换，避免旧 hash 文件或覆盖一半的包；保留前一版本目录供回滚。
 
 配置文件参考：
 
@@ -248,7 +270,7 @@ cp -R frontend-react/dist/* /infoq/nginx/html/react/
 手动部署时，核心差异是：
 
 - 前端不再代理到容器服务，而是直接读取本机静态目录
-- `/prod-api/` 反代到本机或内网中的 `infoq-admin:9090`
+- `/prod-api/` 默认反代到本机 `127.0.0.1:9090`，内网多节点需显式修改 upstream
 - HTTP 与 HTTPS 分成两份独立配置文件
 
 ### 5.1 HTTP 配置文件
@@ -285,6 +307,8 @@ systemctl reload nginx
 
 如果实际文件名不同，先修改配置再重载 Nginx。
 
+示例不包含 MinIO `/oss/`、`/console-oss/` 代理；启用 OSS 时另行评审并配置对象存储地址、TLS 与访问授权，不能假定 Compose 网关能力已随文件复制。HTTPS 示例启用带 `includeSubDomains` 的 HSTS，上线前必须确认所有子域均支持 HTTPS；证书应覆盖真实域名，先备份当前 Nginx 配置并执行 `nginx -t` 再 reload。
+
 ## 6. 标准发布步骤
 
 建议按下面顺序执行：
@@ -292,8 +316,8 @@ systemctl reload nginx
 1. 启动 MySQL
 2. 启动 Redis
 3. 如启用 OSS，启动 MinIO 或接入已有对象存储
-4. 导入初始化 SQL
-5. 按文件名顺序导入所有 `sql/infoq_scaffold_update_*.sql`
+4. 首次空库导入初始化 SQL；已有库禁止重导
+5. 核对迁移状态后按顺序导入适用增量
 6. 设置 `DEPLOY_ID`、`SECURITY_TOKEN_SECRET` 和必要密钥配置后启动后端 `infoq-admin.jar`
 7. 发布 Vue / React 静态资源
 8. 选择 HTTP 或 HTTPS 的 Nginx 配置文件
@@ -334,6 +358,7 @@ WebSocket/SSE 客户端断线重连能力仍需按前端专项验证确认；如
 推荐日志位置：
 
 - 后端：`/infoq/server/logs/console.log`
+- 后端应用滚动日志：`/infoq/server/logs/`（由 `INFOQ_LOG_PATH` 设置）
 - Nginx：`/infoq/nginx/log/`
 
 如果后端无法启动，优先检查：
@@ -363,7 +388,10 @@ WebSocket/SSE 客户端断线重连能力仍需按前端专项验证确认；如
 
 一旦上线后出现严重异常，优先按以下顺序回滚：
 
-1. 回退 Nginx 配置
-2. 回退前端静态资源
-3. 回退后端 jar
-4. 必要时恢复数据库备份
+1. 摘除流量，保留失败日志，确认旧应用与当前数据库兼容。
+2. 停止应用并恢复上一 jar、完整前端目录和匹配配置；不覆盖持久数据目录。
+3. 恢复经校验的 Nginx 配置，`nginx -t` 成功后 reload，启动旧应用。
+4. 若必须恢复数据库，先获数据恢复确认并按独立回滚脚本/备份方案执行；应用回滚不自动回退数据。
+5. 验证 readiness、登录、关键 API、静态资源与日志，再恢复流量。
+
+手动示例不提供告警、备份调度、容量保证或自动回滚。上线前须明确日志轮转/保留、磁盘和依赖告警接收人，并在目标环境演练告警及备份恢复；文档静态审阅不能作为这些项目已通过的证据。

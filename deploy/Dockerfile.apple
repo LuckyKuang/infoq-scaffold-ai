@@ -1,5 +1,5 @@
 # Apple container runtime image. Package infoq-admin.jar on the host first, then
-# copy it into deploy/.apple-build/app.jar before `container build`.
+# copy it into tmp/deploy-cli/apple-build/app.jar before `container build`.
 FROM bellsoft/liberica-openjdk-rocky:21.0.12-cds
 
 LABEL maintainer="Pontus"

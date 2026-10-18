@@ -13,7 +13,7 @@
 3. `skills` 下不保留共享底座型、README-only、helper-only 或已被新工作域覆盖的旧 skill 目录。
 4. 一个 skill 一个工作域；域内用子命令或 mode 表达子场景，细节放 `references/`。React / Vue 管理端差异通过 `references/*` 或 `--client react|vue` 区分。
 5. skill 的主执行入口必须兼容 Windows / macOS / Linux；统一使用 repo-owned Node CLI 或 `.mjs`，不再保留 `.sh` / `.ps1` / `.cmd` 作为 skill 入口。若内部仍需 Python 等实现，必须由跨平台 Node 入口调度。
-6. 仓库级 skill 是 CLI 型可执行 SOP：判定范围 -> 只读探测 / dry-run -> 目标与影响枚举 -> 写入或危险动作门禁 -> 执行验证 -> `tmp/` 证据留存与显式失败。远程写操作默认 dry-run。
+6. 仓库级 skill 是 CLI 型可执行 SOP：判定范围 -> 只读探测 / dry-run -> 目标与影响枚举 -> 写入或危险动作门禁 -> 执行验证 -> `tmp/` 证据留存与显式失败。远程写操作默认 dry-run，必须显式 `--execute`，合并另需 `--yes`。
 7. 工作域之外的能力不新建 skill：backend 验证与 OpenSpec 校验放 `tools/`，数据运维与交付工作流放 `docs/`，部署脚本与运行时矩阵放 `deploy/`；部署生命周期编排由 `deploy-cli` 承担。
 
 ## 2. 一个 skill 通常包含什么
@@ -61,6 +61,8 @@
 
 触发来源三类：用户显式点名 skill；`AGENTS.md` 的 `Skill Trigger` 命中语义；Codex 读取规则后按任务类型主动选择最合适的 skill。因此 skill 的有效性不只取决于脚本，还取决于 `SKILL.md` 是否描述清楚触发场景、`AGENTS.md` 是否正确路由、`README.md` 与 `docs/*.md` 是否与 skill 实际入口一致。
 
+`skills/` 是本仓库正文真值目录，当前依靠规约路由后显式读取。它不是 Codex 官方自动发现的 `.agents/skills/`；UI 选择器和 `$skill-name` 原生调用需要宿主另行安装或链接。文件存在和 metadata 合法不证明当前会话已经加载技能，详见 `docs/AI-COLLABORATION.md` 第 1.4 节。
+
 以下情况通常不值得单独沉淀为 skill：
 
 - 只会执行一次的临时任务
@@ -95,6 +97,7 @@ node tools/openspec_check.mjs <change-id>
 | --- | --- | --- |
 | `tools/lib/skill_runtime.mjs` | repo root 解析、`tmp/` 路径、命令执行、进程管理、HTTP/文件辅助等通用运行时能力 | 多数 repo-level skills 与脚本 |
 | `tools/lib/admin_dev_stack.mjs` | 本地 admin backend + frontend 栈的启动、停止、状态文件、日志与端口收口管理 | `test-cli` 的 `run_admin_e2e.mjs` / `run_admin_crud_e2e.mjs` |
+| `tools/lib/backend_login.mjs` | 共享登录请求加密：AES-256-ECB/PKCS7 载荷与 RSA 头密钥；不发起登录或解析 token | `test-cli` 的验证码种子登录与 `tools/verify/smoke_checks.mjs` |
 
 维护约束：
 
@@ -110,7 +113,7 @@ node tools/openspec_check.mjs <change-id>
 当任务要求"不要跳过验证码""用 Redis 种子答案跑完整登录""启动后端和前端后逐模块 smoke""生成管理端测试矩阵"或"设计 CRUD 浏览器自动化模式"时使用。测试政策与 case 集合见 [TESTING.md](./TESTING.md) 与 `docs/testing/`。
 
 ```bash
-node skills/test-cli/scripts/generate-case-matrix.mjs
+node skills/test-cli/scripts/generate-case-matrix.mjs --output-dir tmp/test-cli/matrix-preview
 node skills/test-cli/scripts/validate-case-matrix.mjs docs/testing/case-matrix.json
 # 先配置 INFOQ_TEST_REDIS_* 或 --redis-*，且与后端使用同一 Redis
 node skills/test-cli/scripts/captcha_login.mjs --backend-url http://127.0.0.1:8080 --print-token
@@ -126,6 +129,7 @@ node skills/test-cli/scripts/run_admin_crud_e2e.mjs --client react
 - `captcha_login.mjs` 是共享验证码登录入口，`run_admin_e2e.mjs` 和 `admin-route-probe` 都直接复用它。
 - 种子模式要求测试进程与后端使用同一个 Redis 实例/DB；通过 `INFOQ_TEST_REDIS_*` 或 `--redis-*` 提供连接，禁止指向生产 Redis。浏览器依赖仍复用 `test-cli`。
 - 证据默认写入 `tmp/test-cli/e2e/<run-id>/`。
+- 上述矩阵命令只向 `tmp/` 预览输出；不带 `--output-dir` 会更新受管矩阵，生成用例不表示 runner 已执行全部用例。`admin-route-probe --list-routes` 会登录并写 Redis/会话，不是只读探测。
 - `run_admin_e2e.mjs` 默认在完成、失败或中断后停止本次 skill 启动的栈；只有成功且需要保留联调进程时显式传 `--keep-stack-after`，失败或中断仍会关闭 owned 进程。
 - `run_admin_crud_e2e.mjs` 仅用于已授权的 `application-local.yml` 测试数据库，默认覆盖 `role,user,menu,dept,post,dict,config,notice,client,invite,ossConfig,job,online`，执行 UI 新增/查询/编辑/删除或模块可用的选择删除/行删除入口；`online` 会创建当前 run 专属 `e2e_` 用户会话并只强退该会话；cleanup 只处理当前 run 的精确 `e2e_` 数据。
 - 管理端 E2E 栈状态按 client 稳定写入 `tmp/test-cli/e2e/stack/<vue|react>/state.json`，断开后下一次运行会先清理未标记 `keepAlive` 的旧状态。
@@ -198,8 +202,9 @@ node skills/deploy-cli/scripts/deploy_cli.mjs down --execute
 - macOS 需要完整栈时使用 Colima + Docker；Apple container 仅启动 MySQL、Redis 和后端，默认端口 `19090`，只操作 `infoq-apple*` 资源。Apple 细节见 `skills/deploy-cli/references/apple-containers.md`。
 - Windows 必须在 WSL2 Debian/Ubuntu 内执行；Linux 使用本地 Docker。Docker 细节见 `skills/deploy-cli/references/docker.md` 与 `deploy/VERIFICATION.md`。
 - Apple 环境文件是 `deploy/.env`；Docker 环境文件是 `INFOQ_ENV_FILE`（默认 `/etc/infoq-scaffold-ai/deploy.env`）。
-- `status` / `smoke` 只读；`up` / `down` 是运行态变更；Docker 路径的写操作必须显式 `--execute`；`down --execute` 同时停止后端与前端。
-- 状态写入 `tmp/deploy-cli/state.json`，日志写入 `tmp/deploy-cli/deploy.log`；完成、失败或中断都要收口。
+- Node 入口在 macOS 固定选择 Apple，在 Linux/WSL2 选择 Docker，没有 `--runtime`。macOS Colima 使用底层部署脚本，不调用该入口管理 Docker 栈。
+- `smoke` 做 HTTP 探测并写本地证据；Apple `status` 还会启动未运行的 daemon，严格只读时用 `container system status` / `container list`。`up` / `down` 是运行态变更；Docker 写操作必须显式 `--execute`；`down --execute` 同时停止依赖、后端与前端。
+- 状态写入 `tmp/deploy-cli/state.json`，日志写入 `tmp/deploy-cli/deploy.log`；成功部署会保留服务，一次性验证必须显式关闭自有栈，脚本失败不会自动清理容器。任务前已有栈不得误停。
 - 默认只使用免费商用运行时基线：WSL2 内 Docker CE、macOS Colima、原生 Linux Docker CE；不默认使用 Docker Desktop。
 - 证据写入 `tmp/deploy-cli/` 或 `tmp/deploy-verify/<run-id>/`。
 
@@ -216,7 +221,7 @@ node skills/compress-cli/scripts/test_agents_check.mjs
 说明：
 
 - 校验器只读：不提供自动改写模式；压缩安全与发布类规则必须人工评审。
-- `check` 覆盖四类契约：`|Category:value` 格式与唯一类别、受保护类别完整性、路由一致性（Local Skills ↔ `skills/` 目录 ↔ `docs/SKILLS.md` 表 ↔ Skill Trigger 引用）、AGENTS.md 引用路径存在性。
+- `check` 覆盖四类结构契约：`|Category:value` 格式与唯一类别、受保护类别存在性、路由一致性（Local Skills ↔ `skills/` 目录 ↔ `docs/SKILLS.md` 表 ↔ Skill Trigger 引用）、根 AGENTS.md 引用路径存在性。规则语义未弱化及近层规约正确性必须另行人工核对。
 - `budget` 输出行数、超长类别与重复片段，作为压缩评审输入，不作为失败条件。
 - 通用 `agents-md-compress` 仅提供压缩写作方法；仓库特有真值以本 skill 为准。
 
@@ -228,17 +233,17 @@ node skills/compress-cli/scripts/test_agents_check.mjs
 node skills/push-cli/scripts/push_cli.mjs ensure
 node skills/push-cli/scripts/push_cli.mjs check --profile docs
 node skills/push-cli/scripts/push_cli.mjs check --profile ci
-node skills/push-cli/scripts/push_cli.mjs submit-pr --message "fix: xxx"
+node skills/push-cli/scripts/push_cli.mjs submit-pr --message "fix: xxx" --execute
 node skills/push-cli/scripts/push_cli.mjs watch --pr <number>
-node skills/push-cli/scripts/push_cli.mjs merge --pr <number> --yes
+node skills/push-cli/scripts/push_cli.mjs merge --pr <number> --execute --yes
 node skills/push-cli/scripts/test_push_cli.mjs
 ```
 
 说明：
 
-- 默认分支（`master`）禁止直推；在本分支上执行 `submit-pr` 时会自动 `git fetch` 最新默认分支并创建 `auto/<yyyymmdd-hhmmss>` 工作分支。
+- 默认分支（`master`）禁止直推；显式执行 `submit-pr --execute` 时会自动 `git fetch` 最新默认分支并创建 `auto/<yyyymmdd-hhmmss>` 工作分支。省略 `--execute` 只预览，不创建分支/commit 或远程 PR。
 - `submit-pr` = 本地校验矩阵 -> 提交 -> 推送 -> 创建或复用 PR -> 自动 `watch`；失败时输出失败 check 与失败日志摘要，修复后重跑即复用同一 PR。
-- `merge` 需要全绿 + 显式 `--yes`；禁止 `--admin` 绕过保护。
+- `merge` 需要全绿 + 显式 `--execute --yes`；禁止 `--admin` 绕过保护。
 - 校验矩阵：`docs`（UTF-8、README 同步、版本一致性、文档链接、AGENTS 校验、active change 的 OpenSpec 校验）、`ci`（精确对齐 `.github/workflows/ci.yml`：仓库门禁 + 双管理端 lint/test/build + 后端 `clean package -P dev`，不含 agents/openspec）、`full`（docs + ci）。
 - 证据写入 `tmp/push-cli/<run-id>/`。
 
@@ -249,17 +254,19 @@ node skills/push-cli/scripts/test_push_cli.mjs
 ```bash
 node skills/release-cli/scripts/release_cli.mjs plan
 node skills/release-cli/scripts/release_cli.mjs bump --version 3.0.1
-node skills/release-cli/scripts/release_cli.mjs tag --version 3.0.1
-node skills/release-cli/scripts/release_cli.mjs publish --version 3.0.1
+node skills/release-cli/scripts/release_cli.mjs tag --version 3.0.1 --execute
 node skills/release-cli/scripts/release_cli.mjs verify --version 3.0.1
 node skills/release-cli/scripts/test_bump_version.mjs
+node skills/release-cli/scripts/test_release_cli.mjs
 ```
 
 说明：
 
 - `plan` 会把「当前版本 <= 最新远程 tag」判为需要先 bump 并显式失败；版本升级需通过 `push-cli` 合并后再打 tag。
 - tag 必须在 `HEAD == origin/<default>` 时创建，已存在的 tag 拒绝复用；Release 已存在时 `publish` 失败（更新说明用 `gh release edit`）。
-- 远程写操作默认 dry-run；受管文件清单见 `skills/release-cli/references/targets.md`。
+- 远程写操作默认 dry-run，只有 `--execute` 才创建/推送 tag 或发布 Release；本地 `bump` 是版本文件写入，不受远程预览默认值保护。受管文件清单见 `skills/release-cli/references/targets.md`。
+- 推送 `vX.Y.Z` tag 会触发 Release workflow，应先等待工作流结束，再验证 Release；不要同时执行手工 `publish`。只有已明确不由工作流发布的独立场景才使用 `publish --version <version> --execute`，该命令不构建或上传发布资产。
+- `verify` 只核对其实现列出的 tag/Release 元数据，不核验 tag 对应提交、资产完整性或生产健康；不能作为完整发布验收。
 
 ### 8.9 域外能力（不在 `skills/` 下的验证与运维）
 
@@ -309,6 +316,11 @@ node skills/release-cli/scripts/test_bump_version.mjs
 - `infoq-plugin-sse`
 - `infoq-plugin-websocket`
 - `infoq-plugin-doc`
+- `infoq-plugin-quartz`
+- `infoq-plugin-oauth`
+- `infoq-plugin-push`
+- `infoq-plugin-mqtt`
+- `infoq-plugin-elasticsearch`
 
 关键原则：
 
@@ -332,16 +344,26 @@ node skills/release-cli/scripts/test_bump_version.mjs
 
 | 插件 | 后端配置键 | 前端配置键 | 默认值 | 备注 |
 |---|---|---|---|---|
-| encrypt | `api-decrypt.enabled` / `mybatis-encryptor.enable` | `VITE_APP_ENCRYPT` | `api-decrypt.enabled=true`，`mybatis-encryptor.enable=false` | 需要前后端同步 |
+| encrypt | `api-decrypt.enabled` / `mybatis-encryptor.enable` | `VITE_APP_ENCRYPT` | `api-decrypt.enabled=true`，`mybatis-encryptor.enable=false` | API 加密需前后端同步；MyBatis 字段加密独立，不由 VITE 开关控制 |
 | mail | `mail.enabled` | 无 | false | 仅后端 |
 | sse | `sse.enabled` | `VITE_APP_SSE` | true | 需要前后端同步 |
 | websocket | `websocket.enabled` | `VITE_APP_WEBSOCKET` | false | 需要前后端同步 |
 | doc | `springdoc.api-docs.enabled` | 无 | true | 仅后端 |
+| quartz | `infoq.quartz.enabled` | 无 | true | 还需核对 bootstrap/reconcile 与托管任务开关 |
+| oauth | `oauth.enabled` | 无 VITE 总开关，前端读取服务端能力 | false | 关闭时配置 Bean 仍可装配，业务入口拒绝；启用前配置受控 provider 凭据与回调 |
+| push | `infoq.push.enabled` / `infoq.push.sse-enabled` / `infoq.push.websocket-enabled` | 复用 `VITE_APP_SSE` / `VITE_APP_WEBSOCKET` | 全 false | 与底层通道开关共同决定适配器是否可用；持久化消息盒子不依赖实时通道 |
+| mqtt | `infoq.mqtt.enabled` / `infoq.mqtt.v3.enabled` / `infoq.mqtt.v5.enabled` | 无 | 全 false | 关闭时保留 `DisabledMqttPublisher`，不创建外部客户端 |
+| elasticsearch | `infoq.elasticsearch.enabled` | 无 | false | 开启前配置节点、认证与 JDK trust store |
+
+以上共 20 个插件（6 个固定、4 个通用、10 个可配置）。微信小程序登录属于业务能力，不是第 21 个插件；`infoq.auth.wechat-miniapp.enabled=false`，启用需受控 AppID/Secret、OAuth identity 及对应业务前置条件。
 
 后端配置文件：
 
 - `backend/infoq-admin/src/main/resources/application.yml`
 - `backend/infoq-admin/src/main/resources/application-dev.yml`
+- `backend/infoq-admin/src/main/resources/application-prod.yml`
+
+可选 `application-local.yml` 被 Git 忽略，不随 checkout 提供；需自行创建，并在打包前纳入资源或显式从外部加载。Spring 激活 profile 与外部配置可能覆盖上述默认值；以目标实际配置为准，不将 MCP 的单文件解析当作 Spring 合并结果。
 
 前端配置文件：
 
@@ -359,7 +381,7 @@ node skills/release-cli/scripts/test_bump_version.mjs
 
 ### 9.6 软关闭与删除建议
 
-软关闭（推荐）：保留依赖不动，把对应 `enabled` 配置置为 `false`，若有前端开关前端同步置 `false`，执行编译与冒烟验证。适用于 `encrypt/mail/sse/websocket/doc`。
+软关闭（推荐）：保留依赖不动，按上表关闭对应配置，若有前端开关同步置 `false`，执行编译与冒烟验证。适用于 `encrypt/mail/sse/websocket/doc/quartz/oauth/push/mqtt/elasticsearch`；不能假设关闭必然移除所有配置 Bean 或业务入口。API 解密与 MyBatis 字段加密独立，修改后须分别核验。
 
 硬删除（仅明确不再需要时）：删除模块 `pom.xml` 依赖，删除直接调用代码（注解/工具类/接口），清理配置项与前端开关，执行全量编译和登录冒烟。
 
@@ -372,7 +394,7 @@ node tools/backend_mvn.mjs -- clean package -P dev -pl infoq-admin -am
 后端运行示例（仅用于插件/API 诊断；登录与路由验收使用 `captcha_login` 的种子登录）：
 
 ```bash
-java -jar backend/infoq-admin/target/infoq-admin.jar \
+node tools/run-env.mjs INFOQ_LOG_PATH=tmp/plugin-check/logs -- java -jar backend/infoq-admin/target/infoq-admin.jar \
   --server.port=18080 \
   --captcha.enable=false \
   --api-decrypt.enabled=false \
@@ -380,11 +402,13 @@ java -jar backend/infoq-admin/target/infoq-admin.jar \
   --websocket.enabled=false
 ```
 
-前端编译：
+以上会启动真实 Java 进程并访问所选 profile 的依赖，只可对已授权隔离环境运行，结束后关闭自己启动的进程。PATH 中的 `java` 需为 21；此示例显式关闭解密，直接访问它的内部 smoke 检查器须选择 `LOGIN_MODE=plain`，失败不得自动切换协议。使用 `run_smoke.mjs` 自管实例时另按其帮助选择登录模式，不复用该手工进程。
+
+前端编译（先按 `DEV_GUIDE.md` 准备匹配后端的受控 RSA 构建配置）：
 
 ```bash
-cd frontend-vue
-pnpm run build:prod
+pnpm --dir frontend-vue run build:prod
+pnpm --dir frontend-react run build:prod
 ```
 
 ### 9.8 维护约定

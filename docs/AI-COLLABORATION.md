@@ -20,7 +20,9 @@
 - React 管理端：`frontend-react/AGENTS.md`
 - Vue 管理端：`frontend-vue/AGENTS.md`
 
-原则只有一条：**越靠近代码越优先**。
+同一作用域内遵循更近目录的规约；同目录存在 `AGENTS.override.md` 时优先采用该文件。Codex 启动时只沿项目根到当前工作目录发现规约，每个目录至多采用一个文件，不会预先加载所有子目录。开始修改其他工作区前，还必须主动读取目标路径的规约。`GEMINI.md` 在本仓库仅作同目录规约入口指针，不维护第二份规则。
+
+官方发现规则见 [Custom instructions with AGENTS.md](https://learn.chatgpt.com/docs/agent-configuration/agents-md)。
 
 ### 1.2 AGENTS.md 里应该放什么
 
@@ -81,6 +83,8 @@
 - 仓库级 skill 默认维护 `agents/openai.yaml`
 - 更新 `SKILL.md` 时，要一起检查 `agents/openai.yaml` 是否 stale
 - `default_prompt` 必须显式包含对应的 `$skill-name`
+
+本仓库按约定把技能正文保存在 `skills/`。Codex 官方自动发现目录是 `.agents/skills/`，不会仅因根目录叫 `skills/` 就自动注册。当前仓库通过根规约路由后显式读取相应 `SKILL.md`；`$skill-name` 和 UI metadata 是否可由选择器调用，取决于宿主是否已安装/链接该技能，不能从文件存在推断已注册。需要原生发现时可由开发者在自己的技能目录链接或安装这些目录，不另维护重复正文。官方机制见 [Build skills](https://learn.chatgpt.com/docs/build-skills)。
 
 ### 1.5 AGENTS 与 `.codex/agents` 的关系
 
@@ -144,9 +148,9 @@ repo 级 custom agents 的真值不写在 `AGENTS.md` 之外的任意散落文�
 | L2 Lite | 单工作区行为变更，不改 API 契约 | 至少 `proposal.md` + `tasks.md`，交付前通过 `openspec-check` |
 | L1 可豁免 | 小修复、不改契约、范围很小 | 可不建 change，但必须先写 acceptance contract |
 
-不确定时按更高一级处理。
+不确定时按 L3 处理。所有 active change 在实现前和交付前都必须通过结构校验。
 
-`openspec/changes/` 是本地计划脚手架：不提交、不进 PR；耐久行为必须落到
+`openspec/changes/` 与 `docs/plan/` 都是本地计划目录：由 Git 忽略，不提交、不进 PR。后续执行计划继续写入 `docs/plan/`，目录不存在时按需创建，由用户手动清理。耐久行为必须落到
 `docs/`（规格真值在 `docs/specs/`）与自动化测试。规格真值位于
 `docs/specs/<capability>/spec.md`；`openspec/config.yaml` 提供 schema 与项目
 上下文；`openspec/examples/demo-change/` 是 change 模板。
@@ -164,7 +168,7 @@ repo 级 custom agents 的真值不写在 `AGENTS.md` 之外的任意散落文�
 
 1. 一次只改一类问题。
 2. 优先最小闭环，不绑无关重构。
-3. `tasks.md` 默认显式评估 backend、React admin、Vue admin、docs、deploy。
+3. `tasks.md` 显式评估 `backend`、`frontend-react`、`frontend-vue`、`docs`、`script / deploy`、`skills`，不受影响项写清原因。
 4. 任何命令、环境变量、skill 入口或 MCP 配置变更，都要同步更新 `README.md` 与 `docs/*.md`。
 
 修改后，验证顺序固定为：
@@ -235,10 +239,11 @@ backend 工作区基线是 JDK 21 与 Maven 3.9.x。
 - `.codex/config.toml` 是仓库级 MCP 真值源，`docs/MCP-SERVERS.md` 只能描述它当前显式配置出来的内容
 - 如果文档里出现 MCP server / tool 名称、默认启用状态、只读范围、审批模式或本地启动脚本路径，这些字段必须和 `.codex/config.toml`、`tools/*` 保持逐项一致
 
-根文档更新后执行 UTF-8 与链接引用检查：
+根文档更新后执行 UTF-8 与链接引用检查；`rg` 仅用于检查旧工作区名称，不代替链接校验：
 
 ```bash
 node tools/validate_utf8.mjs README.md docs
+node tools/check_doc_links.mjs
 rg -n 'infoq-scaffold-(backend|frontend-vue|frontend-react)' README.md docs
 ```
 
@@ -256,11 +261,11 @@ rg -n 'infoq-scaffold-(backend|frontend-vue|frontend-react)' README.md docs
 
 代码度量（建议值，超出时先确认是否有明确业务理由）：
 
-- 函数长度：非空行建议不超过 50，超出时拆分辅助函数。
-- 文件规模：建议不超过 300 行，超出时按职责拆分。
+- 函数长度：非空行超过 50 时评估可读性，不按行数机械拆分 helper；独立业务语义或明显降低主流程复杂度时才抽取。
+- 文件规模：超过 300 行时评估职责边界，不仅为满足行数拆分文件。
 - 嵌套深度：建议不超过 3 层，优先 guard clause / early return 拉平控制流。
 - 位置参数：建议不超过 3 个，超过时使用 options 对象。
-- 圈复杂度：单函数建议不超过 10，超出时拆分分支逻辑。
+- 圈复杂度：单函数超过 10 时检查分支是否必要；优先消除重复与无效分支，抽象仍遵循根规约。
 - 禁止魔法数字：对非显然常量提取具名常量。
 
 解耦与状态：
@@ -342,6 +347,8 @@ requirements_expert
 
 `tasks.md` 必须说清楚：backend、React admin、Vue admin、docs、deploy 的实现矩阵；哪些端不改以及原因；验证命令；观测点、日志与回滚条件。
 
+影响矩阵使用 `backend`、`frontend-react`、`frontend-vue`、`docs`、`script / deploy`、`skills` 六个固定交付面；结构校验器与模板使用相同名称。
+
 spec delta 放在 `openspec/changes/<change-id>/specs/<capability>/spec.md`；变更交付时应用到 `docs/specs/<capability>/spec.md`。
 
 ### 3.6 多工作区闭环要求
@@ -352,8 +359,8 @@ spec delta 放在 `openspec/changes/<change-id>/specs/<capability>/spec.md`；�
 - `frontend-react`
 - `frontend-vue`
 - `docs`
-- `deploy`
-- `skills`（受影响时）
+- `script / deploy`
+- `skills`
 
 这不代表每个需求都必须同时改完所有交付面，而是：
 
@@ -363,20 +370,20 @@ spec delta 放在 `openspec/changes/<change-id>/specs/<capability>/spec.md`；�
 
 ### 3.7 验证与归档要求
 
-建议按以下顺序验证：
+必须按以下顺序验证：
 
 1. 主流程验证
 2. 针对性测试
 3. lint/build
 4. diff review
 
-按工作区最低建议：
+适用工作区的命令示例（从仓库根执行；按改动选择定向测试，不为纯文档改动启动产品构建）：
 
 - Backend：受影响模块 Maven 测试与必要编译
-- React Admin：`pnpm run test`、`pnpm run build:prod`
-- Vue Admin：`pnpm run test:unit`、`pnpm run build:prod`
+- React Admin：`pnpm --dir frontend-react run test`、`pnpm --dir frontend-react run build:prod`
+- Vue Admin：`pnpm --dir frontend-vue run test:unit`、`pnpm --dir frontend-vue run build:prod`
 
-只有在验证证据充分时，主线程才应该决定是否归档；如验证受阻，再按需写 `review.md` 明确 blocker。注意 `openspec/changes/` 不提交，归档的耐久沉淀是 `docs/specs/` 与 `docs/plan/`。
+只有在验证证据充分时，主线程才应该决定是否归档；如验证受阻，再按需写本地 `review.md` 明确 blocker。`openspec/changes/` 与 `docs/plan/` 均不提交；公共底座的耐久沉淀是已接受的 `docs/specs/`、可复用操作文档和测试，不包含具体任务计划。
 
 ## 4. 模块文档分层治理规范
 

@@ -32,6 +32,9 @@
 流程與交付證據集中於同一個儲存庫，並提供可執行的 Spring Boot 後端，以及 Vue、
 React 兩套管理主控台。
 
+任務計畫僅保留在本機：`docs/plan/` 與 `openspec/changes/` 均由 Git 忽略。
+後續執行計畫繼續寫入 `docs/plan/`，目錄按需建立，由使用者手動清理。
+
 目前保留三個工作區：
 
 - `backend`：Spring Boot 4.1 多模組後端
@@ -84,7 +87,9 @@ pnpm run dev
 ```
 
 兩個管理端預設連接埠都是 `80`。同時啟動時，請先為其中一個設定
-`VITE_APP_PORT`。本機開發細節請見 [`DEV_GUIDE.md`](DEV_GUIDE.md)。
+`VITE_APP_PORT`。各工作區範例分別從儲存庫根目錄執行，並先準備被忽略的後端 local
+設定。`VITE_APP_ENCRYPT=true` 時須提供與後端匹配的 RSA 公私鑰環境變數，前置步驟請見
+[`DEV_GUIDE.md`](DEV_GUIDE.md)。
 
 使用 skill 執行管理端路由 smoke 或驗證碼登入：
 
@@ -94,7 +99,7 @@ pnpm run dev
 node skills/test-cli/scripts/run_admin_e2e.mjs --client vue --route-limit 1
 node skills/test-cli/scripts/captcha_login.mjs --backend-url http://127.0.0.1:8080 --print-token
 
-# 本機部署 smoke（Apple container / WSL2 Docker / Linux Docker）
+# 部署狀態：macOS 選擇 Apple，Linux/WSL2 選擇 Docker
 node skills/deploy-cli/scripts/deploy_cli.mjs status
 ```
 
@@ -125,17 +130,18 @@ node skills/deploy-cli/scripts/deploy_cli.mjs status
 產物是 jar 與管理端 `dist` 壓縮包，不是容器映像。
 
 ```bash
-# Linux / WSL2 完整堆疊：遠端安裝腳本（生產環境請固定 tag）
-curl -sSL https://raw.githubusercontent.com/LuckyKuang/infoq-scaffold-ai/main/deploy/install.sh \
-  | sudo env INFOQ_FRONTEND_TARGET=all INFOQ_PUBLIC_BASE_URL=http://SERVER_IP bash
-
-# 或從本機原始碼部署
+# Linux / WSL2：從已審閱的目標 release tag 原始碼部署
 sudo env INFOQ_SOURCE_DIR="$(pwd)" INFOQ_FRONTEND_TARGET=all \
   INFOQ_PUBLIC_BASE_URL=http://SERVER_IP bash deploy/install.sh
 ```
 
 `INFOQ_FRONTEND_TARGET` 為必填：`all`、`vue` 或 `react`。`all` 目標的 Nginx
 路由：`/vue/`、`/react/`、`/console-oss/`、`/oss/`。
+
+遠端安裝請依部署指南固定 tag，下載並審閱後再執行。macOS Colima 使用底層 shell
+腳本；Node CLI 在 macOS 固定選擇 Apple，Apple `status` 可能啟動 daemon。生產前須
+核驗獨立憑證、建置金鑰匹配、HTTPS、監控與已演練的備份/回滾；範例金鑰和建置成功
+不足以證明生產就緒。
 
 <!-- readme-section:documentation -->
 ## 文件
@@ -145,6 +151,7 @@ README 僅提供專案總覽與快速開始。詳細設定與維護請閱讀下�
 | 文件 | 說明 |
 | --- | --- |
 | [文件中心](docs/README.md) | 使用者文件導覽 |
+| [文件稽核紀錄](docs/DOCUMENTATION-AUDIT.md) | 涵蓋範圍、修正、檢查與正式環境驗收阻礙 |
 | [貢獻指南](CONTRIBUTING.md) | 工具鏈、驗證與 PR 流程 |
 | [開發指南](DEV_GUIDE.md) | 本機設定與疑難排解 |
 | [安全策略](SECURITY.md) | 漏洞回報 |

@@ -13,9 +13,13 @@ Use the versions declared by the repository:
 - Node.js: `.node-version` / `.nvmrc` (`24.18.0`)
 - pnpm `10.34.1`: root `package.json` `packageManager`, mirrored by each workspace
 
-Install frontend dependencies with pnpm only and synchronize the workspace
-`pnpm-lock.yaml` when they change. The repository pins pnpm `10.34.1` at the
-root. If the local shim is older, activate it with
+Use pnpm by default and synchronize the workspace `pnpm-lock.yaml` when dependencies
+change. If pnpm is unavailable, the root rules allow npm as a fallback; restore pnpm
+and validate the authoritative lockfile before delivering dependency changes. Do not
+substitute Yarn. The repository pins pnpm `10.34.1` at the
+root. Node 24 does not bundle Corepack; install Corepack separately if you choose
+that launcher, or install the pinned pnpm directly with
+`npm install --global pnpm@10.34.1`. If a Corepack shim is already available, activate it with
 `corepack prepare pnpm@10.34.1 --activate`, then verify `pnpm -v` before
 installing. Run `corepack pnpm` when the shell shim has not yet been refreshed.
 pnpm 10 blocks dependency build scripts by default; the workspaces allowlist
@@ -37,6 +41,9 @@ node tools/check_readme_sync.mjs
 
 # Release metadata consistency
 node tools/check_release_version.mjs
+
+# Local documentation links and anchors
+node tools/check_doc_links.mjs
 
 # Backend, via the repo Maven runner
 node tools/backend_mvn.mjs -- test

@@ -32,6 +32,9 @@
 和交付证据放在同一仓库中，提供可运行的 Spring Boot 后端以及 Vue、React 两套
 管理端。
 
+任务计划仅保留在本地：`docs/plan/` 与 `openspec/changes/` 均由 Git 忽略。
+后续执行计划继续写入 `docs/plan/`，目录按需创建，由用户手动清理。
+
 当前保留三个工作区：
 
 - `backend`：Spring Boot 4.1 多模块后端
@@ -83,8 +86,9 @@ pnpm install
 pnpm run dev
 ```
 
-两个管理端默认端口都是 `80`。同时启动时先为其中一个设置 `VITE_APP_PORT`。本地
-开发细节见 [`DEV_GUIDE.md`](DEV_GUIDE.md)。
+两个管理端默认端口都是 `80`。同时启动时先为其中一个设置 `VITE_APP_PORT`。各工作区
+示例分别从仓库根目录执行；先准备被忽略的后端 local 配置。`VITE_APP_ENCRYPT=true`
+时须提供与后端匹配的 RSA 公私钥环境变量，前置步骤见 [`DEV_GUIDE.md`](DEV_GUIDE.md)。
 
 使用 skill 跑管理端路由 smoke 或验证码登录：
 
@@ -94,7 +98,7 @@ pnpm run dev
 node skills/test-cli/scripts/run_admin_e2e.mjs --client vue --route-limit 1
 node skills/test-cli/scripts/captcha_login.mjs --backend-url http://127.0.0.1:8080 --print-token
 
-# 本机部署 smoke（Apple container / WSL2 Docker / Linux Docker）
+# 部署状态：macOS 选择 Apple，Linux/WSL2 选择 Docker
 node skills/deploy-cli/scripts/deploy_cli.mjs status
 ```
 
@@ -122,16 +126,17 @@ node skills/deploy-cli/scripts/deploy_cli.mjs status
 镜像在目标主机上从源码构建，仓库不发布预构建应用镜像：Docker 路径在镜像内构建后端 jar 和前端产物；Apple container 路径先在宿主机打 jar，再启动仅包含 MySQL、Redis 和后端 API 的栈（不含 Vue/React 和 Nginx 网关）。Release 产物是 jar 与管理端 `dist` 压缩包，不是容器镜像。
 
 ```bash
-# Linux / WSL2 全栈：远程安装脚本（生产环境请固定 tag）
-curl -sSL https://raw.githubusercontent.com/LuckyKuang/infoq-scaffold-ai/main/deploy/install.sh \
-  | sudo env INFOQ_FRONTEND_TARGET=all INFOQ_PUBLIC_BASE_URL=http://SERVER_IP bash
-
-# 或从本地源码部署
+# Linux / WSL2：从已审阅的目标 release tag 源码部署
 sudo env INFOQ_SOURCE_DIR="$(pwd)" INFOQ_FRONTEND_TARGET=all \
   INFOQ_PUBLIC_BASE_URL=http://SERVER_IP bash deploy/install.sh
 ```
 
 `INFOQ_FRONTEND_TARGET` 必填：`all`、`vue` 或 `react`。`all` 目标的 Nginx 路由：`/vue/`、`/react/`、`/console-oss/`、`/oss/`。
+
+远程安装请按部署指南固定 tag，下载并审阅后再执行。macOS Colima 使用底层 shell
+脚本；Node CLI 在 macOS 固定选择 Apple，Apple `status` 可能启动 daemon。生产前须
+核验独立凭据、构建密钥匹配、HTTPS、监控及已演练的备份/回滚；示例密钥和构建成功
+不足以证明生产就绪。
 
 <!-- readme-section:documentation -->
 ## 文档
@@ -141,6 +146,7 @@ README 只提供项目总览和快速开始。详细配置与维护请阅读下�
 | 文档 | 说明 |
 | --- | --- |
 | [文档中心](docs/README.md) | 用户文档导航 |
+| [文档审计记录](docs/DOCUMENTATION-AUDIT.md) | 覆盖范围、修正、校验与生产验收阻塞 |
 | [贡献指南](CONTRIBUTING.md) | 工具链、验证和 PR 流程 |
 | [开发指南](DEV_GUIDE.md) | 本地设置与排障 |
 | [安全策略](SECURITY.md) | 漏洞报告 |

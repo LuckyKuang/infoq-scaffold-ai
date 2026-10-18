@@ -5,7 +5,7 @@
 Unless a release states otherwise, security fixes target the latest published
 version. Older releases may no longer receive fixes.
 
-Current supported version: **3.0.0**
+Use the latest published GitHub Release to determine the currently supported version.
 
 ## Reporting a Vulnerability
 
@@ -27,6 +27,14 @@ coordinate disclosure based on severity and available fixes.
 - Use parameterized database access (MyBatis-Plus)
 - Change default deployment passwords before exposing a stack
 - Keep `VITE_APP_ENCRYPT=true` builds supplied with the matching RSA key pair
+
+Production must use controlled, independent database, Redis, token and RSA
+credentials. Repository example values are for isolated development only.
+Browser bundles expose their keys to users; the bundled RSA private key cannot
+serve as a server-side secret or replace HTTPS. Check API documentation exposure,
+dependency ports, least-privilege accounts, backup access and log redaction
+before exposing a deployment. Build or smoke success does not establish that
+these production checks have passed.
 
 The repository only allows Redisson OSS-compatible APIs. Do not introduce or
 keep Redisson PRO-only APIs such as `getLocalCachedMapCache` or rate-limiter

@@ -2,6 +2,7 @@
 // 只读校验器：仓库根 AGENTS.md 的格式、受保护类别、路由一致性与引用路径存在性。
 import fs from 'node:fs';
 import path from 'node:path';
+import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {normalizeForwardedArgs, resolveRepoRoot} from '../../../tools/lib/skill_runtime.mjs';
 
@@ -50,6 +51,8 @@ const ALLOWED_PATH_PREFIXES = [
 ];
 
 const SKIP_PATH_PATTERNS = [/[*<>{}]/, /YYYYMMDD/, /YYYY-MM-DD/, /x\.y\.z/, /\.\.\./, /\s/, /^https?:/];
+const LOCAL_PLAN_DIRS = new Set(['docs/plan/', 'openspec/changes/']);
+const localPlanDirs = new Set();
 
 function usage() {
   console.log(`Usage: node skills/compress-cli/scripts/agents_check.mjs <check|budget> [options]
@@ -59,8 +62,11 @@ Options:
   --skills-dir <dir>    Path to skills directory. Default: <repo>/skills
   --docs <file>         Path to docs/SKILLS.md. Default: <repo>/docs/SKILLS.md
   --json                Print machine-readable JSON summary
+  --skip-refs           Skip reference-path checks (fixture diagnostics only)
   -h, --help            Show this help
 
+Local plan directories docs/plan/ and openspec/changes/ may be absent,
+but must be Git-ignored; other concrete references must exist.
 Exit code 0 = all contracts pass, 1 = failure (never silently passes).`);
 }
 
@@ -301,8 +307,29 @@ function checkReferencedPaths(skipRefs) {
     if (SKIP_PATH_PATTERNS.some((pattern) => pattern.test(token))) {
       continue;
     }
+    const referencedPath = path.resolve(repoRoot, token.replaceAll('\\', '/'));
+    const relativePath = path.relative(repoRoot, referencedPath);
+    if (relativePath === '..' || relativePath.startsWith(`..${path.sep}`) || path.isAbsolute(relativePath)) {
+      fail(errors, `AGENTS.md 引用的路径逃逸仓库根目录：${token}`);
+      continue;
+    }
     checked.push(token);
-    if (!fs.existsSync(path.join(repoRoot, token))) {
+    if (LOCAL_PLAN_DIRS.has(token)) {
+      const ignored = spawnSync('git', ['check-ignore', '--no-index', '--quiet', '--', token], {
+        cwd: repoRoot,
+        encoding: 'utf8',
+        windowsHide: true
+      });
+      if (ignored.error || ignored.status !== 0) {
+        fail(errors, `本地计划目录必须由 Git 忽略：${token}${ignored.error ? `（${ignored.error.message}）` : ignored.stderr ? `（${ignored.stderr.trim()}）` : ''}`);
+      }
+      if (fs.existsSync(referencedPath) && !fs.statSync(referencedPath).isDirectory()) {
+        fail(errors, `本地计划路径必须是目录：${token}`);
+      }
+      localPlanDirs.add(token);
+      continue;
+    }
+    if (!fs.existsSync(referencedPath)) {
       fail(errors, `AGENTS.md 引用的路径不存在：${token}`);
     }
   }
@@ -359,6 +386,7 @@ const report =
         mentioned: routing.mentioned,
         skillDirs: dirNames,
         checkedPaths: checkedPaths.length,
+        localPlanDirs: [...localPlanDirs].sort(),
         errors
       };
 
@@ -377,6 +405,7 @@ if (asJson) {
 } else if (errors.length === 0) {
   console.log(`[agents-check] PASS ${report.agents}`);
   console.log(`  skills=${report.skillDirs.length} declared=${report.declared.length} docsSkills=${report.docsSkills.length} mentioned=${report.mentioned.length} referencedPaths=${report.checkedPaths}`);
+  if (report.localPlanDirs.length) console.log(`  Git-ignored local plan directories (creation optional): ${report.localPlanDirs.join(', ')}`);
 } else {
   console.error(`[agents-check] FAIL ${report.agents}`);
   for (const item of errors) {

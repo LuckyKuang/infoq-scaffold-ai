@@ -34,12 +34,14 @@ flowchart TB
     jacksonPlugin[plugin-jackson]
 
     securityPlugin[plugin-security]
+    oauthPlugin[plugin-oauth]
     redisPlugin[plugin-redis]
     webPlugin[plugin-web]
     ossPlugin[plugin-oss]
     docPlugin[plugin-doc]
     encryptPlugin[plugin-encrypt]
     ssePlugin[plugin-sse]
+    pushPlugin[plugin-push]
     quartzPlugin[plugin-quartz]
     mailPlugin[plugin-mail]
     websocketPlugin[plugin-websocket]
@@ -50,11 +52,13 @@ flowchart TB
     system --> common
     system --> data
     system --> securityPlugin
+    system --> oauthPlugin
     system --> webPlugin
     system --> ossPlugin
     system --> docPlugin
     system --> encryptPlugin
     system --> ssePlugin
+    system --> pushPlugin
     system --> quartzPlugin
     system --> mailPlugin
     system --> websocketPlugin
@@ -62,6 +66,9 @@ flowchart TB
     system --> elasticsearchPlugin
 
     securityPlugin --> redisPlugin
+    oauthPlugin --> redisPlugin
+    pushPlugin --> ssePlugin
+    pushPlugin --> websocketPlugin
     ossPlugin --> redisPlugin
     ssePlugin --> redisPlugin
     websocketPlugin --> redisPlugin
@@ -80,7 +87,7 @@ flowchart TB
 
 补充一个当前实现上的重要区别：
 
-- `plugin-web`、`plugin-security`、`plugin-redis`、`plugin-mybatis`、`plugin-doc`、`plugin-encrypt`、`plugin-log`、`plugin-mail`、`plugin-quartz`、`plugin-sse`、`plugin-websocket`、`plugin-jackson`、`plugin-translation` 主要通过 `AutoConfiguration.imports` 进入运行时。
+- `plugin-web`、`plugin-security`、`plugin-oauth`、`plugin-redis`、`plugin-mybatis`、`plugin-doc`、`plugin-encrypt`、`plugin-log`、`plugin-mail`、`plugin-quartz`、`plugin-sse`、`plugin-push`、`plugin-websocket`、`plugin-mqtt`、`plugin-elasticsearch`、`plugin-jackson`、`plugin-translation` 通过 `AutoConfiguration.imports` 注册配置入口；是否创建运行时客户端或暴露业务能力仍受各自开关控制。
 - `plugin-oss`、`plugin-excel`、`plugin-sensitive` 当前更像库模块，由业务层或数据层直接调用，而不是单独靠自动装配开放端点。
 
 ## 2. 各模块当前职责
@@ -93,6 +100,7 @@ flowchart TB
 | `infoq-core-data` | 系统实体、BO/VO、Mapper 接口、Mapper XML | `system/domain/*`、`system/mapper/*`、`resources/mapper/system/*` |
 | `plugin-jackson` | Jackson 3 大数、日期定制、JSON 工具与校验注解 | `Jackson3Customizer`、`JsonUtils`、`JsonPatternValidator` |
 | `plugin-security` | Spring Security 过滤链、JWT access token、Redis session / revocation / online index、当前用户上下文、401/403 处理 | `SpringSecurityAutoConfiguration`、`SecurityTokenService`、`CurrentUserService` |
+| `plugin-oauth` | OAuth/OIDC provider、state/PKCE 与一次性 ticket；本地用户和系统 token 仍由业务层处理 | `OAuthAutoConfiguration`、`OAuthFlowService`、`OAuthLoginTicketService` |
 | `plugin-web` | Web 基础自动配置与全局异常处理 | `FilterConfig`、`ResourcesConfig`、`CaptchaConfig`、`GlobalExceptionHandler` |
 | `plugin-mybatis` | Mapper 扫描、分页、数据权限、乐观锁、填充策略 | `MybatisPlusConfig` |
 | `plugin-redis` | Redisson 编解码、缓存、限流、防重提交异常处理 | `RedisConfig`、`CacheConfig`、`RateLimiterConfig`、`IdempotentConfig` |
@@ -104,6 +112,7 @@ flowchart TB
 | `plugin-excel` | Excel 导入导出注解、监听器、转换器与工具类 | `ExcelUtil`、`DefaultExcelListener`、`Excel*Convert` |
 | `plugin-oss` | OSS 客户端、工厂与上传结果封装 | `OssFactory`、`OssClient`、`OssProperties` |
 | `plugin-sse` | SSE 自动配置，供业务侧可选调用 | `SseAutoConfiguration`、`OptionalSseHelper` |
+| `plugin-push` | 提交后实时刷新契约与 SSE / WebSocket 通道选择，默认关闭 | `PushAutoConfiguration`、`DefaultPushService` |
 | `plugin-quartz` | Quartz 托管任务自动配置 | `QuartzAutoConfiguration` |
 | `plugin-mail` | 邮件发送自动配置，当前由 `OptionalMailHelper` 反射调用 | `MailConfig`、`OptionalMailHelper` |
 | `plugin-websocket` | WebSocket 自动配置，当前配置默认关闭 | `WebSocketConfig` |
@@ -147,7 +156,7 @@ flowchart TB
 
 #### 3.2.2 Profile 文件 `application-{dev,prod,local}.yml`
 
-仓库当前存在三份 profile 文件，且 `pom.xml` 把 `<id>dev</id>` 设为 `<activeByDefault>true</activeByDefault>`，因此直接依赖 Maven / `java -jar` 且不指定 profile 时，默认仍会运行 `dev` profile。仓库本地联调脚本会在存在 `application-local.yml` 时优先选择 `local`，所以这里的“默认”只指手动直跑场景。
+仓库受管 profile 文件为 `application-dev.yml` 和 `application-prod.yml`；`application-local.yml` 是可选、被 Git 忽略的本机文件。`pom.xml` 的 Maven `dev` profile 默认激活并过滤 `@profiles.active@`，所以默认构建的 jar 在没有运行时 override 时使用 `dev`；若构建选择 `-P prod` / `-P local`，或运行时指定 `--spring.profiles.active` / `SPRING_PROFILES_ACTIVE`，则以相应选择为准。本地联调脚本会在存在 `application-local.yml` 时优先选择 `local`。
 
 - [application-dev.yml](../infoq-admin/src/main/resources/application-dev.yml) 补充/覆写开发环境基础设施：
   - `spring.datasource`（HikariCP + dynamic-datasource，默认 `master` 指向本地 MySQL）。
@@ -157,7 +166,7 @@ flowchart TB
   - `infoq.quartz.bootstrap` 开发环境差异（`reconcile-enabled=true`、`production-guard-enabled=false`、`marker-enabled=false`）。
   - `mail.enabled=false` 与 SMTP 示例值。
 - [application-prod.yml](../infoq-admin/src/main/resources/application-prod.yml) 补充/覆写生产环境 datasource、Redis、Redisson、`spring.quartz`、`infoq.quartz.bootstrap`、mail。
-- [application-local.yml](../infoq-admin/src/main/resources/application-local.yml) 补充/覆写本地联调 datasource、Redis、Redisson、mail，但不重写 Quartz 相关配置。
+- `application-local.yml` 的具体覆盖项取决于本机文件，不属于所有 checkout 都具备的配置；运行 local 前须确认文件存在且已随构建打包，或通过外部配置加载。
 
 因此本文档其余章节里出现的"`api-decrypt.enabled=true`"、"`sse.enabled=true`"、"Quartz 表前缀 `QRTZ_`"等具体值，来自通用 `application.yml`；datasource、Redis、Redisson、mail 等连接信息来自当前激活 profile。
 
@@ -205,7 +214,7 @@ HTTP Request
 - 用户：`SysUserController -> SysUserServiceImpl -> SysUserMapper + 关联 Mapper`
 - 监控：`CacheController / DataSourceController / ServerController`
 
-对于 `GET` 请求或未标注 `@ApiEncrypt` 的接口，`CryptoFilter` 基本只做透传；真正强制要求加密头的是被 `@ApiEncrypt` 标注的 `POST/PUT` 接口。
+对于 `POST/PUT`，只要提供 `encrypt-key` 就会进入解密；只有没有该头且未标注 `@ApiEncrypt` 时才透传。带注解的 `POST/PUT` 缺头会被拒绝。其他 HTTP 方法不执行请求体解密；响应是否加密另由 `@ApiEncrypt(response=true)` 决定。
 
 ### 4.2 控制器分组
 
@@ -266,21 +275,23 @@ MyBatis 层由 `MybatisPlusConfig` 注入 `PlusDataPermissionInterceptor` 和 `D
 - `global:captcha_codes:*`：验证码
 - `pwd_err_cnt:*`：登录失败计数
 - `online_tokens:*`：在线用户态
+- `security:token:session:*`、`security:token:revoked:*`：以 token digest 索引的会话和撤销标记
+- `security:token:login:*`、`security:token:user:*`、`security:token:role:*`：按登录身份、用户和角色组织的 token digest 集合
 - `global:repeat_submit:*`：防重提交
 - `global:rate_limit:*`：限流
 - `global:sys_client#30d` 等缓存组：客户端与系统缓存
 
-这些 key 前缀来自 `GlobalConstants`、`CacheConstants`、`CacheNames`。
+这些 key 前缀来自 `GlobalConstants`、`CacheConstants`、`CacheNames` 和 `SecurityAuthNames`；配置的 Redisson key prefix 还会影响实际物理键名。`online_tokens:*` 的写入与删除由 `SecurityTokenStore` 负责，`UserActionListener` 只构建元数据和记录登录审计。
 
 ## 7. 异常处理与显式失败
 
-当前后端不是通过静默 fallback 吞错，而是尽量把错误转成明确的响应：
+主要错误出口如下，具体边界应以各处理器为准：
 
 - `GlobalExceptionHandler` 统一处理 `ServiceException`、校验异常、JSON 解析异常、请求体不可读异常、SpEL 异常等。
 - Spring Security 的 `SecurityAuthenticationEntryPoint` 与 `SecurityAccessDeniedHandler` 统一把未登录和无权限转换成 `401/403` 语义的 `ApiResult`。
 - `application.yml` 显式开启 `fail_on_unknown_properties`，避免前端传错字段时被静默忽略。
 
-唯一明显的例外是 SSE 连接断开：
+SSE 连接断开有独立处理：
 
 - `GlobalExceptionHandler` 对 SSE 的 `IOException` 和超时做了特殊处理，避免把浏览器关闭连接当成真正系统故障刷屏。
 
@@ -288,7 +299,7 @@ MyBatis 层由 `MybatisPlusConfig` 注入 `PlusDataPermissionInterceptor` 和 `D
 
 ### 8.1 文件日志
 
-[logback-plus.xml](../infoq-admin/src/main/resources/logback-plus.xml) 默认会把日志写到仓库根 `logs/`；容器场景通过 `INFOQ_LOG_PATH=/infoq/server/logs` 覆盖：
+[logback-plus.xml](../infoq-admin/src/main/resources/logback-plus.xml) 默认使用相对进程工作目录的 `../logs/`。从 `backend/` 启动才对应仓库根 `logs/`；从仓库根运行 jar 时须显式指定 `INFOQ_LOG_PATH`。容器场景使用 `INFOQ_LOG_PATH=/infoq/server/logs`：
 
 - `sys-console.log`
 - `sys-info.log`

@@ -58,11 +58,11 @@ infoq-scaffold-ai
 
 profile 约定：
 
-- `dev`：默认启用；未显式设置 `spring.profiles.active` 时生效。
+- `dev`：默认 Maven profile；构建时把 `application.yml` 的 `@profiles.active@` 过滤为 `dev`。用 `-P prod` 构建时默认值会变为 `prod`，运行参数仍可显式覆盖。
 - `local`：运行 jar 时显式传 `--spring.profiles.active=local`。
 - `prod`：部署和打包时使用。
 
-`application-local.yml` 属于开发者本地配置，允许按个人调试环境指向本地或远端依赖；自动化脚本默认按 `application-local.yml -> application-dev.yml` 顺序解析配置。共享文档、示例命令和 skill 不得暴露个人测试环境的私有地址、账号或密码。
+`application-local.yml` 属于开发者本地配置，允许按个人调试环境指向本地或远端依赖。使用 `tools/resolve_backend_local_mcp_env.mjs` 的工具优先选择 local 配置，否则选 dev；CRUD E2E 则只接受 local。具体 profile、URL、env 覆盖以各入口解析器为准，不能把静态配置选择当作运行实例的真实配置。共享文档、示例命令和 skill 不得暴露个人测试环境的私有地址、账号或密码。
 
 共享真值端口保持为 `8080`。若开发者本地为了避开已有服务冲突，临时把 backend 改到 `8081` 或其他端口，应通过 `--server.port=<port>` 或 test-cli 本地栈入口的 `--backend-port <port>` 显式覆盖，而不是长期改写共享默认值。
 
@@ -75,7 +75,7 @@ profile 约定：
 
 当前登录链路以 `AuthController` 为核心，路径位于 `cc.infoq.system.controller.login.AuthController`。
 
-### 4.1 公开接口
+### 4.1 认证接口
 
 | 接口 | 作用 |
 | --- | --- |
@@ -83,6 +83,15 @@ profile 约定：
 | `POST /auth/login` | 登录 |
 | `POST /auth/logout` | 退出登录 |
 | `POST /auth/register` | 注册 |
+| `POST /auth/email/code` | 发送自助认证邮件验证码 |
+| `POST /auth/forgot-password` | 重置密码 |
+| `GET /auth/invite/code/check` | 校验邀请码 |
+| `GET /auth/oauth/providers` | 查询公开 OAuth Provider |
+| `GET /auth/oauth/{provider}/authorize` | 发起 OAuth 授权 |
+| `GET /auth/oauth/{provider}/callback` | 处理 Provider 回调 |
+| `POST /auth/oauth/ticket` | 消费短期登录 ticket |
+
+`/auth/logout` 需要当前会话，不能作为免登录探针。公开注册、邮件、忘记密码和 OAuth 的可用性受后端配置控制；`GET /auth/code` 同时返回验证码及公开能力位。
 
 ### 4.2 登录做了什么
 
@@ -113,7 +122,7 @@ profile 约定：
 
 ### 5.2 当前核心菜单
 
-- 系统管理：用户、角色、菜单、部门、岗位、字典、参数、通知、文件、客户端
+- 系统管理：用户、角色、菜单、部门、岗位、字典、参数、通知、文件、客户端、邀请码
 - 系统监控：在线用户、登录日志、操作日志、定时任务、任务日志、缓存、服务监控、连接池监控
   连接池监控基于 `Hikari + dynamic-datasource` 原生实现，但对外接口已收敛为安全摘要字段，不向前端返回 JDBC URL、账号、驱动类和连接池实现细节。
 
@@ -126,9 +135,9 @@ profile 约定：
 
 从 `infoq-system` 当前控制器可以看到主要边界如下：
 
-- 登录与基础入口：`AuthController`、`CaptchaController`、`IndexController`
-- 系统管理：`SysUserController`、`SysRoleController`、`SysMenuController`、`SysDeptController`、`SysPostController`、`SysDictTypeController`、`SysDictDataController`、`SysConfigController`、`SysNoticeController`、`SysOssController`、`SysOssConfigController`、`SysClientController`、`SysProfileController`
-- 监控：`SysUserOnlineController`、`SysLoginInfoController`、`SysOperLogController`、`SysJobController`、`SysJobLogController`、`CacheController`、`ServerController`、`DataSourceController`
+- 登录与基础入口：`AuthController`、`CaptchaController`、`OAuthController`、`IndexController`
+- 系统管理：`SysUserController`、`SysRoleController`、`SysMenuController`、`SysDeptController`、`SysPostController`、`SysDictTypeController`、`SysDictDataController`、`SysConfigController`、`SysNoticeController`、`SysOssController`、`SysOssConfigController`、`SysClientController`、`SysProfileController`、`SysInviteCodeController`、`SysOauthIdentityController`、`SysMessageController`
+- 监控：`SysUserOnlineController`、`SysLoginInfoController`、`SysOperLogController`、`SysJobController`、`SysJobLogController`、`CacheController`、`ServerController`、`DataSourceController`、`HealthController`
 
 其中：
 
@@ -232,7 +241,7 @@ Vue 与 React 管理端共享同一套后端、同一套菜单权限和大部分
 
 ### 11.2 固定路由
 
-`src/router/index.ts` 里已经声明了这类常量路由：`/login`、`/register`、`/index`、`/user/profile`、`/401`、`404`。剩余业务路由依赖后端返回的动态菜单。
+`src/router/index.ts` 声明 `/login`、`/oauth/callback`、`/register`、`/forgot-password`、`/index`、`/user/profile`、`/message-center`、`/401`、`/redirect/:path(.*)` 和 catch-all 404。`/404` 只是触发 catch-all 的测试地址。固定定义不等于免登录，`src/permission.ts` 的公开认证白名单决定访问边界；剩余业务路由依赖后端动态菜单。
 
 ### 11.3 请求层特性
 
@@ -260,7 +269,9 @@ Vue 与 React 管理端共享同一套后端、同一套菜单权限和大部分
 
 ### 12.2 固定路由
 
-`src/router/AppRouter.tsx` 里固定声明了 `/login`、`/register`、`/401`、`/redirect/*`、`/index`、`/user/profile`。其他路径统一通过 `BackendRouteView` 接管，再由后端菜单数据匹配到页面组件。
+`src/router/AppRouter.tsx` 固定声明 `/login`、`/oauth/callback`、`/register`、`/forgot-password`、`/401`、`/redirect/*`、`/index`、`/user/profile`、`/message-center` 与 catch-all。首页、个人中心和消息中心位于 `AuthGuard` 内；受保护布局内的其他路径由 `BackendRouteView` 解析，无法匹配页面时展示 404。
+
+当前 `BrowserRouter` 未设置 `basename`。Vite `base` 只决定构建资源路径，不能据此声称 `/react/` 子路径导航和刷新已可用；生产子路径必须补实际路由验证，见 [测试政策](./TESTING.md)。
 
 ### 12.3 动态路由转换
 
@@ -282,10 +293,10 @@ Vue 与 React 管理端共享同一套后端、同一套菜单权限和大部分
 
 React admin 的分包真值在 `frontend-react/vite.config.ts` 的 `build.rollupOptions.output.manualChunks`：
 
-- 当前策略优先稳定 vendor 分组与路由级懒加载：`vendor-react`、`vendor-shared`、`vendor-media`、`vendor-echarts`，以及 `vendor-antd-infra`、`vendor-rc-table`、`vendor-rc-picker`、`vendor-rc-form`、`vendor-rc-tree`、`vendor-rc-overlay`。
-- `src/router/AppRouter.tsx` 中的 `AuthGuard`、`MainLayout`、`BackendRouteView`、`login`、`register`、`401`、`redirect` 已改为 `lazy()`；入口首包优化依赖这些真实路由边界。
+- 当前策略使用 `vendor-react`、`vendor-shared`、`vendor-media`；ECharts 按 `vendor-echarts-charts`、`vendor-echarts-components`、`vendor-echarts-core`、`vendor-echarts-render` 分组，另有 `vendor-antd-infra`、`vendor-rc-table`、`vendor-rc-picker`、`vendor-rc-form`、`vendor-rc-tree`、`vendor-rc-overlay`。这些是配置中的分组名称，实际 chunk 以构建结果为准。
+- `src/router/AppRouter.tsx` 中守卫、布局、动态页面入口及登录、自助认证、OAuth 回调、首页、消息中心、错误和重定向页面均使用 `lazy()`；业务页面还通过组件映射懒加载。
 - 处理 chunk warning 时保留「按路由边界拆 + 按 rc 重模块拆」的思路，不要回到按 `antd/es/*` 或 `antd/lib/*` 细粒度手工拆包；旧策略容易触发 circular chunk warning。
-- 验收标准以 `pnpm run build:prod` 输出为准：既要避免 circular chunk warning，也要避免 `Some chunks are larger than 500 kB after minification`。
+- 审查 `pnpm --dir frontend-react run build:prod` 的真实输出，定位 circular chunk 与大 chunk 警告；脚本没有把所有 warning 自动转换为失败。构建成功不能代替浏览器加载、路由和性能验证，也不能靠提高阈值消除问题。
 
 ## 13. 如何新增一个后台页面
 

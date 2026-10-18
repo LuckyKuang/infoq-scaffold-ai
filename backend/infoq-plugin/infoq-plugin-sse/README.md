@@ -46,11 +46,11 @@
 
 ## 9. 日志 / 监控切入点
 
-- 登录后欢迎消息能否收到，是验证 SSE 链路的一个直接信号。
+- 登录后欢迎消息可作为原始 SSE 流的检查信号；当前管理端仅处理 `{ type: "message" }` 的刷新事件，欢迎文本不会自动变成通知面板记录。
 - 若连接建立正常但消息不达，需同时排查 Redis topic 和当前 token session。
 
 ## 10. 已知边界
 
 - 只负责 SSE 能力，不替代 WebSocket。
-- 是否开放路径还受 `security` 模块的 SSE 排除配置影响。
+- 默认连接路径 `/resource/sse` 在过滤链放行后，由 `SseController` 自行校验 token 和 `clientId`；这不代表匿名可连接。`/resource/sse/close` 仍需过滤链鉴权。
 

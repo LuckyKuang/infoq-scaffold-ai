@@ -20,8 +20,8 @@ context: |
   - L3 变更（新功能、API 契约变更、跨工作区交付）在改代码前必须创建或定位
     openspec/changes/<change-id>/；L2 至少 proposal.md + tasks.md；L1 小修复
     不建 change 但必须先写验收约定；不确定分级时默认按 L3 执行
-  - openspec/changes/ 是本地计划脚手架：不提交、不进 PR；耐久行为落到 docs/
-    与测试与提交信息
+  - openspec/changes/ 与 docs/plan/ 都是 Git 忽略的本地计划目录，不提交、不进 PR；
+    后续执行计划继续写入 docs/plan/，按需创建目录，由用户手动清理；版本控制只保留可复用 docs/、已接受的 docs/specs/、测试与提交信息
   - active change 在实现前和交付前都必须通过
     node tools/openspec_check.mjs <change-id>
   - tasks.md 默认显式评估 backend、frontend-react、frontend-vue、docs、script / deploy、
@@ -37,12 +37,14 @@ context: |
   - 前端命令优先使用 pnpm；后端构建与测试使用 node tools/backend_mvn.mjs -- ...
   - L3/L2 交付流程以 docs/DELIVERY-WORKFLOW.md 为准；change 初始化使用
     tools/init_change_dir.mjs，结构校验使用 tools/openspec_check.mjs
-  - 对重复验证流程优先复用仓库技能；仅当用户明确要求子代理或多专家执行时才使用子代理
+  - 对重复验证流程优先复用仓库技能；OpenSpec 交付默认按
+    requirements_expert -> technical_designer -> code_implementer -> auto_fixer
+    协作，主线程负责最终验收；当前运行环境不支持角色或子代理时由主线程按同序完成并记录限制
 
 rules:
   proposal:
     - 保持中文正文，路径与命令保留英文原样
-    - 必须包含背景、问题陈述、目标与成功指标、用户故事、范围、非目标、验收约定、延期范围
+    - 必须包含背景、问题陈述、目标与成功指标、变更内容、用户故事、范围、非目标、约束、验收约定、延期范围、风险与待确认
   tasks:
     - 必须包含影响矩阵（逐工作区评估）、实施任务、验证映射、延期范围、阻塞与残余风险
     - 验证映射固定包含主流程验证、定向测试、lint/build、差异审查四节

@@ -13,7 +13,7 @@
 
 - 当客户端调用 `/system/user/getInfo` 时
 - 则返回体必须包含 `user`、`permissions`、`roles`
-- 并且当当前用户数据不在可访问范围时必须显式失败
+- 并且当前用户记录不存在时必须显式失败；该接口使用 `DataPermissionHelper.ignore` 读取本人资料，不套用后台用户列表的数据范围
 
 ### 要求：个人资料维护
 当前用户的资料、角色组、岗位组与密码修改必须走统一入口。
@@ -57,3 +57,5 @@
 - 当管理员调用 `/system/user/importData` 时
 - 则系统必须接收 `file` 与 `updateSupport`
 - 并且 `/system/user/importTemplate` 必须继续提供模板下载
+
+接口方法以 `SysUserController` / `SysProfileController` 为准：个人资料查询为 `GET`、更新与改密为 `PUT`；用户导出、导入和模板下载均为 `POST`。改密带 `@ApiEncrypt`，启用 API 解密时必须遵循加密协议；手机号、邮箱仅在非空时校验唯一性。文档核查不代表已执行真实导入或修改账号。

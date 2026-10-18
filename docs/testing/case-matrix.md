@@ -1,17 +1,19 @@
 # 管理端 Web 自动化测试矩阵
 
-生成时间：2026-09-22T21:44:03.807Z
+生成时间：2026-10-18T07:01:10.364Z
+
+这是静态用例设计清单，不是执行报告；范围与 runner 验收限制见 [测试政策](../TESTING.md) 第 6.5–6.6 节。
 
 ## 摘要
 
-- 用例总数：114
+- 用例总数：115
 - P0：24
-- P1：69
+- P1：70
 - P2：21
-- React 适用用例：114
-- Vue 适用用例：114
+- React 适用用例：115
+- Vue 适用用例：115
 - 副作用用例：51
-- 缺口数：2
+- 缺口数：0
 - 安全门禁：6
 
 ## 用例清单
@@ -25,6 +27,7 @@
 | FE-ERROR-401 | P0 | smoke | error.401 | 401 | /401 | error/401 | react,vue | no |  |
 | FE-ERROR-404 | P0 | smoke | error.404 | 404 | /404 | error/404 | react,vue | no |  |
 | FE-HOME-INDEX | P0 | smoke | home.index | 首页 | /index | index | react,vue | no |  |
+| FE-MESSAGE-CENTER | P1 | smoke | message.center | 消息中心 | /message-center | message-center/index | react,vue | no |  |
 | FE-MONITOR-2 | P1 | route | monitor | 系统监控 | /monitor |  | react,vue | no |  |
 | FE-MONITOR-CACHE-113 | P0 | smoke | monitor.cache | 缓存监控 | /monitor/cache | monitor/cache/index | react,vue | no |  |
 | FE-MONITOR-DATA-SOURCE-2026042920 | P0 | smoke | monitor.dataSource | 连接池监控 | /monitor/dataSource | monitor/dataSource/index | react,vue | no |  |

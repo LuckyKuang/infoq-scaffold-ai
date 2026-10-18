@@ -123,7 +123,7 @@ const wsMocks = vi.hoisted(() => ({
   useEventSource: vi.fn(),
   useWebSocket: vi.fn(),
   getToken: vi.fn(),
-  addNotice: vi.fn()
+  refresh: vi.fn()
 }));
 
 vi.mock('@vueuse/core', () => ({
@@ -131,7 +131,7 @@ vi.mock('@vueuse/core', () => ({
   useWebSocket: wsMocks.useWebSocket
 }));
 vi.mock('@/utils/auth', () => ({ getToken: wsMocks.getToken }));
-vi.mock('@/store/modules/notice', () => ({ useNoticeStore: vi.fn(() => ({ addNotice: wsMocks.addNotice })) }));
+vi.mock('@/store/modules/notice', () => ({ useNoticeStore: vi.fn(() => ({ refresh: wsMocks.refresh })) }));
 ```
 
 ## 9) 业务缺陷回归示例（websocket ping）
@@ -140,7 +140,10 @@ vi.mock('@/store/modules/notice', () => ({ useNoticeStore: vi.fn(() => ({ addNot
 initWebSocket('/ws/notice');
 const [, options] = wsMocks.useWebSocket.mock.calls[0] as [string, any];
 options.onMessage({}, { data: 'ping' });
-expect(wsMocks.addNotice).not.toHaveBeenCalled();
+expect(wsMocks.refresh).not.toHaveBeenCalled();
+
+options.onMessage({}, { data: JSON.stringify({ type: 'message', messageId: 'fixture-id' }) });
+expect(wsMocks.refresh).toHaveBeenCalledTimes(1);
 ```
 
 ## 10) getCurrentInstance proxy 注入（views/401）
@@ -291,7 +294,7 @@ const chartMocks = vi.hoisted(() => ({
   resize: vi.fn()
 }));
 
-vi.mock('echarts', () => ({ init: chartMocks.init }));
+vi.mock('@/utils/echarts', () => ({ init: chartMocks.init }));
 
 chartMocks.init.mockReturnValue({
   setOption: chartMocks.setOption,

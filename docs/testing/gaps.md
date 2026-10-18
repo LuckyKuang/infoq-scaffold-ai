@@ -1,11 +1,12 @@
 # 管理端 Web 自动化缺口报告
 
-生成时间：2026-09-22T21:44:03.807Z
+生成时间：2026-10-18T07:01:10.364Z
 
-缺口总数：2
+本报告仅检查静态组件/菜单匹配与测试文件路径关联，不证明业务断言或运行态已覆盖；完整边界见 [测试政策](../TESTING.md) 第 6.5–6.6 节。
 
-- [react-page-without-menu] message-center/index: React 页面未直接匹配菜单组件
-- [vue-view-without-menu] message-center/index: Vue 页面未直接匹配菜单组件
+缺口总数：0
+
+未发现结构性缺口。
 
 ## 安全门禁
 

@@ -29,6 +29,8 @@ deployment guides. Compose files and runtime config still live under
 
 “完整栈”指 MySQL、Redis、MinIO、后端、Vue/React 管理端和 Nginx 网关。Apple container 只启动 MySQL、Redis 和后端；前后端联调时前端以 dev server 连接 `http://127.0.0.1:19090`，该模式不包含 MinIO 与 Nginx，详见 [APPLE_CONTAINER.md](APPLE_CONTAINER.md#full-stack-local-development)。
 
+生产执行前必须先关闭 [当前生产准备阻塞](DEPLOYMENT_LIFECYCLE.md#9-当前生产准备阻塞)，包括权限、公开 bucket、TLS/端口和凭据；本机安装成功不等于已通过生产验收。
+
 Install, upgrade, rollback, stop, and data-retention boundaries are documented in
 [DEPLOYMENT_LIFECYCLE.md](DEPLOYMENT_LIFECYCLE.md). The cross-platform runtime entry is
 `node skills/deploy-cli/scripts/deploy_cli.mjs`.
@@ -64,9 +66,9 @@ Install, upgrade, rollback, stop, and data-retention boundaries are documented i
 | 后端构建镜像 | `maven:3.9.12-eclipse-temurin-21` |
 | 后端运行镜像 | `bellsoft/liberica-openjdk-rocky:21.0.12-cds` |
 | 手动部署 JDK | 21 |
-| 手动部署 Maven | 3.9+ |
+| 手动部署 Maven | 3.9.x |
 | Node.js | 24.18.0 |
-| pnpm | >= 10.0.0 |
+| pnpm | 10.34.1（根 `package.json` 的 `packageManager`） |
 | MySQL | 8.x |
 | Redis | 7.x |
 | Nginx | 1.30.x |
@@ -76,7 +78,7 @@ Install, upgrade, rollback, stop, and data-retention boundaries are documented i
 说明：
 
 - Docker Compose / 脚本化部署不要求宿主机安装 JDK 或 Maven；后端 Maven 打包在 Docker builder 镜像 `maven:3.9.12-eclipse-temurin-21` 内完成，最终运行镜像仍是 `bellsoft/liberica-openjdk-rocky:21.0.12-cds`。后端 Dockerfile 使用 BuildKit `RUN --mount`，因此 Docker CLI 必须支持 `docker buildx`：[`backend/infoq-admin/Dockerfile`](../backend/infoq-admin/Dockerfile)
-- 手动部署或本机直接执行 Maven 构建时，仍需要宿主机 JDK 21 与 Maven 3.9+。
+- 手动部署或本机直接执行 Maven 构建时，仍需要宿主机 JDK 21 与 Maven 3.9.x。
 - 前端本机开发、CI 和 Docker 构建镜像统一固定基于 Node 24.18.0：[`frontend-vue/Dockerfile`](../frontend-vue/Dockerfile) [`frontend-react/Dockerfile`](../frontend-react/Dockerfile)。npm 版本不作为仓库构建基线单独固定，包管理器遵循各工作区 `packageManager` 与 lockfile。
 - Docker Compose 默认依赖 MySQL 8.0、Redis 7.2、MinIO `RELEASE.2026-06-18T00-00-00Z`、Nginx 1.30：[`deploy/docker/docker-compose.yml`](../deploy/docker/docker-compose.yml)
 
@@ -86,7 +88,7 @@ Install, upgrade, rollback, stop, and data-retention boundaries are documented i
 
 | 服务 | 默认端口 |
 | --- | --- |
-| nginx 网关 | 80 / 443 |
+| nginx 网关 | 80；443 已映射但默认未启用 TLS listener |
 | 后端 `infoq-admin` | 9090 |
 | Vue 前端直连 | 9091 |
 | React 前端直连 | 9092 |
@@ -113,6 +115,8 @@ Install, upgrade, rollback, stop, and data-retention boundaries are documented i
 - 如启用可选 MQTT / Elasticsearch，已通过 `deploy-middleware.sh` 选择 `single` 或 `cluster`，并按 [DOCKER.md](DOCKER.md) 的可选中间件章节准备 `deploy.env` 变量；不得使用 `*-it` 测试材料
 - 选择 Elasticsearch cluster 时，宿主机 `vm.max_map_count` 至少为 `262144`
 - 首次安装会生成 `/etc/infoq-scaffold-ai/deploy.env` 和 `/etc/infoq-scaffold-ai/credentials.txt`，两个文件必须保留且权限为 `600`
+
+当前 Compose 把数据库、Redis、MinIO、后端和前端直连端口发布到所有宿主网卡；生产应通过经过评审的端口绑定/网络策略限制为本机或可信内网，仅开放必要网关入口。映射 `443` 不会自动配置 HTTPS，设置 `INFOQ_PUBLIC_BASE_URL=https://...` 也不会生成 TLS 配置。
 
 ### 1.3 目录与权限准备
 
@@ -160,6 +164,8 @@ ${INFOQ_DEPLOY_ROOT}/react/logs      # INFOQ_FRONTEND_TARGET=react 或 all
 
 前端重点检查：`VITE_APP_CONTEXT_PATH`、`VITE_APP_BASE_API`、`VITE_APP_ENCRYPT`、RSA 公私钥、`VITE_APP_CLIENT_ID`。配置入口为 `frontend-vue/.env.production` 与 `frontend-react/.env.production`。
 
+安装器生成数据库/Redis/MinIO/token/管理员凭据，不生成 RSA。保持加密时，前端 `VITE_APP_RSA_PUBLIC_KEY` 对应后端 `api-decrypt.privateKey`，前端 `VITE_APP_RSA_PRIVATE_KEY` 对应后端 `api-decrypt.publicKey`，这是两组密钥。两端必须同步更换仓库示例值并重建；前端私钥会进入浏览器产物，不能承担服务端秘密保护，公网仍需 HTTPS。Compose/Dockerfile 没有传递 RSA build args，单纯 export 宿主机 `VITE_APP_RSA_*` 不会传入 builder；当前可在受控构建工作区使用各端未提交的 `.env.production.local`，同时评审其进入构建上下文/缓存的暴露面。后端通过 `${INFOQ_DEPLOY_ROOT}/server/config/application-prod.yml` 覆盖 `api-decrypt`。
+
 网关确认：`INFOQ_FRONTEND_TARGET=all` 时 `/vue/`、`/react/` 分别指向 Vue、React 静态资源；单目标时 `/` 指向被选中的前端；`/prod-api/` 反代到后端 `9090`；HTTPS 证书路径和域名配置正确。基线配置见 [`deploy/docker/nginx/conf/nginx.conf`](../deploy/docker/nginx/conf/nginx.conf)，运维示例见 `examples/nginx/` 与 `examples/systemd/`。
 
 ### 1.5 数据初始化准备
@@ -175,11 +181,13 @@ Compose / 脚本化部署不需要提前在宿主机准备 jar；`infoq-admin` �
 
 ## 2. Linux Installer
 
-Remote install (pin a tag for production):
+远程安装应固定已审核 tag，并在执行前审阅下载脚本（从仓库根目录运行，替换 `v3.0.0` 为实际目标 tag）：
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/LuckyKuang/infoq-scaffold-ai/main/deploy/install.sh \
-  | sudo env INFOQ_FRONTEND_TARGET=all INFOQ_PUBLIC_BASE_URL=http://SERVER_IP bash
+mkdir -p tmp/install
+curl -fSL https://raw.githubusercontent.com/LuckyKuang/infoq-scaffold-ai/v3.0.0/deploy/install.sh -o tmp/install/install.sh
+# 审阅脚本并确认目标后执行
+sudo env INFOQ_VERSION=v3.0.0 INFOQ_FRONTEND_TARGET=all INFOQ_PUBLIC_BASE_URL=http://SERVER_IP INFOQ_PRINT_SECRETS=0 bash tmp/install/install.sh
 ```
 
 From a local checkout:
@@ -195,10 +203,12 @@ expects Docker, Docker Compose, and Buildx. It writes random secrets to
 `/opt/infoq-scaffold-ai`. Do not reuse `.env.example` placeholders in a shared
 environment.
 
-Uninstall:
+安装默认只显示凭据文件路径，`INFOQ_PRINT_SECRETS=1` 只用于不会被采集的私密终端；禁止把秘密写入发布日志。已有环境文件会覆盖调用环境中的同名值；源码选择/下载却发生在加载该文件前，升级必须核对实际 checkout/tag、调用版本和环境文件内版本/批次，见 [DEPLOYMENT_LIFECYCLE.md](DEPLOYMENT_LIFECYCLE.md)。下载的安装器没有安全的 `--help`/dry-run；不要把这两个参数当作预览运行。
+
+Uninstall（先预览，实际删除仍需逐项确认）：
 
 ```bash
-bash deploy/uninstall.sh
+sudo bash deploy/uninstall.sh --dry-run
 ```
 
 ## 3. Docker Compose
@@ -210,9 +220,11 @@ cp deploy/.env.example deploy/docker/.env
 chmod 600 deploy/docker/.env
 ```
 
-Deploy all admin consoles plus the Nginx gateway:
+编辑 `.env` 所有占位凭据、管理员密码、公共地址和部署根目录后，明确传给 shell helper。helper 不自动读取 `deploy/docker/.env`；必须先部署后端依赖，再部署前端：
 
 ```bash
+export INFOQ_ENV_FILE="$(pwd)/deploy/docker/.env"
+bash deploy/bin/infoq.sh deploy
 bash deploy/bin/deploy-frontend.sh deploy all
 ```
 
@@ -227,6 +239,7 @@ Stop:
 
 ```bash
 bash deploy/bin/deploy-frontend.sh stop all
+bash deploy/bin/infoq.sh stop
 ```
 
 On macOS Colima set `INFOQ_DEPLOY_ROOT="$HOME/infoq"` before starting. Full
@@ -271,8 +284,7 @@ A single-target deploy mounts that admin at `/`.
 Use [`deploy/VERIFICATION.md`](./VERIFICATION.md) for a full Compose smoke. A minimal check:
 
 ```bash
-cd deploy/docker
-docker compose ps
+INFOQ_ENV_FILE=/etc/infoq-scaffold-ai/deploy.env bash deploy/bin/infoq.sh status
 curl -fsS http://127.0.0.1:9090/monitor/health/readiness
 curl -fsS http://127.0.0.1/prod-api/monitor/health/readiness
 ```
@@ -294,21 +306,20 @@ Local `java -jar` with the `local` profile still uses `http://127.0.0.1:8080`.
 - 回滚方案已准备：上一个 jar、上一个前端静态包、数据库备份
 - 日志查看路径已明确
 
-如果以上任一项不明确，不建议直接执行上线部署。
+以上任一项未确认，或生命周期文档的生产阻塞未关闭时，停止上线部署并记录具体缺失条件。
 
 ## 9. Troubleshooting
 
 Container logs:
 
 ```bash
-cd deploy/docker
-docker compose logs infoq-admin
-docker compose logs mysql
-docker compose logs redis
+INFOQ_ENV_FILE=/etc/infoq-scaffold-ai/deploy.env bash deploy/bin/infoq.sh logs infoq-admin
 ```
 
 更多排障（镜像 tag 收口、Docker credential helper、WSL2 keepalive、Corepack
 激活失败等）见 [DOCKER.md](DOCKER.md) 的排障章节。
+
+上述命令需由能读取 `600` 环境文件且能访问 Docker socket 的部署账号执行；root 创建的文件通常需要授权 root shell。`logs` 持续跟随，可用 `Ctrl-C` 退出，服务不受影响。查看其他服务时将 `infoq-admin` 替换为 `mysql`、`redis` 或 `minio`。
 
 ## 10. Detailed Documents
 

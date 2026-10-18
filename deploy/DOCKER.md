@@ -9,9 +9,11 @@ environment template lives in [`.env.example`](.env.example). Prerequisites
 (versions, ports, directories, config checklist) are in [README.md](README.md).
 
 本文件合并了 Compose 教程与脚本化部署流程：首次部署按第 1 - 6 节顺序执行；
-日常运维看第 7 - 9 节；可选中间件与排障看第 10 - 14 节。
+日常运维看第 7 - 9 节；可选中间件、排障与测试入口看第 10 - 15 节。
 
 当前文档对应项目基线版本为 `3.0.0`。
+
+生产执行前必须关闭 [部署生命周期中的生产准备阻塞](DEPLOYMENT_LIFECYCLE.md#9-当前生产准备阻塞)。本教程的命令及历史经验不代表本次审计已经部署或验收目标环境。
 
 ## 1. 教程目标
 
@@ -90,7 +92,7 @@ docker compose version || docker-compose version
 
 macOS 的**完整栈**使用 Colima + Docker，包含 MySQL、Redis、MinIO、后端、Vue/React 和 Nginx。Apple container 只提供后端栈，不含 MinIO、前端或 Nginx；仅开发后端时见 [APPLE_CONTAINER.md](APPLE_CONTAINER.md)，前后端联调可用 Apple 后端加两个前端 dev server。
 
-先确认 Colima 和 Docker CLI 可用：
+先确认 Colima 和 Docker CLI 可用。下列 `colima start` 与 `docker context use` 会修改运行时/用户配置，只在已授权启动目标运行时后执行，先记录原 context；纯只读探测按运行时矩阵执行：
 
 ```bash
 command -v colima
@@ -175,17 +177,18 @@ mkdir -p /tmp/infoq-deploy "${INFOQ_DEPLOY_ROOT}/server/temp"
 仓库不发布预构建应用镜像；`deploy/install.sh` 会在目标主机上用 Docker builder 构建后端 jar 与前端镜像。首次部署推荐使用 `deploy/install.sh`，它会生成并持久化 MySQL、Redis、MinIO、后端安全密钥和默认管理员账号密码，随后调用后端、前端和 Nginx 部署脚本：
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/LuckyKuang/infoq-scaffold-ai/main/deploy/install.sh | sudo env INFOQ_FRONTEND_TARGET=all bash
+sudo env INFOQ_SOURCE_DIR="$(pwd)" INFOQ_FRONTEND_TARGET=all INFOQ_PUBLIC_BASE_URL=http://SERVER_IP INFOQ_DEPLOY_ROOT=/infoq INFOQ_PRINT_SECRETS=0 bash deploy/install.sh
 ```
 
 该入口的宿主机前置命令是 `curl`、`tar`、`openssl`、`docker`、`docker buildx` 和 Docker Compose；Java 与 Maven 由 Docker 镜像提供。
 
-生产或准生产环境建议固定 tag：
+上例从已审阅的本地 release checkout 执行。远程安装应固定已审核 tag，先下载至 `tmp/` 并审阅，再执行；下面的 `v3.0.0` 必须替换为实际已审核目标：
 
 ```bash
-curl -fsSLO https://raw.githubusercontent.com/LuckyKuang/infoq-scaffold-ai/<tag>/deploy/install.sh
-chmod +x install.sh
-sudo env INFOQ_VERSION=<tag> INFOQ_FRONTEND_TARGET=all INFOQ_PUBLIC_BASE_URL=http://SERVER_IP ./install.sh
+mkdir -p tmp/install
+curl -fSL https://raw.githubusercontent.com/LuckyKuang/infoq-scaffold-ai/v3.0.0/deploy/install.sh -o tmp/install/install.sh
+# 审阅脚本后执行；INFOQ_VERSION 必须与下载的 tag 一致
+sudo env INFOQ_VERSION=v3.0.0 INFOQ_FRONTEND_TARGET=all INFOQ_PUBLIC_BASE_URL=http://SERVER_IP INFOQ_DEPLOY_ROOT=/infoq INFOQ_PRINT_SECRETS=0 bash tmp/install/install.sh
 ```
 
 `INFOQ_FRONTEND_TARGET` 是必填的前端安装目标，取值为 `react`、`vue` 或 `all`。选择单个前端时只构建并启动目标前端，网关根路径 `/` 直接进入该管理端。
@@ -237,8 +240,9 @@ sudo env INFOQ_SOURCE_DIR="$(pwd)" INFOQ_FRONTEND_TARGET=all INFOQ_PUBLIC_BASE_U
 
 如果 WSL distro 容易自动退出，可以先临时保持一个 WSL 会话：
 
-```bash
-nohup bash -c 'while true; do sleep 3600; done' >/tmp/infoq-wsl-keepalive.log 2>&1 &
+```powershell
+# 在单独 Windows 终端保持此交互会话，验证完成后 exit
+wsl.exe -d Debian -- bash
 ```
 
 ### 5.2 macOS Colima
@@ -268,7 +272,9 @@ sudo env INFOQ_SOURCE_DIR="$(pwd)" INFOQ_FRONTEND_TARGET=all INFOQ_PUBLIC_BASE_U
 
 ## 6. 部署环境文件
 
-生产或准生产发布可以在首次安装前显式指定 `INFOQ_PUBLIC_BASE_URL`、`INFOQ_DEPLOY_ROOT`、`INFOQ_VERSION` 和 `INFOQ_OSS_BUCKET`。不设置 `DEPLOY_ID` 时，安装脚本会生成并持久化当前批次号。同一批滚动发布的所有后端节点必须使用同一个 `DEPLOY_ID`；同一版本再次发布时应换新值。
+首次安装可指定 `INFOQ_PUBLIC_BASE_URL`、`INFOQ_DEPLOY_ROOT`、`INFOQ_VERSION` 和 `INFOQ_OSS_BUCKET`。安装器首次生成随机凭据及 `DEPLOY_ID`，不会采用调用环境中已有的密码或批次号；复用环境文件时，文件值覆盖同名调用变量。同一批滚动发布必须受控同步同一个 `DEPLOY_ID`，新批次必须更新文件中的值。源码定位/下载早于加载文件，`INFOQ_SOURCE_DIR` 指向本地 checkout 时不会按 `INFOQ_VERSION` 切换代码，不能仅改版本字段就当作完成升级。
+
+安装器没有安全的 `--help` 或 dry-run；不要为探测而执行。它不生成 RSA；加密构建的两组密钥对应关系、Docker 构建传递限制和受控配置方法见 [README.md 第 1.4 节](README.md#14-配置检查项)。
 
 如果需要直接调用底层脚本，先加载同一个环境文件：
 
@@ -357,7 +363,7 @@ bash deploy/bin/infoq.sh start
 bash deploy/bin/deploy-frontend.sh start "${INFOQ_FRONTEND_TARGET}"
 ```
 
-`start` 适用于"启动已有容器"，会复用已经持久化的 `DEPLOY_ID`，不会生成新的部署批次。如果是发布新包、希望生产环境重新执行一次受控 Quartz reconcile，应使用新的 `DEPLOY_ID` 执行 `deploy`。
+`start` 复用 `DEPLOY_ID` 并启动已有后端容器，但还会准备目录/Redis 配置、启动或更新依赖、补导缺失 SQL、同步数据库应用账号/OSS 并设置 MinIO bucket 策略。前端 `start` 会重新生成网关配置。它们不是无写入的进程恢复命令；执行前需备份并确认变更范围。发布新包应使用新的 `DEPLOY_ID` 执行 `deploy`。
 
 停止顺序建议先前端和网关，再后端和基础服务：
 
@@ -396,70 +402,11 @@ sudo env DOCKER_CONFIG="${DOCKER_CONFIG:-$HOME/.docker}" DOCKER_HOST="${DOCKER_H
 
 ## 8. 部署后 smoke 验证
 
-部署完成后，至少执行以下 smoke。代理环境中访问本机地址时必须加 `--noproxy '*'`，避免 localhost 请求被系统代理转发后得到伪 502。
+按 [VERIFICATION.md](VERIFICATION.md#部署后检查) 执行唯一的详细 smoke 流程：对 HTTP 状态、数据库结构计数和 Redis PONG 做显式失败判定，将退出码与脱敏证据写入 `tmp/deploy-verify/<run-id>/`。`curl` 能返回响应或命令组最后一条成功，均不能证明整轮通过。
 
-```bash
-docker ps -a --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}'
+检查必须覆盖直接后端、Nginx `/prod-api/`、所选前端、MinIO、初始化结构，以及真实登录和上传/下载。默认 `all` 的 `/` 是跳转，检查 `/vue/` 与 `/react/`；单端才检查 `/`。默认无条件 GET 期望 `200`，不能把 `302` 或未带条件头的 `304` 作为通过。
 
-export INFOQ_ENV_FILE=/etc/infoq-scaffold-ai/deploy.env
-set -a
-. "${INFOQ_ENV_FILE}"
-set +a
-
-curl --noproxy '*' -i --max-time 15 http://127.0.0.1:9090/monitor/health/readiness
-curl --noproxy '*' -i --max-time 15 http://127.0.0.1/prod-api/monitor/health/readiness
-
-if [[ "${INFOQ_FRONTEND_TARGET}" == "all" ]]; then
-  curl --noproxy '*' -sS -o /dev/null -w '%{http_code}\n' --max-time 15 http://127.0.0.1/vue/
-  curl --noproxy '*' -sS -o /dev/null -w '%{http_code}\n' --max-time 15 http://127.0.0.1/react/
-else
-  curl --noproxy '*' -sS -o /dev/null -w '%{http_code}\n' --max-time 15 http://127.0.0.1/
-fi
-curl --noproxy '*' -sS -o /dev/null -w '%{http_code}\n' --max-time 15 http://127.0.0.1/console-oss/
-curl --noproxy '*' -i --max-time 15 http://127.0.0.1/oss/minio/health/live
-
-case "${INFOQ_FRONTEND_TARGET}" in
-  all)
-    curl --noproxy '*' -sS -o /dev/null -w '%{http_code}\n' --max-time 15 http://127.0.0.1:9091/
-    curl --noproxy '*' -sS -o /dev/null -w '%{http_code}\n' --max-time 15 http://127.0.0.1:9092/
-    ;;
-  vue)
-    curl --noproxy '*' -sS -o /dev/null -w '%{http_code}\n' --max-time 15 http://127.0.0.1:9091/
-    ;;
-  react)
-    curl --noproxy '*' -sS -o /dev/null -w '%{http_code}\n' --max-time 15 http://127.0.0.1:9092/
-    ;;
-esac
-
-curl --noproxy '*' -i --max-time 15 http://127.0.0.1:9000/minio/health/live
-
-docker exec mysql mysql -uroot -p"${MYSQL_ROOT_PASSWORD}" -Nse 'SELECT COUNT(*) FROM infoq.sys_menu;'
-docker exec mysql mysql -uroot -p"${MYSQL_ROOT_PASSWORD}" -Nse "SELECT COUNT(*) FROM infoq.sys_oss_config WHERE config_key IN ('minio','image') AND access_key='${MINIO_ROOT_USER}' AND secret_key='${MINIO_ROOT_PASSWORD}' AND bucket_name='${INFOQ_OSS_BUCKET}' AND endpoint='minio:9000' AND domain='${INFOQ_PUBLIC_BASE_URL}/oss' AND is_https=IF(LEFT('${INFOQ_PUBLIC_BASE_URL}', 6)='https:', 'Y', 'N');"
-docker exec mysql mysql -uroot -p"${MYSQL_ROOT_PASSWORD}" -Nse "SELECT COUNT(*) FROM infoq.sys_user WHERE user_id=1 AND user_name='${INFOQ_ADMIN_USERNAME}' AND status='0' AND del_flag='0';"
-docker exec redis redis-cli -a "${REDIS_PASSWORD}" ping
-```
-
-期望结果：
-
-- `infoq-admin` 容器为 `healthy`，readiness 返回 `200`。
-- `/prod-api/monitor/health/readiness` 通过 Nginx 也返回 `200`。
-- `INFOQ_FRONTEND_TARGET=all` 时 `/vue/`、`/react/` 通过网关返回 `200` 或 `304`；单前端目标时 `/` 返回 `200` 或 `304`。
-- `/console-oss/` 可访问 MinIO Console，`/oss/minio/health/live` 返回 `200`。
-- `all` 目标时 `9091`、`9092` 两个直连端口有响应；单前端目标时仅对应直连端口有响应。
-- MinIO live health 返回 `200`。
-- MySQL 能查到初始化菜单数据。
-- `sys_oss_config` 同步计数返回 `2`，表示 `minio` 和 `image` 的 MinIO 凭据与 `deploy.env` 一致。
-- 管理员同步计数返回 `1`，表示 `sys_user.user_id=1` 的用户名是安装脚本生成的管理员账号。
-- Redis 返回 `PONG`。
-
-如果从 Windows 浏览器访问 WSL2 部署，还可以在 Windows PowerShell 验证：
-
-```powershell
-curl.exe --noproxy * -sS -o NUL -w "%{http_code}\n" --max-time 15 http://localhost/vue/
-curl.exe --noproxy * -sS -o NUL -w "%{http_code}\n" --max-time 15 http://localhost/react/
-curl.exe --noproxy * -i --max-time 15 http://localhost/prod-api/monitor/health/readiness
-curl.exe --noproxy * -sS -o NUL -w "%{http_code}\n" --max-time 15 http://localhost/console-oss/
-```
+WSL2 还须从 Windows 浏览器/主机验证实际用户访问路径，见 [WSL2 专项步骤](wsl2-docker-compose.md)。诊断日志不得包含环境文件内容、密码、token、私钥或带秘密的 SQL；结构查询不证明实际管理员/OSS 凭据已匹配。
 
 ## 9. 日志、状态与重建
 
@@ -493,7 +440,7 @@ bash deploy/bin/deploy-frontend.sh deploy "${INFOQ_FRONTEND_TARGET}"
 如果同时升级 MinIO 镜像，可单独受控重建 MinIO，再重新执行前端脚本刷新 nginx upstream：
 
 ```bash
-docker compose -f deploy/docker/docker-compose.yml up -d --no-deps --force-recreate minio
+docker compose -p "${INFOQ_COMPOSE_PROJECT_NAME:-${COMPOSE_PROJECT_NAME:-infoq-scaffold-ai}}" -f deploy/docker/docker-compose.yml up -d --no-deps --force-recreate minio
 bash deploy/bin/deploy-frontend.sh deploy "${INFOQ_FRONTEND_TARGET}"
 ```
 
@@ -531,9 +478,9 @@ ES_BOOTSTRAP_PASSWORD
 
 生产安全材料由运维/组织 PKI 提供，不能复用 `tmp/`、`${INFOQ_DEPLOY_ROOT}/mqtt-it/` 或 `${INFOQ_DEPLOY_ROOT}/elasticsearch-it/` 的测试 run 材料。私钥应只允许最小必要的容器用户读取；ES 数据目录必须允许容器用户 `1000:0` 写入。选择脚本只会在 root 身份下创建缺失数据目录并设置为 `1000:0`、`0750`；非 root 必须由运维先创建，已有目录绝不自动修改 owner 或权限。脚本绝不生成证书、账户、ACL 或私钥。
 
-单节点所需路径：`${INFOQ_DEPLOY_ROOT}/mqtt/certs/{ca,tls}.crt`、`tls.key`、`data`，以及 `${INFOQ_DEPLOY_ROOT}/elasticsearch/certs/{ca,tls}.crt`、`tls.key`、`data`。
+单节点所需材料分别是 `${INFOQ_DEPLOY_ROOT}/mqtt/certs/{ca.crt,tls.crt,tls.key}`、`${INFOQ_DEPLOY_ROOT}/mqtt/data/`，以及 `${INFOQ_DEPLOY_ROOT}/elasticsearch/certs/{ca.crt,tls.crt,tls.key}`、`${INFOQ_DEPLOY_ROOT}/elasticsearch/data/`。
 
-三节点 cluster 所需路径：`${INFOQ_DEPLOY_ROOT}/mqtt/certs/` 下逐节点 `mqtt-broker-{1,2,3}/tls.{crt,key}` 与 `data/mqtt-broker-{1,2,3}`；`${INFOQ_DEPLOY_ROOT}/elasticsearch/certs/` 下逐节点 `es0{1,2,3}/tls.{crt,key}` 与 `data/es0{1,2,3}`。
+三节点 cluster 所需材料为各组件 `certs/ca.crt`，MQTT 的 `certs/mqtt-broker-{1,2,3}/tls.{crt,key}`、`data/mqtt-broker-{1,2,3}/`，以及 Elasticsearch 的 `certs/es0{1,2,3}/tls.{crt,key}`、`data/es0{1,2,3}/`；路径都相对于各自 `${INFOQ_DEPLOY_ROOT}/mqtt/` 或 `${INFOQ_DEPLOY_ROOT}/elasticsearch/`。
 
 MQTT 生产基线配置在 [`deploy/docker/mqtt/production/base.hocon`](../deploy/docker/mqtt/production/base.hocon)：它只启用 TLS `8883`、关闭明文 `1883`、启用 built-in database 认证并默认拒绝未匹配授权。上线前必须通过受控运维流程创建业务账户与最小权限 ACL。
 
@@ -541,7 +488,7 @@ MQTT 生产基线配置在 [`deploy/docker/mqtt/production/base.hocon`](../deplo
 
 唯一受支持的选择入口为：
 
-```bash
+```text
 bash deploy/bin/deploy-middleware.sh <mqtt|elasticsearch> <single|cluster> <prepare|config|deploy|bootstrap|status|stop>
 ```
 
@@ -577,9 +524,9 @@ bash deploy/bin/deploy-middleware.sh elasticsearch cluster bootstrap
 
 MQTT cluster 固定为 `mqtt-broker-1`、`mqtt-broker-2`、`mqtt-broker-3`，并在 Compose 网络中分别使用 FQDN 别名作为 EMQX Erlang 节点名和静态发现地址。三个节点使用同一个 `MQTT_NODE_COOKIE`、TLS-only `8883`、独立数据目录和逐节点证书。每张节点证书的 SAN 至少应包含对应的 FQDN 别名；默认只把节点一的 TLS listener 发布到 `127.0.0.1:8883`，节点二、三只在 Compose 网络内通信。
 
-Elasticsearch cluster 固定为 `es01`、`es02`、`es03`：启用认证、HTTP TLS、transport TLS、节点发现和独立数据目录/证书，默认仅把 `es01` 的 HTTP endpoint 发布到 `127.0.0.1:9200`。逐节点证书 SAN 必须包含节点服务名。生产应用必须使用受控创建的业务 role/user，不能使用 `elastic` bootstrap 用户。
+Elasticsearch cluster 固定为 `es01`、`es02`、`es03`：启用认证、HTTP TLS、transport TLS、节点发现和独立数据目录/证书，默认仅把 `es01` 的 HTTP endpoint 发布到 `127.0.0.1:9200`。证书 SAN 必须覆盖节点服务名、容器 healthcheck 使用的 `127.0.0.1`，以及实际客户端访问的域名/IP。生产应用必须使用受控创建的业务 role/user，不能使用 `elastic` bootstrap 用户。
 
-首次执行 `elasticsearch cluster bootstrap` 时，脚本要求三个数据目录均为空；任一目录已有内容时脚本会明确拒绝并提示使用 `deploy`。ES 部署/首次 bootstrap 还会检查 Linux `vm.max_map_count` 至少为 `262144`；该内核参数由运维在宿主机修复，脚本不会修改它。
+首次执行 `elasticsearch cluster bootstrap` 时，脚本要求三个数据目录均为空；任一目录已有内容时脚本会明确拒绝并提示使用 `deploy`。ES 部署/首次 bootstrap 会在当前 shell 可读 `/proc/sys/vm/max_map_count` 时检查其至少为 `262144`；该参数由运维修复，脚本不会修改。macOS Colima 中需另在 Linux VM 内核验证，宿主 shell 未读到该路径不代表检查通过。
 
 这套三节点编排运行在**同一个 Docker Compose 主机**上，能提供三节点发现、持久化和 TLS/认证拓扑验证，但不能替代跨物理主机、跨可用区或跨故障域的高可用。停止时只使用选择脚本的目标 `stop` 操作；不使用 `down -v`，不删除数据目录或 Docker volume。
 
@@ -592,11 +539,11 @@ export INFOQ_ENV_FILE=/etc/infoq-scaffold-ai/deploy.env
 set -a
 . "${INFOQ_ENV_FILE}"
 set +a
-docker compose -f deploy/docker/docker-compose.yml ps
-docker compose -f deploy/docker/docker-compose.yml logs -f infoq-admin
+docker compose -p "${INFOQ_COMPOSE_PROJECT_NAME:-${COMPOSE_PROJECT_NAME:-infoq-scaffold-ai}}" -f deploy/docker/docker-compose.yml ps
+docker compose -p "${INFOQ_COMPOSE_PROJECT_NAME:-${COMPOSE_PROJECT_NAME:-infoq-scaffold-ai}}" -f deploy/docker/docker-compose.yml logs -f infoq-admin
 ```
 
-如果当前环境只有 standalone CLI，则使用等价的 `docker-compose -f deploy/docker/docker-compose.yml ...`。直接使用 Docker Compose CLI 时，建议保证 `${INFOQ_DEPLOY_ROOT}/mysql/data` 为空目录，以便 MySQL 首次启动时自动执行 `sql/` 目录内的基础 SQL 与当前增量 SQL。
+如果当前环境只有 standalone CLI，则使用带相同 `-p` 和 `-f` 的 `docker-compose`。必须保持与 helper 相同的 project name；否则通用 `container_name` 会冲突。首次空数据目录会触发 SQL 初始化；已有环境保留数据，不得为触发初始化而清空目录。
 
 ## 12. 镜像 tag 收口与 credential helper 排查
 
@@ -622,7 +569,7 @@ Docker credential helper 排查见第 2.2 节：macOS Colima 环境如果曾安�
 
 ## 13. 排障经验
 
-本仓库的 Compose 部署在 WSL2 Debian 中已经验证过完整链路。以下经验应作为后续部署排障优先检查项：
+以下为既有 WSL2 Debian 排障经验；不作为当前 checkout 或目标主机已经验证的证据，应结合本轮 `tmp/deploy-verify/<run-id>/` 的实际结果判断：
 
 | 现象 | 原因 | 处理 |
 | --- | --- | --- |
@@ -635,7 +582,7 @@ Docker credential helper 排查见第 2.2 节：macOS Colima 环境如果曾安�
 | React 在 `/react/` 下请求 `/logo.svg` 404 | 静态资源使用了根路径 | 使用 `VITE_APP_CONTEXT_PATH` 生成 `/react/logo.svg` |
 | WSL 容器反复重启 | WSL distro 退出导致 Docker daemon 生命周期不稳定 | 部署验证期保持一个 WSL 会话或 keepalive |
 
-当前 Compose 部署不依赖宿主机 JDK/Maven；后端 Dockerfile 使用 Temurin 21 builder 与 Liberica 21 runtime 镜像。只有手动部署或本机直接 Maven 构建时，才需要在宿主机准备 JDK 21 与 Maven 3.9+。
+当前 Compose 部署不依赖宿主机 JDK/Maven；后端 Dockerfile 使用 Temurin 21 builder 与 Liberica 21 runtime 镜像。只有手动部署或本机直接 Maven 构建时，才需要在宿主机准备 JDK 21 与 Maven 3.9.x。
 
 ## 14. 生产化前的最小检查
 
@@ -649,4 +596,12 @@ Docker credential helper 排查见第 2.2 节：macOS Colima 环境如果曾安�
 - 滚动更新顺序明确：先摘流量，再停旧节点，新节点 readiness 通过后再接流量。
 - 前端 `VITE_APP_CONTEXT_PATH`、`VITE_APP_BASE_API`、加密开关和 RSA key 与后端匹配。
 
-完整发布前验收清单见 [README.md](README.md) 第 8 节。如果以上任一项不明确，不建议直接把本文件命令用于生产上线。
+完整发布前验收清单见 [README.md](README.md) 第 8 节及 [当前生产准备阻塞](DEPLOYMENT_LIFECYCLE.md#9-当前生产准备阻塞)。任一项未关闭时停止上线。
+
+## 15. 本地 / CI 中间件工具入口
+
+`deploy/docker/mqtt/run-mqtt-it.sh` 和 `deploy/docker/elasticsearch/run-elasticsearch-it.sh` 是 WSL2 Debian Docker CE 专项集成测试 runner，支持 `prepare [run-id]`、`config|verify|status|stop <run-id>`；`generate-certificates.sh`、`prepare-run.sh` 和 `init-*.sh` 是其工具镜像内部入口，不是生产初始化脚本。测试证书仅有效两天；禁止将测试账户、ACL、truststore 或 CA 导入生产。
+
+runner 默认 Maven 缓存 `/mnt/c/DevTools/repo`，可用 `MIDDLEWARE_MAVEN_REPO` 覆盖；只读缓存必须已经具备测试所需依赖。执行所有阶段前确认 WSL2 Debian Docker、独立 project、固定测试端口 MQTT `18883` / ES `19200` 和本轮证据目录。必须为每轮设置专用且可挂载的 `INFOQ_DEPLOY_ROOT`：ES IT 使用其 `elasticsearch/data/`，**不按 run-id 隔离数据**，不能复用生产根目录或已有 ES 数据。MQTT 数据按 run-id 隔离。仓库位于 DrvFS 时另选 WSL Linux 文件系统临时根并记录外部工具要求。
+
+`verify` 会启动节点、创建测试账号/规则并执行 Maven 测试；ES 还会停止测试节点验证不可用场景。失败或中断不会自动执行 `stop`，必须按相同 root/run-id 显式停止本轮自有资源。`stop` 使用 Compose `down --remove-orphans`，保留 bind 数据和秘密文件；清理数据另需确认。证据在 `tmp/mqtt-wsl2/<run-id>/` 或 `tmp/elasticsearch-wsl2/<run-id>/`。这些步骤未运行时应明确标为运行态未验证。

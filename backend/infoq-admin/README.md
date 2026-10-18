@@ -8,14 +8,14 @@
 
 - 启动类：[`SysAdminApplication`](./src/main/java/cc/infoq/admin/SysAdminApplication.java)
 - 构建入口：[`pom.xml`](./pom.xml)
-- profile 资源：[`src/main/resources/application.yml`](./src/main/resources/application.yml)、[`application-dev.yml`](./src/main/resources/application-dev.yml)、[`application-local.yml`](./src/main/resources/application-local.yml)、[`application-prod.yml`](./src/main/resources/application-prod.yml)
+- 受管 profile 资源：[`src/main/resources/application.yml`](./src/main/resources/application.yml)、[`application-dev.yml`](./src/main/resources/application-dev.yml)、[`application-prod.yml`](./src/main/resources/application-prod.yml)；`application-local.yml` 是可选、被 Git 忽略的本机覆盖文件。
 - 日志配置：[`src/main/resources/logback-plus.xml`](./src/main/resources/logback-plus.xml)
 
 ## 3. 核心类 / 文件
 
 - `SysAdminApplication`：`@SpringBootApplication(scanBasePackages = "cc.infoq")`，把 `cc.infoq` 下所有模块统一纳入 Spring 容器，并排除 `UserDetailsServiceAutoConfiguration`，避免 token 鉴权下生成默认内存用户。
 - `application*.yml`：定义 profile 分层、数据源、Redis、Quartz、mail、SSE、WebSocket、Springdoc 等运行开关。
-- `logback-plus.xml`：当前后端日志输出规则，默认把文件日志写到仓库根 `logs/`，容器场景通过 `INFOQ_LOG_PATH` 覆盖。
+- `logback-plus.xml`：文件日志默认写到进程工作目录的 `../logs/`；从 `backend/` 启动时对应仓库根 `logs/`。从仓库根直接启动 jar 时应显式设置 `INFOQ_LOG_PATH`，容器也通过该变量覆盖。
 - `banner.txt`、`i18n/*.properties`、`ip2region_v4.xdb`：启动展示、多语言消息与 IPv4 归属地内置资源。
 - IPv6 归属地地址库不再打包进 `infoq-admin.jar`，部署源文件位于仓库根 [`deploy/docker/server/ip2region/ip2region_v6.xdb`](../../deploy/docker/server/ip2region/ip2region_v6.xdb)，运行时通过 `INFOQ_IP2REGION_V6_PATH` 指向外置挂载文件。
 
@@ -49,7 +49,7 @@
 
 ## 9. 日志 / 监控切入点
 
-- `logback-plus.xml` 是日志输出真值入口，默认文件日志目录是仓库根 `logs/`。
+- `logback-plus.xml` 是日志输出真值入口；核对 `INFOQ_LOG_PATH` 与进程工作目录后确定实际文件日志目录。
 - `application*.yml` 里的 Web、SSE、WebSocket 与监控相关配置会影响健康检查暴露方式。
 - 具体监控接口实现仍在 `infoq-system` 与 `infoq-plugin-web` / `infoq-plugin-security`。
 

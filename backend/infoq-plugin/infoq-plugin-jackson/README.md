@@ -39,8 +39,8 @@ Spring Boot 4 MVC、业务 `JsonUtils` 与 Redis codec 全部使用 Jackson 3，
 ## 7. 关键数据流
 
 1. Spring Boot 4 构建 Jackson 3 `JsonMapper`，`Jackson3Customizer` 注册大数值、日期、未知字段和空 Bean 规则。
-2. MVC 请求/响应、业务 `JsonUtils` 与 Redis codec 全部复用 Jackson 3。
-3. 大数值、日期和 JSON 校验规则在以上链路保持一致。
+2. MVC 请求/响应与业务 `JsonUtils` 使用 Spring 管理的 Jackson 3 mapper；Redis codec 也使用 Jackson 3，但在 `RedisConfig` 中独立构建带类型信息的 mapper。
+3. `Jackson3Customizer` 的大数转字符串、未知字段和日期规则不自动作用于 Redis mapper；改动时分别核对 HTTP 与缓存读写兼容性，不能用其中一条链路的测试证明另一条已覆盖。
 
 ## 8. 扩展点
 

@@ -16,14 +16,14 @@
 本 skill 不再提供独立的栈启停包装脚本；本地栈有两种获取方式：
 
 - **E2E 自管栈**：`run_admin_e2e.mjs` / `run_admin_crud_e2e.mjs` 会启动 backend + admin、执行验证，并按状态文件收口 owned 端口。
-- **手动启动**：纯单测 / 构建迭代时按下文命令自行启动，进程由开发者自行收口。
+- **手动启动**：需要真实接口的交互联调时按下文命令自行启动，进程由开发者自行收口。纯单测 / lint / 构建不需要运行本地栈。
 
-Backend：
+Backend（从仓库根目录执行；先核对 local profile 的数据库、Redis、密钥和 JDK 21）：
 
 ```bash
-cd backend
+node tools/validate_utf8.mjs
 node tools/backend_mvn.mjs -- clean install -DskipTests
-java -jar infoq-admin/target/infoq-admin.jar --spring.profiles.active=local --server.port=8080
+java -jar backend/infoq-admin/target/infoq-admin.jar --spring.profiles.active=local --server.port=8080
 ```
 
 验证码种子登录和动态路由 smoke 使用 `run_admin_e2e.mjs` / `captcha_login.mjs`，不要用关闭验证码的诊断后端替代验收。
@@ -40,7 +40,7 @@ node skills/test-cli/scripts/captcha_login.mjs --backend-url http://127.0.0.1:80
 node skills/test-cli/scripts/run_admin_e2e.mjs --client vue --route-limit 1
 ```
 
-- `admin-route-probe --list-routes` 只列后端真实返回的路由，不启动浏览器。
+- `admin-route-probe --list-routes` 在真实登录后列出后端路由，不启动浏览器；会写 Redis 验证码种子和会话，不能用于生产只读核查。
 - `captcha_login.mjs --print-token` 输出真实 token（`TOKEN=...`），供脚本或人工核对使用；种子模式需配置 `INFOQ_TEST_REDIS_*` 或 `--redis-*`，且与后端使用同一 Redis。
 - 需要逐路由截图、console 门禁与报告时使用 `run_admin_e2e.mjs`。
 
@@ -73,27 +73,25 @@ pnpm --dir skills/test-cli/scripts run playwright-cli admin-route-probe --fronte
 pnpm --dir skills/test-cli/scripts run playwright-cli admin-route-probe --frontend-origin "http://127.0.0.1:5174" --route "/index"
 ```
 
-4. `admin-route-probe` 直接调用 `test-cli/scripts/captcha_login.mjs`，通过 Redis 种子答案获取 token。若要覆盖完整验证码路由矩阵，请改用 `test-cli`。
+4. `admin-route-probe` 直接调用 `test-cli/scripts/captcha_login.mjs`，通过 Redis 种子答案获取 token。需要逐个动态菜单路由取证时使用 `run_admin_e2e.mjs`；它尚不执行完整静态矩阵，不能代替固定路由、登录表单和角色权限用例。
 5. 只有在需要临时交互探索或定位器发现时，才改用 Playwright MCP。
 
 ## Docker 部署验证模式
 
-当验收目标是 Docker 部署产物时，使用仓库统一部署脚本，不要改用 `pnpm run dev` 或 dev 端口替代。
-
-```bash
-export INFOQ_DEPLOY_ROOT="$(pwd)/tmp/infoq-deploy"
-export SECURITY_TOKEN_SECRET=replace-with-at-least-32-chars-secret
-bash deploy/bin/deploy-frontend.sh deploy
-```
+当验收目标是 Docker 部署产物时，按 `skills/deploy-cli/SKILL.md`、`deploy/README.md` 与 `deploy/VERIFICATION.md` 完成部署前置条件和运行时选择，再验证已部署站点。不要只设置示例 token secret 就运行部署；数据库、Redis、后端、RSA 构建参数和网关必须对应同一环境。部署生命周期由 deploy-cli 负责。
 
 Admin Docker 入口：
 
 - Vue：网关路径 `http://127.0.0.1/vue/`，直连端口 `http://127.0.0.1:9091/`
 - React：网关路径 `http://127.0.0.1/react/`，直连端口 `http://127.0.0.1:9092/`
 
-受保护路由探测优先走网关上下文路径（Vue 用 `/vue`，React 用 `/react`）：
+在已授权测试部署中，按实际网关上下文路径探测（Vue 用 `/vue`，React 用 `/react`）；这会执行 Redis 种子登录，禁止直接对生产后端/Redis 使用：
 
 ```bash
 pnpm --dir skills/test-cli/scripts run playwright-cli admin-route-probe --backend-url "http://127.0.0.1:9090" --frontend-origin "http://127.0.0.1/vue" --route "/index"
 pnpm --dir skills/test-cli/scripts run playwright-cli admin-route-probe --backend-url "http://127.0.0.1:9090" --frontend-origin "http://127.0.0.1/react" --route "/index"
 ```
+
+React 当前 `AppRouter.tsx` 的 `BrowserRouter` 未配置 `basename`；仅设置 Vite `base` 不能证明 `/react/` 下路由可用。双端子路径刷新、登录回跳、资源 URL 及 API 反代必须单独实测，不能用站点 HTTP 200 或直连 `/` 的结果替代。
+
+请求加密公钥通过 `RSA_PUBLIC_KEY`（或登录/E2E runner 的 `--rsa-public-key`）与后端对齐；浏览器构建另需 `VITE_APP_RSA_PUBLIC_KEY` / `VITE_APP_RSA_PRIVATE_KEY`。先确认测试账号候选集合、代理和 API/Redis/JDBC 实例一致性，完整已确认限制见 `docs/TESTING.md` 第 6.6 节。手动 dev 绑定 `0.0.0.0`，应限制测试机网络访问；以上默认地址不代表生产开放端口建议。

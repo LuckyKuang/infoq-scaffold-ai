@@ -7,6 +7,7 @@
 - `auth.forgot-password`
 - `auth.oauth-callback`
 - `home.index`
+- `message.center`（固定受保护消息中心）
 - `error.401`
 - `error.404`
 - `route.redirect`

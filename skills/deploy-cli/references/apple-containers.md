@@ -20,6 +20,7 @@
 ## 前置条件
 
 - Apple silicon Mac，macOS 26+，Apple `container` 1.1+。
+- Node 24.18.0、Python 3、`openssl`；`INFOQ_ENV_FILE` 可指定独立环境文件，默认 `deploy/.env`。
 - 首次使用先启动系统服务：
 
 ```bash
@@ -40,14 +41,16 @@ node skills/deploy-cli/scripts/deploy_cli.mjs init
 node skills/deploy-cli/scripts/deploy_cli.mjs build
 
 # 3. 启动 MySQL、Redis、infoq-admin，等待 readiness 后执行 smoke
-node skills/deploy-cli/scripts/deploy_cli.mjs up
+node skills/deploy-cli/scripts/deploy_cli.mjs up --no-build
 
-# 4. 只读复核
+# 4. 复核（status 在 daemon 停止时会启动 Apple 服务）
 node skills/deploy-cli/scripts/deploy_cli.mjs status
 node skills/deploy-cli/scripts/deploy_cli.mjs smoke
 ```
 
-`up` 在镜像缺失时会自动构建；`up --recreate` 会替换三个容器但保留数据卷。
+Node `up` 默认每次构建；只有底层 shell `up` 才仅在镜像缺失时构建。`up --no-build` 省略 wrapper 构建，镜像仍缺失时底层仍会构建。更新镜像后需 `up --recreate` 才会替换已有三个容器并保留数据卷；单纯 build 或 up 不保证已有容器使用新镜像。
+
+首次空 MySQL 卷会导入基线和增量 SQL；已有卷不自动补跑增量。升级前按 `docs/DATA-OPS.md` 处理适用迁移，不能用删除卷代替迁移。Apple 路径不重置管理员或初始化 MinIO。
 
 ## 冒烟探针
 

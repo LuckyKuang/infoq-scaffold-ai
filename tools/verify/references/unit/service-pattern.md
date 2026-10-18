@@ -6,6 +6,8 @@
 
 ## 模板
 
+以下为结构示意，`Xxx*` 与 `...` 必须换成真实业务类型和参数；完整实例见 `backend/infoq-modules/infoq-system/src/test/java/cc/infoq/system/service/impl/SysMenuServiceImplTest.java`。缺失数据应返回 null 还是抛异常，以目标业务契约为准，不能为了套模板修改实现。
+
 ```java
 @ExtendWith(MockitoExtension.class)
 @Tag("dev")

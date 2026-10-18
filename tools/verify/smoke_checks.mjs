@@ -13,7 +13,8 @@ const config = {
     process.env.RSA_PUBLIC_KEY ||
     'MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAKoR8mX0rGKLqzcWmOzbfj64K8ZIgOdHnzkXSOVOZbFu/TJhZ7rFAN+eaGkl3C4buccQd/EjEsj9ir7ijT7h96MCAwEAAQ==',
   printToken: process.env.PRINT_TOKEN === '1',
-  printUserId: process.env.PRINT_USER_ID === '1'
+  printUserId: process.env.PRINT_USER_ID === '1',
+  loginMode: process.env.LOGIN_MODE || 'encrypted'
 };
 
 function logPass(name, detail = '') {
@@ -157,24 +158,23 @@ async function loginPlain(username, password) {
 async function loginAndGetToken() {
   const candidates = buildCandidateList();
   const attempts = [];
+  const login = config.loginMode === 'encrypted' ? loginEncrypted : loginPlain;
 
   for (const account of candidates) {
-    for (const fn of [loginEncrypted, loginPlain]) {
-      const result = await fn(account.username, account.password);
-      const code = result?.body?.code;
-      const token = result?.body?.data?.access_token || result?.body?.data?.accessToken;
-      if (result.res.status === 200 && code === 200 && token) {
-        const payload = decodeJwtPayload(token);
-        logPass(
-          'POST /auth/login',
-          `mode=${result.mode}, user=${account.username}, token_len=${String(token).length}`
-        );
-        return { token, username: account.username, userId: payload.userId || '' };
-      }
-      attempts.push(
-        `${account.username}/${account.password} (${result.mode}) => http=${result.res.status}, code=${code}, msg=${result?.body?.msg || ''}`
+    const result = await login(account.username, account.password);
+    const code = result?.body?.code;
+    const token = result?.body?.data?.access_token || result?.body?.data?.accessToken;
+    if (result.res.status === 200 && code === 200 && token) {
+      const payload = decodeJwtPayload(token);
+      logPass(
+        'POST /auth/login',
+        `mode=${result.mode}, user=${account.username}, token_len=${String(token).length}`
       );
+      return { token, username: account.username, userId: payload.userId || '' };
     }
+    attempts.push(
+      `${account.username} (${result.mode}) => http=${result.res.status}, code=${code}`
+    );
   }
 
   fail('POST /auth/login', `all attempts failed: ${attempts.join(' || ')}`);
@@ -227,6 +227,9 @@ async function checkProtectedEndpoints(token) {
 }
 
 async function main() {
+  if (!['encrypted', 'plain'].includes(config.loginMode)) {
+    throw new Error('LOGIN_MODE must be encrypted or plain.');
+  }
   console.log(
     `[INFO] smoke target: ${config.baseUrl}, roleId=${config.roleId}, dictType=${config.dictType}`
   );

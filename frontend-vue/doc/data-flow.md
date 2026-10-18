@@ -25,10 +25,10 @@
 
 ```text
 LoginView
+-> userStore.login()
 -> api/login.ts login()
 -> utils/request.ts
 -> POST /auth/login
--> userStore.login()
 -> setToken()
 ```
 
@@ -40,9 +40,9 @@ LoginView
 -> GET /auth/oauth/providers
 -> browser redirect /auth/oauth/{provider}/authorize
 -> OAuthCallbackView
+-> userStore.loginByOAuthTicket()
 -> exchangeOAuthTicket()
 -> POST /auth/oauth/ticket
--> userStore.loginByOAuthTicket()
 -> setToken()
 ```
 
@@ -53,10 +53,12 @@ router.beforeEach
 -> userStore.getInfo()
 -> permissionStore.generateRoutes()
 -> router.addRoute(...)
--> next(to.fullPath)
+-> return to.fullPath
 ```
 
 因此当前 Vue admin 的登录闭环同样是“先拿 token，再由守卫补齐用户信息与动态菜单”。
+
+登录、注册与忘记密码页面通过 `GET /auth/code` 读取 `registerEnabled`、`forgotPasswordEnabled`、`mailEnabled` 等能力位；自助邮件验证码和密码重置分别调用 `POST /auth/email/code` 与 `POST /auth/forgot-password`。SSE/WebSocket 由 `layout/index.vue` 挂载时初始化，SSE 在布局卸载和登出时关闭。
 
 ## 2. 后端菜单到动态路由注入
 

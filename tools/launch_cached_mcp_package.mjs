@@ -20,7 +20,7 @@ function getDefaultNpmCacheDir() {
 
 function getNpmCacheDirs(repoRoot) {
   const candidates = [];
-  const repoCache = path.join(repoRoot, 'tools', 'tmp', 'npm-cache');
+  const repoCache = path.join(repoRoot, 'tmp', 'mcp', 'npm-cache');
 
   candidates.push(repoCache);
 
@@ -125,7 +125,7 @@ export function launchCachedMcpPackage({ repoRoot, packageName, env, label }) {
     }
   }
 
-  const repoCache = path.join(repoRoot, 'tools', 'tmp', 'npm-cache');
+  const repoCache = path.join(repoRoot, 'tmp', 'mcp', 'npm-cache');
   fs.mkdirSync(repoCache, { recursive: true });
 
   console.error(`[${label}] cached package not found; falling back to npx download`);

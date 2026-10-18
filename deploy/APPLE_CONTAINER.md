@@ -29,6 +29,7 @@ manage any resource that is not labeled
 - Apple `container` 1.1.0 or newer
 - Host JDK 21 and Maven 3.9.x for image builds, or an existing `infoq-admin.jar`
 - `openssl` for generating initial secrets
+- Node.js 24.18.0 and Python 3 for the repository wrapper and shell helpers
 - Local Network access for `container-runtime-linux` when macOS prompts during
   the first published-container startup
 
@@ -73,6 +74,12 @@ node skills/deploy-cli/scripts/deploy_cli.mjs status
 `deploy/apple-container.sh` remains the execution truth; `deploy-cli` adds state
 and smoke reporting.
 
+The shell `up` builds only when the image is missing. The Node wrapper `up`
+builds on every invocation unless `--no-build` is specified. To apply a new image
+to existing containers, use `up --recreate`; building alone does not replace
+containers. `status` may start the Apple system service when it is stopped;
+use `container system status` and wrapper `smoke` for strictly read-only probes.
+
 ## Full-stack local development
 
 This stack is backend-only. For frontend development, keep the Apple backend running and start both admin dev servers against it:
@@ -91,7 +98,8 @@ pnpm --dir frontend-react run dev
 
 Open `http://127.0.0.1:5173/login` or `http://127.0.0.1:5174/login`. This is a development setup, not a production-like full stack: it does not include the Nginx gateway or MinIO. Use Colima + Docker Compose when you need MinIO, OSS, gateway routing, or the complete stack.
 
-The env file uses literal `KEY=value` syntax. Do not use Compose expressions
+`INFOQ_ENV_FILE` can select another protected env file; otherwise `deploy/.env`
+is used. The Apple env file uses literal unquoted `KEY=value` syntax without spaces around `=`. Do not use Compose expressions
 such as `${VALUE:-default}`. `APPLE_CONTAINER_BIND_HOST` must be an IPv4
 address, and `APPLE_CONTAINER_HOST_PORT` must be between 1025 and 65535.
 `APPLE_CONTAINER_DEPLOY_ROOT` defaults to `$HOME/infoq-apple` and must not reuse
@@ -163,8 +171,8 @@ Permanently delete the stack and named-volume data:
 ./apple-container.sh destroy --volumes --yes
 ```
 
-`destroy` never deletes containers or networks owned by other projects,
-network, `.env`, host bind directories, or pulled images.
+`destroy` never deletes resources owned by other projects, `.env`, host bind
+directories, or pulled images. It deletes this stack's network.
 
 After a host reboot or `container system stop`, run `./apple-container.sh up`
 again. Apple `container` does not automatically restart persisted containers.
@@ -176,7 +184,7 @@ backend Dockerfile uses BuildKit cache mounts and remains the Docker Compose
 builder. Apple builds:
 
 1. Package `infoq-admin.jar` on the host with JDK 21
-2. Copy the jar into `deploy/.apple-build/app.jar`
+2. Copy the jar into `tmp/deploy-cli/apple-build/app.jar`
 3. Build `localhost/infoq-admin:3.0.0-apple` from `deploy/Dockerfile.apple`
 
 Runtime base image: `bellsoft/liberica-openjdk-rocky:21.0.12-cds`.
@@ -191,6 +199,13 @@ curl --noproxy '*' -fsS http://127.0.0.1:19090/monitor/health/readiness
 
 Readiness requires MySQL and Redis only. MinIO, Nginx, and the Vue/React
 gateways stay on the Docker Compose path.
+
+Empty MySQL volumes receive the baseline and SQL updates during first startup;
+existing volumes do not automatically apply later migrations. Before an upgrade,
+back up the database and apply the applicable updates under
+[`docs/DATA-OPS.md`](../docs/DATA-OPS.md). This path does not rotate the baseline
+administrator account or configure MinIO. It rewrites the generated backend
+configuration at each `up`; retain any required operator configuration separately.
 
 See [`README.md`](README.md) for installer options and
 [`DOCKER.md`](DOCKER.md) for Compose.

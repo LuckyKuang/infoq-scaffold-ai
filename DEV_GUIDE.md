@@ -4,6 +4,9 @@ This guide covers local setup, common commands, and troubleshooting. Mandatory
 repository rules are in [`AGENTS.md`](AGENTS.md). Command selection and review
 flow are in [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
+Commands start from the repository root. Each workspace `cd` example is a
+separate session; return to the root before running another root-relative command.
+
 ## Toolchain
 
 Use the versions declared by the repository. Do not copy tool versions into
@@ -15,25 +18,28 @@ extra policy documents.
 
 ## Local Services
 
-Development requires MySQL 8 and Redis 7. You can use local services or Compose:
-
-```bash
-cp deploy/.env.example deploy/docker/.env
-cd deploy/docker
-docker compose up -d mysql redis
-```
+Development requires MySQL 8 and Redis 7. Use configured local services, or follow
+the environment and directory preparation in [`deploy/README.md`](deploy/README.md)
+and [`deploy/DOCKER.md`](deploy/DOCKER.md) for Compose. Copying `.env.example`
+alone is insufficient: Redis needs a matching `redis.conf`, credentials must be
+set, and Compose uses host-mounted data/configuration directories. Restrict
+published dependency ports to trusted local access.
 
 Keep local credentials in ignored `.env` or profile files. Do not add developer
 machine paths, passwords, or production data to tracked documentation.
 
-Import the frozen baseline before the first login:
+For a fresh host-managed database, import the frozen baseline before the first
+login (from the repository root):
 
 ```bash
-mysql -u root -p infoq < sql/infoq_scaffold_3.0.0.sql
+mysql --host=127.0.0.1 --port=3306 --user=root --password infoq < sql/infoq_scaffold_3.0.0.sql
 ```
 
 Create the database first if it does not exist. Fresh-environment login data
 comes from that SQL file; do not guess passwords for an existing environment.
+Compose initializes a fresh MySQL data directory from the mounted `sql/` files;
+do not re-import the baseline into an initialized database. SQL changes and
+data recovery follow [`docs/DATA-OPS.md`](docs/DATA-OPS.md).
 
 ## Install and Build
 
@@ -59,8 +65,11 @@ Backend:
 java -jar backend/infoq-admin/target/infoq-admin.jar --spring.profiles.active=local
 ```
 
-`dev` is the default Spring profile in config. Use `local` for machine-specific
-datasource and Redis overrides.
+`dev` is the default Spring profile in config. `application-local.yml` is an
+ignored, developer-owned file, not a bundled profile with usable credentials.
+Prepare it from the relevant `application-dev.yml` sections, set local datasource
+and Redis values, then select `local` explicitly. Do not assume it inherits
+`dev` dependencies or point it at production services.
 
 Vue admin:
 
@@ -78,6 +87,10 @@ Both admin apps default to port `80` and proxy `/dev-api` to
 `http://localhost:8080`. Override with `VITE_APP_PORT` and
 `VITE_APP_PROXY_TARGET`. `VITE_APP_ENCRYPT`, RSA keys, and backend decrypt
 settings must match, and `clientId` must match initialized `sys_client` data.
+When `VITE_APP_ENCRYPT=true`, provide both `VITE_APP_RSA_PUBLIC_KEY` and
+`VITE_APP_RSA_PRIVATE_KEY` to dev/build, matching the backend protocol. Repository
+example keys are for isolated development; production needs controlled keys and
+HTTPS. Keys in browser bundles are visible to browser users.
 
 Admin E2E scripts manage their own local stack (start, verify, then close owned ports):
 
@@ -116,6 +129,7 @@ Encoding and README sync:
 ```bash
 node tools/validate_utf8.mjs
 node tools/check_readme_sync.mjs
+node tools/check_doc_links.mjs
 ```
 
 GitHub `CI Build` runs the repository gates (UTF-8, README structure, release
@@ -129,7 +143,9 @@ verification uses `deploy-cli`; Docker-specific steps are in
 ### Frozen lockfile failure
 
 If a frontend `package.json` changes, run `pnpm install` in that workspace and
-commit the resulting `pnpm-lock.yaml`. Do not use npm or yarn.
+commit the resulting `pnpm-lock.yaml`. If pnpm is unavailable, npm is the fallback
+allowed by the root rules; restore pnpm and validate the authoritative lockfile
+before delivering dependency changes. Do not substitute Yarn.
 
 ### Maven runner cannot find JDK or Maven
 

@@ -46,6 +46,7 @@ current repository; it does not retell third-party framework tutorials.
 | [发布流程](./RELEASING.md) | 版本格式、发布 PR、tag、Release workflow、产物与回滚 |
 | [CI 验证](./CI_VALIDATION.md) | 工作流覆盖、本地等价命令、发布门禁与安全扫描 |
 | [FAQ](./FAQ.md) | 常见问题和排障 |
+| [文档审计记录](./DOCUMENTATION-AUDIT.md) | 全量覆盖方法、修正结果、工具回归与生产验收阻塞 |
 
 ### 部署运维
 
@@ -105,9 +106,9 @@ docs/
 ├── DESIGN.md            # 设计系统与组件选型
 ├── RELEASING.md         # 发布流程与回滚
 ├── CI_VALIDATION.md     # CI 覆盖与发布门禁
+├── DOCUMENTATION-AUDIT.md # 文档审计方法、结果与剩余阻塞
 ├── specs/               # 规格真值（capability 需求）
 ├── testing/             # E2E case 集合
-├── plan/                # 治理执行计划
 └── images/              # 文档配图
 ```
 
@@ -146,7 +147,7 @@ docs/
 
 - **用户手册**：真值源放在 `docs/` 的主题文档与 `deploy/`
 - **规格真值**：放在 `docs/specs/<capability>/spec.md`
-- **OpenSpec change**：本地计划脚手架，不提交；耐久沉淀在 `docs/` 与提交信息
+- **任务计划**：`openspec/changes/` 与 `docs/plan/` 仅供本地使用，由 Git 忽略，不提交；后续计划继续写入 `docs/plan/`，按需创建目录，由用户手动清理；公共文档保留已接受的规格与可复用流程
 - **根 README**：保持总览，不重复展开长篇内容
 - **AGENTS.md**：只保留机器协作约束，不混入用户手册
 - **同步更新**：命令、环境变量、路径变化时及时更新相关文档

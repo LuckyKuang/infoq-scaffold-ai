@@ -6,7 +6,7 @@
 
 ## 2. 子模块清单
 
-- `login.ts`、`menu.ts`：登录、OAuth provider 列表与 ticket 换 token、验证码、用户信息、动态菜单相关接口。
+- `login.ts`、`menu.ts`：登录、OAuth provider 列表与 ticket 换 token、公开认证能力、注册、邮件验证码、忘记密码、用户信息、动态菜单相关接口。
 - `system/*`：用户、角色、菜单、部门、岗位、字典、配置、公告、客户端、OSS 等管理接口。
 - `monitor/*`：在线用户、登录日志、操作日志、缓存、数据源、任务、服务监控等运行态接口。
 - `types.ts` 与各子目录 `types.ts`：接口请求/响应类型。
@@ -15,7 +15,7 @@
 
 | 子模块 | 当前职责 |
 | --- | --- |
-| `login.ts` | 登录、OAuth provider 列表与 ticket 换 token、注册、验证码、登出、当前用户信息 |
+| `login.ts` | 登录、OAuth provider 列表与 ticket 换 token、注册、邀请码校验、邮件验证码、忘记密码、公开能力验证码、登出、当前用户信息 |
 | `menu.ts` | 后端菜单与前端动态路由来源 |
 | `system/*` | 管理台业务 CRUD 接口；`system/config` 额外提供配置中心 `panel`、按 key 恢复默认和显示顺序调整接口 |
 | `monitor/*` | 监控页查询接口 |
@@ -39,8 +39,9 @@ View / Store
 ## 6. 公共约束
 
 - 登录与注册请求默认补齐 `clientId` 和 `grantType`。
-- OAuth ticket 登录请求固定补齐 `grantType=oauth`，并沿用公开加密请求头。
+- OAuth ticket 登录请求默认补齐 `grantType=oauth`（调用方可显式提供），并沿用公开加密请求头。
 - `GET /auth/oauth/providers` 是登录页第三方入口的公开真值；`POST /auth/oauth/ticket` 只消费后端回调签出的短期 ticket。
+- `GET /auth/code` 同时提供验证码与注册、忘记密码、邮件等公开能力位；`POST /auth/email/code` 和 `POST /auth/forgot-password` 复用公开加密请求约定。
 - 需要跳过 token、关闭重复提交拦截或启用请求加密时，优先通过请求头开关表达。
 - 统一错误处理不在 API 文件里重复实现，而是下沉到 `utils/request.ts`。
 

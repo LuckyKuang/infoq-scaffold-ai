@@ -86,9 +86,10 @@ test-results/
 .pnpm-store/
 .swc/
 
-# 忽略根级 tmp/（运行时证据与临时产物）与 OpenSpec 本地 change（本地脚手架，不提交）。
+# 忽略根级 tmp/（运行时证据与临时产物）、OpenSpec 本地 change 与 docs/plan 本地计划。
 tmp/
 openspec/changes/
+/docs/plan/
 
 settings.local.json
 

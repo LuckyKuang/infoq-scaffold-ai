@@ -26,10 +26,10 @@
 
 ```text
 LoginPage
+-> userStore.login()
 -> api/login.ts login()
 -> utils/request.ts
 -> POST /auth/login
--> userStore.login()
 -> setToken()
 -> initSSE()
 -> initWebSocket()
@@ -43,9 +43,9 @@ LoginPage
 -> GET /auth/oauth/providers
 -> browser redirect /auth/oauth/{provider}/authorize
 -> OAuthCallbackPage
+-> userStore.loginByOAuthTicket()
 -> exchangeOAuthTicket()
 -> POST /auth/oauth/ticket
--> userStore.loginByOAuthTicket()
 -> setToken()
 -> initSSE()
 -> initWebSocket()

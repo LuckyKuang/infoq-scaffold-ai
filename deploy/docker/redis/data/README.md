@@ -1,71 +1,20 @@
-默认部署根目录是 `/infoq`。执行下面的目录初始化命令前，先显式设置部署根目录：
+# 部署数据目录说明
 
-```bash
-export INFOQ_DEPLOY_ROOT=/infoq
-```
+Compose 的目录和配置准备以 [部署指南](../../../README.md) 与 [Docker 流程](../../../DOCKER.md) 为准。本文件位于 Redis 数据目录，但适用于完整栈目录预检；不会自动创建或启动服务。
 
-如果是在 macOS 本机配合 Colima 做验证，建议显式使用可被 Colima 挂载的目录，例如：
+显式设置部署根目录：WSL2/Linux 使用 Linux 文件系统（通常 `/infoq`），macOS Colima 通常使用 `$HOME/infoq`；已有环境必须以受控 `INFOQ_ENV_FILE` 的实际值为准。不得把数据目录放在 WSL DrvFS 下，也不得为重新初始化而清空已有数据。
 
-```bash
-export INFOQ_DEPLOY_ROOT="${HOME}/infoq"
-```
+最低预创建目录为 `/tmp/infoq-deploy` 与 `${INFOQ_DEPLOY_ROOT}/server/temp`。完整路径包括：
 
-后端脚本 `deploy/bin/infoq.sh` 与前端脚本 `deploy/bin/deploy-frontend.sh` 都支持这个环境变量。
+- MySQL：`mysql/data/`、`mysql/conf/`
+- Redis：`redis/conf/`、`redis/data/`
+- MinIO：`minio/data/`
+- 后端：`server/config/`、`server/logs/`、`server/temp/`、`server/ip2region/`
+- Nginx：`nginx/cert/`、`nginx/conf/`、`nginx/log/`
+- 前端：按 `INFOQ_FRONTEND_TARGET` 创建 `vue/logs/`、`react/logs/`，`all` 时两者均需
 
-数据目录请赋予读写权限，否则容器可能无法写入数据。
+所有相对路径均位于部署根目录内。由授权管理员按目标镜像的 UID/GID 设置 owner 和最小权限：服务仅对数据、日志和临时目录有写权限，配置和证书只允许必要用户读取。禁止递归 `chmod 777` 或把秘密文件设为所有用户可读。
 
-mysql 目录
+当前 helper 仍会对运行目录应用 `777` 并将包含密码的 Redis 配置设为 `644`，再次 `prepare/start/deploy` 会覆盖权限；这属于 [生产准备阻塞](../../../DEPLOYMENT_LIFECYCLE.md#9-当前生产准备阻塞)，不能靠一次手动收紧就宣称已修复。权限治理前只用于明确隔离的验证环境。
 
-```bash
-mkdir -p "${INFOQ_DEPLOY_ROOT}/mysql/data/"
-mkdir -p "${INFOQ_DEPLOY_ROOT}/mysql/conf/"
-```
-
-redis 目录
-
-```bash
-mkdir -p "${INFOQ_DEPLOY_ROOT}/redis/conf/"
-mkdir -p "${INFOQ_DEPLOY_ROOT}/redis/data/"
-```
-
-minio 目录
-
-```bash
-mkdir -p "${INFOQ_DEPLOY_ROOT}/minio/data/"
-```
-
-Nginx 目录
-
-```bash
-mkdir -p "${INFOQ_DEPLOY_ROOT}/nginx/cert/"
-mkdir -p "${INFOQ_DEPLOY_ROOT}/nginx/conf/"
-mkdir -p "${INFOQ_DEPLOY_ROOT}/nginx/log/"
-```
-
-后端目录
-
-```bash
-mkdir -p "${INFOQ_DEPLOY_ROOT}/server/config/"
-mkdir -p "${INFOQ_DEPLOY_ROOT}/server/logs/"
-mkdir -p "${INFOQ_DEPLOY_ROOT}/server/temp/"
-mkdir -p "${INFOQ_DEPLOY_ROOT}/server/ip2region/"
-```
-
-前端目录
-
-```bash
-mkdir -p "${INFOQ_DEPLOY_ROOT}/vue/"
-mkdir -p "${INFOQ_DEPLOY_ROOT}/react/"
-mkdir -p "${INFOQ_DEPLOY_ROOT}/react/"
-
-# 前端日志存放目录
-mkdir -p "${INFOQ_DEPLOY_ROOT}/vue/logs/"
-mkdir -p "${INFOQ_DEPLOY_ROOT}/react/logs/"
-mkdir -p "${INFOQ_DEPLOY_ROOT}/react/logs/"
-```
-
-赋予权限
-
-```bash
-chmod 777 -R "${INFOQ_DEPLOY_ROOT}/"
-```
+Redis 只读诊断先检查容器日志、实际配置可读性、数据目录 owner/权限及持久化文件；不要打印 `redis.conf` 或删除 RDB/AOF 解决认证/权限问题。停止和卸载的数据保留边界见 [部署生命周期](../../../DEPLOYMENT_LIFECYCLE.md)。

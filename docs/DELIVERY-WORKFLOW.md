@@ -48,11 +48,14 @@ node tools/generate_plugin_plan.mjs --name infoq-plugin-xxx --class toggle --fro
 
 ## 验证顺序
 
+active change 的 OpenSpec 结构校验必须在实现前和交付前通过，不代替以下验证闭环：
+
 1. 主流程验证。
-2. OpenSpec 结构校验。
-3. 定向测试。
-4. 受影响工作区 lint/build 或等价检查。
-5. Diff review。
+2. 定向测试。
+3. 受影响工作区 lint/build 或等价检查。
+4. Diff review。
+
+交付前显式检查性能影响、日志/告警覆盖、回滚路径，以及 config/SQL/依赖影响。任何未执行或无法执行的必要检查必须记录为阻塞或残余风险；文档核对不能替代生产环境运行验收。
 
 ## 参考
 

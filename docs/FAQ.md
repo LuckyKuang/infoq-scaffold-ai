@@ -28,6 +28,8 @@ Vue 和 React 管理端的 `.env.development` 默认都把 `VITE_APP_PORT` 设�
 
 手动运行 `java -jar` 时，应显式传入 profile：
 
+`application-local.yml` 是可选且被 Git 忽略的本机文件。先确认它已存在，并在修改后重新打包，或通过 Spring 外部配置加载；选择 `local` 不会自动继承 `application-dev.yml` 的依赖连接配置。
+
 ```bash
 node tools/backend_mvn.mjs -- clean install -DskipTests
 java -jar backend/infoq-admin/target/infoq-admin.jar --spring.profiles.active=local
@@ -54,7 +56,7 @@ java -jar backend/infoq-admin/target/infoq-admin.jar --spring.profiles.active=lo
 
 ## 7. 我只改了文档，需要跑单元测试吗
 
-纯文档变更通常没有对应的单元测试目标，但仍建议检查文档链接、文件存在性、命令和端口是否与实际脚本一致，并完成 diff review。
+纯 Markdown 变更通常没有对应的产品单元测试目标，交付时说明不适用的原因；仍须完成 UTF-8、链接、文件存在性、命令与端口事实核对及 diff review。若同时修改校验器、技能或部署脚本行为，必须执行其相关回归，不能按“纯文档”跳过。全仓方法与已知限制见 [文档审计](./DOCUMENTATION-AUDIT.md)。
 
 ## 8. 下一步阅读
 

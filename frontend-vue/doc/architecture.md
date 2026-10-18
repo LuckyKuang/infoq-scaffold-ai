@@ -41,7 +41,7 @@ main.ts
 | 模块 | 当前职责 | 当前证据 |
 | --- | --- | --- |
 | `main.ts` | 注册 router、Pinia、i18n、插件、指令与开发者工具保护 | `app.use(...)`、`directive(app)`、`initDevToolsProtection()` |
-| `router/index.ts` | 固定公开路由和首页路由 | `constantRoutes` |
+| `router/index.ts` | 固定认证入口、受保护页面、错误及重定向路由 | `constantRoutes` |
 | `permission.ts` | 登录态检查、白名单放行、`getInfo()` 与动态路由注入 | `router.beforeEach(...)` |
 | `store/modules/user.ts` | 登录、获取用户信息、登出、SSE 关闭、退出失败本地清理 | `login()`、`getInfo()`、`logout()` |
 | `store/modules/permission.ts` | 拉取后端菜单并解析成 Vue Router 路由对象 | `generateRoutes()`、`filterAsyncRouter()` |
@@ -55,14 +55,17 @@ main.ts
 `src/router/index.ts` 当前固定定义了：
 
 - `/login`
+- `/oauth/callback`
 - `/register`
-- `/redirect/*`
+- `/forgot-password`
+- `/redirect/:path(.*)`
 - `/401`
 - `/:pathMatch(.*)*`
 - `/index`
 - `/user/profile`
+- `/message-center`
 
-这些路由用于承载登录前入口、首页和少量稳定页面。
+固定路由不等于公开路由。`permission.ts` 只对白名单中的登录、自助认证与 OAuth 回调入口免登录放行；首页、个人中心、消息中心及错误/重定向路由仍受全局守卫约束。
 
 ### 3.2 动态菜单路由
 
@@ -92,7 +95,7 @@ const modules = import.meta.glob('./../../views/**/*.vue')
 - `isEncrypt: true`
 - `repeatSubmit: false`
 
-`utils/request.ts` 会在环境变量开启时为写请求附加 `encrypt-key` 并加密请求体。
+`utils/request.ts` 仅在 `VITE_APP_ENCRYPT=true` 且请求声明 `isEncrypt: true` 时，为 `POST/PUT` 请求附加 `encrypt-key` 并加密请求体，不会自动加密所有写请求。`login.ts` 还承载邮件验证码与忘记密码接口，`GET /auth/code` 提供公开认证能力位。
 
 ### 4.2 统一请求出口
 

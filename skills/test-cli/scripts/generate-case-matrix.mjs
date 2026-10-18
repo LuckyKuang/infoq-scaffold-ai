@@ -594,6 +594,7 @@ const FIXED_ROUTES = [
   {moduleKey: 'auth.oauth-callback', menuName: 'OAuth 回调', routePath: '/oauth/callback', component: 'oauth-callback'},
   {moduleKey: 'home.index', menuName: '首页', routePath: '/index', component: 'index'},
   {moduleKey: 'system.user.profile', menuName: '个人中心', routePath: '/user/profile', component: 'system/user/profile/index'},
+  {moduleKey: 'message.center', menuName: '消息中心', routePath: '/message-center', component: 'message-center/index'},
   {moduleKey: 'error.401', menuName: '401', routePath: '/401', component: 'error/401'},
   {moduleKey: 'error.404', menuName: '404', routePath: '/404', component: 'error/404'},
   {moduleKey: 'route.redirect', menuName: '路由跳转', routePath: '/redirect/:path*', component: 'redirect/index'}
@@ -772,6 +773,8 @@ function renderMarkdown(matrix) {
     '',
     `生成时间：${matrix.generatedAt}`,
     '',
+    '这是静态用例设计清单，不是执行报告；范围与 runner 验收限制见 [测试政策](../TESTING.md) 第 6.5–6.6 节。',
+    '',
     '## 摘要',
     '',
     `- 用例总数：${matrix.summary.totalCases}`,
@@ -814,6 +817,8 @@ function renderGaps(matrix) {
     '# 管理端 Web 自动化缺口报告',
     '',
     `生成时间：${matrix.generatedAt}`,
+    '',
+    '本报告仅检查静态组件/菜单匹配与测试文件路径关联，不证明业务断言或运行态已覆盖；完整边界见 [测试政策](../TESTING.md) 第 6.5–6.6 节。',
     '',
     `缺口总数：${matrix.gaps.length}`,
     ''

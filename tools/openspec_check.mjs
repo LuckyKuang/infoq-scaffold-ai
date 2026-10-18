@@ -46,10 +46,6 @@ function readUtf8(filePath) {
   return fs.readFileSync(filePath, 'utf8');
 }
 
-function hasHeading(text, heading) {
-  return text.includes(heading);
-}
-
 function hasCheckbox(text) {
   return /- \[[ x]\]/u.test(text);
 }
@@ -119,7 +115,9 @@ const requiredImpactRows = [
   'backend',
   'frontend-react',
   'frontend-vue',
-  'script / deploy'
+  'docs',
+  'script / deploy',
+  'skills'
 ];
 
 const errors = [];
@@ -158,7 +156,12 @@ if (fs.existsSync(proposalPath)) {
 if (fs.existsSync(tasksPath)) {
   tasksText = readUtf8(tasksPath);
   pushMissing(errors, tasksText, 'tasks.md 章节', requiredTaskSections);
-  pushMissing(errors, tasksText, 'tasks.md 影响矩阵', requiredImpactRows);
+  const impactMatrix = /^## 影响矩阵\s*\r?\n([\s\S]*?)(?=^## |$(?![\s\S]))/mu.exec(tasksText)?.[1] ?? '';
+  for (const row of requiredImpactRows) {
+    const escaped = row.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
+    const inMatrix = new RegExp(`(?:^|[^a-zA-Z0-9_-])${escaped}(?=$|[^a-zA-Z0-9_-])`, 'mu');
+    if (!inMatrix.test(impactMatrix)) errors.push(`tasks.md 影响矩阵 缺少：${row}`);
+  }
   if (!hasCheckbox(tasksText)) {
     errors.push('tasks.md 缺少 checklist 项');
   }
