@@ -16,14 +16,14 @@ jobs:
     timeout-minutes: 100
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
       - name: Setup pnpm
         uses: pnpm/action-setup@v6
         with:
           package_json_file: package.json
           run_install: false
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version-file: .node-version
       - name: Validate UTF-8
@@ -49,7 +49,7 @@ jobs:
       # generated env/keys/SQL/object backups or raw application/container logs.
       - name: Preserve redacted acceptance state
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: linux-docker-acceptance-${{ github.run_id }}
           path: |
