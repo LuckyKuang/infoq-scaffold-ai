@@ -10,11 +10,13 @@ import tools.jackson.databind.ObjectMapper;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.context.support.GenericApplicationContext;
+import org.springframework.context.ApplicationContext;
 
 import java.util.Map;
 import java.util.Set;
@@ -25,13 +27,27 @@ import static org.mockito.Mockito.when;
 
 @Tag("dev")
 class DefaultExcelListenerTest {
+    private static GenericApplicationContext applicationContext;
+    private static ApplicationContext previousContext;
 
     @BeforeAll
     static void initSpringContext() {
-        GenericApplicationContext context = new GenericApplicationContext();
-        context.registerBean(ObjectMapper.class, () -> new ObjectMapper());
-        context.refresh();
-        new SpringUtils().setApplicationContext(context);
+        previousContext = SpringUtils.context();
+        applicationContext = new GenericApplicationContext();
+        applicationContext.registerBean(ObjectMapper.class, () -> new ObjectMapper());
+        applicationContext.refresh();
+        new SpringUtils().setApplicationContext(applicationContext);
+    }
+
+    @AfterAll
+    static void closeSpringContext() {
+        try {
+            if (applicationContext != null) {
+                applicationContext.close();
+            }
+        } finally {
+            new SpringUtils().setApplicationContext(previousContext);
+        }
     }
 
     @Test

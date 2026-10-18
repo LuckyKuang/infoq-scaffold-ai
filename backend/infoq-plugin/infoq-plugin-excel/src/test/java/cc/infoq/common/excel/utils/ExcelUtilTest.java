@@ -10,6 +10,7 @@ import cn.idev.excel.FastExcel;
 import cn.idev.excel.annotation.ExcelProperty;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
+import jakarta.validation.ValidatorFactory;
 import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -18,7 +19,9 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.context.support.GenericApplicationContext;
+import org.springframework.context.ApplicationContext;
 import org.springframework.mock.web.MockHttpServletResponse;
+import tools.jackson.databind.ObjectMapper;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -42,12 +45,17 @@ class ExcelUtilTest {
 
     private static final String TEMPLATE_PATH = "excel/unit-template.xlsx";
     private static GenericApplicationContext context;
+    private static ApplicationContext previousContext;
+    private static ValidatorFactory validatorFactory;
 
     @BeforeAll
     static void prepareTemplate() throws IOException {
+        previousContext = SpringUtils.context();
         context = new GenericApplicationContext();
         context.registerBean(DictService.class, () -> Mockito.mock(DictService.class));
-        context.registerBean(Validator.class, () -> Validation.buildDefaultValidatorFactory().getValidator());
+        context.registerBean(ObjectMapper.class, () -> new ObjectMapper());
+        validatorFactory = Validation.buildDefaultValidatorFactory();
+        context.registerBean(Validator.class, validatorFactory::getValidator);
         context.refresh();
         new SpringUtils().setApplicationContext(context);
 
@@ -68,8 +76,18 @@ class ExcelUtilTest {
 
     @AfterAll
     static void tearDownContext() {
-        if (context != null) {
-            context.close();
+        try {
+            if (context != null) {
+                context.close();
+            }
+        } finally {
+            try {
+                if (validatorFactory != null) {
+                    validatorFactory.close();
+                }
+            } finally {
+                new SpringUtils().setApplicationContext(previousContext);
+            }
         }
     }
 

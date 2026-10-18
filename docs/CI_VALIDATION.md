@@ -112,4 +112,17 @@ CI 不负责创建 tag、推送镜像或执行生产部署。
 - 已观察真实 PR CI/安全扫描：发现 runner Maven 浮动版本、macOS Bash 3.2 heredoc、Dependency Graph 未启用及 CodeQL 提示。修复须在新候选 SHA 重新完成全部 job 和 CodeQL aggregate 核验，单个语言扫描 job 成功不表示没有告警。
 - Apple container、WSL2 Docker 的真实差异由部署验证覆盖；Linux Docker 有手动隔离 workflow，新增不代表已运行通过。
 - 发布 workflow 不推送容器镜像；镜像发布与生产部署必须单独授权。
-- 合并须满足默认分支保护要求的至少 1 位有权限的独立审阅者批准；存在适用 CODEOWNERS 时还须满足 owner 审阅规则，不得用管理员权限绕过。本地通过或已启用安全配置均不代替当前 SHA 的远端结果。完整生产可信证书/秘密、Provider、告警接收和容量/RTO/RPO另需目标环境证据。
+- 合并须满足实际默认分支保护；本仓库采用下述单人维护门禁，不要求独立人工批准。其他仓库若设置了独立或 CODEOWNER 审核，仍必须满足，不得用管理员权限绕过。本地通过或已启用安全配置均不代替当前 SHA 的远端结果。完整生产可信证书/秘密、Provider、告警接收和容量/RTO/RPO另需目标环境证据。
+
+## 9. 单人维护合并门禁
+
+本仓库 `master` 保留 PR 合并路径，人工必需批准数为 **0**，不要求 CODEOWNER 审核；管理员同样受保护，禁止直接推送、强推、删除分支或使用 `--admin` 绕过。启用自动合并，分支必须保持最新，以下 **11** 项检查按来源 GitHub App 设为必需：
+
+| GitHub App | 必需检查 |
+| --- | --- |
+| `github-actions` | `Repository Gates`、`Backend Build`、`Admin Frontend (react)`、`Admin Frontend (vue)` |
+| `github-actions` | `Node CLI (ubuntu-latest)`、`Node CLI (macos-latest)`、`Node CLI (windows-latest)` |
+| `github-actions` | `CodeQL (Java/Kotlin)`、`CodeQL (JavaScript/TypeScript)`、`Dependency Review` |
+| `github-advanced-security` | `CodeQL` |
+
+这是 GitHub 远端设置，工作流 YAML 不会自动创建分支保护。更改 job 名称或新增合并门禁时，必须同步实际保护并回读检查来源、strict、审批数和管理员约束。执行合并仍需核对当前 SHA 的全部工作流及 CodeQL 聚合结果，不能只看到一个同名 check 成功就合并；有失败、取消、未完成或不可解释的跳过时停止。发布 tag 只指向后续验证通过的默认分支合并提交。

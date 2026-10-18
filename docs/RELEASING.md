@@ -17,7 +17,7 @@
 
 ## 2. 发布前置条件
 
-- 默认分支保护开启，PR 必需检查和审批通过；禁止 `--admin` 绕过。执行时查询实际规则；缺少独立批准或 Code Owner 审核则保留可审阅 PR，停止合并与发布。
+- 默认分支保护开启，PR 必需检查和实际要求的审批通过；禁止 `--admin` 绕过。本仓库采用单人维护配置：人工批准数为0、11项必需检查、分支保持最新、管理员同样执行保护并允许自动合并，详见 [CI 门禁](CI_VALIDATION.md#9-单人维护合并门禁)。执行时回读实际规则；若所在仓库另要求独立批准或 Code Owner 审核且尚未满足，则保留可审阅 PR，停止合并与发布。
 - `.github/workflows/ci.yml` 在候选提交上为绿。
 - `node tools/validate_utf8.mjs`、`node tools/check_readme_sync.mjs`、
   `node tools/check_release_version.mjs`、`node tools/check_doc_links.mjs` 通过。

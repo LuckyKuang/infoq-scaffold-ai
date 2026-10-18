@@ -167,7 +167,13 @@ HTTP/Provider 替身同步真实后端在恢复401时清除恢复及 CSRF cookie
 
 会话合同和 SOP 见 [认证规范](specs/auth/spec.md)、[后端恢复会话](../backend/doc/browser-session.md)、双端 `doc/` 测试说明和 [CI 覆盖](CI_VALIDATION.md)。全量本地矩阵、当前源码 Colima 集成与新 SHA 远端门禁的最终证据保留在 `tmp/`，交付时逐项核对；未完成不能视作发布就绪。
 
-性能影响限于首载/绑定/恢复/退出和安全变更撤销，不在每次业务请求新增数据库查询；Redis 映射有界 TTL。可观测性保留 action/category/clientId/短摘要/requestId，故障显式失败；生产精确审计日志增加有限写入，不扩大全局 INFO，容量和外部告警接收仍需目标测量。回滚须代码与受控配置一起回退，按精确 name/path 清本 scope cookie，不恢复明文持久 token、不复活已撤销 JWT。无冻结 SQL、依赖或 lockfile 变更；生产秘密、可信 HTTPS、真实 Provider、容量和外部告警仍须目标环境验收。
+追加远端检查发现 `bcprov-jdk15to18:1.84` 命中 [GHSA-9pwp-9qqc-pr26](https://github.com/advisories/GHSA-9pwp-9qqc-pr26) 与 [GHSA-qp49-qgx5-5m26](https://github.com/advisories/GHSA-qp49-qgx5-5m26)。仅将后端统一版本属性升至两个公告指定的首个修复版 **1.85**，未降低 Dependency Review 阈值；RSA/SM2/AES/SM4 主流程 3 项及生产 RSA、过滤器、包装器、MyBatis 等 22 项目标测试通过。同期 backend CI 暴露 Excel 测试上下文漏注册真实 Jackson mapper：按失败类顺序复现后，仅修测试的依赖注册、context 恢复与 ValidatorFactory 关闭；原失败顺序 9 项和模块全量 43 项均通过，产品 `JsonUtils` 保留缺失依赖时显式失败。可复用步骤见 [Excel 单测 SOP](../backend/infoq-plugin/infoq-plugin-excel/README.md#11-导入与监听器单测-sop)。这些目标结果不替代升级后完整 dev/prod 打包、实际依赖解析、新后端镜像与新 SHA 的远端门禁。
+
+性能影响限于首载/绑定/恢复/退出和安全变更撤销，不在每次业务请求新增数据库查询；Redis 映射有界 TTL。可观测性保留 action/category/clientId/短摘要/requestId，故障显式失败；生产精确审计日志增加有限写入，不扩大全局 INFO，容量和外部告警接收仍需目标测量。回滚须代码与受控配置一起回退，按精确 name/path 清本 scope cookie，不恢复明文持久 token、不复活已撤销 JWT；若新 provider 引发兼容或安全回归，阻断发布并选择安全修复方案，不回退漏洞版后宣称就绪。冻结 SQL 与前端 lockfile 不变，本轮依赖变更仅为上述安全补丁；生产秘密、可信 HTTPS、真实 Provider、容量和外部告警仍须目标环境验收。
+
+依赖和 Excel 修复后的完整后端 `clean package` 重新通过：dev **235 suite / 1,141 项、37.377 秒**，prod 真实日志配置 **1 项、0.376 秒**，两轮均零失败/错误/跳过，suite 时间合计 **37.753 秒**。实际 dependency tree 及两轮打包 JAR 均仅包含 `bcprov-jdk15to18:1.85`，provider SHA-256 与新运行镜像一致；完整日志和统计已按轮次保留，未混用被 clean 覆盖的报告。
+
+依赖修复后的 Colima `rc-browser-009` 独立构建新后端镜像，直接核验运行 JAR 内仅有 `bcprov-jdk15to18-1.85.jar`，provider manifest、JAR、镜像和源码摘要一致。复用两端固定子路径前端镜像，真实 HTTPS 加密验证码首登、profile/reload 恢复、UI DELETE 退出、CSRF/Origin/cookie-only 拒绝及 scope 隔离通过；会话审计分类与 clientId/requestId 已实际核验。产品源码漂移为 0，后续 Excel 修改仅影响测试 setup 与 SOP；本轮不重复声称四产物或恢复演练。所有 owned 容器、卷、网络、进程与监听已清理，专用 VM 停止，其他栈及宿主 context 保持。
 
 ## 可复用审计与回归 SOP
 
