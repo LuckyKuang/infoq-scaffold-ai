@@ -577,7 +577,7 @@ function componentSet(files, baseDir, extension) {
   const result = new Set();
   for (const filePath of files) {
     const relative = path.relative(baseDir, filePath).replace(/\\/g, '/');
-    result.add(relative.replace(new RegExp(`${extension.replace('.', '\\.')}$`, 'u'), ''));
+    result.add(relative.endsWith(extension) ? relative.slice(0, -extension.length) : relative);
   }
   return result;
 }
@@ -764,7 +764,7 @@ function summarize(cases, gaps) {
 }
 
 function escapeMd(value) {
-  return String(value ?? '').replace(/\|/gu, '\\|').replace(/\n/gu, ' ');
+  return String(value ?? '').replace(/[\\|]/gu, '\\$&').replace(/\r?\n|\r/gu, ' ');
 }
 
 function renderMarkdown(matrix) {

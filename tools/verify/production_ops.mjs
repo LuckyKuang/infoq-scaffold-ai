@@ -255,6 +255,7 @@ export async function s3Request(config, method, key = '', {query = '', body = Bu
 
 export async function listObjects(config, options = {}) {
   const result = []; let token = '', totalBytes=0;
+  const seenTokens = new Set();
   do {
     const query = (token ? `continuation-token=${encodeURIComponent(token)}&` : '') + 'encoding-type=url&list-type=2';
     const xml = (await s3Request(config,'GET','',{...options,query})).toString();
@@ -269,11 +270,29 @@ export async function listObjects(config, options = {}) {
       if (result.length > config.s3.maxObjects || totalBytes > config.s3.maxBytes) fail('S3 备份范围超限');
     }
     const truncated = /<IsTruncated>true<\/IsTruncated>/.test(xml);
-    const next = /<NextContinuationToken>(.*?)<\/NextContinuationToken>/.exec(xml)?.[1];
-    if (truncated && (!next || next === token)) fail('S3 list 分页无效');
-    token = truncated ? next.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>') : '';
+    const next = /<NextContinuationToken>([\s\S]*?)<\/NextContinuationToken>/.exec(xml)?.[1];
+    token = truncated ? decodeXmlToken(next) : '';
+    if (truncated && (!token || seenTokens.has(token))) fail('S3 list 分页无效');
+    if (truncated) seenTokens.add(token);
   } while (token);
   return result;
+}
+
+// Continuation tokens are opaque: decode XML once, never feed decoded text back into the decoder.
+function decodeXmlToken(value) {
+  if (!value || /[<>\u0000-\u0008\u000b\u000c\u000e-\u001f\ufffe\uffff\ud800-\udfff]/u.test(value)) fail('S3 list 分页 token XML 无效');
+  const named = {amp: '&', lt: '<', gt: '>', quot: '"', apos: "'"};
+  return value.replace(/&(?:([^;\s&]*);)?|[^&]+/gu, (text, entity) => {
+    if (!text.startsWith('&')) return text;
+    if (Object.hasOwn(named, entity)) return named[entity];
+    if (!/^(?:#\d+|#x[\da-fA-F]+)$/u.test(entity || '')) fail('S3 list 分页 token XML 实体无效');
+    const code = entity.startsWith('#x') ? Number.parseInt(entity.slice(2), 16) : Number(entity.slice(1));
+    if (!Number.isSafeInteger(code) || !(code === 9 || code === 10 || code === 13 ||
+      (code >= 0x20 && code <= 0xd7ff) || (code >= 0xe000 && code <= 0xfffd) || (code >= 0x10000 && code <= 0x10ffff))) {
+      fail('S3 list 分页 token XML 字符无效');
+    }
+    return String.fromCodePoint(code);
+  });
 }
 
 async function sqlSnapshot(config, mysql, run, signal) {

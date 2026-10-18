@@ -42,7 +42,7 @@ main.tsx
 | --- | --- | --- |
 | `RootProviders.tsx` | 注入 Ant Design 主题、语言、暗色模式和全局样式变量 | `ConfigProvider`、`theme.getDesignToken(...)` |
 | `router/AppRouter.tsx` | 建立固定路由树并装配 `AuthGuard`/`MainLayout`/`BackendRouteView` | `BrowserRouter`、`Routes` |
-| `router/AuthGuard.tsx` | 校验 token，必要时触发 `getInfo()` 和 `generateRoutes()`，成功后恢复实时通道，失败时清理会话回登录 | `useUserStore.getState().getInfo()`、`usePermissionStore.getState().generateRoutes()`、`useUserStore.getState().initializeRealtimeChannels()` |
+| `router/AuthGuard.tsx` | 等待共享浏览器恢复、`getInfo()` 与 `generateRoutes()`，成功后启动实时通道；匿名回登录，失败可重试 | `useUserStore.getState().getInfo()`、`usePermissionStore.getState().generateRoutes()`、`useUserStore.getState().initializeRealtimeChannels()` |
 | `router/public-routes.ts` | 登录前公开认证路径白名单匹配 | `isWhiteListRoute()` |
 | `router/BackendRouteView.tsx` | 根据路径或后端 `component` 值解析页面组件，并同步 tags view | `resolvePageComponent()`、`convertPathToComponent()` |
 | `store/modules/user.ts` | 登录、拉取用户信息、登出、SSE/WebSocket 生命周期、退出失败本地清理 | `login()`、`getInfo()`、`logout()` |
@@ -128,7 +128,7 @@ main.tsx
 
 - 后端路由组件名必须能映射到 `src/pages` 中的真实页面组件。
 - 登录、注册、忘记密码等加密请求默认依赖 `VITE_APP_CLIENT_ID`、`VITE_APP_BASE_API` 和可选 RSA/AES 环境变量。
-- SSE / WebSocket 在用户登录成功后初始化；已有 token 刷新进入受保护路由时，由 `AuthGuard` 复用同一入口恢复实时通道。退出时会显式关闭；后端退出接口失败不阻断本地 token 与用户状态清理。
+- access token 仅在内存；密码/OAuth成功先绑定 HttpOnly 浏览器恢复会话，刷新通过同源CSRF协议恢复。SSE / WebSocket 只在用户与路由初始化后启动；退出关闭owned连接并清本地状态，DELETE失败仍显式报告。
 
 ## 7. 已知边界
 

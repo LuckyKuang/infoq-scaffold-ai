@@ -97,7 +97,7 @@ pnpm run dev
 # 驗證碼 E2E 會將種子答案寫入後端 Redis。
 # 先設定 INFOQ_TEST_REDIS_HOST/PORT/DATABASE/PASSWORD（以及可選的 TLS）。
 node skills/test-cli/scripts/run_admin_e2e.mjs --client vue --route-limit 1
-node skills/test-cli/scripts/captcha_login.mjs --backend-url http://127.0.0.1:8080 --print-token
+node skills/test-cli/scripts/captcha_login.mjs --backend-url http://127.0.0.1:8080 --json
 
 # 先準備所選執行環境的設定檔，見 deploy/README.md。
 # 部署狀態：macOS 選擇 Apple，Linux/WSL2 選擇 Docker
@@ -144,6 +144,11 @@ sudo env INFOQ_SOURCE_DIR="$(pwd)" INFOQ_FRONTEND_TARGET=all \
 準備。`all` 預設路由為 `/vue/`、`/react/`、`/console-oss/`；私有 S3 URL 使用
 獨立 OSS origin 並保留簽章原路徑。開發 HTTP 須明確選擇模式。
 
+管理端 access token 僅存於記憶體；重新整理透過同源、CSRF 保護的 HttpOnly
+cookie 恢復，React/Vue scope 隔離。部署前須核驗 `INFOQ_PUBLIC_BASE_URL`、
+`INFOQ_BROWSER_SESSION_COOKIE_PATH`、`INFOQ_BROWSER_SESSION_SECURE` 與
+`INFOQ_BROWSER_SESSION_TTL_SECONDS` 符合實際反向代理，見[正式環境設定](deploy/PRODUCTION.md)。
+
 遠端安裝請依部署指南固定 tag，下載並審閱後再執行。macOS Colima 使用底層 shell
 腳本；Node CLI 在 macOS 固定選擇 Apple，Apple `status` 可能啟動 daemon。生產前須
 核驗獨立憑證、建置金鑰匹配、HTTPS、監控與已演練的備份/回滾；範例金鑰和建置成功
@@ -164,7 +169,7 @@ README 僅提供專案總覽與快速開始。詳細設定與維護請閱讀下�
 | [AGENTS.md](AGENTS.md) | 儲存庫協作規則 |
 | [設計系統](docs/DESIGN.md) | 管理端視覺語言 |
 | [發布流程](docs/RELEASING.md) | 版本、tag、Release workflow 與回滾 |
-| [CI 驗證](docs/CI_VALIDATION.md) | 工作流涵蓋範圍、本機門檻與安全掃描 |
+| [CI 驗證](docs/CI_VALIDATION.md) | 工作流涵蓋範圍、dev/prod 測試分組、本機門檻與安全掃描 |
 
 ## 社群
 

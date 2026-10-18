@@ -15,7 +15,7 @@ const fixture = fs.mkdtempSync(path.join(parent, 'browser-runtime-'));
 const scripts = path.join(fixture, 'skills/test-cli/scripts');
 fs.mkdirSync(scripts, {recursive: true});
 fs.writeFileSync(path.join(fixture, 'AGENTS.md'), '# Fixture\n', 'utf8');
-for (const file of ['skills/test-cli/scripts/playwright_core.mjs', 'skills/test-cli/scripts/chrome_devtools_cli.mjs', 'skills/test-cli/scripts/run_admin_crud_e2e.mjs', 'skills/test-cli/scripts/captcha_login.mjs', 'skills/test-cli/scripts/redis_captcha_seed.mjs', 'skills/test-cli/scripts/test_run_lifecycle.mjs', 'tools/lib/skill_runtime.mjs', 'tools/lib/admin_dev_stack.mjs', 'tools/lib/backend_login.mjs', 'tools/resolve_backend_local_mcp_env.mjs']) {
+for (const file of ['skills/test-cli/scripts/playwright_core.mjs', 'skills/test-cli/scripts/chrome_devtools_cli.mjs', 'skills/test-cli/scripts/run_admin_crud_e2e.mjs', 'skills/test-cli/scripts/captcha_login.mjs', 'skills/test-cli/scripts/redis_captcha_seed.mjs', 'skills/test-cli/scripts/test_run_lifecycle.mjs', 'tools/lib/skill_runtime.mjs', 'tools/lib/admin_dev_stack.mjs', 'tools/lib/backend_login.mjs', 'tools/lib/browser_session.mjs', 'tools/lib/browser_evidence.mjs', 'tools/resolve_backend_local_mcp_env.mjs']) {
   fs.mkdirSync(path.dirname(path.join(fixture, file)), {recursive: true});
   fs.copyFileSync(path.join(repoRoot, file), path.join(fixture, file));
 }
@@ -28,8 +28,13 @@ export const chromium = {launch: async (options) => {
   fixture.launchOptions = options;
   if (fixture.launchError) throw new Error('fixture launch failed');
   const page = {
-    on: (event, callback) => {if (event === 'console' && fixture.consoleError) callback({type:()=> 'error', text:()=> 'fixture console failure', location:()=> ({})});},
+    on: (event, callback) => {
+      if (event === 'console' && fixture.consoleError) callback({type:()=> 'error', text:()=> 'fixture console failure', location:()=> ({})});
+      if (event === 'console') for (const entry of fixture.consoleEntries || []) callback({type:()=>entry.type,text:()=>entry.text,location:()=>entry.location || {}});
+      if (event === 'pageerror') for (const text of fixture.pageErrors || []) callback(new Error(text));
+    },
     goto: async () => {
+      if (fixture.gotoError) throw new Error(fixture.gotoError);
       if (fixture.wait) return new Promise((resolve, reject) => {fixture.reject = reject; fixture.ready();});
       return {ok:()=> fixture.httpStatus < 400, status:()=> fixture.httpStatus};
     },
@@ -38,8 +43,14 @@ export const chromium = {launch: async (options) => {
     waitForLoadState: async () => {},
     screenshot: async () => {}
   };
-  return {newContext: async () => ({addInitScript: async () => {}, newPage:async () => page}), close:async () => {
-    fixture.closeCount++; fixture.reject?.(new Error('fixture browser closed')); fixture.onClose?.(); if (fixture.closeError) throw new Error('fixture close failed');
+  return {newContext: async () => ({
+    addInitScript: async () => {}, newPage:async () => page,
+    request: {
+      get: async () => ({status:()=>200,json:async()=>({code:200,data:{token:'csrf-fixture',headerName:'X-XSRF-TOKEN'}})}),
+      put: async () => ({status:()=>200,json:async()=>({code:200})})
+    }
+  }), close:async () => {
+    fixture.closeCount++; fixture.reject?.(new Error('fixture browser closed')); fixture.onClose?.(); if (fixture.closeError) throw new Error(fixture.closeError === true ? 'fixture close failed' : fixture.closeError);
   }};
 }};
 `, 'utf8');
@@ -106,11 +117,47 @@ try {
     globalThis.browserFixture = {httpStatus: 200, closeCount: 0, consoleError: true};
     const runDir = path.join(fixture, 'tmp/crud-console');
     const report = {browser: {}};
-    await assert.rejects(runBrowser({modules: [], timeoutMs: 1000}, runDir, 'fixture', {}, {}, {}, {}, report), /Console check failed/);
+    await assert.rejects(runBrowser({modules: [], timeoutMs: 1000, frontendOrigin:'http://fixture.invalid', client:'vue', clientId:'fixture-client'}, runDir, 'fixture-token', {}, {}, {}, {}, report), /Console check failed/);
     const state = JSON.parse(fs.readFileSync(path.join(runDir, 'browser-state.json'), 'utf8'));
     assert.equal(state.status, 'failed');
     assert.equal(state.browserClosed, true);
     assert.equal(report.browser.badConsoleEntries, 1);
+  });
+  await test('authenticated console/page errors and returned JSON redact raw/encoded URLs without hiding errors', async () => {
+    const token = 'private/browser+credential=value';
+    const encoded = encodeURIComponent(token);
+    const privateText = `WebSocket failed ${token} ${encoded}`;
+    globalThis.browserFixture = {httpStatus:200,closeCount:0,consoleEntries:[{type:'error',text:privateText,location:{url:`http://fixture.invalid/${encoded}`,lineNumber:3}}],pageErrors:[privateText]};
+    const result = await runPlaywrightFlow({targetUrl:'http://fixture.invalid/',browserSession:{token,client:'react',clientId:'fixture-client'},failOnConsoleErrors:false});
+    assert.equal(result.consoleEntries.length,2);
+    assert.deepEqual(result.consoleEntries.map(item=>item.type),['error','pageerror']);
+    assert.equal(result.consoleEntries[0].location.lineNumber,3);
+    for (const value of [JSON.stringify(result),fs.readFileSync(result.consoleLogPath,'utf8'),fs.readFileSync(result.stateFile,'utf8')]) assert.ok(!value.includes(token) && !value.includes(encoded),'public evidence must hide both credential representations');
+    assert.equal(globalThis.browserFixture.closeCount,1);
+  });
+  await test('Playwright and cleanup errors keep failure details but sanitize nested causes and terminal stacks', async () => {
+    const token='private/cancelled+credential=value';
+    const encoded=encodeURIComponent(token);
+    globalThis.browserFixture={httpStatus:200,closeCount:0,gotoError:`navigation failed ${encoded}`,closeError:`close failed ${token}`};
+    await assert.rejects(runPlaywrightFlow({targetUrl:'http://fixture.invalid/',browserSession:{token,client:'vue',clientId:'fixture-client'}}),error=>{
+      assert.ok(error instanceof AggregateError);
+      assert.match(error.message,/navigation failed.*Browser cleanup failed/u);
+      for(const item of [error,...error.errors]) assert.ok(!item.message.includes(token)&&!item.stack.includes(encoded));
+      return true;
+    });
+    const state=latestState();
+    assert.equal(state.status,'failed');assert.equal(state.browserClosed,false);
+    assert.ok(!JSON.stringify(state).includes(token)&&!JSON.stringify(state).includes(encoded));
+  });
+  await test('CRUD evidence keeps admin and online-session credentials private after online token is cleared', async () => {
+    const token='private/admin+credential=value',online='private/online+credential=value';
+    const data={onlineUser:{token:online}};
+    const runDir=path.join(fixture,'tmp/crud-private-console');
+    const report={browser:{}};
+    globalThis.browserFixture={httpStatus:200,closeCount:0,consoleEntries:[{type:'error',text:`handshake ${token} ${encodeURIComponent(online)}`,location:{url:`http://fixture.invalid/${encodeURIComponent(token)}`}}],pageErrors:[`page failure ${online}`],onClose:()=>{data.onlineUser.token='';}};
+    await assert.rejects(runBrowser({modules:[],timeoutMs:1000,frontendOrigin:'http://fixture.invalid',client:'vue',clientId:'fixture-client'},runDir,token,{},{},data,{},report),/Console check failed/u);
+    assert.equal(data.onlineUser.token,'');assert.equal(report.browser.badConsoleEntries,2);
+    for (const value of [fs.readFileSync(path.join(runDir,'console/admin-crud.json'),'utf8'),fs.readFileSync(path.join(runDir,'browser-state.json'),'utf8'),JSON.stringify(report)]) for(const secret of [token,online,encodeURIComponent(token),encodeURIComponent(online)]) assert.ok(!value.includes(secret),'CRUD public evidence must not disclose a login token');
   });
   await test('admin stack preserves external service ownership and cancels a pending probe', async () => {
     fs.mkdirSync(path.join(fixture, 'backend'), {recursive: true});

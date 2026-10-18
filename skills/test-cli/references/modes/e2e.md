@@ -46,15 +46,15 @@ node skills/test-cli/scripts/run_admin_crud_e2e.mjs --client react
 
 可用 `--modules role,user`（如仅公告模块用 `--modules notice`）缩小模块范围；报告会同时输出高副作用安全门禁：不删除非 `e2e_` 数据、不清空日志、不触发定时任务“立即执行”、不触碰真实 OSS 对象上传/删除。在线强退只允许对当前 run 创建的 `e2e_` 用户会话执行；缺少隔离 fixture 时记录 blocker，不伪造通过。
 
-仅获取验证码种子登录 token：
+仅验证验证码种子登录并输出脱敏摘要：
 
 ```bash
-node skills/test-cli/scripts/captcha_login.mjs --backend-url http://127.0.0.1:8080 --print-token
+node skills/test-cli/scripts/captcha_login.mjs --backend-url http://127.0.0.1:8080 --json
 ```
 
 `captcha_login.mjs` 是 `/auth/code` + Redis 种子答案 + 加密 `/auth/login` 的共享入口，`run_admin_e2e.mjs` 与 `test-cli` 的 `admin-route-probe` 都直接复用它。种子模式要求测试进程与后端使用同一个 Redis 实例/DB，通过 `INFOQ_TEST_REDIS_HOST`、`INFOQ_TEST_REDIS_PORT`、`INFOQ_TEST_REDIS_DATABASE`、`INFOQ_TEST_REDIS_PASSWORD` 或对应 `--redis-*` 参数提供连接；禁止指向生产 Redis。证据默认写入 `tmp/test-cli/e2e/captcha-login/<run-id>/`。
 
-CRUD 的 API、浏览器和 JDBC 只读核对必须指向同一测试实例；使用 `--no-start-stack` 或覆盖 URL 时尤其要核对 `application-local.yml` 的数据库。该 runner 依赖 PATH 中的 JDK 21（`java` / `javac`）和 `~/.m2/repository` 中的 MySQL Connector/J；其简化配置解析器不能展开任意 Spring env 占位符或识别运行实例的配置覆盖。缺少依赖或目标无法一致确认时停止。`--print-token` 输出及登录证据含敏感测试信息，不上传到共享日志或提交到仓库。
+CRUD 的 API、浏览器和 JDBC 只读核对必须指向同一测试实例；使用 `--no-start-stack` 或覆盖 URL 时尤其要核对 `application-local.yml` 的数据库。该 runner 依赖 PATH 中的 JDK 21（`java` / `javac`）和 `~/.m2/repository` 中的 MySQL Connector/J；其简化配置解析器不能展开任意 Spring env 占位符或识别运行实例的配置覆盖。缺少依赖或目标无法一致确认时停止。登录证据含敏感测试信息，不上传到共享日志或提交到仓库；token 不进入 stdout 或浏览器存储，内部通过受保护同源资源建立 HttpOnly 会话。
 
 `run_admin_e2e.mjs` 默认只使用有管理端动态菜单的 route smoke 候选账号（`admin`、`dept`）；`captcha_login.mjs` 可继续通过 `--login-candidates` 做独立账号登录诊断。不要把无动态路由权限的账号作为 route smoke 默认候选，否则会出现登录成功但无路由可巡检的假失败。
 

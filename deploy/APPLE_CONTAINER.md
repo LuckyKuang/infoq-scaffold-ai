@@ -98,6 +98,10 @@ pnpm --dir frontend-react run dev
 
 Open `http://127.0.0.1:5173/login` or `http://127.0.0.1:5174/login`. This is a development setup, not a production-like full stack: it does not include the Nginx gateway or MinIO. Use Colima + Docker Compose when you need MinIO, OSS, gateway routing, or the complete stack.
 
+浏览器恢复会话只接受受控的精确 Origin。`init` 将新环境设为 `INFOQ_DEPLOY_MODE=development`，默认主站为 `http://127.0.0.1:19090`，并加入 `localhost` / `127.0.0.1` 的无端口、`5173` 与 `5174` Origin；不使用通配符。Vite 通过同源 `/dev-api` 代理后端，环境文件对应 `INFOQ_BROWSER_SESSION_COOKIE_PATH=/dev-api/auth/browser-session`、`INFOQ_BROWSER_SESSION_SECURE=false`、`INFOQ_BROWSER_SESSION_TTL_SECONDS=2592000`。这些字段会显式注入后端容器；即使后端使用 `prod` Spring profile，部署模式依然是 development。
+
+若更换浏览器主机名或 Vite 端口，先把新的精确 HTTP loopback Origin 加到同一环境文件的 `INFOQ_BROWSER_SESSION_ORIGINS`（逗号分隔），执行 `node tools/production_config.mjs check --scope apple --env-file <绝对环境文件路径>`，再 `./apple-container.sh up --recreate`；只重启 Vite 不会更新已有后端容器。既有文件的合法值会保留；缺失字段可通过 `init` 补齐，已有错误的 Path、非 loopback Origin 或生产模式会明确拒绝。Apple 路径没有 `/prod-api` 网关，不要套用 Compose 的 cookie Path。TTL 仅限制恢复映射，不能延长 JWT 寿命；升级后仍需真实登录、刷新和退出验证。
+
 `INFOQ_ENV_FILE` can select another protected env file; otherwise `deploy/.env`
 is used. The Apple env file uses literal unquoted `KEY=value` syntax without spaces around `=`. Do not use Compose expressions
 such as `${VALUE:-default}`. `APPLE_CONTAINER_BIND_HOST` must be an IPv4

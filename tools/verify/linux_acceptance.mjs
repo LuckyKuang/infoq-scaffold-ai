@@ -10,6 +10,7 @@ import {readProductionConfig,validateProductionConfig,verifyFrontendArtifact,fro
 import {validateGatewayConfig,writeGateway} from '../../deploy/bin/render-gateway.mjs';
 import {runProcess,loadConfig,inspectTarget,executeOperation,s3Request} from './production_ops.mjs';
 import {loginWithRealCaptcha} from '../../skills/test-cli/scripts/captcha_login.mjs';
+import {establishBrowserSession} from '../lib/browser_session.mjs';
 
 const repo=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../..');
 const sha=value=>crypto.createHash('sha256').update(value).digest('hex');
@@ -259,7 +260,7 @@ async function main() {
       const browserContext=await browser.newContext({ignoreHTTPSErrors:true}),page=await browserContext.newPage();
       await page.goto(`https://app.infoq.test${base}user/profile`,{waitUntil:'domcontentloaded'});
       await page.waitForURL(url=>url.pathname===base+'login',{timeout:30000});
-      await page.evaluate(value=>localStorage.setItem('Admin-Token',value),token);
+      await establishBrowserSession(browserContext, {origin:'https://app.infoq.test',client,clientId:'e5cd7e4891bf95d1d19206ce24a7b32e',token,apiPrefix:'/prod-api',page});
       await profileDom(page,`https://app.infoq.test${base}user/profile`,client,'subpath');await browserContext.close();
       state.checks[`${client}-subpath`]='real DOM protected route/profile/refresh passed';
     }
@@ -278,8 +279,10 @@ async function main() {
       // this loop uses a fresh Chromium with the same DNS boundary.
       stage(`browser-root-${client}`);
       browser=await chromium.launch({headless:true,handleSIGINT:false,handleSIGTERM:false,handleSIGHUP:false,args:['--host-resolver-rules=MAP app.infoq.test 127.0.0.1','--no-proxy-server']});
-      const ctx=await browser.newContext({ignoreHTTPSErrors:true});await ctx.addInitScript(value=>localStorage.setItem('Admin-Token',value),token);
-      const page=await ctx.newPage();await profileDom(page,'https://app.infoq.test/user/profile',client,'root');await browser.close();browser=undefined;
+      const ctx=await browser.newContext({ignoreHTTPSErrors:true});
+      const page=await ctx.newPage();await page.goto('https://app.infoq.test/login',{waitUntil:'domcontentloaded'});
+      await establishBrowserSession(ctx, {origin:'https://app.infoq.test',client,clientId:'e5cd7e4891bf95d1d19206ce24a7b32e',token,apiPrefix:'/prod-api',page});
+      await profileDom(page,'https://app.infoq.test/user/profile',client,'root');await browser.close();browser=undefined;
       definition.services[service]=original;save(composeFile,definition);
       state.checks[`${client}-root`]='actual root build + DOM/refresh passed';
     }

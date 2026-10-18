@@ -2,6 +2,8 @@
 
 本文档是对当前代码结构的保守描述。
 
+浏览器恢复资源由 security 插件承载 opaque 映射、固定 React/Vue scope 与 Spring CSRF，system 模块提供控制器和退出审计，web 模块在 SecurityFilterChain 前处理严格资源 CORS。普通业务 API 不增加 cookie 认证，部署属性和事务撤销边界见 [浏览器恢复会话](./browser-session.md)。
+
 - 只写仓库里已经能直接确认的模块关系和装配行为。
 - 不把未验证的插件链路包装成“既定平台能力”。
 - 如果未来模块边界变化，应把这里视为“当前实现说明”而不是长期真理。
@@ -288,6 +290,7 @@ MyBatis 层由 `MybatisPlusConfig` 注入 `PlusDataPermissionInterceptor` 和 `D
 主要错误出口如下，具体边界应以各处理器为准：
 
 - `GlobalExceptionHandler` 统一处理 `ServiceException`、校验异常、JSON 解析异常、请求体不可读异常、SpEL 异常等。
+- 用户/角色会话撤销的 Redis 失败在 security 边界转换为 common `SecurityDependencyException`，web 显式返回 HTTP/业务码 503；日志只保留 operation、type、requestId，不携原消息或 cause，数据库事务回滚但不复活已撤销 JWT。
 - Spring Security 的 `SecurityAuthenticationEntryPoint` 与 `SecurityAccessDeniedHandler` 统一把未登录和无权限转换成 `401/403` 语义的 `ApiResult`。
 - `application.yml` 显式开启 `fail_on_unknown_properties`，避免前端传错字段时被静默忽略。
 

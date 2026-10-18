@@ -69,7 +69,7 @@ pnpm exec vitest --config vitest.config.ts --run \
 
 ```bash
 node skills/test-cli/scripts/run_admin_e2e.mjs --client vue --route-limit 1
-node skills/test-cli/scripts/captcha_login.mjs --backend-url http://127.0.0.1:8080 --print-token
+node skills/test-cli/scripts/captcha_login.mjs --backend-url http://127.0.0.1:8080 --json
 node skills/test-cli/scripts/playwright_cli.mjs admin-route-probe --list-routes
 ```
 

@@ -47,7 +47,16 @@ jobs:
         id: policy
         run: node skills/release-cli/scripts/release_policy.mjs classify --tag "${GITHUB_REF_NAME}" --github-output "${GITHUB_OUTPUT}"
 
-      - name: Run backend tests and package
+      - name: Setup pinned Maven
+        run: node tools/setup_ci_maven.mjs
+
+      - name: Verify Maven environment
+        run: node tools/backend_mvn.mjs --dry-run -- -B -ntp -DskipTests=false clean package -P prod
+
+      - name: Run complete backend unit suite
+        run: node tools/backend_mvn.mjs -- -B -ntp -DskipTests=false clean test -P dev
+
+      - name: Verify production configuration and package
         run: node tools/backend_mvn.mjs -- -B -ntp -DskipTests=false clean package -P prod
 
       - name: Upload backend jar

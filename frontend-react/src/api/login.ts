@@ -127,16 +127,11 @@ export function forgotPassword(data: ForgotPasswordForm) {
 /**
  * 注销
  */
-export function logout() {
-  if (import.meta.env.VITE_APP_SSE === 'true') {
-    request({
-      url: '/resource/sse/close',
-      method: 'get'
-    });
-  }
+export function logout(token: string) {
   return request({
     url: '/auth/logout',
-    method: 'post'
+    method: 'post',
+    headers: { isToken: false, repeatSubmit: false, skipRelogin: true, Authorization: `Bearer ${token}` }
   });
 }
 

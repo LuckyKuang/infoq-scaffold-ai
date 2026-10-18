@@ -1,4 +1,4 @@
 interface:
   display_name: "Test CLI（Web 测试）"
   short_description: "统一浏览器、管理端 E2E 与前端运行态测试入口"
-  default_prompt: "使用 $test-cli 完成本次 Web 或前端验证，先核对目标、账号候选与 RSA/实例配置；确认种子登录（包括 --list-routes）的写入边界，核对 CRUD 的 API/DB 预期、未知残留、中断清理、证据与 owned 进程收口，明确真实环境未验证项。"
+  default_prompt: "使用 $test-cli 完成本次 Web 或前端验证，先核对目标、账号候选、RSA/实例与同源 API 前缀及应用 scope；确认种子登录（包括 --list-routes）的写入边界，token 仅进程内传递并建立 HttpOnly 会话，核对 CRUD 的 API/DB 预期、未知残留、中断清理、证据与 owned 进程收口，明确真实环境未验证项。"

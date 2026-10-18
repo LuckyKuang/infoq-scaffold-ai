@@ -225,20 +225,13 @@ describe('api/login', () => {
     });
   });
 
-  it('closes sse stream before logout when sse flag is enabled', async () => {
-    vi.stubEnv('VITE_APP_SSE', 'true');
+  it('revokes a newly issued bearer explicitly without using the current token', async () => {
     const { logout } = await import('@/api/login');
-
-    logout();
-
-    expect(loginApiMocks.request).toHaveBeenCalledTimes(2);
-    expect(loginApiMocks.request).toHaveBeenNthCalledWith(1, {
-      url: '/resource/sse/close',
-      method: 'get'
-    });
-    expect(loginApiMocks.request).toHaveBeenNthCalledWith(2, {
+    logout('unbound-token');
+    expect(loginApiMocks.request).toHaveBeenCalledWith({
       url: '/auth/logout',
-      method: 'post'
+      method: 'post',
+      headers: { isToken: false, repeatSubmit: false, skipRelogin: true, Authorization: 'Bearer unbound-token' }
     });
   });
 });

@@ -82,7 +82,9 @@ node tools/verify/run_cluster_smoke.mjs
 
 `smoke_checks.mjs` 是只接受环境变量的内部 HTTP 检查器，没有 CLI `--help`。`BASE_URL` 默认 `http://127.0.0.1:18080`，`LOGIN_MODE` 默认 `encrypted`；`ROLE_ID=3`、`DICT_TYPE=sys_yes_no` 用于受保护接口。它还读取 `CLIENT_ID`、`USERNAME`、`PASSWORD`、`LOGIN_CANDIDATES`、`RSA_PUBLIC_KEY` 与 `HTTP_TIMEOUT_MS`（与上述请求期限相同的默认值和校验）。直接运行会访问目标，不要把 `--help` 当成安全预览。
 
-`PRINT_TOKEN=1` / `PRINT_USER_ID=1` 是集群父子进程间的私有协议。集群捕获这些行，`smoke_output.mjs` 校验字段唯一且非空后剥离，再把 token 仅通过进程环境传给 Python。不得将内部原始 stdout 写到终端、CI 日志或证据文件；单节点 runner 强制把这两个变量设为 `0`，不继承调用者的私有输出开关。登录失败只记录账号、协议、HTTP 和数值业务码，公开/受保护 JSON 接口失败只记录方法、路径、HTTP 或数值业务码；缺失或非数值业务码显示 `invalid-response`，不打印上游 `msg` 或非 JSON 正文。集群子检查失败按退出码/信号报错；进一步定位查看受控节点日志，不输出私有子进程原始结果。
+两个 runner 通过 `smoke_output.mjs` 的 Node `fork` IPC 启动 HTTP 检查器。集群只接收一条结构化认证消息，token 不经过 stdout、stderr 或日志文件，再通过进程环境交给 Python；单节点不请求认证消息。旧 `PRINT_TOKEN` / `PRINT_USER_ID` 变量（包括值 `0`）均显式拒绝，不再提供明文输出开关。内部 `SMOKE_AUTH_IPC=1` 要求已连接父进程，无 IPC 时在网络请求前失败。
+
+公开诊断只允许固定检查/原因枚举和 HTTP、数值业务码、期限或导出字节数；不打印账号、token 长度、上游 `msg`、非 JSON 正文、Content-Type 原文或任意异常正文。未知异常报告 `internal-error`，需要深入定位时查看受控节点日志。子进程 stdout/stderr 出现任何内容、IPC 非法/重复/缺失、上游失败、超时或中断都会失败；父进程不转发原始输出。检查器默认总期限为 120 秒，独立于单个 HTTP 请求期限；超时/中断会终止自有子进程树并核验退出，清理失败保持 failed。state 的 `checker` 记录 pid、owned 与运行结果。父进程断开时，检查器立即失败退出。登录加密复用 `tools/lib/backend_login.mjs` 的密码学安全随机及既有 RSA/AES 协议。
 
 失败需区分：参数/登录协议错误、配置或 jar 缺失、端口占用、依赖不可达、接口权限不足和集群清理未收敛。按 `tmp/verify/*.state.json` 的 pid/port/log 检查 cleanup，仅停止本轮或已记录 owned 的进程；状态为 `failed` / `interrupted` 时不能认定验证完成。回滚脚本修订后重新执行下面的隔离回归，不回滚数据库数据或部署状态。
 
@@ -91,7 +93,7 @@ node tools/verify/run_cluster_smoke.mjs
 触发条件：修改 smoke 登录协议、监听地址、私有输出、错误诊断、参数解析、候选账号、运行态编排或覆盖缺口扫描行为时。
 
 1. 先读 runner → `smoke_checks.mjs` → `smoke_output.mjs` 调用链，确认无意外真实地址、启动或秘密输出。
-2. 执行 `node tools/verify/test_smoke.mjs`，需 Node 24 与 Python 3；Python fixture 注入假 `redis` / `websockets`，无需安装这两个包。HTTP fixture 只监听 `127.0.0.1` 随机端口，验证加密/明文成功与失败、不跨协议重试、公开/受保护/登录错误正文与异常业务码不泄漏凭据；另核无响应头/响应体悬挂超时、非法期限、Redis 5 秒参数与超时非零退出、私有字段剥离、扫描器帮助、runner 参数拒绝。Node 24 `registerHooks` fixture 仅替换外部 runtime/config 边界，执行真实 runner 编排，检查 Java bind/probe 一致、单节点禁止私有输出，以及成功/失败 cleanup 与显式 keep 状态。测试子进程另有 5 秒上限，防止超时实现回归导致测试自身挂起。测试不启动 Java、连接真实 MySQL/Redis，也不证明实际进程清理或集群运行态。
+2. 执行 `node tools/verify/test_smoke.mjs`，需 Node 24 与 Python 3；Python fixture 注入假 `redis` / `websockets`，无需安装这两个包。HTTP fixture 只监听 `127.0.0.1` 随机端口，验证加密/明文成功与失败、不跨协议重试、错误正文/异常业务码不泄漏凭据；禁用 `Math.random` 时真实加密登录仍成功。真实 fork 流程验证认证 IPC、固定诊断、非法/重复/缺失消息、子进程失败、旧开关/无 IPC 拒绝、秘密 stdout/stderr 拒绝，以及超时/中断后实际 PID 退出和端口重绑；POSIX 另注入 `ps` 检查失败，验证失败状态并清理 fixture。Node 24 `registerHooks` fixture 只替换外部 runtime/config/IPC 边界，执行真实 runner 编排，检查 Java bind/probe 一致、单节点不请求认证，以及成功/失败 cleanup 与显式 keep 状态。HTTP 请求、测试子进程各有期限；fixture 不能替代真实 Java/Redis 集群验收。
 3. 对修改的 `.mjs` 执行 `node --check <file>`，再运行 `node tools/validate_utf8.mjs tools/verify` 和 `git diff --check`；日志、命令/退出码放到 `tmp/`。
 4. fixture 必须关闭自己的连接与监听端口。沙箱禁止回环监听时记录 `EPERM` 并在允许本地 fixture 的权限环境重跑；不得改为跳过测试或连接已有 backend 制造通过。
 

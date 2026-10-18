@@ -96,6 +96,16 @@ When `VITE_APP_ENCRYPT=true`, provide both `VITE_APP_RSA_PUBLIC_KEY` and
 example keys are for isolated development; production needs controlled keys and
 HTTPS. Keys in browser bundles are visible to browser users.
 
+Browser reload recovery requires a same-origin API proxy. Admin access tokens
+stay in memory; do not seed `Admin-Token` in browser storage. For local HTTP set
+`INFOQ_DEPLOY_MODE=development`, explicit loopback
+`INFOQ_BROWSER_SESSION_ORIGINS` matching the frontend origin (including its port),
+`INFOQ_BROWSER_SESSION_COOKIE_PATH=/dev-api/auth/browser-session`, and
+`INFOQ_BROWSER_SESSION_SECURE=false` on the backend. A changed `VITE_APP_PORT`
+also requires updating the allowed origin. The test-cli owned local stack sets
+these values for its selected port. Production uses the HTTPS public origin and
+`/prod-api/auth/browser-session`; see [production configuration](deploy/PRODUCTION.md).
+
 Production builds require a private, absolute `INFOQ_PRODUCTION_CONFIG_FILE`
 path (owner-only permissions on Unix) or an explicitly managed environment.
 The file contains `VITE_APP_ENCRYPT=true` and four RSA fields: the frontend

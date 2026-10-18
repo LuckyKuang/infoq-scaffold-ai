@@ -31,7 +31,7 @@ function prepare(fixture, command = 'backend', extraEnv = {}) {
   const deployRoot = path.join(fixture, 'data');
   const envFile = path.join(fixture, 'deploy.env');
   const password = "fixture '&\\ $password : # value";
-  fs.writeFileSync(envFile, `INFOQ_DEPLOY_MODE=development\nINFOQ_PUBLIC_BASE_URL=http://app.localhost\nINFOQ_OSS_PUBLIC_ORIGIN=http://oss.localhost\nINFOQ_DEPLOY_ROOT=${quote(deployRoot)}\nREDIS_PASSWORD=${quote(password)}\n`, {encoding: 'utf8', mode: 0o600});
+  fs.writeFileSync(envFile, `INFOQ_DEPLOY_MODE=development\nINFOQ_PUBLIC_BASE_URL=http://app.localhost\nINFOQ_OSS_PUBLIC_ORIGIN=http://oss.localhost\nINFOQ_BROWSER_SESSION_COOKIE_PATH=/prod-api/auth/browser-session\nINFOQ_BROWSER_SESSION_SECURE=false\nINFOQ_DEPLOY_ROOT=${quote(deployRoot)}\nREDIS_PASSWORD=${quote(password)}\n`, {encoding: 'utf8', mode: 0o600});
   const script = command === 'backend' ? 'deploy/bin/infoq.sh' : 'deploy/bin/deploy-frontend.sh';
   const result = shell(`umask 077\nbash ${script} prepare react`, {INFOQ_ENV_FILE: envFile, ...extraEnv});
   return {result, deployRoot, password};

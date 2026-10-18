@@ -7,6 +7,8 @@ import cc.infoq.common.domain.model.LoginUser;
 import cc.infoq.common.redis.utils.RedisUtils;
 import cc.infoq.common.utils.StringUtils;
 import org.redisson.api.RSet;
+import org.redisson.api.RBatch;
+import org.redisson.api.RFuture;
 
 import java.time.Duration;
 import java.util.*;
@@ -97,6 +99,25 @@ public class SecurityTokenStore {
 
     public int revokeByUserId(Long userId) {
         return revokeDigests(readIndex(userIndexKey(userId)));
+    }
+
+    public int revokeByUserIds(Collection<Long> userIds) {
+        List<Long> ids = userIds.stream().filter(Objects::nonNull).distinct().toList();
+        int count = 0;
+        for (int offset = 0; offset < ids.size(); offset += 500) {
+            RBatch batch = RedisUtils.getClient().createBatch();
+            List<RFuture<Set<String>>> reads = new ArrayList<>();
+            for (Long id : ids.subList(offset, Math.min(offset + 500, ids.size()))) {
+                reads.add(batch.<String>getSet(userIndexKey(id)).readAllAsync());
+            }
+            batch.execute();
+            Set<String> digests = new HashSet<>();
+            for (RFuture<Set<String>> read : reads) {
+                digests.addAll(read.toCompletableFuture().join());
+            }
+            count += revokeDigests(digests);
+        }
+        return count;
     }
 
     public int revokeByRoleId(Long roleId) {
@@ -245,15 +266,35 @@ public class SecurityTokenStore {
         if (digests.isEmpty()) {
             return 0;
         }
-        String[] sessionKeys = digests.stream().map(this::sessionKey).toArray(String[]::new);
-        Map<String, SecurityTokenSession> sessionsByKey = RedisUtils.getClient().getBuckets().get(sessionKeys);
+        List<String> values = digests.stream().filter(StringUtils::isNotBlank).distinct().toList();
         int count = 0;
-        for (String digest : digests) {
-            SecurityTokenSession session = sessionsByKey.get(sessionKey(digest));
-            String accessToken = session == null ? null : session.getAccessToken();
-            if (revokeLoadedSession(accessToken, digest, session)) {
-                count++;
+        for (int offset = 0; offset < values.size(); offset += 500) {
+            List<String> group = values.subList(offset, Math.min(offset + 500, values.size()));
+            String[] keys = group.stream().map(this::sessionKey).toArray(String[]::new);
+            Map<String, SecurityTokenSession> sessions = RedisUtils.getClient().getBuckets().get(keys);
+            RBatch batch = RedisUtils.getClient().createBatch();
+            for (String digest : group) {
+                SecurityTokenSession session = sessions.get(sessionKey(digest));
+                Duration ttl = sessionTtl(session);
+                if (ttl == null) {
+                    batch.getBucket(revokedKey(digest)).setAsync(Boolean.TRUE);
+                } else {
+                    batch.getBucket(revokedKey(digest)).setAsync(Boolean.TRUE, ttl);
+                }
+                batch.getBucket(sessionKey(digest)).deleteAsync();
+                if (session != null) {
+                    if (StringUtils.isNotBlank(session.getAccessToken())) {
+                        batch.getBucket(CacheConstants.ONLINE_TOKEN_KEY + session.getAccessToken()).deleteAsync();
+                    }
+                    batch.getSet(loginIndexKey(session.getLoginId())).removeAsync(digest);
+                    batch.getSet(userIndexKey(session.getUserId())).removeAsync(digest);
+                    for (Long roleId : session.getRoleIds()) {
+                        batch.getSet(roleIndexKey(roleId)).removeAsync(digest);
+                    }
+                    count++;
+                }
             }
+            batch.execute();
         }
         return count;
     }

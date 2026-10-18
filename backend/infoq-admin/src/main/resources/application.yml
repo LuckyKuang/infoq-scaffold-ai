@@ -102,6 +102,13 @@ spring:
 
 # security配置
 security:
+  browser-session:
+    deployment-mode: ${INFOQ_DEPLOY_MODE:development}
+    public-base-url: ${INFOQ_PUBLIC_BASE_URL:}
+    origins: ${INFOQ_BROWSER_SESSION_ORIGINS:http://localhost,http://127.0.0.1}
+    cookie-path: ${INFOQ_BROWSER_SESSION_COOKIE_PATH:/dev-api/auth/browser-session}
+    secure: ${INFOQ_BROWSER_SESSION_SECURE:false}
+    ttl-seconds: ${INFOQ_BROWSER_SESSION_TTL_SECONDS:2592000}
   # 排除路径
   excludes:
     - /*.html

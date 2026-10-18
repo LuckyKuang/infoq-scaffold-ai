@@ -84,6 +84,7 @@ Options:
   --client <vue|react>    Required admin client.
   --backend-url <url>               Backend base URL. Default: ${DEFAULTS.backendUrl}
   --frontend-origin <url>           Frontend origin. Default follows --client.
+  --api-prefix <path>               Same-origin API prefix: /dev-api (default) or /prod-api.
   --start-stack                     Start or reuse backend + frontend dev stack. Default.
   --no-start-stack                  Reuse existing services only.
   --build-backend                   Build backend jar before startup.
@@ -132,6 +133,7 @@ function parseArgs(argv) {
     client: '',
     backendUrl: process.env.BACKEND_URL || DEFAULTS.backendUrl,
     frontendOrigin: process.env.FRONTEND_ORIGIN || '',
+    apiPrefix: process.env.INFOQ_TEST_API_PREFIX || '/dev-api',
     startStack: true,
     buildBackend: false,
     forceRestart: false,
@@ -177,6 +179,10 @@ function parseArgs(argv) {
         break;
       case '--frontend-origin':
         options.frontendOrigin = readValue(argv, index, arg).replace(/\/+$/, '');
+        index += 1;
+        break;
+      case '--api-prefix':
+        options.apiPrefix = readValue(argv, index, arg);
         index += 1;
         break;
       case '--start-stack':
@@ -312,6 +318,7 @@ function parseArgs(argv) {
   if (!CLIENTS[options.client]) {
     throw new Error('--client must be one of: vue, react');
   }
+  if (!['/dev-api', '/prod-api'].includes(options.apiPrefix)) throw new Error('--api-prefix must be /dev-api or /prod-api.');
   if (!Number.isInteger(options.maxCaptchaAttempts) || options.maxCaptchaAttempts <= 0) {
     throw new Error('--max-captcha-attempts must be a positive integer.');
   }
@@ -495,8 +502,7 @@ async function runRouteSmoke(options, runDir, token, routes, results = []) {
     try {
       await runPlaywrightFlow({
         targetUrl,
-        storageKey: 'Admin-Token',
-        storageValue: token,
+        browserSession: {token, client: options.client, clientId: options.clientId, apiPrefix: options.apiPrefix},
         waitForUrl: route.path,
         screenshotPath,
         consoleLogPath,

@@ -34,7 +34,7 @@ node skills/test-cli/scripts/playwright_cli.mjs flow --url "https://example.com"
 # 以下登录与路由命令只用于已授权的测试环境，会写入验证码种子和会话
 node skills/test-cli/scripts/playwright_cli.mjs admin-route-probe --list-routes
 # 验证码登录使用 Redis 种子答案；先配置 INFOQ_TEST_REDIS_* 或 --redis-*
-node skills/test-cli/scripts/captcha_login.mjs --backend-url http://127.0.0.1:8080 --print-token
+node skills/test-cli/scripts/captcha_login.mjs --backend-url http://127.0.0.1:8080 --json
 node skills/test-cli/scripts/run_admin_e2e.mjs --client vue --route-limit 1
 node skills/test-cli/scripts/run_admin_crud_e2e.mjs --client vue --modules notice
 node skills/test-cli/scripts/generate-case-matrix.mjs
@@ -42,6 +42,8 @@ node skills/test-cli/scripts/validate-case-matrix.mjs docs/testing/case-matrix.j
 ```
 
 `generate-case-matrix.mjs` 不带输出参数时会更新受管矩阵文档；只做审计/预览时必须指定 `--output-dir tmp/test-cli/matrix-preview`。矩阵存在不表示用例已执行，runner 的覆盖边界及账号候选、RSA、实例一致性、CRUD 断言/清理条件见 `docs/TESTING.md` 第 6.5–6.6 节。CRUD 只接受 local profile，没有 dry-run；执行前必须确认隔离实例与人工恢复条件。
+
+登录 CLI 只输出脱敏摘要，旧 `--print-token` 显式拒绝；内部 runner 直接复用登录函数，并通过同源 CSRF 引导/绑定资源建立 HttpOnly 浏览器会话，不注入 `Admin-Token` 存储。管理端浏览器入口使用 `--client react|vue`，代理前缀通过 `--api-prefix /dev-api|/prod-api` 明确，必须匹配后端允许 Origin 和 Cookie Path。
 
 Playwright 依赖安装在 `skills/test-cli/scripts/`（自带 `package.json` / `pnpm-lock.yaml`）：
 

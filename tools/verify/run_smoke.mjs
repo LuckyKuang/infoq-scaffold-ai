@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {resolveBackendConfigSelection} from '../resolve_backend_local_mcp_env.mjs';
+import {runSmokeChecks} from './smoke_output.mjs';
 import {
     canConnect,
     fetchText,
@@ -12,7 +13,6 @@ import {
     resolveRepoRoot,
     resolveTmpPath,
     runBackendMavenChecked,
-    runCommandChecked,
     spawnDetachedProcess,
     stopRecordedRunState,
     tailFile,
@@ -47,6 +47,9 @@ let keepServer = false;
 let serverPid = '';
 let logFile = '';
 let stateFile = '';
+const checkerAbort = new AbortController();
+let checkerTask;
+let interrupting = false;
 
 function usage() {
   console.log(`Usage: node tools/verify/run_smoke.mjs [options]
@@ -68,7 +71,8 @@ Options:
   -h, --help                 Show help.
 
 Environment:
-  SMOKE_HTTP_TIMEOUT_MS      HTTP request/header/body deadline, 1-60000 ms (default: 10000).`);
+  SMOKE_HTTP_TIMEOUT_MS      HTTP request/header/body deadline, 1-60000 ms (default: 10000).
+HTTP checks run over private IPC with a 120-second total deadline; PRINT_TOKEN/PRINT_USER_ID are rejected.`);
 }
 
 function readValue(index, flag) {
@@ -145,6 +149,9 @@ for (let index = 0; index < args.length; index += 1) {
 if (!['encrypted', 'plain'].includes(config.loginMode)) {
   throw new Error('--login-mode must be encrypted or plain.');
 }
+if (process.env.PRINT_TOKEN !== undefined || process.env.PRINT_USER_ID !== undefined) {
+  throw new Error('PRINT_TOKEN / PRINT_USER_ID output is no longer supported; authentication uses IPC.');
+}
 if (!['127.0.0.1', 'localhost'].includes(config.host)) {
   throw new Error('--host must be 127.0.0.1 or localhost; smoke disables captcha and must stay on loopback.');
 }
@@ -189,6 +196,8 @@ function writeState(patch) {
 }
 
 async function cleanup(status = 'stopped', reason = '', options = {}) {
+  checkerAbort.abort();
+  await checkerTask?.catch(() => {});
   const shouldStop = options.force === true || !keepServer || status !== 'passed';
   if (stateFile) {
     if (shouldStop) {
@@ -222,14 +231,17 @@ process.on('exit', () => {
   }
 });
 process.on('SIGINT', async () => {
+  interrupting = true;
   await cleanup('interrupted', 'SIGINT', {force: true});
   process.exit(130);
 });
 process.on('SIGTERM', async () => {
+  interrupting = true;
   await cleanup('interrupted', 'SIGTERM', {force: true});
   process.exit(143);
 });
 process.on('SIGHUP', async () => {
+  interrupting = true;
   await cleanup('interrupted', 'SIGHUP', {force: true});
   process.exit(129);
 });
@@ -307,7 +319,9 @@ async function main() {
   writeState({readyAt: new Date().toISOString()});
 
   console.log('[smoke] server is ready, running endpoint checks...');
-  await runCommandChecked(process.execPath, [path.join(scriptDir, 'smoke_checks.mjs')], {
+  checkerTask = runSmokeChecks({
+    signal: checkerAbort.signal,
+    onState: checker => writeState({checker}),
     cwd: scriptDir,
     env: {
       ...process.env,
@@ -320,11 +334,10 @@ async function main() {
       LOGIN_MODE: config.loginMode,
       LOGIN_CANDIDATES: config.loginCandidates,
       RSA_PUBLIC_KEY: config.rsaPublicKey,
-      HTTP_TIMEOUT_MS: config.httpTimeoutMs,
-      PRINT_TOKEN: '0',
-      PRINT_USER_ID: '0'
+      HTTP_TIMEOUT_MS: config.httpTimeoutMs
     }
   });
+  await checkerTask;
 
   console.log('[smoke] all checks passed.');
   console.log(`[smoke] server log file: ${logFile}`);
@@ -341,6 +354,7 @@ async function main() {
 }
 
 main().catch(async (error) => {
+  if (interrupting) return;
   await cleanup('failed', error.message || String(error), {force: true});
   console.error(error.message || error);
   process.exit(1);

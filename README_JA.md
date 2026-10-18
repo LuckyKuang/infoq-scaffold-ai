@@ -101,7 +101,7 @@ pnpm run dev
 # CAPTCHA E2E はシード回答をバックエンドの Redis に書き込みます。
 # 先に INFOQ_TEST_REDIS_HOST/PORT/DATABASE/PASSWORD（必要に応じて TLS）を設定してください。
 node skills/test-cli/scripts/run_admin_e2e.mjs --client vue --route-limit 1
-node skills/test-cli/scripts/captcha_login.mjs --backend-url http://127.0.0.1:8080 --print-token
+node skills/test-cli/scripts/captcha_login.mjs --backend-url http://127.0.0.1:8080 --json
 
 # 先に対象ランタイムの環境ファイルを準備します。deploy/README.md を参照。
 # デプロイ状態：macOS は Apple、Linux/WSL2 は Docker を選択
@@ -152,6 +152,12 @@ sudo env INFOQ_SOURCE_DIR="$(pwd)" INFOQ_FRONTEND_TARGET=all \
 非公開 S3 URL は専用 OSS origin を使用し、署名されたパスを変更しません。
 開発用 HTTP はモードを明示する必要があります。
 
+管理画面の access token はメモリ内だけに保持します。再読み込み時は同一 origin の
+CSRF 保護された HttpOnly cookie で復元し、React/Vue の scope を分離します。
+`INFOQ_PUBLIC_BASE_URL`、`INFOQ_BROWSER_SESSION_COOKIE_PATH`、
+`INFOQ_BROWSER_SESSION_SECURE`、`INFOQ_BROWSER_SESSION_TTL_SECONDS` と実際の
+リバースプロキシの一致を確認してください。[本番設定](deploy/PRODUCTION.md)を参照してください。
+
 リモートインストールはデプロイガイドに従い、tag を固定してダウンロード後に確認
 してください。macOS Colima は shell スクリプトを使用し、Node CLI は macOS で Apple
 を選択します。Apple `status` は daemon を起動する場合があります。本番では独立した
@@ -174,7 +180,7 @@ README はプロジェクト概要とクイックスタートのみを提供し�
 | [AGENTS.md](AGENTS.md) | リポジトリのコラボレーションルール |
 | [デザインシステム](docs/DESIGN.md) | 管理コンソールのビジュアル言語 |
 | [リリースプロセス](docs/RELEASING.md) | バージョン、tag、Release workflow、ロールバック |
-| [CI 検証](docs/CI_VALIDATION.md) | ワークフローの範囲、ローカルゲート、セキュリティスキャン |
+| [CI 検証](docs/CI_VALIDATION.md) | ワークフローの範囲、dev/prod テストグループ、ローカルゲート、セキュリティスキャン |
 
 ## コミュニティ
 

@@ -204,10 +204,35 @@ function htmlTags(text, markdown = true) {
 }
 
 function headingText(text) {
-  return decodeEntities(unescapeMarkdown(text
+  const inlineText = text
     .replace(/!?\[([^\]]*)\]\((?:[^()]|\([^()]*\))*\)/gu, '$1')
-    .replace(/!?\[([^\]]*)\]\[[^\]]*\]/gu, '$1')
-    .replace(/<[^>]*>/gu, '')
+    .replace(/!?\[([^\]]*)\]\[[^\]]*\]/gu, '$1');
+  const parts = [];
+  let start = 0;
+  const ticks = backtickRuns(inlineText);
+  const codeSpans = new Map(ticks.filter(tick => !tick.escaped && tick.closing !== undefined).map(tick => [tick.start,ticks[tick.closing].end]));
+  // Extract heading text for anchor indexing; this is not an HTML sanitizer or renderer.
+  for (let index = 0; index < inlineText.length; index += 1) {
+    if (inlineText[index] === '\\') { index += 1; continue; }
+    if (codeSpans.has(index)) { index = codeSpans.get(index) - 1; continue; }
+    if (inlineText[index] !== '<' || !/^<\/?[a-z][\w:-]*(?=[\s/>])/iu.test(inlineText.slice(index))) continue;
+    let quote = '';
+    let end = index + 1;
+    for (; end < inlineText.length; end += 1) {
+      const character = inlineText[end];
+      if (quote) { if (character === quote) quote = ''; }
+      else if (character === '"' || character === "'") quote = character;
+      else if (character === '>') break;
+      else if (character === '<') break;
+    }
+    if (end === inlineText.length) break;
+    if (inlineText[end] !== '>') { index = end - 1; continue; }
+    parts.push(inlineText.slice(start, index));
+    start = end + 1;
+    index = end;
+  }
+  parts.push(inlineText.slice(start));
+  return decodeEntities(unescapeMarkdown(parts.join('')
     .replace(/`+/gu, '')
     .replace(/(\*+|~~)(.*?)\1/gu, '$2')
     .replace(/(^|\s)(_+)(.+?)\2(?=\s|$)/gu, '$1$3')));

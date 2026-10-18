@@ -82,6 +82,10 @@ profile 约定：
 | `GET /auth/code` | 获取验证码 |
 | `POST /auth/login` | 登录 |
 | `POST /auth/logout` | 退出登录 |
+| `GET /auth/browser-session/csrf` | 同源浏览器 CSRF 引导 |
+| `PUT /auth/browser-session` | 以显式 Bearer 绑定 HttpOnly 恢复 cookie |
+| `POST /auth/browser-session` | 恢复原 JWT，不续期 |
+| `DELETE /auth/browser-session` | 撤销浏览器会话并清当前 scope cookie |
 | `POST /auth/register` | 注册 |
 | `POST /auth/email/code` | 发送自助认证邮件验证码 |
 | `POST /auth/forgot-password` | 重置密码 |
@@ -92,6 +96,13 @@ profile 约定：
 | `POST /auth/oauth/ticket` | 消费短期登录 ticket |
 
 `/auth/logout` 需要当前会话，不能作为免登录探针。公开注册、邮件、忘记密码和 OAuth 的可用性受后端配置控制；`GET /auth/code` 同时返回验证码及公开能力位。
+
+双管理端只记用户名，access token 仅内存。浏览器会话专用资源按 `clientid` 与
+`X-InfoQ-Browser-Session: react|vue` 隔离；写方法由框架 CSRF 与精确 Origin
+保护，普通业务 API 仍只认 Bearer。首载恢复、用户和动态路由完成后才建立实时
+连接；只有恢复 POST 的 HTTP401 进入匿名，403/503/网络故障显式失败并等待重试。
+生产 Origin 来自 `INFOQ_PUBLIC_BASE_URL`，Cookie Path 必须对应外部 API
+前缀，生产 Secure/HTTPS；配置和错误合同见 [认证规范](specs/auth/spec.md)。
 
 ### 4.2 登录做了什么
 

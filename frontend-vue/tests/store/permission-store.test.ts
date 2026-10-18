@@ -39,6 +39,21 @@ describe('store/permission generateRoutes', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
     vi.clearAllMocks();
+    permissionStoreMocks.addRoute.mockReturnValue(vi.fn());
+  });
+
+  it('removes owned routes and menus on session invalidation', () => {
+    const remove = vi.fn();
+    permissionStoreMocks.addRoute.mockReturnValueOnce(remove);
+    const store = permissionMod.usePermissionStore();
+    store.installRoutes([{ path: '/private', name: 'Private', component: {} }]);
+    store.setRoutes([{ path: '/private', name: 'Private', component: {} }]);
+    store.resetRoutes();
+    expect(remove).toHaveBeenCalledTimes(1);
+    expect(store.routes).toEqual([]);
+    expect(store.sidebarRouters).toEqual([]);
+    store.resetRoutes();
+    expect(remove).toHaveBeenCalledTimes(1);
   });
 
   it('generates sidebar/default routes and injects authorized dynamic routes', async () => {

@@ -23,7 +23,7 @@ function certEnv(root, {days = '2', names = 'DNS:app.localhost,DNS:oss.localhost
   const result = spawnSync('openssl', ['req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-keyout', key, '-out', cert, '-days', days, '-subj', '/CN=app.localhost', '-addext', `subjectAltName=${names}`], {encoding: 'utf8', timeout: 10000});
   assert.equal(result.status, 0, 'openssl fixture generation failed');
   fs.chmodSync(key, 0o600); fs.chmodSync(cert, 0o644);
-  return {INFOQ_DEPLOY_MODE: 'production', INFOQ_CONFIG_SOURCE: 'isolated-test', INFOQ_PUBLIC_BASE_URL: 'https://app.localhost', INFOQ_OSS_PUBLIC_ORIGIN: 'https://oss.localhost', INFOQ_DEPLOY_ROOT: path.join(root, 'data'), INFOQ_TLS_CERT_FILE: cert, INFOQ_TLS_KEY_FILE: key, INFOQ_FRONTEND_TARGET: 'all'};
+  return {INFOQ_DEPLOY_MODE: 'production', INFOQ_CONFIG_SOURCE: 'isolated-test', INFOQ_PUBLIC_BASE_URL: 'https://app.localhost', INFOQ_OSS_PUBLIC_ORIGIN: 'https://oss.localhost', INFOQ_DEPLOY_ROOT: path.join(root, 'data'), INFOQ_TLS_CERT_FILE: cert, INFOQ_TLS_KEY_FILE: key, INFOQ_FRONTEND_TARGET: 'all', INFOQ_BROWSER_SESSION_ORIGINS: '', INFOQ_BROWSER_SESSION_COOKIE_PATH: '/prod-api/auth/browser-session', INFOQ_BROWSER_SESSION_SECURE: 'true', INFOQ_BROWSER_SESSION_TTL_SECONDS: '2592000'};
 }
 function dockerFixture(root, service = 'minio', {running = service === 'minio', permission = 'private', foreign = false} = {}) {
   const bin = path.join(root, 'bin'); fs.mkdirSync(bin);
@@ -131,8 +131,23 @@ await test('strict production prepare injects validated security placeholders an
   fs.mkdirSync(path.join(env.INFOQ_DEPLOY_ROOT, 'server/config'), {recursive: true}); fs.writeFileSync(path.join(env.INFOQ_DEPLOY_ROOT, 'server/config/application-prod.yml'), 'api-decrypt:\n  enabled: false\n  privateKey: obsolete\n');
   for (const helper of ['infoq.sh', 'deploy-frontend.sh']) { const result = spawnSync('/bin/bash', [path.join(repo, 'deploy/bin', helper), 'prepare'], {env: {...process.env, INFOQ_ENV_FILE: file}, encoding: 'utf8'}); assert.equal(result.status, 0, result.stderr); for (const key of ['INFOQ_API_REQUEST_PRIVATE_KEY', 'VITE_APP_RSA_PRIVATE_KEY', 'REDIS_PASSWORD']) assert.ok(!`${result.stdout}${result.stderr}`.includes(env[key])); }
   const managed = fs.readFileSync(path.join(env.INFOQ_DEPLOY_ROOT, 'server/config/managed-security.yml'), 'utf8');
+  for (const [property, variable] of [['deployment-mode', 'INFOQ_DEPLOY_MODE:production'], ['public-base-url', 'INFOQ_PUBLIC_BASE_URL'], ['origins', 'INFOQ_BROWSER_SESSION_ORIGINS:'], ['cookie-path', 'INFOQ_BROWSER_SESSION_COOKIE_PATH'], ['secure', 'INFOQ_BROWSER_SESSION_SECURE'], ['ttl-seconds', 'INFOQ_BROWSER_SESSION_TTL_SECONDS:2592000']]) assert.ok(managed.includes(`    ${property}: \u0024{${variable}}`), `missing browser-session ${property}`);
   assert.match(managed, /api-decrypt:\n  enabled: true\n  privateKey: \$\{INFOQ_API_REQUEST_PRIVATE_KEY\}/u); assert.match(managed, /'\[\/admin\/react\/\]': '\/admin\/react\/oauth\/callback'/u); assert.ok(!managed.includes(env.INFOQ_API_REQUEST_PRIVATE_KEY));
   assert.match(fs.readFileSync(path.join(env.INFOQ_DEPLOY_ROOT, 'nginx/conf/nginx.conf'), 'utf8'), /location \^~ \/admin\/vue\//u);
+  const bin = path.join(root, 'bin'); fs.mkdirSync(bin);
+  const dockerCalls = path.join(root, 'docker-calls');
+  fs.writeFileSync(path.join(bin, 'docker'), `#!${process.execPath}\nrequire('node:fs').appendFileSync(process.env.INFOQ_TEST_DOCKER_CALLS, 'called\\n'); process.exit(91);\n`, {mode: 0o755});
+  for (const [index, override] of [{INFOQ_BROWSER_SESSION_ORIGINS: 'https://another.localhost'}, {INFOQ_BROWSER_SESSION_COOKIE_PATH: '/'}, {INFOQ_BROWSER_SESSION_SECURE: 'false'}, {INFOQ_BROWSER_SESSION_TTL_SECONDS: '2592001'}].entries()) {
+    const invalidRoot = path.join(root, `invalid-${index}`);
+    fs.writeFileSync(file, Object.entries({...env, ...override, INFOQ_DEPLOY_ROOT: invalidRoot}).map(([key, value]) => `${key}=${quote(value)}`).join('\n') + '\n', {mode: 0o600});
+    for (const helper of ['infoq.sh', 'deploy-frontend.sh']) {
+      const result = spawnSync('/bin/bash', [path.join(repo, 'deploy/bin', helper), 'prepare'], {env: {...process.env, INFOQ_ENV_FILE: file, PATH: bin + path.delimiter + process.env.PATH, INFOQ_TEST_DOCKER_CALLS: dockerCalls}, encoding: 'utf8', timeout: 10000});
+      assert.notEqual(result.status, 0); assert.match(result.stderr, /ORIGINS|COOKIE_PATH|SECURE|TTL_SECONDS/u);
+      assert.equal(fs.existsSync(invalidRoot), false, `${helper} wrote directories before browser-session validation`);
+      for (const name of ['INFOQ_API_REQUEST_PRIVATE_KEY', 'VITE_APP_RSA_PRIVATE_KEY', 'REDIS_PASSWORD']) assert.ok(!(result.stdout + result.stderr).includes(env[name]));
+    }
+  }
+  assert.equal(fs.existsSync(dockerCalls), false, 'invalid browser-session config must not invoke Docker');
 });
 await test('runtime environment loader treats expressions as data and merges controlled source consistently', () => {
   const root = fixture(); const data = path.join(root, 'must-not-exist'); const envFile = path.join(root, 'runtime.env'); const extra = path.join(root, 'controlled.env');
@@ -292,7 +307,9 @@ await test('Compose defaults auxiliary ports to loopback and mounts controlled b
     assert.equal(path.posix.resolve(source), source, `${name} bind source must satisfy the runtime's canonical path guard`);
     assert.equal(path.posix.resolve(target), target, `${name} bind target must use its canonical path`);
   }
-  for (const client of ['vue', 'react']) { const build = config.services[`infoq-frontend-${client}`].build; assert.equal(build.context, '../..'); assert.deepEqual(build.secrets, ['production_config']); }
+  for (const client of ['vue', 'react']) { const build = config.services[`infoq-frontend-${client}`].build; assert.equal(build.context, '../..'); assert.deepEqual(build.secrets, ['production_config']); assert.equal(build.args.VITE_APP_BASE_API, '/prod-api'); }
+  const browserEnv = config.services['infoq-admin'].environment;
+  for (const name of ['INFOQ_DEPLOY_MODE', 'INFOQ_PUBLIC_BASE_URL', 'INFOQ_BROWSER_SESSION_ORIGINS', 'INFOQ_BROWSER_SESSION_COOKIE_PATH', 'INFOQ_BROWSER_SESSION_SECURE', 'INFOQ_BROWSER_SESSION_TTL_SECONDS']) assert.ok(browserEnv[name].includes(name), `Compose omitted ${name}`);
   assert.match(config.services['infoq-admin'].environment.SPRING_CONFIG_ADDITIONAL_LOCATION, /managed-security.yml$/u);
   assert.match(config.services['infoq-admin'].environment.INFOQ_API_REQUEST_PRIVATE_KEY, /INFOQ_API_REQUEST_PRIVATE_KEY/u);
 });

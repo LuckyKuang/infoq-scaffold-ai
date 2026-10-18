@@ -5,7 +5,9 @@ import http from 'node:http';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import test from 'node:test';
-import {parseSmokeAuthenticationOutput} from './smoke_output.mjs';
+import fs from 'node:fs';
+import {runSmokeChecks,formatSmokeDiagnostic} from './smoke_output.mjs';
+import {terminateProcessTree} from '../lib/skill_runtime.mjs';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(scriptDir, '../..');
@@ -54,8 +56,8 @@ for (const mode of ['encrypted', 'plain']) {
       const result = await runScript('smoke_checks.mjs', [], {
         BASE_URL: `http://127.0.0.1:${server.address().port}`,
         USERNAME: 'fixture-user', PASSWORD: password, LOGIN_CANDIDATES: 'none',
-        LOGIN_MODE: mode, PRINT_TOKEN: '0', PRINT_USER_ID: '0'
-      });
+        LOGIN_MODE: mode
+      }, mode === 'encrypted' ? ['--import', 'data:text/javascript,Math.random=()=>{throw new Error("unsafe randomness used")}'] : []);
       assert.equal(result.code, acceptsLogin ? 0 : 1, result.output);
       assert.equal(loginRequests.length, 1, 'each account must use only the explicitly selected protocol');
       assert.equal(Boolean(loginRequests[0].headers['encrypt-key']), mode === 'encrypted');
@@ -76,17 +78,112 @@ test('invalid login modes fail before config resolution or server startup', asyn
   }
 });
 
-test('cluster consumes private auth fields without including them in public output', () => {
-  const result = parseSmokeAuthenticationOutput(`[PASS] login\r\nTOKEN=${token}\r\nUSER_ID=123\r\n[PASS] done\r\n`);
-  assert.equal(result.token, token);
-  assert.equal(result.userId, '123');
-  assert.equal(result.publicOutput, '[PASS] login\n[PASS] done\n');
-  for (const invalid of [`TOKEN=${token}`, `TOKEN=\nUSER_ID=123`, `TOKEN=${token}\nTOKEN=other\nUSER_ID=123`]) {
-    assert.throws(() => parseSmokeAuthenticationOutput(invalid), (error) => {
-      assert.ok(!error.message.includes(token));
-      return /expected one nonempty TOKEN and USER_ID/.test(error.message);
+test('diagnostics accept only fixed checks/reasons and numeric facts, never arbitrary secret text', () => {
+  assert.equal(formatSmokeDiagnostic({type:'smoke-status',version:1,check:'login',passed:true,http:200,code:200}), '[PASS] POST /auth/login | http=200, code=200');
+  for (const override of [{check:token},{reason:password},{code:token},{http:token},{message:token}]) {
+    assert.throws(() => formatSmokeDiagnostic({type:'smoke-status',version:1,check:'login',passed:false,...override}),error => {
+      assert.ok(!error.message.includes(token));assert.ok(!error.message.includes(password));return /invalid diagnostic/.test(error.message);
     });
   }
+});
+
+test('real smoke subprocess completes HTTP checks and passes authentication only through IPC', async t => {
+  const server = http.createServer(async(req,res) => {
+    for await (const chunk of req) { /* drain */ }
+    if (req.url === '/') return res.end('backend fixture');
+    if (req.url === '/system/user/export') {
+      res.setHeader('Content-Type','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      return res.end('fixture workbook');
+    }
+    res.setHeader('Content-Type','application/json');
+    res.end(req.url === '/auth/login' ? JSON.stringify({code:200,data:{accessToken:token}}) : '{"code":200,"data":[]}');
+  });
+  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+  t.after(()=>new Promise(resolve=>{server.closeAllConnections();server.close(resolve);}));
+  const env={...process.env,BASE_URL:`http://127.0.0.1:${server.address().port}`,USERNAME:'fixture-user',PASSWORD:password,LOGIN_CANDIDATES:'none',LOGIN_MODE:'plain'};
+  const diagnostics=[],states=[];
+  const auth=await runSmokeChecks({env,authentication:true,onDiagnostic:message=>diagnostics.push(message),onState:state=>states.push(state)});
+  assert.deepEqual(auth,{token,userId:'123'});
+  assert.equal(diagnostics.length,9);
+  assert.deepEqual(states.map(state=>state.status),['running','passed']);
+  assert.ok(!diagnostics.join('\n').includes(token));assert.ok(!diagnostics.join('\n').includes(password));
+  assert.throws(()=>process.kill(states[0].pid,0),error=>error.code==='ESRCH');
+  const direct=await runScript('smoke_checks.mjs',[],{...env,SMOKE_AUTH_IPC:'1'});
+  assert.equal(direct.code,1);assert.match(direct.output,/connected parent IPC/);
+});
+
+test('legacy token output options fail before HTTP or backend startup', async()=>{
+  for(const script of ['smoke_checks.mjs','run_smoke.mjs','run_cluster_smoke.mjs']) {
+    for(const key of ['PRINT_TOKEN','PRINT_USER_ID']) {
+      const result=await runScript(script,[],{[key]:'1'});
+      assert.equal(result.code,1);assert.match(result.output,/no longer supported/);
+      assert.doesNotMatch(result.output,/starting server|starting node|smoke completed/);
+    }
+  }
+});
+
+test('real IPC rejects malformed/duplicate/missing messages, child failures and secret output', async()=>{
+  const parent=path.join(repoRoot,'tmp/production-readiness');fs.mkdirSync(parent,{recursive:true});
+  const directory=fs.mkdtempSync(path.join(parent,'smoke-ipc-'));
+  const auth=`{type:'smoke-auth',version:1,token:process.env.FIXTURE_TOKEN,userId:'123'}`;
+  const pass=`for (const check of ['root','captcha','login','routers','roleMenu','departments','dictionary','export']) process.send({type:'smoke-status',version:1,check,passed:true});`;
+  const complete=`process.send({type:'smoke-status',version:1,check:'complete',passed:true});`;
+  for(const [name,source,pattern] of [
+    ['malformed',`process.send({type:'smoke-auth',version:1,token:process.env.FIXTURE_TOKEN,userId:'bad'});`,/invalid or duplicate/],
+    ['duplicate',`process.send(${auth});process.send(${auth});`,/invalid or duplicate/],
+    ['missing',`${pass}`,/missing authentication/],
+    ['incomplete',`process.send(${auth});`,/missing completed/],
+    ['bad-status',`process.send({type:'smoke-status',version:1,check:'login',passed:false,reason:process.env.FIXTURE_TOKEN});`,/invalid or duplicate/],
+    ['bad-diagnostic',`process.send({type:'smoke-status',version:1,check:'login',passed:true,message:process.env.FIXTURE_TOKEN});`,/invalid or duplicate/],
+    ['failed',`process.send(${auth});${pass}${complete}process.exitCode=1;`,/child failed/],
+    ['stdout',`process.stdout.write(process.env.FIXTURE_TOKEN);`,/unexpected child stdout/],
+    ['stderr',`process.stderr.write(process.env.FIXTURE_PASSWORD);`,/unexpected child stderr/]
+  ]) {
+    const file=path.join(directory,`${name}.mjs`);fs.writeFileSync(file,source+'\n','utf8');
+    const states=[],diagnostics=[];
+    await assert.rejects(runSmokeChecks({modulePath:file,authentication:true,env:{...process.env,FIXTURE_TOKEN:token,FIXTURE_PASSWORD:password},
+      onDiagnostic:message=>diagnostics.push(message),onState:state=>states.push(state),timeoutMs:2000}),error=>{
+      assert.ok(!error.message.includes(token));assert.ok(!error.message.includes(password));return pattern.test(error.message);
+    });
+    assert.equal(states.at(-1).status,'failed');
+    assert.throws(()=>process.kill(states[0].pid,0),error=>error.code==='ESRCH');
+    assert.ok(!diagnostics.join('\n').includes(token));assert.ok(!diagnostics.join('\n').includes(password));
+  }
+});
+
+test('IPC timeout and abort stop the actual owned subprocess and close its listener', async()=>{
+  const directory=fs.mkdtempSync(path.join(repoRoot,'tmp/production-readiness/smoke-ipc-stop-'));
+  const portFile=path.join(directory,'port.txt'),file=path.join(directory,'hang.mjs');
+  fs.writeFileSync(file,`import fs from 'node:fs';import net from 'node:net';const server=net.createServer();server.listen(0,'127.0.0.1',()=>fs.writeFileSync(process.env.FIXTURE_PORT_FILE,String(server.address().port),'utf8'));setInterval(()=>{},1000);\n`,'utf8');
+  for(const mode of ['timeout','abort']) {
+    fs.rmSync(portFile,{force:true});
+    const states=[],abort=new AbortController();
+    const promise=runSmokeChecks({modulePath:file,authentication:true,timeoutMs:400,signal:abort.signal,
+      env:{...process.env,FIXTURE_PORT_FILE:portFile},onState:state=>states.push(state),onDiagnostic:()=>{}});
+    if(mode==='abort')setTimeout(()=>abort.abort(),200);
+    await assert.rejects(promise,mode==='timeout'?/timed out/:/interrupted/);
+    assert.equal(states.at(-1).status,'failed');
+    assert.throws(()=>process.kill(states[0].pid,0),error=>error.code==='ESRCH');
+    const port=Number(fs.readFileSync(portFile,'utf8'));
+    await new Promise((resolve,reject)=>{const server=http.createServer();server.once('error',reject);server.listen(port,'127.0.0.1',()=>server.close(resolve));});
+  }
+});
+
+test('IPC cleanup inspection failures remain failed and are never reported as successful checks', {skip:process.platform==='win32'}, async()=>{
+  const directory=fs.mkdtempSync(path.join(repoRoot,'tmp/production-readiness/smoke-ipc-cleanup-'));
+  const file=path.join(directory,'hang.mjs'),bin=path.join(directory,'bin');fs.mkdirSync(bin);
+  fs.writeFileSync(file,'setInterval(()=>{},1000);\n','utf8');
+  fs.writeFileSync(path.join(bin,'ps'),'#!/bin/sh\nexit 1\n',{encoding:'utf8',mode:0o700});
+  const originalPath=process.env.PATH,states=[];
+  try {
+    process.env.PATH=`${bin}${path.delimiter}${originalPath}`;
+    await assert.rejects(runSmokeChecks({modulePath:file,timeoutMs:150,onState:state=>states.push(state),onDiagnostic:()=>{}}),/owned IPC process cleanup failed/);
+    assert.equal(states.at(-1).status,'failed');
+  } finally {
+    process.env.PATH=originalPath;
+    if(states[0]?.pid) await terminateProcessTree(states[0].pid,{graceMs:40});
+  }
+  assert.throws(()=>process.kill(states[0].pid,0),error=>error.code==='ESRCH');
 });
 
 test('coverage scan help does not run the scan and rejects unknown options', async () => {
@@ -139,7 +236,7 @@ test('API error bodies and malformed business codes never enter public diagnosti
       const result = await runScript('smoke_checks.mjs', [], {
         BASE_URL: `http://127.0.0.1:${server.address().port}`,
         USERNAME: 'fixture-user', PASSWORD: password, LOGIN_CANDIDATES: 'none',
-        LOGIN_MODE: 'plain', PRINT_TOKEN: '0', PRINT_USER_ID: '0'
+        LOGIN_MODE: 'plain'
       });
       assert.equal(result.code, 1, result.output);
       assert.match(result.output, /\[FAIL\]/, result.output);
@@ -204,7 +301,7 @@ test('hung HTTP headers and response bodies fail within the configured request d
       const result = await runScript('smoke_checks.mjs', [], {
         BASE_URL: `http://127.0.0.1:${server.address().port}`,
         USERNAME: 'fixture-user', PASSWORD: password, LOGIN_CANDIDATES: 'none',
-        LOGIN_MODE: 'plain', PRINT_TOKEN: '0', PRINT_USER_ID: '0', HTTP_TIMEOUT_MS: '200'
+        LOGIN_MODE: 'plain', HTTP_TIMEOUT_MS: '200'
       });
       assert.equal(result.code, 1, result.output);
       assert.match(result.output, /network=timeout, timeout_ms=200/);
@@ -282,15 +379,6 @@ export const spawnDetachedProcess = (command, args) => {
   emit({type: 'spawn', command, args});
   return {pid: 424242};
 };
-export const runCommandChecked = async (command, args, {env}) => {
-  emit({type: 'check-env', printToken: env.PRINT_TOKEN, printUserId: env.PRINT_USER_ID, httpTimeoutMs: env.HTTP_TIMEOUT_MS});
-  if (process.env.RUNTIME_FIXTURE_FAILURE === '1') throw new Error('isolated check failed');
-};
-export const runCommand = async (command, args, {env}) => {
-  emit({type: 'check-env', printToken: env.PRINT_TOKEN, printUserId: env.PRINT_USER_ID, httpTimeoutMs: env.HTTP_TIMEOUT_MS});
-  return {code: process.env.RUNTIME_FIXTURE_FAILURE === '1' ? 1 : 0,
-    stdout: 'TOKEN=private-fixture-token\\nUSER_ID=123\\n[PASS] fixture checks\\n'};
-};
 export const spawnPythonScript = () => {
   const child = new EventEmitter();
   queueMicrotask(() => child.emit('exit', 0));
@@ -301,11 +389,21 @@ const configFixtureSource = `
 export const resolveBackendConfigSelection = (root) => ({configPath: root + '/fixture.yml', profile: 'fixture'});
 export const resolveRedisEnv = () => ({REDIS_HOST: '127.0.0.1', REDIS_PORT: '6379', REDIS_DB: '0', REDIS_PASSWORD: 'fixture'});
 `;
+const smokeFixtureSource = `
+export async function runSmokeChecks({env,authentication=false,onState}) {
+  console.log('RUNTIME_FIXTURE=' + JSON.stringify({type:'check-env',authentication,ipc:true,httpTimeoutMs:env.HTTP_TIMEOUT_MS}));
+  onState({pid:424243,port:null,log:null,owned:true,status:'running'});
+  if (process.env.RUNTIME_FIXTURE_FAILURE === '1') throw new Error('isolated IPC check failed');
+  onState({pid:424243,port:null,log:null,owned:true,status:'passed'});
+  return authentication ? {token:'private-fixture-token',userId:'123'} : undefined;
+}
+`;
 const hookSource = `
 import {registerHooks} from 'node:module';
 registerHooks({load(url, context, nextLoad) {
   if (url.endsWith('/tools/lib/skill_runtime.mjs')) return {format: 'module', shortCircuit: true, source: ${JSON.stringify(runtimeFixtureSource)}};
   if (url.endsWith('/tools/resolve_backend_local_mcp_env.mjs')) return {format: 'module', shortCircuit: true, source: ${JSON.stringify(configFixtureSource)}};
+  if (url.endsWith('/tools/verify/smoke_output.mjs')) return {format:'module',shortCircuit:true,source:${JSON.stringify(smokeFixtureSource)}};
   return nextLoad(url, context);
 }});
 `;
@@ -318,7 +416,7 @@ test('runner binds the probe host, confines private output and cleans up on succ
       if (cluster) args.push('--skip-abnormal-exit');
       if (mode === 'keep') args.push(cluster ? '--keep-servers' : '--keep-server');
       const result = await runScript(script, args, {
-        PRINT_TOKEN: '1', PRINT_USER_ID: '1', RUNTIME_FIXTURE_FAILURE: mode === 'failure' ? '1' : '0',
+        RUNTIME_FIXTURE_FAILURE: mode === 'failure' ? '1' : '0',
         [cluster ? 'CLUSTER_SMOKE_HTTP_TIMEOUT_MS' : 'SMOKE_HTTP_TIMEOUT_MS']: '2500'
       }, ['--import', `data:text/javascript,${encodeURIComponent(hookSource)}`]);
       assert.equal(result.code, mode === 'failure' ? 1 : 0, result.output);
@@ -338,7 +436,7 @@ test('runner binds the probe host, confines private output and cleans up on succ
       assert.ok(probes.every((event) => new URL(event.url).hostname === 'localhost'));
       assert.ok(probes.every((event) => event.bounded), 'startup readiness requests must have a deadline');
       assert.deepEqual(events.find((event) => event.type === 'check-env'), {
-        type: 'check-env', printToken: cluster ? '1' : '0', printUserId: cluster ? '1' : '0', httpTimeoutMs: '2500'
+        type: 'check-env', authentication:cluster,ipc:true,httpTimeoutMs: '2500'
       });
       assert.ok(!result.output.includes('private-fixture-token'), result.output);
       const cleanup = events.filter((event) => event.type === 'cleanup');

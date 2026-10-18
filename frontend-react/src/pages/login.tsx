@@ -21,6 +21,7 @@ export default function LoginPage() {
   const [oauthProviders, setOauthProviders] = useState<OAuthProviderOption[]>([]);
   const [oauthLoadingProvider, setOauthLoadingProvider] = useState('');
   const [redirectError, setRedirectError] = useState(false);
+  const [loginError, setLoginError] = useState('');
   const navigate = useNavigate();
   const login = useUserStore((state) => state.login);
   const { t } = useTranslation();
@@ -55,10 +56,16 @@ export default function LoginPage() {
 
   useEffect(() => {
     document.title = title;
+    localStorage.removeItem('password');
+    const rememberMe = localStorage.getItem('rememberMe') === 'true';
+    if (!rememberMe) {
+      localStorage.removeItem('username');
+      localStorage.removeItem('rememberMe');
+    }
     form.setFieldsValue({
-      username: localStorage.getItem('username') || '',
-      password: localStorage.getItem('password') || '',
-      rememberMe: localStorage.getItem('rememberMe') === 'true'
+      username: rememberMe ? localStorage.getItem('username') || '' : '',
+      password: '',
+      rememberMe
     });
     getCode();
   }, [form, getCode, title]);
@@ -91,12 +98,12 @@ export default function LoginPage() {
       return;
     }
     setRedirectError(false);
+    setLoginError('');
     setLoading(true);
     try {
       const submitValues = form.getFieldsValue(true) as LoginData;
       if (values.rememberMe) {
         localStorage.setItem('username', values.username || '');
-        localStorage.setItem('password', values.password || '');
         localStorage.setItem('rememberMe', 'true');
       } else {
         localStorage.removeItem('username');
@@ -105,7 +112,8 @@ export default function LoginPage() {
       }
       await login(submitValues);
       navigate(redirect);
-    } catch {
+    } catch (error) {
+      setLoginError(error instanceof Error ? error.message : '登录失败，请重试');
       if (captchaEnabled) {
         await getCode();
       }
@@ -136,6 +144,7 @@ export default function LoginPage() {
   return (
     <AuthPageShell title={title}>
       {redirectError && <Alert type="error" showIcon title={t('login.invalidRedirect')} style={{ marginBottom: 16 }} />}
+      {loginError && <Alert type="error" showIcon title={loginError} style={{ marginBottom: 16 }} />}
       <Form className="auth-login-form" form={form} onFinish={onFinish} initialValues={{ rememberMe: false }}>
         <Form.Item name="uuid" hidden>
           <Input />
@@ -189,7 +198,17 @@ export default function LoginPage() {
           </div>
         )}
         <Form.Item name="rememberMe" valuePropName="checked" style={{ marginBottom: 25 }}>
-          <Checkbox>{t('login.rememberPassword')}</Checkbox>
+          <Checkbox
+            onChange={(event) => {
+              if (!event.target.checked) {
+                localStorage.removeItem('username');
+                localStorage.removeItem('rememberMe');
+                localStorage.removeItem('password');
+              }
+            }}
+          >
+            {t('login.rememberUsername')}
+          </Checkbox>
         </Form.Item>
         <Form.Item style={{ marginBottom: 18 }}>
           <Button type="primary" htmlType="submit" loading={loading} block size="large" style={{ height: 40 }}>

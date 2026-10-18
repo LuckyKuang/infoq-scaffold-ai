@@ -131,6 +131,11 @@ export const useTagsViewStore = defineStore('tagsView', () => {
       });
     });
   };
+  const resetSessionViews = () => {
+    visitedViews.value = [];
+    cachedViews.value = [];
+    iframeViews.value = [];
+  };
   const delAllVisitedViews = (): Promise<RouteLocationNormalized[]> => {
     return new Promise((resolve) => {
       visitedViews.value = visitedViews.value.filter((tag: RouteLocationNormalized) => tag.meta?.affix);
@@ -223,6 +228,7 @@ export const useTagsViewStore = defineStore('tagsView', () => {
     addView,
     delView,
     delAllViews,
+    resetSessionViews,
     delAllVisitedViews,
     delAllCachedViews,
     delOthersViews,

@@ -25,6 +25,17 @@ describe('store/tagsView', () => {
     setActivePinia(createPinia());
   });
 
+  it('clears even affixed and iframe views when the authenticated session ends', () => {
+    const store = useTagsViewStore();
+    const privateView = makeRoute('/private', 'Private', { meta: { title: 'Private', affix: true } as RouteMetaLike });
+    store.addView(privateView);
+    store.addIframeView(privateView);
+    store.resetSessionViews();
+    expect(store.getVisitedViews()).toEqual([]);
+    expect(store.getCachedViews()).toEqual([]);
+    expect(store.getIframeViews()).toEqual([]);
+  });
+
   it('adds and deletes visited/cached views', async () => {
     const store = useTagsViewStore();
     const view = makeRoute('/system/user', 'SysUser', { meta: { title: '用户管理' } as RouteMetaLike });

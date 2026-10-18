@@ -132,7 +132,7 @@ type PermissionState = {
   setDefaultRoutes: (routes: AppRoute[]) => void;
   setTopbarRoutes: (routes: AppRoute[]) => void;
   setSidebarRouters: (routes: AppRoute[]) => void;
-  generateRoutes: () => Promise<AppRoute[]>;
+  generateRoutes: (isCurrent?: () => boolean) => Promise<AppRoute[]>;
   getRouteByPath: (path: string) => RouteComponentMapItem | undefined;
   getRouteByComponent: (component?: string) => RouteComponentMapItem | undefined;
 };
@@ -148,8 +148,9 @@ export const usePermissionStore = create<PermissionState>((set, get) => ({
   setDefaultRoutes: (routes) => set({ defaultRoutes: routes }),
   setTopbarRoutes: (routes) => set({ topbarRouters: routes }),
   setSidebarRouters: (routes) => set({ sidebarRouters: routes }),
-  generateRoutes: async () => {
+  generateRoutes: async (isCurrent = () => true) => {
     const res = await getRouters();
+    if (!isCurrent()) return [];
     const data = cloneRouteList(res.data);
     const sdata: AppRoute[] = JSON.parse(JSON.stringify(data));
     const rdata: AppRoute[] = JSON.parse(JSON.stringify(data));

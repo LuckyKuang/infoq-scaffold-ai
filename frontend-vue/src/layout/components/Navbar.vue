@@ -103,15 +103,19 @@ const logout = async () => {
     cancelButtonText: '取消',
     type: 'warning'
   } as ElMessageBoxOptions);
-  userStore.logout().then(() => {
-    router.replace({
+  try {
+    await userStore.logout();
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : '服务端注销未确认');
+  } finally {
+    await router.replace({
       path: '/login',
       query: {
         redirect: encodeURIComponent(router.currentRoute.value.fullPath || '/')
       }
     });
     proxy?.$tab.closeAllPage();
-  });
+  }
 };
 
 const emits = defineEmits(['setLayout']);

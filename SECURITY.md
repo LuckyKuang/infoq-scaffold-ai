@@ -36,6 +36,13 @@ dependency ports, least-privilege accounts, backup access and log redaction
 before exposing a deployment. Build or smoke success does not establish that
 these production checks have passed.
 
+Admin passwords are never remembered by the application; the optional login
+setting remembers only a username. Access tokens stay in memory. Page reloads
+use a scoped HttpOnly browser session protected by Spring CSRF and exact Origin
+checks through the same-origin API proxy; ordinary APIs still require Bearer
+authentication. Production requires HTTPS and verified cookie Path/Secure/TTL
+configuration. See [the authentication contract](docs/specs/auth/spec.md).
+
 The repository only allows Redisson OSS-compatible APIs. Do not introduce or
 keep Redisson PRO-only APIs such as `getLocalCachedMapCache` or rate-limiter
 overloads that depend on `keepAliveTime`. Cache, limiter, auth, or login-path

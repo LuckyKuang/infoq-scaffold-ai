@@ -11,7 +11,7 @@ export default {
     login: '登 录',
     logging: '登 录 中...',
     code: '验证码',
-    rememberPassword: '记住我',
+    rememberUsername: '记住用户名',
     switchRegisterPage: '立即注册',
     switchForgotPasswordPage: '忘记密码',
     oauthDivider: '第三方登录',

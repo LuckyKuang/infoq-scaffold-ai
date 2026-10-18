@@ -32,6 +32,8 @@ export function createProductionFixture(directory) {
     INFOQ_DEPLOY_MODE: 'production', INFOQ_CONFIG_SOURCE: 'isolated-test',
     INFOQ_PRODUCTION_CONFIG_FILE: configFile,
     INFOQ_PUBLIC_BASE_URL: 'https://app.infoq.test', INFOQ_OSS_PUBLIC_ORIGIN: 'https://oss.infoq.test',
+    INFOQ_BROWSER_SESSION_ORIGINS: '', INFOQ_BROWSER_SESSION_COOKIE_PATH: '/prod-api/auth/browser-session',
+    INFOQ_BROWSER_SESSION_SECURE: 'true', INFOQ_BROWSER_SESSION_TTL_SECONDS: '2592000',
     INFOQ_TLS_CERT_FILE: cert, INFOQ_TLS_KEY_FILE: key, INFOQ_INTERNAL_BIND_HOST: '127.0.0.1',
     INFOQ_DEPLOY_ROOT: path.join(output, 'data'), INFOQ_FRONTEND_TARGET: 'all',
     INFOQ_VERSION: JSON.parse(fs.readFileSync(path.join(root, 'frontend-react/package.json'), 'utf8')).version,

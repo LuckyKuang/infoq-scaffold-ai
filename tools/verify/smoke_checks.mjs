@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-import crypto from 'node:crypto';
+import {encryptHeaderKey,encryptWithAesEcbPkcs7,randomAesKey} from '../lib/backend_login.mjs';
+import {SmokeCheckError,sendSmokeDiagnostic} from './smoke_output.mjs';
 
 const config = {
   baseUrl: process.env.BASE_URL || 'http://127.0.0.1:18080',
@@ -12,32 +13,29 @@ const config = {
   rsaPublicKey:
     process.env.RSA_PUBLIC_KEY ||
     'MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAKoR8mX0rGKLqzcWmOzbfj64K8ZIgOdHnzkXSOVOZbFu/TJhZ7rFAN+eaGkl3C4buccQd/EjEsj9ir7ijT7h96MCAwEAAQ==',
-  printToken: process.env.PRINT_TOKEN === '1',
-  printUserId: process.env.PRINT_USER_ID === '1',
   loginMode: process.env.LOGIN_MODE || 'encrypted',
   httpTimeoutMs: process.env.HTTP_TIMEOUT_MS || '10000'
 };
 const requests = new WeakMap();
+let finished = false;
+process.on('disconnect',() => { if (!finished) process.exit(1); });
 
-function logPass(name, detail = '') {
-  console.log(`[PASS] ${name}${detail ? ` | ${detail}` : ''}`);
+function logPass(check, details = {}) {
+  return sendSmokeDiagnostic({type:'smoke-status',version:1,check,passed:true,...details});
 }
 
-function fail(name, detail = '') {
-  throw new Error(`[FAIL] ${name}${detail ? ` | ${detail}` : ''}`);
+function fail(check, reason, details = {}) {
+  throw new SmokeCheckError(check,reason,details);
 }
 
-async function request(endpoint, options = {}) {
-  const name = `${options.method || 'GET'} ${endpoint}`;
+async function request(check, endpoint, options = {}) {
   const signal = AbortSignal.timeout(Number(config.httpTimeoutMs));
   try {
     const response = await fetch(`${config.baseUrl}${endpoint}`, {...options, signal});
-    requests.set(response, {name, signal});
+    requests.set(response, {check, signal});
     return response;
-  } catch (error) {
-    const cause = ['ECONNREFUSED', 'ECONNRESET', 'ENOTFOUND', 'EAI_AGAIN', 'ETIMEDOUT', 'UND_ERR_CONNECT_TIMEOUT']
-      .includes(error.cause?.code) ? `, cause=${error.cause.code}` : '';
-    fail(name, `network=${signal.aborted ? 'timeout' : 'request-failed'}, timeout_ms=${config.httpTimeoutMs}${cause}`);
+  } catch {
+    fail(check,signal.aborted ? 'timeout' : 'network',{timeoutMs:Number(config.httpTimeoutMs)});
   }
 }
 
@@ -46,36 +44,8 @@ async function readBody(response, format = 'text') {
     return await response[format]();
   } catch {
     const context = requests.get(response);
-    fail(context?.name || 'HTTP response', `network=${context?.signal.aborted ? 'timeout' : 'response-read-failed'}, timeout_ms=${config.httpTimeoutMs}`);
+    fail(context?.check || 'configuration',context?.signal.aborted ? 'timeout' : 'body',{timeoutMs:Number(config.httpTimeoutMs)});
   }
-}
-
-function toPem(base64Key) {
-  const lines = (base64Key.match(/.{1,64}/g) || []).join('\n');
-  return `-----BEGIN PUBLIC KEY-----\n${lines}\n-----END PUBLIC KEY-----\n`;
-}
-
-function randomAesKey(length = 32) {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let value = '';
-  for (let i = 0; i < length; i += 1) {
-    value += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return value;
-}
-
-function encryptWithAesEcbPkcs7(plainText, aesKey) {
-  const cipher = crypto.createCipheriv('aes-256-ecb', Buffer.from(aesKey, 'utf8'), null);
-  cipher.setAutoPadding(true);
-  return Buffer.concat([cipher.update(plainText, 'utf8'), cipher.final()]).toString('base64');
-}
-
-function encryptHeaderKey(aesKey, publicKeyBase64) {
-  const b64Aes = Buffer.from(aesKey, 'utf8').toString('base64');
-  return crypto.publicEncrypt(
-    { key: toPem(publicKeyBase64), padding: crypto.constants.RSA_PKCS1_PADDING },
-    Buffer.from(b64Aes, 'utf8')
-  ).toString('base64');
 }
 
 async function parseResponseAsJson(response) {
@@ -83,7 +53,7 @@ async function parseResponseAsJson(response) {
   try {
     return JSON.parse(text);
   } catch {
-    return { _raw: text };
+    return null;
   }
 }
 
@@ -98,30 +68,30 @@ function decodeJwtPayload(token) {
   }
 }
 
-async function assertJsonApi(name, response, expectedHttp = 200) {
+async function assertJsonApi(check, response, expectedHttp = 200) {
   if (response.status !== expectedHttp) {
-    fail(name, `http=${response.status}`);
+    fail(check,'response',{http:response.status});
   }
   const body = await parseResponseAsJson(response);
   if (body?.code !== 200) {
-    fail(name, `http=${response.status}, code=${Number.isInteger(body?.code) ? body.code : 'invalid-response'}`);
+    fail(check,'response',{http:response.status,code:Number.isSafeInteger(body?.code) ? body.code : 'invalid-response'});
   }
-  logPass(name, `http=${response.status}, code=${body.code}`);
+  await logPass(check,{http:200,code:200});
   return body;
 }
 
 async function checkPublicEndpoints() {
-  const rootResp = await request('/');
+  const rootResp = await request('root','/');
   if (rootResp.status !== 200) {
-    fail('GET /', `http=${rootResp.status}`);
+    fail('root','response',{http:rootResp.status});
   }
   const rootText = await readBody(rootResp);
   if (!rootText.includes('backend')) {
-    fail('GET /', 'unexpected response body');
+    fail('root','response');
   }
-  logPass('GET /', 'http=200');
+  await logPass('root',{http:200});
 
-  await assertJsonApi('GET /auth/code', await request('/auth/code'));
+  await assertJsonApi('captcha', await request('captcha','/auth/code'));
 }
 
 function buildCandidateList() {
@@ -149,7 +119,7 @@ async function loginEncrypted(username, password) {
     username,
     password
   });
-  const res = await request('/auth/login', {
+  const res = await request('login','/auth/login', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json;charset=UTF-8',
@@ -159,11 +129,11 @@ async function loginEncrypted(username, password) {
     body: encryptWithAesEcbPkcs7(loginBody, aesKey)
   });
   const body = await parseResponseAsJson(res);
-  return { res, body, mode: 'encrypted' };
+  return { res, body };
 }
 
 async function loginPlain(username, password) {
-  const res = await request('/auth/login', {
+  const res = await request('login','/auth/login', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json;charset=UTF-8',
@@ -177,32 +147,26 @@ async function loginPlain(username, password) {
     })
   });
   const body = await parseResponseAsJson(res);
-  return { res, body, mode: 'plain' };
+  return { res, body };
 }
 
 async function loginAndGetToken() {
   const candidates = buildCandidateList();
-  const attempts = [];
   const login = config.loginMode === 'encrypted' ? loginEncrypted : loginPlain;
 
   for (const account of candidates) {
     const result = await login(account.username, account.password);
-    const code = Number.isInteger(result?.body?.code) ? result.body.code : 'invalid-response';
+    const code = Number.isSafeInteger(result?.body?.code) ? result.body.code : 'invalid-response';
     const token = result?.body?.data?.access_token || result?.body?.data?.accessToken;
-    if (result.res.status === 200 && code === 200 && token) {
+    if (result.res.status === 200 && code === 200 && typeof token === 'string' && token && !/[\s\x00-\x1f\x7f]/u.test(token)) {
       const payload = decodeJwtPayload(token);
-      logPass(
-        'POST /auth/login',
-        `mode=${result.mode}, user=${account.username}, token_len=${String(token).length}`
-      );
-      return { token, username: account.username, userId: payload.userId || '' };
+      await logPass('login',{http:200,code:200});
+      return { token, userId: String(payload.userId || '') };
     }
-    attempts.push(
-      `${account.username} (${result.mode}) => http=${result.res.status}, code=${code}`
-    );
+    if (account === candidates.at(-1)) fail('login','login',{http:result.res.status,code});
   }
 
-  fail('POST /auth/login', `all attempts failed: ${attempts.join(' || ')}`);
+  fail('login','login');
 }
 
 async function checkProtectedEndpoints(token) {
@@ -213,23 +177,23 @@ async function checkProtectedEndpoints(token) {
   };
 
   await assertJsonApi(
-    'GET /system/menu/getRouters',
-    await request('/system/menu/getRouters', { headers })
+    'routers',
+    await request('routers','/system/menu/getRouters', { headers })
   );
   await assertJsonApi(
-    `GET /system/menu/roleMenuTreeselect/${config.roleId}`,
-    await request(`/system/menu/roleMenuTreeselect/${config.roleId}`, { headers })
+    'roleMenu',
+    await request('roleMenu',`/system/menu/roleMenuTreeselect/${config.roleId}`, { headers })
   );
   await assertJsonApi(
-    `GET /system/role/deptTree/${config.roleId}`,
-    await request(`/system/role/deptTree/${config.roleId}`, { headers })
+    'departments',
+    await request('departments',`/system/role/deptTree/${config.roleId}`, { headers })
   );
   await assertJsonApi(
-    `GET /system/dict/data/type/${config.dictType}`,
-    await request(`/system/dict/data/type/${config.dictType}`, { headers })
+    'dictionary',
+    await request('dictionary',`/system/dict/data/type/${config.dictType}`, { headers })
   );
 
-  const exportResp = await request('/system/user/export', {
+  const exportResp = await request('export','/system/user/export', {
     method: 'POST',
     headers: {
       ...headers,
@@ -238,42 +202,40 @@ async function checkProtectedEndpoints(token) {
     body: ''
   });
   if (exportResp.status !== 200) {
-    fail('POST /system/user/export', `http=${exportResp.status}`);
+    fail('export','export',{http:exportResp.status});
   }
   const contentType = exportResp.headers.get('content-type') || '';
   const buffer = Buffer.from(await readBody(exportResp, 'arrayBuffer'));
   if (!contentType.includes('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')) {
-    fail('POST /system/user/export', `unexpected content-type=${contentType}`);
+    fail('export','export');
   }
   if (buffer.length === 0) {
-    fail('POST /system/user/export', 'empty file');
+    fail('export','export');
   }
-  logPass('POST /system/user/export', `bytes=${buffer.length}`);
+  await logPass('export',{bytes:buffer.length});
 }
 
 async function main() {
   if (!['encrypted', 'plain'].includes(config.loginMode)) {
-    throw new Error('LOGIN_MODE must be encrypted or plain.');
+    fail('configuration','invalid-login-mode');
   }
   if (!/^[1-9]\d{0,4}$/.test(config.httpTimeoutMs) || Number(config.httpTimeoutMs) > 60000) {
-    throw new Error('HTTP_TIMEOUT_MS must be an integer from 1 to 60000 without leading zeros.');
+    fail('configuration','invalid-timeout');
   }
-  console.log(
-    `[INFO] smoke target: ${config.baseUrl}, roleId=${config.roleId}, dictType=${config.dictType}`
-  );
+  if (process.argv.length > 2) fail('configuration','invalid-arguments');
+  if (process.env.PRINT_TOKEN !== undefined || process.env.PRINT_USER_ID !== undefined) fail('configuration','legacy-output');
+  if (process.env.SMOKE_AUTH_IPC === '1' && typeof process.send !== 'function') fail('configuration','ipc-required');
   await checkPublicEndpoints();
-  const { token, username, userId } = await loginAndGetToken();
+  const { token, userId } = await loginAndGetToken();
   await checkProtectedEndpoints(token);
-  if (config.printToken) {
-    console.log(`TOKEN=${token}`);
+  if (process.env.SMOKE_AUTH_IPC === '1') {
+    if (!/^[1-9]\d{0,19}$/u.test(userId) || token.length > 16384) fail('login','invalid-auth');
+    await new Promise((resolve,reject) => process.send({type:'smoke-auth',version:1,token,userId},error => error ? reject(new SmokeCheckError('configuration','ipc-required')) : resolve()));
   }
-  if (config.printUserId && userId) {
-    console.log(`USER_ID=${userId}`);
-  }
-  console.log(`[INFO] smoke completed with login user: ${username}`);
+  await logPass('complete');
 }
 
-main().catch((error) => {
-  console.error(error.message || error);
-  process.exit(1);
-});
+main().catch(async(error) => {
+  await sendSmokeDiagnostic(error instanceof SmokeCheckError ? error.diagnostic : new SmokeCheckError('configuration','internal').diagnostic).catch(() => {});
+  process.exitCode = 1;
+}).finally(() => { finished = true; if (process.connected) process.disconnect(); });

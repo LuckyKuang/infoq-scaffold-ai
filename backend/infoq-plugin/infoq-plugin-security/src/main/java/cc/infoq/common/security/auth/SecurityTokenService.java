@@ -1,7 +1,9 @@
 package cc.infoq.common.security.auth;
 
 import cc.infoq.common.domain.model.LoginUser;
+import cc.infoq.common.exception.SecurityDependencyException;
 import cc.infoq.common.utils.StringUtils;
+import org.redisson.client.RedisException;
 import tools.jackson.core.JacksonException;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
@@ -154,11 +156,27 @@ public class SecurityTokenService {
     }
 
     public int revokeByUserId(Long userId) {
-        return tokenStore.revokeByUserId(userId);
+        try {
+            return tokenStore.revokeByUserId(userId);
+        } catch (RedisException exception) {
+            throw new SecurityDependencyException("revoke_user", exception.getClass());
+        }
+    }
+
+    public int revokeByUserIds(Collection<Long> userIds) {
+        try {
+            return tokenStore.revokeByUserIds(userIds);
+        } catch (RedisException exception) {
+            throw new SecurityDependencyException("revoke_users", exception.getClass());
+        }
     }
 
     public int revokeByRoleId(Long roleId) {
-        return tokenStore.revokeByRoleId(roleId);
+        try {
+            return tokenStore.revokeByRoleId(roleId);
+        } catch (RedisException exception) {
+            throw new SecurityDependencyException("revoke_role", exception.getClass());
+        }
     }
 
     public String digest(String accessToken) {

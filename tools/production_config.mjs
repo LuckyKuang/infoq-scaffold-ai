@@ -102,6 +102,35 @@ function origin(env, name, production) {
   return url;
 }
 
+export function validateBrowserSessionConfig(env, {apiPrefix = '/prod-api'} = {}) {
+  const deploymentMode = env.INFOQ_DEPLOY_MODE || 'production';
+  if (!['production', 'development'].includes(deploymentMode)) fail('INFOQ_DEPLOY_MODE 必须为 production 或 development');
+  const production = deploymentMode === 'production';
+  const publicOrigin = origin(env, 'INFOQ_PUBLIC_BASE_URL', production);
+  const configuredOrigins = env.INFOQ_BROWSER_SESSION_ORIGINS;
+  if (production && configuredOrigins) fail('生产浏览器会话 Origin 只使用 INFOQ_PUBLIC_BASE_URL，禁止 INFOQ_BROWSER_SESSION_ORIGINS');
+  const origins = [publicOrigin.origin];
+  if (!production) {
+    const values = configuredOrigins === undefined || configuredOrigins === '' ? [] : configuredOrigins.split(',');
+    for (const value of [publicOrigin.origin, ...values]) {
+      const item = origin({VALUE: value}, 'VALUE', false);
+      const hostname = item.hostname;
+      if (item.protocol !== 'http:' || !(['localhost', '127.0.0.1', '[::1]'].includes(hostname) || /^(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+localhost$/u.test(hostname))) fail('development 浏览器会话禁止 HTTPS 或非 loopback Origin，仅允许精确 HTTP localhost、*.localhost、127.0.0.1、::1');
+      if (!origins.includes(item.origin)) origins.push(item.origin);
+    }
+  }
+  if (!['/prod-api', '/dev-api'].includes(apiPrefix) || (production && apiPrefix !== '/prod-api')) fail('浏览器会话 API 前缀与部署模式不一致');
+  const cookiePath = required(env, 'INFOQ_BROWSER_SESSION_COOKIE_PATH');
+  if (cookiePath !== `${apiPrefix}/auth/browser-session`) fail(`INFOQ_BROWSER_SESSION_COOKIE_PATH 必须匹配实际 API 路径 ${apiPrefix}/auth/browser-session`);
+  const secure = required(env, 'INFOQ_BROWSER_SESSION_SECURE');
+  if (!['true', 'false'].includes(secure) || (production && secure !== 'true')) fail('INFOQ_BROWSER_SESSION_SECURE 生产必须为 true；仅显式 HTTP loopback development 允许 false');
+  const ttlText = env.INFOQ_BROWSER_SESSION_TTL_SECONDS === undefined ? '2592000' : required(env, 'INFOQ_BROWSER_SESSION_TTL_SECONDS');
+  const ttlSeconds = Number(ttlText);
+  if (!/^[1-9][0-9]*$/u.test(ttlText) || !Number.isSafeInteger(ttlSeconds) || ttlSeconds > 2592000) fail('INFOQ_BROWSER_SESSION_TTL_SECONDS 必须为不大于 2592000 的正整数');
+  if (env.VITE_APP_BASE_API !== undefined && env.VITE_APP_BASE_API !== apiPrefix) fail('VITE_APP_BASE_API 必须与浏览器会话的同源代理 API 路径一致');
+  return {deploymentMode, origins, cookiePath, secure: secure === 'true', ttlSeconds};
+}
+
 function validateCredentials(env) {
   const values = [];
   for (const name of credentialFields) {
@@ -128,7 +157,7 @@ export function validateProductionConfig(env, {scope = 'deploy', source = 'envir
   if (scope === 'frontend') {
     if (!production && env.INFOQ_CONFIG_SOURCE !== 'isolated-test') fail('development 前端构建必须显式声明 INFOQ_CONFIG_SOURCE=isolated-test，不得作为生产产物');
     if (env.VITE_APP_ENCRYPT !== 'true') fail('生产构建必须显式设置 VITE_APP_ENCRYPT=true');
-    return {scope, mode, source, rsa: validateRsaConfiguration(env)};
+    return {scope, mode, source, rsa: validateRsaConfiguration(env), browserSession: validateBrowserSessionConfig(env)};
   }
   if (scope === 'apple') {
     if (production) fail('Apple 本地栈仅支持显式 INFOQ_DEPLOY_MODE=development；生产基线为 Linux Docker');
@@ -136,7 +165,7 @@ export function validateProductionConfig(env, {scope = 'deploy', source = 'envir
       const value = required(env, name);
       if (value.length < (name === 'SECURITY_TOKEN_SECRET' ? 32 : 16) || samplePattern.test(value)) fail(`凭据缺少强度或仍为示例值: ${name}`);
     }
-    return {scope, mode, source, rsa: validateRsaConfiguration(env)};
+    return {scope, mode, source, rsa: validateRsaConfiguration(env), browserSession: validateBrowserSessionConfig(env, {apiPrefix: '/dev-api'})};
   }
   const publicOrigin = origin(env, 'INFOQ_PUBLIC_BASE_URL', production);
   const ossOrigin = origin(env, 'INFOQ_OSS_PUBLIC_ORIGIN', production);
@@ -146,10 +175,11 @@ export function validateProductionConfig(env, {scope = 'deploy', source = 'envir
   const target = env.INFOQ_FRONTEND_TARGET || 'all';
   if (target === 'all' && (reactPath === '/' || vuePath === '/' || reactPath.startsWith(vuePath) || vuePath.startsWith(reactPath))) fail('all 目标的 React/Vue context path 必须非根且互不重叠');
   if (env.INFOQ_INTERNAL_BIND_HOST && !['127.0.0.1', '::1'].includes(env.INFOQ_INTERNAL_BIND_HOST)) fail('INFOQ_INTERNAL_BIND_HOST 必须为 loopback；公开入口仅使用网关');
+  const browserSession = validateBrowserSessionConfig(env);
   if (!production) {
     if (publicOrigin.protocol === 'https:' || ossOrigin.protocol === 'https:') fail('development HTTP 模式不得声称启用 HTTPS；HTTPS 请使用 production 配置');
     validateGatewayConfig(env);
-    return {scope, mode, source, productionReady: false};
+    return {scope, mode, source, productionReady: false, browserSession};
   }
   for (const name of ['INFOQ_TLS_CERT_FILE', 'INFOQ_TLS_KEY_FILE', 'INFOQ_PRODUCTION_CONFIG_FILE']) {
     const file = required(env, name);
@@ -159,7 +189,7 @@ export function validateProductionConfig(env, {scope = 'deploy', source = 'envir
   validateCredentials(env);
   if (env.VITE_APP_ENCRYPT !== 'true') fail('生产必须显式设置 VITE_APP_ENCRYPT=true');
   validateGatewayConfig(env);
-  return {scope, mode, source, rsa: validateRsaConfiguration(env), tls: 'key-validity-domains-and-provided-chain-consistency-verified-not-trust'};
+  return {scope, mode, source, rsa: validateRsaConfiguration(env), browserSession, tls: 'key-validity-domains-and-provided-chain-consistency-verified-not-trust'};
 }
 
 export function frontendBuildCacheKey(env, {source = 'controlled-file'} = {}) {
@@ -187,6 +217,8 @@ export function frontendBuildConfig({command, mode, env, processEnv = process.en
   if (file) runtimeConfigEntries(controlled);
   contextPath = validateContextPath(processEnv.VITE_APP_CONTEXT_PATH || controlled.VITE_APP_CONTEXT_PATH || contextPath);
   const result = validateProductionConfig(controlled, {scope: 'frontend', source: file ? 'controlled-file' : 'managed-environment'});
+  const actualBaseApi = processEnv.VITE_APP_BASE_API ?? env.VITE_APP_BASE_API ?? controlled.VITE_APP_BASE_API ?? '/prod-api';
+  if (actualBaseApi !== '/prod-api') fail('production 构建的 VITE_APP_BASE_API 必须使用同源 /prod-api，与受控浏览器会话 cookie Path 一致');
   const configDigest = frontendBuildCacheKey(controlled, {source: result.source});
   if (Object.hasOwn(processEnv, 'INFOQ_FRONTEND_CONFIG_DIGEST') && processEnv.INFOQ_FRONTEND_CONFIG_DIGEST !== configDigest) fail('INFOQ_FRONTEND_CONFIG_DIGEST 缺失、无效或与受控构建输入不匹配；通过构建入口自动计算');
   for (const name of ['VITE_APP_RSA_PUBLIC_KEY', 'VITE_APP_RSA_PRIVATE_KEY', 'VITE_APP_ENCRYPT']) processEnv[name] = controlled[name];

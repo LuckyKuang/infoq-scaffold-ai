@@ -2,6 +2,7 @@ package cc.infoq.common.web.handler;
 
 import cc.infoq.common.domain.ApiResult;
 import cc.infoq.common.exception.ServiceException;
+import cc.infoq.common.exception.SecurityDependencyException;
 import cc.infoq.common.exception.SseException;
 import cc.infoq.common.exception.base.BaseException;
 import cc.infoq.common.json.utils.JsonUtils;
@@ -41,6 +42,13 @@ import java.util.Objects;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ResponseStatus(org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE)
+    @ExceptionHandler(SecurityDependencyException.class)
+    public ApiResult<Void> handleSecurityDependencyException(SecurityDependencyException e, HttpServletRequest request) {
+        log.error("security_dependency operation={} type={} requestId={}", e.operation(), e.dependencyType(), request.getRequestId());
+        return ApiResult.fail(HttpStatus.HTTP_UNAVAILABLE, e.getMessage());
+    }
 
     /**
      * 请求方式不支持

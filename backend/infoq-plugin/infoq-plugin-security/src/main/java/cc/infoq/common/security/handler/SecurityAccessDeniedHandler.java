@@ -9,6 +9,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.web.access.AccessDeniedHandler;
+import org.springframework.security.web.csrf.CsrfException;
+import cc.infoq.common.security.browser.BrowserSessionGuardFilter;
 
 import java.io.IOException;
 
@@ -26,6 +28,11 @@ public class SecurityAccessDeniedHandler implements AccessDeniedHandler {
     @Override
     public void handle(HttpServletRequest request, HttpServletResponse response,
                        AccessDeniedException accessDeniedException) throws IOException {
+        if (BrowserSessionGuardFilter.isResource(request)) {
+            log.info("browser_session action={} category={} clientId={} requestId={}", request.getMethod(),
+                accessDeniedException instanceof CsrfException ? "csrf_rejected" : "access_denied",
+                request.getHeader("clientid"), request.getRequestId());
+        }
         log.warn("请求地址'{}',权限校验失败类型'{}'",
             request.getRequestURI(), accessDeniedException.getClass().getSimpleName());
         SecurityExceptionResponseWriter.write(response, objectMapper,

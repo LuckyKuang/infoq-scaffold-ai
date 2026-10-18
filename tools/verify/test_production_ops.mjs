@@ -199,6 +199,28 @@ try {
   await test('S3 list errors cannot masquerade as empty backup',async()=>{
     await assert.rejects(listObjects(source.config,{fetchImpl:async()=>new Response('<Error>forbidden</Error>')}),/协议/);
   });
+  await test('S3 pagination decodes XML entities once and preserves opaque continuation tokens',async()=>{
+    const tokens = ['&amp;lt;', '&lt;&gt;&quot;&apos;&amp;', '&#65;&#x1F600;&#9;', 'literal%2F+value'];
+    const expected = ['&lt;', '<>"\'&', 'A😀\t', 'literal%2F+value'];
+    const requests = [];
+    const objects = await listObjects(source.config,{fetchImpl:async url=>{
+      requests.push(new URL(url).searchParams.get('continuation-token'));
+      const index = requests.length - 1;
+      return new Response(`<ListBucketResult><IsTruncated>${index < tokens.length}</IsTruncated>${index < tokens.length ? `<NextContinuationToken>${tokens[index]}</NextContinuationToken>` : '<Contents><Key>proof%26name.txt</Key><Size>3</Size></Contents>'}</ListBucketResult>`);
+    }});
+    assert.deepEqual(requests,[null,...expected]);
+    assert.deepEqual(objects,[{key:'proof&name.txt',size:3}]);
+  });
+  await test('S3 pagination rejects missing, cyclic and invalid XML tokens',async()=>{
+    for (const value of ['', '&unknown;', '&amp', '&#0;', '&#xD800;', '&#x110000;', '&#-1;', '&#xZZ;', '<invalid>', '\u0000', '\ud800']) {
+      await assert.rejects(listObjects(source.config,{fetchImpl:async()=>new Response(`<ListBucketResult><IsTruncated>true</IsTruncated><NextContinuationToken>${value}</NextContinuationToken></ListBucketResult>`)}),/分页/);
+    }
+    for (const tokens of [['same','same'],['first','second','first'],['&amp;lt;','&#38;lt;']]) {
+      let index=0;
+      await assert.rejects(listObjects(source.config,{fetchImpl:async()=>new Response(`<ListBucketResult><IsTruncated>true</IsTruncated><NextContinuationToken>${tokens[index++]}</NextContinuationToken></ListBucketResult>`)}),/分页/);
+      assert.equal(index,tokens.length);
+    }
+  });
   save(path.join(root,'result.json'),{status:'passed',tests:passed,scope:'fixture Docker/S3; real loopback HTTP; no Linux daemon',platform:process.platform,node:process.version,cleanup:'HTTP server closed; fixture files retained under tmp'});
   console.log(`[production-ops-tests] ${passed} passed; evidence=${path.relative(repo,root)}`);
 } catch(error) {console.error(error);process.exitCode=1;}

@@ -18,6 +18,8 @@ import {
 } from '../../../tools/lib/skill_runtime.mjs';
 import {runAdminDevStack, stopAdminDevStackState} from '../../../tools/lib/admin_dev_stack.mjs';
 import {DEFAULT_CAPTCHA_LOGIN_OPTIONS, loginWithRealCaptcha} from './captcha_login.mjs';
+import {establishBrowserSession} from '../../../tools/lib/browser_session.mjs';
+import {createBrowserEvidence} from '../../../tools/lib/browser_evidence.mjs';
 import {runTestLifecycle} from './test_run_lifecycle.mjs';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
@@ -124,6 +126,7 @@ Options:
   --modules <csv>                   Module keys. Default: ${SAFE_MODULE_ORDER.join(',')}.
   --backend-url <url>               Backend base URL. Default: ${DEFAULTS.backendUrl}
   --frontend-origin <url>           Frontend origin. Default follows --client.
+  --api-prefix <path>               Same-origin API prefix: /dev-api (default) or /prod-api.
   --start-stack                     Start or reuse backend + frontend dev stack. Default.
   --no-start-stack                  Reuse existing services only.
   --build-backend                   Build backend jar before startup.
@@ -168,6 +171,7 @@ function parseArgs(argv) {
     modules: SAFE_MODULE_ORDER,
     backendUrl: process.env.BACKEND_URL || DEFAULTS.backendUrl,
     frontendOrigin: process.env.FRONTEND_ORIGIN || '',
+    apiPrefix: process.env.INFOQ_TEST_API_PREFIX || '/dev-api',
     startStack: true,
     buildBackend: false,
     forceRestart: false,
@@ -212,6 +216,10 @@ function parseArgs(argv) {
         break;
       case '--frontend-origin':
         options.frontendOrigin = readValue(argv, index, arg).replace(/\/+$/, '');
+        index += 1;
+        break;
+      case '--api-prefix':
+        options.apiPrefix = readValue(argv, index, arg);
         index += 1;
         break;
       case '--start-stack':
@@ -327,6 +335,7 @@ function parseArgs(argv) {
   if (!CLIENTS[options.client]) {
     throw new Error('--client must be one of: vue, react');
   }
+  if (!['/dev-api', '/prod-api'].includes(options.apiPrefix)) throw new Error('--api-prefix must be /dev-api or /prod-api.');
   if (options.profile !== 'local') {
     throw new Error('Admin CRUD E2E is restricted to --profile local because it writes to application-local.yml test data only.');
   }
@@ -607,19 +616,24 @@ function buildApiHeaders(options, token) {
 }
 
 async function apiRequest(options, token, method, apiPath, body = undefined) {
-  const headers = buildApiHeaders(options, token);
-  const requestOptions = {method, headers, signal: AbortSignal.any([AbortSignal.timeout(options.timeoutMs || 30000), ...(options.signal ? [options.signal] : [])])};
-  if (body !== undefined) {
-    headers['Content-Type'] = 'application/json;charset=UTF-8';
-    requestOptions.body = JSON.stringify(body);
+  const evidence = options.browserEvidence || createBrowserEvidence([token]);
+  try {
+    const headers = buildApiHeaders(options, token);
+    const requestOptions = {method, headers, signal: AbortSignal.any([AbortSignal.timeout(options.timeoutMs || 30000), ...(options.signal ? [options.signal] : [])])};
+    if (body !== undefined) {
+      headers['Content-Type'] = 'application/json;charset=UTF-8';
+      requestOptions.body = JSON.stringify(body);
+    }
+    const {response, body: responseBody} = await fetchJson(`${options.backendUrl}${apiPath}`, requestOptions);
+    if (response.status !== 200) throw new Error(`${method} ${apiPath} failed: http=${response.status}, body=${JSON.stringify(evidence.sanitize(responseBody)).slice(0, 500)}`);
+    if (responseBody && Object.prototype.hasOwnProperty.call(responseBody, 'code') && responseBody.code !== 200) {
+      throw new Error(`${method} ${apiPath} failed: code=${responseBody.code}, msg=${responseBody.msg || ''}`);
+    }
+    if (method !== 'GET' && responseBody?.code !== 200) throw new Error(`${method} ${apiPath} failed: missing successful business response`);
+    return responseBody;
+  } catch (error) {
+    throw evidence.error(error);
   }
-  const {response, body: responseBody} = await fetchJson(`${options.backendUrl}${apiPath}`, requestOptions);
-  if (response.status !== 200) throw new Error(`${method} ${apiPath} failed: http=${response.status}, body=${JSON.stringify(responseBody).slice(0, 500)}`);
-  if (responseBody && Object.prototype.hasOwnProperty.call(responseBody, 'code') && responseBody.code !== 200) {
-    throw new Error(`${method} ${apiPath} failed: code=${responseBody.code}, msg=${responseBody.msg || ''}`);
-  }
-  if (method !== 'GET' && responseBody?.code !== 200) throw new Error(`${method} ${apiPath} failed: missing successful business response`);
-  return responseBody;
 }
 
 function assertE2eKey(key) {
@@ -920,10 +934,10 @@ async function clickFirstRowAction(page, client, actionIndex, timeoutMs) {
   await button.click();
 }
 
-async function takeScreenshot(page, runDir, name) {
+async function takeScreenshot(page, runDir, name, mask = []) {
   const screenshotPath = path.join(runDir, 'screenshots', `${name}.png`);
   ensureDir(path.dirname(screenshotPath));
-  await page.screenshot({path: screenshotPath, fullPage: true});
+  await page.screenshot({path: screenshotPath, fullPage: true, mask});
   return screenshotPath;
 }
 
@@ -1636,12 +1650,13 @@ async function runModuleFlow(ctx, key) {
       await createOnlineFixtureUser(options, token, definitions, data);
       const fixtureLogin = await loginOnlineFixtureUser(options, runDir, data);
       data.onlineUser.token = fixtureLogin.token;
+      options.browserEvidence.add(fixtureLogin.token);
       moduleReport.notes.push(`在线强退测试用户：${data.onlineUser.name}`);
       await waitForOnlineRow(options, token, data.onlineUser.name, fixtureLogin.token);
       await page.goto(`${options.frontendOrigin}/monitor/online`, {waitUntil: 'domcontentloaded', timeout: options.timeoutMs});
       await page.getByPlaceholder('请输入用户名称').first().waitFor({state: 'visible', timeout: options.timeoutMs});
       await searchByPlaceholder(page, '请输入用户名称', data.onlineUser.name, options.timeoutMs, true);
-      moduleReport.screenshots.afterCreate = await takeScreenshot(page, runDir, `${key}-after-login`);
+      moduleReport.screenshots.afterCreate = await takeScreenshot(page, runDir, `${key}-after-login`, [page.getByText(fixtureLogin.token,{exact:false})]);
       await clickRowAction(page, options.client, data.onlineUser.name, 0, options.timeoutMs);
       await confirmDanger(page, options.client, options.timeoutMs);
       await waitForOnlineRowGone(options, token, data.onlineUser.name);
@@ -1662,8 +1677,8 @@ async function runModuleFlow(ctx, key) {
     moduleReport.status = 'passed';
   } catch (error) {
     moduleReport.status = 'failed';
-    moduleReport.error = error.message || String(error);
-    throw error;
+    moduleReport.error = options.browserEvidence.text(error.message || String(error));
+    throw options.browserEvidence.error(error);
   } finally {
     moduleReport.finishedAt = new Date().toISOString();
   }
@@ -1719,11 +1734,13 @@ function writeMarkdownReport(reportPath, report) {
 }
 
 export async function runBrowser(options, runDir, token, dbTool, dbConfig, data, definitions, report) {
+  const evidence = options.browserEvidence ||= createBrowserEvidence([token,data.onlineUser?.token]);
+  evidence.add(token);
   let chromium;
   try {
     ({chromium} = browserRequire('playwright'));
   } catch (error) {
-    throw new Error(`Playwright runtime is required. Install with pnpm --dir skills/test-cli/scripts install. ${error.message || error}`);
+    throw evidence.error(new Error(`Playwright runtime is required. Install with pnpm --dir skills/test-cli/scripts install. ${error.message || error}`));
   }
   let browser;
   let closePromise;
@@ -1745,10 +1762,10 @@ export async function runBrowser(options, runDir, token, dbTool, dbConfig, data,
     options.signal?.throwIfAborted();
     markRunState(stateFile, {status: 'running'});
     const context = await browser.newContext({viewport: {width: 1440, height: 900}});
-    await context.addInitScript(({key, value}) => window.localStorage.setItem(key, value), {key: 'Admin-Token', value: token});
+    await establishBrowserSession(context, {origin: options.frontendOrigin, client: options.client, clientId: options.clientId, token, apiPrefix: options.apiPrefix});
     const page = await context.newPage();
-    page.on('console', (message) => consoleEntries.push({type: message.type(), text: message.text(), location: message.location()}));
-    page.on('pageerror', (error) => consoleEntries.push({type: 'pageerror', text: error.message}));
+    page.on('console', (message) => consoleEntries.push(evidence.sanitize({type: message.type(), text: message.text(), location: message.location()})));
+    page.on('pageerror', (error) => consoleEntries.push(evidence.sanitize({type: 'pageerror', text: error.message})));
     for (const moduleKey of options.modules) {
       console.log(`[admin-crud] module: ${moduleKey}`);
       await runModuleFlow({page, options, runDir, token, report, definitions, dbTool, dbConfig, data}, moduleKey);
@@ -1756,21 +1773,21 @@ export async function runBrowser(options, runDir, token, dbTool, dbConfig, data,
     const badEntries = consoleEntries.filter((entry) => entry.type === 'error' || entry.type === 'pageerror');
     if (!options.allowConsoleErrors && badEntries.length) throw new Error(`Console check failed with ${badEntries.length} bad entries. See ${consoleLogPath}`);
   } catch (error) {
-    failure = error;
+    failure = evidence.error(error);
     fs.writeFileSync(consoleLogPath, `${JSON.stringify(consoleEntries, null, 2)}\n`, 'utf8');
     report.browser.consoleLogPath = consoleLogPath;
     report.browser.consoleEntries = consoleEntries.length;
     report.browser.badConsoleEntries = consoleEntries.filter((entry) => entry.type === 'error' || entry.type === 'pageerror').length;
-    throw error;
+    throw failure;
   } finally {
     options.signal?.removeEventListener('abort', interruptBrowser);
     let closeError;
-    try { await closeBrowser(); } catch (error) { closeError = error; }
+    try { await closeBrowser(); } catch (error) { closeError = evidence.error(error); }
     fs.writeFileSync(consoleLogPath, `${JSON.stringify(consoleEntries, null, 2)}\n`, 'utf8');
     report.browser.consoleLogPath = consoleLogPath;
     report.browser.consoleEntries = consoleEntries.length;
     report.browser.badConsoleEntries = consoleEntries.filter((entry) => entry.type === 'error' || entry.type === 'pageerror').length;
-    markRunState(stateFile, {status: options.signal?.aborted ? 'interrupted' : (failure || closeError) ? 'failed' : 'passed', browserClosed: !closeError, error: failure?.message || '', cleanupError: closeError?.message || ''});
+    markRunState(stateFile, evidence.sanitize({status: options.signal?.aborted ? 'interrupted' : (failure || closeError) ? 'failed' : 'passed', browserClosed: !closeError, error: failure?.message || '', cleanupError: closeError?.message || ''}));
     if (closeError) throw new AggregateError([failure, closeError].filter(Boolean), [failure?.message, `Browser cleanup failed: ${closeError.message}`].filter(Boolean).join('; '));
   }
 }
@@ -1876,6 +1893,7 @@ async function main() {
     if (shouldStop) await stopAdminDevStackState(stackConfig, {status: 'stopped', reason: 'stale-before-admin-crud'});
   };
   let token = '';
+  const evidence = options.browserEvidence = createBrowserEvidence();
   await runTestLifecycle({
     report,
     execute: async (signal) => {
@@ -1892,6 +1910,7 @@ async function main() {
       signal.throwIfAborted();
       const login = await loginWithRealCaptcha({...options, logPrefix: 'admin-crud'}, runDir);
       token = login.token;
+      evidence.add(token);
       report.username = login.username;
       report.loginAttempts = login.attempts;
       signal.throwIfAborted();
@@ -1921,16 +1940,19 @@ async function main() {
     },
     stop: async (status) => {
       if (options.startStack && (options.stopStackAfter || status !== 'passed')) {
-        await stopAdminDevStackState(stackConfig, {status: status === 'passed' ? 'stopped' : status, reason: report.error || 'admin-crud-complete'});
+        await stopAdminDevStackState(stackConfig, {status: status === 'passed' ? 'stopped' : status, reason: evidence.text(report.error || 'admin-crud-complete')});
       } else if (options.startStack && status === 'passed') {
         markRunState(stackConfig.stateFile, {status: 'running', validationStatus: 'passed', keepAlive: true, keepReason: '--keep-stack-after', context: stackConfig.stateContext});
       }
     },
     persist: () => {
-      writeJson(path.join(runDir, 'report.json'), report);
-      writeMarkdownReport(path.join(runDir, 'report.md'), report);
+      const publicReport = evidence.sanitize(report);
+      writeJson(path.join(runDir, 'report.json'), publicReport);
+      writeMarkdownReport(path.join(runDir, 'report.md'), publicReport);
       console.log(`[admin-crud] report: ${path.join(runDir, 'report.md')}`);
     }
+  }).catch(error => {
+    throw evidence.error(error);
   });
   console.log('[admin-crud] completed successfully');
 }

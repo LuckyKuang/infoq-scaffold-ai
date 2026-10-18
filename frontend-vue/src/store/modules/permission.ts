@@ -19,6 +19,24 @@ export const usePermissionStore = defineStore('permission', () => {
   const defaultRoutes = ref<RouteRecordRaw[]>([]);
   const topbarRouters = ref<RouteRecordRaw[]>([]);
   const sidebarRouters = ref<RouteRecordRaw[]>([]);
+  const removeOwnedRoutes: Array<() => void> = [];
+  let routeGeneration = 0;
+
+  const installRoutes = (newRoutes: RouteRecordRaw[]) => {
+    newRoutes.forEach((route) => {
+      if (!/^https?:\/\//i.test(route.path)) removeOwnedRoutes.push(router.addRoute(route));
+    });
+  };
+
+  const resetRoutes = () => {
+    routeGeneration++;
+    removeOwnedRoutes.splice(0).forEach((remove) => remove());
+    routes.value = [];
+    addRoutes.value = [];
+    defaultRoutes.value = [];
+    topbarRouters.value = [];
+    sidebarRouters.value = [];
+  };
 
   const getRoutes = (): RouteRecordRaw[] => {
     return routes.value as RouteRecordRaw[];
@@ -47,7 +65,9 @@ export const usePermissionStore = defineStore('permission', () => {
     sidebarRouters.value = routes;
   };
   const generateRoutes = async (): Promise<RouteRecordRaw[]> => {
+    const generation = routeGeneration;
     const res = await getRouters();
+    if (generation !== routeGeneration) return [];
     const { data } = res;
     const sdata = JSON.parse(JSON.stringify(data));
     const rdata = JSON.parse(JSON.stringify(data));
@@ -56,9 +76,7 @@ export const usePermissionStore = defineStore('permission', () => {
     const rewriteRoutes = filterAsyncRouter(rdata, undefined, true);
     const defaultRoutes = filterAsyncRouter(defaultData);
     const asyncRoutes = filterDynamicRoutes(dynamicRoutes);
-    asyncRoutes.forEach((route) => {
-      router.addRoute(route);
-    });
+    installRoutes(asyncRoutes);
     setRoutes(rewriteRoutes);
     setSidebarRouters(constantRoutes.concat(sidebarRoutes));
     setDefaultRoutes(sidebarRoutes);
@@ -123,6 +141,8 @@ export const usePermissionStore = defineStore('permission', () => {
 
     setRoutes,
     generateRoutes,
+    installRoutes,
+    resetRoutes,
     setSidebarRouters
   };
 });

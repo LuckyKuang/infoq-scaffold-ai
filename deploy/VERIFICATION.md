@@ -101,6 +101,10 @@ SQL 示例只验证结构，不验证安装器凭据与数据库记录的相等�
 
 收口报告包含运行时/root/目标、容器健康、readiness/liveness、网关与直连、结构与登录/OSS、失败与恢复证据、停止/保留状态，以及未验证的容量、告警、TLS、跨平台、备份恢复。没有执行的步骤明确写未验证。脚本修改先通过 `node deploy/bin/test-production-runtime.mjs`、`node skills/deploy-cli/scripts/test_deploy_safety.mjs` 与 `node skills/deploy-cli/scripts/test_deploy_cli.mjs`，再执行语法、UTF-8 与 diff 检查；不以真实部署替代隔离回归。
 
+修改 `install.sh` 的 RSA 生成、受控配置加载或 shell/Node 边界时，额外运行 `node tools/test_production_config.mjs`。macOS 使用实际 `/bin/bash` 3.2：隔离安装须生成两组匹配且独立的 RSA，配置预检通过，加载/生成子进程中断或缺少 NUL 完成标记必须失败且不打印秘密；证据在 `tmp/production-readiness/build/tests-*/results.json`。嵌入 Node heredoc 由独立流函数执行，避免 Bash 3.2 在进程替换内重解析 JavaScript；禁止用全局关闭 brace expansion、只跑 `bash -n` 或跳过 macOS 掩盖问题。
+
+浏览器会话配置变更还须验证生产单一 HTTPS Origin、`/prod-api/auth/browser-session`、Secure 与有界 TTL，以及本机 Vite/Apple 的精确 HTTP loopback Origin 和 `/dev-api` 投影。`test_production_config.mjs` 检查配置边界与 Apple env 的真实生成，`test-production-runtime.mjs` 检查 managed-security/Compose 同源注入及坏配置在目录和 Docker 副作用前失败；这些隔离回归不启动 Apple/Colima。目标运行态须另外断言 HostOnly、HttpOnly、SameSite=Strict、正确 Path/Secure 的 cookie，完成双端登录→刷新受保护路由→退出→刷新未认证，不留存 JWT、CSRF、cookie、trace/HAR 或公开 storageState。
+
 ## Linux 生产补证
 
 除上面 smoke 外，必须使用受控 CA 检验 HTTPS（不用 `-k`），核实外网无法直连辅助端口；完成双端根/子路径与 OAuth、精确匿名小程序探测、真实文件上传和约 120 秒签名 URL、匿名和过期拒绝。旧公开 bucket 先预览/备份/显式迁移，目录按真实镜像用户做权限迁移及重启写入验证，命令见 [PRODUCTION.md](PRODUCTION.md)。恢复、回滚、告警与容量工具见 [生产运维 SOP](../docs/PRODUCTION-OPS.md)。若 Docker/CA/凭据/告警目的地或验收目标缺失，分别记 blocked；不能用 Apple 替代 Linux，也不能将生成的 workflow 当作已执行证据。

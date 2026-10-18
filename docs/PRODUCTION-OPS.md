@@ -60,6 +60,8 @@ node tools/verify/production_ops.mjs restore --config tmp/production-readiness/n
 
 manifest 保存来源 project/run、镜像 ID、时间、工具版本、数据库/bucket 范围、每文件大小/SHA-256、对象 key/内容元数据和数据查询摘要。空数据库导出、损坏、文件类型/链接越界、分页异常、超过对象/字节预算都失败；合法零字节对象保留。对象版本历史、未完成 multipart、bucket IAM/生命周期/复制规则不在逻辑对象备份范围，须单独导出并验证；本项目默认私有 bucket 的权限迁移另见部署文档。当前工具拒绝 URL 会归一化的 `.`/`..` 对象 key，必须单独迁移，不悄悄漏备份。
 
+S3 continuation token 是不透明协议值，只做一次 XML 实体解码，支持五种预定义实体及合法十进制/十六进制数字实体；不递归解码，`&amp;lt;` 保持为 `&lt;`。未知/损坏实体、XML 非法字符、缺少 token 或跨页循环均失败。修改分页时运行 `node tools/verify/test_production_ops.mjs`，核验第二页实际请求 token、正常对象列表与上述拒绝场景，禁止只测字符串替换或把失败当空 bucket。
+
 restore 必须使用完全新的 project、卷、网络、目录和数据库账号，拒绝源目标相同或采用已有资源。导入后重新创建目标数据库应用账号/权限，核验 SQL 字段/关联摘要、对象数量/内容 checksum、readiness 与关键业务 JSON；配置认证时真实验证码登录重新获取目标会话。任何阶段失败都会保留证据并只清理本轮 owned 恢复资源，清理失败使整体失败。恢复资源在成功后同样删除，源数据库和对象不会删除。
 
 结果记录 `backupAgeSeconds`，它只是备份年龄，不能代表业务实际丢失窗口。`rtoSeconds` 可显式限制本轮恢复耗时；未给目标则报告 blocked。RPO 即使配置 `rpoSeconds`，仍需独立核业务提交水位/恢复点和故障时刻，工具不会把年龄冒充 RPO 达标。共享环境恢复点、丢失窗口、责任人和保留/销毁期限须另行审批。

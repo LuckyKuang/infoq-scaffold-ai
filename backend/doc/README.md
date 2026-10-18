@@ -2,6 +2,8 @@
 
 本目录承载 `backend` 的顶层聚合文档，目标是先给出整体理解路径，再把阅读者导向更贴近代码的模块文档。
 
+管理端新增的同源浏览器会话资源、框架 CSRF/Origin/CORS、HttpOnly cookie、受控环境映射和单测 SOP 见 [浏览器恢复会话](./browser-session.md)。
+
 ## 推荐阅读顺序
 
 1. [`../README.md`](../README.md)

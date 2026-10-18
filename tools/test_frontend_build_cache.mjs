@@ -19,6 +19,8 @@ const response = pair();
 const rotated = pair();
 const env = {
   INFOQ_DEPLOY_MODE: 'production', INFOQ_CONFIG_SOURCE: 'controlled-file', VITE_APP_ENCRYPT: 'true',
+  INFOQ_PUBLIC_BASE_URL: 'https://app.infoq.test', INFOQ_BROWSER_SESSION_ORIGINS: '',
+  INFOQ_BROWSER_SESSION_COOKIE_PATH: '/prod-api/auth/browser-session', INFOQ_BROWSER_SESSION_SECURE: 'true', INFOQ_BROWSER_SESSION_TTL_SECONDS: '2592000',
   VITE_APP_RSA_PUBLIC_KEY: request.publicKey, INFOQ_API_REQUEST_PRIVATE_KEY: request.privateKey,
   VITE_APP_RSA_PRIVATE_KEY: response.privateKey, INFOQ_API_RESPONSE_PUBLIC_KEY: response.publicKey
 };
@@ -55,7 +57,8 @@ test('独立响应密钥轮换改变缓存键', () => {
 });
 test('来源标识参与产物缓存，路径/API/端口由各自 Docker ARG 管理', () => {
   assert.notEqual(frontendBuildCacheKey({...env, INFOQ_CONFIG_SOURCE: 'isolated-test'}), digest);
-  assert.equal(frontendBuildCacheKey({...env, VITE_APP_CONTEXT_PATH: '/other/', VITE_APP_BASE_API: '/other-api', VITE_APP_PORT: '8080'}), digest);
+  assert.equal(frontendBuildCacheKey({...env, VITE_APP_CONTEXT_PATH: '/other/', VITE_APP_BASE_API: '/prod-api', VITE_APP_PORT: '8080'}), digest);
+  assert.throws(() => frontendBuildCacheKey({...env, VITE_APP_BASE_API: '/other-api'}), /VITE_APP_BASE_API/u);
 });
 test('密钥配对错误或禁用加密时不得输出可用缓存键', () => {
   assert.throws(() => frontendBuildCacheKey({...env, INFOQ_API_REQUEST_PRIVATE_KEY: rotated.privateKey}), /配对不匹配/u);

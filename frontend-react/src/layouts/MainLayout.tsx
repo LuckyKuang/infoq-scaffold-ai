@@ -23,6 +23,7 @@ import TagsViewBar from '@/layouts/TagsViewBar';
 import KeepAliveView from '@/layouts/KeepAliveView';
 import MenuIcon from '@/components/MenuIcon';
 import logo from '@/assets/logo/logo.png';
+import modal from '@/utils/modal';
 
 const { Header, Sider, Content } = Layout;
 
@@ -357,8 +358,12 @@ export default function MainLayout() {
                     return;
                   }
                   if (key === 'logout') {
-                    await logout();
-                    navigate('/login');
+                    try {
+                      await logout();
+                      navigate('/login');
+                    } catch (error) {
+                      modal.msgError(error);
+                    }
                   }
                 }
               }}

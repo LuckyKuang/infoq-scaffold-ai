@@ -69,7 +69,7 @@ export const initSSE = (baseUrl: string) => {
     if (!currentError) return;
     // VueUse may surface transient EventSource Event objects during reconnect churn.
     if (currentError instanceof Error) {
-      console.error('SSE connection error:', currentError);
+      console.error('SSE connection error');
     }
     error.value = null;
   });

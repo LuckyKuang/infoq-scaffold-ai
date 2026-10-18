@@ -1,5 +1,5 @@
 import { flushPromises, mount } from '@vue/test-utils';
-import { ElMessageBox } from 'element-plus/es';
+import { ElMessage, ElMessageBox } from 'element-plus/es';
 import { defineComponent, h, reactive } from 'vue';
 import Navbar from '@/layout/components/Navbar.vue';
 
@@ -231,6 +231,16 @@ describe('layout/components/Navbar', () => {
         redirect: encodeURIComponent('/system/user?tab=1')
       }
     });
+    expect(navbarMocks.closeAllPage).toHaveBeenCalledTimes(1);
+  });
+
+  it('reports unconfirmed server logout and still leaves the protected page', async () => {
+    navbarMocks.logout.mockRejectedValueOnce(new Error('服务端注销未确认'));
+    const wrapper = mountNavbar();
+    await wrapper.find('button.dropdown-logout').trigger('click');
+    await flushPromises();
+    expect(ElMessage.error).toHaveBeenCalledWith('服务端注销未确认');
+    expect(navbarMocks.routerReplace).toHaveBeenCalledWith(expect.objectContaining({ path: '/login' }));
     expect(navbarMocks.closeAllPage).toHaveBeenCalledTimes(1);
   });
 });

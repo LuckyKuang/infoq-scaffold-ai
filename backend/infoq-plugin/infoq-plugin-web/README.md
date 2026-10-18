@@ -4,6 +4,10 @@
 
 提供 Web 基础设施，包括验证码、XSS 过滤、可重复读取请求包装、国际化、静态资源映射和全局异常处理。
 
+`ResourcesConfig` 的 CORS filter 通过显式 registration 先于 SecurityFilterChain 执行。浏览器恢复资源优先使用安全插件提供的精确 Origin 策略，拒绝任意来源带凭据读取；普通 Bearer API 保持原有 CORS 策略。拒绝响应不输出凭据，恢复路径始终 no-store。合同和验证顺序见 [浏览器恢复会话](../../doc/browser-session.md)。
+
+`GlobalExceptionHandler` 将安全撤销边界的 `SecurityDependencyException` 映射为 HTTP/业务码 503；日志只含 operation、type、requestId，不记录原 Redis 异常消息、cause 或命令参数。
+
 ## 2. 关键入口
 
 - `CaptchaConfig`

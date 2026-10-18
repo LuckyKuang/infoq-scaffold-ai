@@ -6,6 +6,7 @@ import type { MessageRecipientVO } from '@/api/system/message/types';
 export type NoticeItem = MessageRecipientVO;
 
 export const useNoticeStore = defineStore('notice', () => {
+  let sessionGeneration = 0;
   const state = reactive({
     notices: [] as NoticeItem[],
     unreadCount: 0,
@@ -13,13 +14,15 @@ export const useNoticeStore = defineStore('notice', () => {
   });
 
   const refresh = async (pageSize = 10) => {
+    const generation = sessionGeneration;
     state.loading = true;
     try {
       const [listResponse, unreadResponse] = await Promise.all([listMessages({ pageNum: 1, pageSize }), getUnreadMessageCount()]);
+      if (generation !== sessionGeneration) return;
       state.notices = listResponse.rows;
       state.unreadCount = unreadResponse.data;
     } finally {
-      state.loading = false;
+      if (generation === sessionGeneration) state.loading = false;
     }
   };
 
@@ -39,6 +42,7 @@ export const useNoticeStore = defineStore('notice', () => {
   };
 
   const clearNotice = () => {
+    sessionGeneration++;
     state.notices = [];
     state.unreadCount = 0;
     state.loading = false;

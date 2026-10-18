@@ -1,12 +1,11 @@
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {spawnSync} from 'node:child_process';
 import {runPlaywrightFlow} from './playwright_core.mjs';
 import {resolveRepoRoot} from '../../../tools/lib/skill_runtime.mjs';
+import {DEFAULT_CAPTCHA_LOGIN_OPTIONS, loginWithRealCaptcha} from './captcha_login.mjs';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolveRepoRoot(scriptDir);
-const captchaLoginScript = path.join(repoRoot, 'skills', 'test-cli', 'scripts', 'captcha_login.mjs');
 
 function formatTimestamp(date = new Date()) {
   const pad = (value) => String(value).padStart(2, '0');
@@ -53,80 +52,21 @@ function buildDefaultEvidencePath(route, extension) {
   return path.join(repoRoot, 'tmp', 'test-cli', 'browser', 'admin-route-probe', `${normalizedRoute}.${formatTimestamp()}.${extension}`);
 }
 
-function collectProcessOutput(result) {
-  return [result.stdout, result.stderr, result.error?.message]
-    .filter(Boolean)
-    .map((value) => value.trim())
-    .filter(Boolean)
-    .join('\n');
-}
-
-function parseTokenOutput(output, label) {
-  const tokenLine = output
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter((line) => line.startsWith('TOKEN='))
-    .at(-1);
-
-  if (!tokenLine) {
-    throw new Error(`${label} succeeded without TOKEN output.\n${output}`);
-  }
-
-  const token = tokenLine.replace(/^TOKEN=/, '');
-  if (!token) {
-    throw new Error(`${label} returned an empty token.\n${output}`);
-  }
-
-  return token;
-}
-
-function runCaptchaLogin({backendUrl, clientId, username, password}) {
-  const runId = `admin-route-probe-${formatTimestamp()}-${process.pid}`;
-  const args = [
-    captchaLoginScript,
-    '--backend-url',
-    backendUrl,
-    '--client-id',
-    clientId,
-    '--run-id',
-    runId,
-    '--print-token'
-  ];
-  if (username && password) {
-    args.push('--username', username, '--password', password);
-  }
-
-  const result = spawnSync(process.execPath, args, {
-    cwd: repoRoot,
-    env: {
-      ...process.env,
-      BACKEND_URL: backendUrl,
-      CLIENT_ID: clientId,
-      USERNAME: username,
-      PASSWORD: password
-    },
-    encoding: 'utf8'
-  });
-  return {result, runId};
-}
-
-function acquireToken({
+async function acquireToken({
   backendUrl = 'http://127.0.0.1:8080',
   clientId = 'e5cd7e4891bf95d1d19206ce24a7b32e',
   username = '',
   password = ''
 }) {
   console.log('[admin-probe] acquiring admin token with Redis-seeded captcha login.');
-  const {result, runId} = runCaptchaLogin({backendUrl, clientId, username, password});
-  const output = collectProcessOutput(result);
-  if (result.status !== 0) {
-    throw new Error(
-      `Failed to acquire admin token from ${backendUrl} with Redis-seeded captcha login. Evidence run id: ${runId}\n` +
-      `Captcha login output:\n${output}`
-    );
-  }
+  const runId = `admin-route-probe-${formatTimestamp()}-${process.pid}`;
+  const {token} = await loginWithRealCaptcha({
+    ...DEFAULT_CAPTCHA_LOGIN_OPTIONS, backendUrl, clientId, username, password,
+    loginCandidates: process.env.LOGIN_CANDIDATES || DEFAULT_CAPTCHA_LOGIN_OPTIONS.loginCandidates,
+    rsaPublicKey: process.env.RSA_PUBLIC_KEY || DEFAULT_CAPTCHA_LOGIN_OPTIONS.rsaPublicKey
+  }, path.join(repoRoot, 'tmp/test-cli/e2e/captcha-login', runId));
   console.log(`[admin-probe] seeded captcha login evidence: tmp/test-cli/e2e/captcha-login/${runId}/`);
-  return parseTokenOutput(output, 'Captcha login');
+  return token;
 }
 
 async function fetchRoutes(backendUrl, clientId, token) {
@@ -151,6 +91,8 @@ async function fetchRoutes(backendUrl, clientId, token) {
 }
 
 export async function runAdminRouteProbe({
+  client = 'vue',
+  apiPrefix = '/dev-api',
   frontendOrigin = '',
   route = '/index',
   backendUrl = 'http://127.0.0.1:8080',
@@ -166,7 +108,7 @@ export async function runAdminRouteProbe({
   allowConsoleErrors = false
 }) {
   const normalizedRoute = route.startsWith('/') ? route : `/${route}`;
-  const token = acquireToken({ backendUrl, clientId, username, password });
+  const token = await acquireToken({ backendUrl, clientId, username, password });
   const routeTree = await fetchRoutes(backendUrl, clientId, token);
   const routeList = Array.from(new Set(getRouteList(routeTree))).sort();
 
@@ -194,8 +136,7 @@ export async function runAdminRouteProbe({
 
   await runPlaywrightFlow({
     targetUrl,
-    storageKey: 'Admin-Token',
-    storageValue: token,
+    browserSession: {token, client, clientId, apiPrefix},
     waitForText,
     waitForUrl: normalizedRoute,
     screenshotPath: effectiveScreenshotPath,

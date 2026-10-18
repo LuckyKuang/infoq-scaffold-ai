@@ -29,7 +29,8 @@ LoginView
 -> api/login.ts login()
 -> utils/request.ts
 -> POST /auth/login
--> setToken()
+-> GET /auth/browser-session/csrf -> PUT /auth/browser-session
+-> 绑定成功后 setToken()（仅内存）
 ```
 
 OAuth 登录沿用同一个 token 落地路径，但授权发起和回调多两段公开接口：
@@ -43,24 +44,26 @@ LoginView
 -> userStore.loginByOAuthTicket()
 -> exchangeOAuthTicket()
 -> POST /auth/oauth/ticket
--> setToken()
+-> GET csrf -> PUT browser-session -> setToken()（仅内存）
 ```
 
 登录成功后，真正把用户资料和动态菜单装进前端状态的动作由全局守卫 `permission.ts` 完成：
 
 ```text
 router.beforeEach
+-> userStore.bootstrap()（并发去重，OAuth callback 跳过旧身份恢复）
+-> 无内存 token 时 GET csrf -> POST browser-session
 -> userStore.getInfo()
 -> permissionStore.generateRoutes()
--> router.addRoute(...)
+-> permissionStore.installRoutes(...)
 -> return to.fullPath
 ```
 
-因此当前 Vue admin 的登录闭环同样是“先拿 token，再由守卫补齐用户信息与动态菜单”。
+绑定失败会以新 Bearer 尝试撤销刚创建的会话，且不会写入认证状态；清理失败单独报告。首载只有恢复 401 才匿名跳登录，403/503/网络错误展示失败与重试入口，不循环恢复，也不读取历史 localStorage token。
 
 密码提交、OAuth 授权和 ticket 兑换前先校验 Router 已解析的 `redirect`；缺省目标为 `/index`，非法/空值/数组显式拒绝且不创建会话。授权与绑定 API 使用 `/vue/user/profile` 等安全站内浏览器路径；回调导航移除当前前缀一次交给 history base，query/hash 保留原编码，不重复解码。
 
-登录、注册与忘记密码页面通过 `GET /auth/code` 读取 `registerEnabled`、`forgotPasswordEnabled`、`mailEnabled` 等能力位；自助邮件验证码和密码重置分别调用 `POST /auth/email/code` 与 `POST /auth/forgot-password`。SSE/WebSocket 由 `layout/index.vue` 挂载时初始化，SSE 在布局卸载和登出时关闭。
+登录、注册与忘记密码页面通过 `GET /auth/code` 读取 `registerEnabled`、`forgotPasswordEnabled`、`mailEnabled` 等能力位；自助邮件验证码和密码重置分别调用 `POST /auth/email/code` 与 `POST /auth/forgot-password`。SSE/WebSocket 仅在资料/路由恢复完成后的布局挂载时初始化；布局卸载、退出与认证失效关闭 owned 连接及重连 timer。
 
 ## 2. 后端菜单到动态路由注入
 
@@ -106,13 +109,15 @@ API 模块本身主要负责：
 `utils/request.ts` 的响应拦截器在收到 `401` 时会：
 
 ```text
-检测 isRelogin.show
--> ElMessageBox.confirm(...)
--> useUserStore().logout()
+校验响应原 Bearer 仍等于当前内存 token
+-> invalidateSession() 立即清本地状态/路由/实时连接
+-> 显式提示会话已失效
 -> router.replace('/login?redirect=...')
 ```
 
-这条链路说明当前 Vue admin 不会静默吞掉过期会话，而是显式提示并跳回登录页。若 token 已被后端撤销，`userStore.logout()` 仍会在 `/auth/logout` 失败后清理本地会话，避免继续携带旧 token 请求受保护接口。
+普通 401 不会递归调用专用恢复资源。浏览器恢复请求使用独立同源 fetch，绕过普通拦截器，也不会写入 `sessionObj`；密码和 OAuth ticket 已通过 `repeatSubmit:false` 排除该缓存。
+
+旧 Bearer 请求晚到的 401 不会注销新身份；App 在匿名且当前仍为受保护路由时隐藏旧 DOM，即使导航失败也不会继续显示旧页面。专用恢复/绑定/退出的 cookie 副作用在当前 tab 排队，新密码/OAuth 登录等待 pending logout，避免晚到 DELETE 清掉新 cookie。
 
 ## 5. 登出与副作用清理
 
@@ -120,13 +125,15 @@ API 模块本身主要负责：
 
 ```text
 userStore.logout()
--> closeSSE()
--> POST /auth/logout
--> finally removeToken()
--> 清空用户状态 / roles / permissions / token
+-> 清空内存 token / 用户状态 / roles / permissions / owned 路由 / 消息 / 标签页
+-> closeSSE() + closeWebSocket()
+-> GET csrf -> DELETE /auth/browser-session（无 Bearer）
+-> 同 scope + clientId tab 无凭据通知
 ```
 
 因此登录态的主动清理动作挂在 `user` store 上，而不是分散在各个页面。
+
+DELETE 失败会明确提示服务端注销未确认，本地仍保持已清理；不会宣称完全退出。恢复 cookie 与 CSRF cookie 由服务端 HttpOnly 管理，生产 Secure/SameSite=Strict，普通 Bearer 业务接口和实时 query 协议保持原有认证来源。只支持相对 API 前缀的同源代理。
 
 ## 6. 已知边界
 

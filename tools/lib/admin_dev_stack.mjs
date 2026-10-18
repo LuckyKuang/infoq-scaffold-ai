@@ -279,7 +279,11 @@ export async function runAdminDevStack(config, argv) {
             '-jar',
             backendJar,
             `--spring.profiles.active=${options.profile}`,
-            `--server.port=${options.backendPort}`
+            `--server.port=${options.backendPort}`,
+            '--security.browser-session.deployment-mode=development',
+            `--security.browser-session.origins=http://localhost:${options.frontendPort},http://127.0.0.1:${options.frontendPort}`,
+            '--security.browser-session.cookie-path=/dev-api/auth/browser-session',
+            '--security.browser-session.secure=false'
           ],
           {
             cwd: backendDir,

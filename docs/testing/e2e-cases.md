@@ -34,7 +34,7 @@ node skills/test-cli/scripts/validate-case-matrix.mjs docs/testing/case-matrix.j
 | 用例 ID | 客户端 | 类型 | 路由/模块 | 前置条件 | 步骤 | 断言 | 数据与 cleanup | 证据 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | WEB-AUTH-LOGIN-SMOKE | react, vue | P0 smoke | /login | 前端已启动，后端 /auth/code 可用 | 打开登录页；加载验证码；通过真实验证码登录入口获取 token；确认登录后可进入首页 | 登录页首屏可渲染；验证码接口真实调用；登录失败时错误可见；成功后不误跳 401/404；无 pageerror 和默认 console error | 只读，无业务数据 cleanup | screenshot、console、captcha attempt、report |
-| WEB-HOME-INDEX-SMOKE | react, vue | P0 smoke | /index | 已通过真实验证码登录；Admin-Token 写入浏览器存储 | 打开 /index；等待动态菜单和首页内容渲染 | 首页可见；用户信息接口和菜单接口成功；不出现空白页；不误跳登录页、401 或 404 | 只读，无业务数据 cleanup | screenshot、console、route report |
+| WEB-HOME-INDEX-SMOKE | react, vue | P0 smoke | /index | 已通过真实验证码登录；经同源 CSRF 引导/绑定建立 HttpOnly 会话 | 打开 /index；等待动态菜单和首页内容渲染 | 首页可见；用户信息接口和菜单接口成功；不出现空白页；不误跳登录页、401 或 404 | 只读，无业务数据 cleanup | screenshot、console、route report |
 | WEB-DYNAMIC-ROUTE-SMOKE | react, vue | P0/P1 route | 后端实时菜单中所有非参数化只读路由 | 已通过真实验证码登录；后端 /system/menu/getRouters 可用 | 从后端读取动态路由；逐条打开并与设计矩阵核对覆盖差异；等待页面首屏 | 页面非空；路由与菜单组件可匹配；无 pageerror；默认不允许 console error；失败时报告 client、route、component | 业务只读；跳过需要业务 ID 的参数化路由，除非提供隔离 fixture | 每路由 screenshot、console、report.json |
 | WEB-SYSTEM-USER-READONLY | react, vue | P1 readonly | /system/user | 账号具备用户查询权限；共享环境禁止写入 | 打开用户管理；执行查询；执行重置；切换分页或每页条数；查看权限按钮状态 | 查询请求参数符合表单；重置恢复默认条件；分页状态和表格数据一致；新增/编辑/删除/导入按钮只校验可见性，不点击写入动作 | 只读，不创建用户；无需 cleanup | screenshot、console、clicked-elements 或 blocker |
 | WEB-SYSTEM-ROLE-READONLY | react, vue | P1 readonly | /system/role | 账号具备角色查询权限 | 打开角色管理；执行查询/重置；打开分配用户入口但不提交；检查角色权限按钮 | 列表渲染稳定；分配用户入口可打开或跳转；未提交授权动作；权限按钮与当前账号权限一致 | 只读；禁止分配或取消分配用户；无需 cleanup | screenshot、console、clicked-elements 或 blocker |

@@ -5,6 +5,7 @@ type GuardSetupOptions = {
   roles?: string[];
   getInfoReject?: boolean;
   accessRoutes?: unknown[];
+  restored?: boolean;
 };
 
 type GuardRoute = {
@@ -17,7 +18,7 @@ type GuardRoute = {
   name: string;
 };
 
-type NavigationResult = true | string | Record<string, unknown>;
+type NavigationResult = boolean | string | Record<string, unknown>;
 type BeforeHook = (to: GuardRoute, from: GuardRoute) => Promise<NavigationResult> | NavigationResult;
 
 const createToRoute = (path: string, fullPath?: string, title?: string) => {
@@ -53,7 +54,8 @@ const loadPermissionGuard = async (options: GuardSetupOptions = {}) => {
   const userStore = {
     roles: options.roles ?? [],
     getInfo: vi.fn(),
-    logout: vi.fn(() => Promise.resolve())
+    logout: vi.fn(() => Promise.resolve()),
+    bootstrap: vi.fn()
   };
   const settingsStore = {
     setTitle: vi.fn()
@@ -65,8 +67,10 @@ const loadPermissionGuard = async (options: GuardSetupOptions = {}) => {
 
   if (options.getInfoReject) {
     userStore.getInfo.mockRejectedValue(new Error('get-info-failed'));
+    userStore.bootstrap.mockRejectedValue(new Error('get-info-failed'));
   } else {
     userStore.getInfo.mockResolvedValue(undefined);
+    userStore.bootstrap.mockResolvedValue(options.restored ?? false);
   }
   permissionStore.generateRoutes.mockResolvedValue(
     options.accessRoutes ?? [
@@ -85,7 +89,7 @@ const loadPermissionGuard = async (options: GuardSetupOptions = {}) => {
     default: routerMock
   }));
   vi.doMock('@/utils/auth', () => ({
-    getToken: vi.fn(() => options.token ?? '')
+    getToken: vi.fn(() => options.token ?? (options.restored ? 'restored-token' : ''))
   }));
   vi.doMock('@/utils/request', () => ({
     isRelogin
@@ -140,6 +144,7 @@ describe('permission route guard', () => {
     const result = await ctx.beforeHook(createToRoute('/oauth/callback'), createToRoute('/'));
 
     expect(result).toBe(true);
+    expect(ctx.userStore.bootstrap).not.toHaveBeenCalled();
   });
 
   it('redirects authenticated user away from login page', async () => {
@@ -167,28 +172,44 @@ describe('permission route guard', () => {
     expect(result).toBe(true);
   });
 
-  it('loads user info and dynamic routes when authenticated roles are empty', async () => {
-    const ctx = await loadPermissionGuard({ token: 'token-a', roles: [] });
+  it('waits for store bootstrap and resolves the target again after dynamic route installation', async () => {
+    const ctx = await loadPermissionGuard({ restored: true });
     const to = createToRoute('/system/menu', '/system/menu?type=1', '菜单管理');
 
     const result = await ctx.beforeHook(to, createToRoute('/'));
 
-    expect(ctx.userStore.getInfo).toHaveBeenCalled();
-    expect(ctx.permissionStore.generateRoutes).toHaveBeenCalled();
-    expect(ctx.routerMock.addRoute).toHaveBeenCalledTimes(1);
-    expect(ctx.routerMock.addRoute).toHaveBeenCalledWith(expect.objectContaining({ path: '/system/user' }));
+    expect(ctx.userStore.bootstrap).toHaveBeenCalledTimes(1);
     expect(ctx.isRelogin.show).toBe(false);
     expect(result).toBe('/system/menu?type=1');
   });
 
-  it('handles getInfo failure by logout and fallback navigation', async () => {
+  it('stops failed restoration with an explicit error instead of retrying or logging out', async () => {
     const ctx = await loadPermissionGuard({ token: 'token-a', roles: [], getInfoReject: true });
     const result = await ctx.beforeHook(createToRoute('/system/dept'), createToRoute('/'));
 
-    expect(ctx.userStore.logout).toHaveBeenCalled();
+    expect(ctx.userStore.logout).not.toHaveBeenCalled();
     expect(messageMock.error).toHaveBeenCalled();
-    expect(result).toEqual({ path: '/' });
+    expect(result).toBe(false);
     expect(ctx.isRelogin.show).toBe(false);
+  });
+
+  it('does not finish navigation until restoration settles', async () => {
+    const ctx = await loadPermissionGuard();
+    let finish!: (value: boolean) => void;
+    ctx.userStore.bootstrap.mockReturnValue(
+      new Promise((resolve) => {
+        finish = resolve;
+      })
+    );
+    let finished = false;
+    const navigation = Promise.resolve(ctx.beforeHook(createToRoute('/system/user'), createToRoute('/'))).then((value) => {
+      finished = true;
+      return value;
+    });
+    await Promise.resolve();
+    expect(finished).toBe(false);
+    finish(false);
+    await expect(navigation).resolves.toBe('/login?redirect=%2Fsystem%2Fuser');
   });
 
   it('stops progress bar on afterEach hook', async () => {

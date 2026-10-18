@@ -2,6 +2,8 @@ package cc.infoq.common.security.auth;
 
 import cc.infoq.common.domain.dto.RoleDTO;
 import cc.infoq.common.domain.model.LoginUser;
+import cc.infoq.common.exception.SecurityDependencyException;
+import org.redisson.client.RedisException;
 import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
@@ -21,6 +23,41 @@ import static org.mockito.Mockito.*;
 
 @Tag("dev")
 class SecurityTokenServiceTest {
+
+    @Test
+    void revocationDependencyFailuresKeepOperationAndTypeWithoutRedisArguments() {
+        SecurityTokenStore store = mock(SecurityTokenStore.class);
+        var dependencyFailure = new RedisException("sensitive-command-marker access-token");
+        when(store.revokeByUserId(20L)).thenThrow(dependencyFailure);
+        when(store.revokeByUserIds(List.of(20L, 21L))).thenThrow(dependencyFailure);
+        when(store.revokeByRoleId(6L)).thenThrow(dependencyFailure);
+        var service = new SecurityTokenService(properties(), store);
+        List<java.util.function.Supplier<Integer>> operations = List.of(
+            () -> service.revokeByUserId(20L),
+            () -> service.revokeByUserIds(List.of(20L, 21L)),
+            () -> service.revokeByRoleId(6L));
+        List<String> operationNames = List.of("revoke_user", "revoke_users", "revoke_role");
+        for (int index = 0; index < operations.size(); index++) {
+            var operation = operations.get(index);
+            var exception = assertThrows(SecurityDependencyException.class, operation::get);
+            assertEquals(operationNames.get(index), exception.operation());
+            assertEquals("RedisException", exception.dependencyType());
+            assertNull(exception.getCause());
+            var stack = new java.io.StringWriter();
+            exception.printStackTrace(new java.io.PrintWriter(stack));
+            assertFalse(stack.toString().contains("sensitive-command-marker"));
+            assertFalse(stack.toString().contains("access-token"));
+        }
+    }
+
+    @Test
+    void revocationDoesNotDisguiseProgrammingErrorsAsDependencyFailures() {
+        SecurityTokenStore store = mock(SecurityTokenStore.class);
+        var failure = new IllegalArgumentException("invalid user reference");
+        when(store.revokeByUserId(20L)).thenThrow(failure);
+        var service = new SecurityTokenService(properties(), store);
+        assertSame(failure, assertThrows(IllegalArgumentException.class, () -> service.revokeByUserId(20L)));
+    }
 
     @Test
     @DisplayName("issue/parse: should create jwt with light claims and store full LoginUser session")

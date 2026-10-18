@@ -10,6 +10,10 @@ import org.redisson.api.RBucket;
 import org.redisson.api.RBuckets;
 import org.redisson.api.RSet;
 import org.redisson.api.RedissonClient;
+import org.redisson.api.RBatch;
+import org.redisson.api.RBucketAsync;
+import org.redisson.api.RSetAsync;
+import org.redisson.misc.CompletableFutureWrapper;
 import org.springframework.context.support.GenericApplicationContext;
 
 import java.lang.reflect.Field;
@@ -17,6 +21,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -30,6 +35,9 @@ class SecurityTokenStoreTest {
     private static RBucket<Object> bucket;
     private static RBuckets buckets;
     private static RSet<String> set;
+    private static RBatch batch;
+    private static RBucketAsync<Object> batchBucket;
+    private static RSetAsync<String> batchSet;
 
     @BeforeAll
     @SuppressWarnings("unchecked")
@@ -47,15 +55,21 @@ class SecurityTokenStoreTest {
         bucket = mock(RBucket.class);
         buckets = mock(RBuckets.class);
         set = mock(RSet.class);
+        batch = mock(RBatch.class);
+        batchBucket = mock(RBucketAsync.class);
+        batchSet = mock(RSetAsync.class);
         when(redissonClient.getBucket(anyString())).thenAnswer(invocation -> bucket);
         when(redissonClient.getBuckets()).thenReturn(buckets);
         when(redissonClient.<String>getSet(anyString())).thenAnswer(invocation -> set);
         when(set.expire(any(Duration.class))).thenReturn(true);
+        when(redissonClient.createBatch()).thenReturn(batch);
+        when(batch.getBucket(anyString())).thenReturn(batchBucket);
+        when(batch.<String>getSet(anyString())).thenReturn(batchSet);
     }
 
     @BeforeEach
     void clearInteractions() {
-        clearInvocations(redissonClient, bucket, buckets, set);
+        clearInvocations(redissonClient, bucket, buckets, set, batch, batchBucket, batchSet);
     }
 
     @Test
@@ -107,14 +121,41 @@ class SecurityTokenStoreTest {
         int count = store.revokeByUserId(1L);
 
         assertEquals(1, count);
-        verify(redissonClient, times(2)).getSet(store.userIndexKey(1L));
+        verify(redissonClient).getSet(store.userIndexKey(1L));
         verify(set).readAll();
         verify(buckets).get(any(String[].class));
         verify(bucket, never()).get();
-        verify(redissonClient).getBucket(store.sessionKey("digest-1"));
-        verify(redissonClient).getBucket(store.sessionKey("digest-missing"));
-        verify(bucket, times(3)).delete();
-        verify(set, times(2)).remove("digest-1");
+        verify(batch).getBucket(store.sessionKey("digest-1"));
+        verify(batch).getBucket(store.sessionKey("digest-missing"));
+        verify(batchBucket, times(3)).deleteAsync();
+        verify(batchBucket).setAsync(eq(Boolean.TRUE), any(Duration.class));
+        verify(batchSet, times(2)).removeAsync("digest-1");
+        verify(batch).execute();
+    }
+
+    @Test
+    void revokeByUserIdsBatchesDistinctIndexesAndDoesNotRepeatSessionLoads() {
+        SecurityTokenStore store = new SecurityTokenStore();
+        SecurityTokenSession session = session("shared-digest");
+        when(batchSet.readAllAsync()).thenAnswer(ignored -> new CompletableFutureWrapper<>(Set.of("shared-digest")));
+        when(buckets.get(any(String[].class))).thenReturn(Map.of(store.sessionKey("shared-digest"), session));
+
+        assertEquals(1, store.revokeByUserIds(Arrays.asList(1L, 2L, 1L, null)));
+
+        verify(batch, times(2)).execute();
+        verify(batchSet, times(2)).readAllAsync();
+        verify(buckets).get(store.sessionKey("shared-digest"));
+        verify(redissonClient, never()).getSet(anyString());
+    }
+
+    @Test
+    void moreThanFiveHundredUserIndexesAreReadInBoundedGroups() {
+        when(batchSet.readAllAsync()).thenAnswer(ignored -> new CompletableFutureWrapper<>(Set.of()));
+        List<Long> ids = java.util.stream.LongStream.rangeClosed(1, 501).boxed().toList();
+        assertEquals(0, new SecurityTokenStore().revokeByUserIds(ids));
+        verify(batch, times(2)).execute();
+        verify(batchSet, times(501)).readAllAsync();
+        verifyNoInteractions(buckets);
     }
 
     @Test

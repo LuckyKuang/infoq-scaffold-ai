@@ -36,12 +36,12 @@ Admin（Vue `frontend-vue` / React `frontend-react`）：手动启动时不要�
 
 ```bash
 node skills/test-cli/scripts/playwright_cli.mjs admin-route-probe --list-routes
-node skills/test-cli/scripts/captcha_login.mjs --backend-url http://127.0.0.1:8080 --print-token
+node skills/test-cli/scripts/captcha_login.mjs --backend-url http://127.0.0.1:8080 --json
 node skills/test-cli/scripts/run_admin_e2e.mjs --client vue --route-limit 1
 ```
 
 - `admin-route-probe --list-routes` 在真实登录后列出后端路由，不启动浏览器；会写 Redis 验证码种子和会话，不能用于生产只读核查。
-- `captcha_login.mjs --print-token` 输出真实 token（`TOKEN=...`），供脚本或人工核对使用；种子模式需配置 `INFOQ_TEST_REDIS_*` 或 `--redis-*`，且与后端使用同一 Redis。
+- `captcha_login.mjs --json` 只输出脱敏登录摘要；旧 `--print-token` 显式拒绝。内部 runner 直接复用 `loginWithRealCaptcha`，有效 token 仅在进程内传递。种子模式需配置 `INFOQ_TEST_REDIS_*` 或 `--redis-*`，且与后端使用同一 Redis。
 - 需要逐路由截图、console 门禁与报告时使用 `run_admin_e2e.mjs`。
 
 ## 默认 Admin URL

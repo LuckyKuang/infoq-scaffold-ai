@@ -44,4 +44,6 @@
 
 ## 安全与通知边界
 
+`infoq-system` 的专用浏览器恢复资源返回同一 JWT，退出复用撤销和登录审计；用户/密码/用户角色/角色数据范围的安全写操作在成功 SQL 后提交前撤销旧会话。依赖失败不能返回假成功，详见 [浏览器恢复会话](../doc/browser-session.md)。
+
 `infoq-system` 保留文件接口权限与批量消息持久化；OAuth 绑定先校验站内回跳再创建一次性票据，错误不公开 Provider 详情；Push 仅提交后尝试并按通道分类。回归及真实环境限制见 [后端生产边界回归](../doc/production-verification.md)。

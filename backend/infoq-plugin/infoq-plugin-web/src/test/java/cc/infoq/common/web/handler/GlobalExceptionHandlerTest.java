@@ -2,6 +2,7 @@ package cc.infoq.common.web.handler;
 
 import cc.infoq.common.domain.ApiResult;
 import cc.infoq.common.exception.ServiceException;
+import cc.infoq.common.exception.SecurityDependencyException;
 import cc.infoq.common.exception.SseException;
 import cc.infoq.common.exception.base.BaseException;
 import cc.infoq.common.utils.SpringUtils;
@@ -35,6 +36,13 @@ import org.springframework.web.context.request.async.AsyncRequestTimeoutExceptio
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.NoHandlerFoundException;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -42,6 +50,8 @@ import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @Tag("dev")
 class GlobalExceptionHandlerTest {
@@ -54,6 +64,37 @@ class GlobalExceptionHandlerTest {
         context.registerBean(ObjectMapper.class, () -> new ObjectMapper());
         context.refresh();
         new SpringUtils().setApplicationContext(context);
+    }
+
+    @Test
+    void securityDependencyFailureReturnsHttp503AndOnlySafeDiagnosticFields() throws Exception {
+        Logger logger = (Logger) LoggerFactory.getLogger(GlobalExceptionHandler.class);
+        var events = new ListAppender<ILoggingEvent>();
+        events.start();
+        logger.addAppender(events);
+        try {
+            var mvc = MockMvcBuilders.standaloneSetup(new DependencyFailureController()).setControllerAdvice(handler).build();
+            mvc.perform(get("/security-dependency"))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.code").value(503))
+                .andExpect(jsonPath("$.msg").value("认证存储暂不可用，请稍后重试"));
+            ILoggingEvent event = events.list.stream()
+                .filter(item -> item.getFormattedMessage().startsWith("security_dependency "))
+                .findFirst().orElseThrow();
+            assertTrue(event.getFormattedMessage().contains("operation=revoke_user type=IllegalStateException requestId="));
+            assertNull(event.getThrowableProxy(), "raw dependency causes must not enter logs");
+        } finally {
+            logger.detachAppender(events);
+            events.stop();
+        }
+    }
+
+    @RestController
+    private static class DependencyFailureController {
+        @GetMapping("/security-dependency")
+        public void fail() {
+            throw new SecurityDependencyException("revoke_user", IllegalStateException.class);
+        }
     }
 
     @Test

@@ -7,7 +7,9 @@ type MergeableRecord = Record<string, unknown>;
 type TreeNode = Record<string, unknown>;
 
 const isPlainObject = (value: unknown): value is MergeableRecord => {
-  return typeof value === 'object' && value !== null && !Array.isArray(value) && (value as { constructor?: unknown }).constructor === Object;
+  if (typeof value !== 'object' || value === null) return false;
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
 };
 
 const toDictItems = (datas: DictDataSource): DictDataItem[] => {
@@ -152,21 +154,32 @@ export const parseStrEmpty = (str: unknown): string => {
 
 // 数据合并
 export const mergeRecursive = <T extends MergeableRecord, U extends MergeableRecord>(source: T, target: U): T & U => {
-  const sourceRecord = source as MergeableRecord;
-  const targetRecord = target as MergeableRecord;
-  for (const key in targetRecord) {
-    try {
-      const targetValue = targetRecord[key];
-      const sourceValue = sourceRecord[key];
-      if (isPlainObject(targetValue) && isPlainObject(sourceValue)) {
-        sourceRecord[key] = mergeRecursive(sourceValue, targetValue);
-      } else {
-        sourceRecord[key] = targetValue;
-      }
-    } catch {
-      sourceRecord[key] = targetRecord[key];
+  const pending: unknown[] = [source, target];
+  const visited = new WeakSet<object>();
+  // 先检查完整输入图，覆盖直接赋值的对象与数组，避免部分合并后才发现危险键。
+  while (pending.length > 0) {
+    const value = pending.pop();
+    if (typeof value !== 'object' || value === null || visited.has(value)) continue;
+    visited.add(value);
+    for (const key of Object.getOwnPropertyNames(value)) {
+      if (key === '__proto__' || key === 'constructor' || key === 'prototype') throw new Error(`Unsafe merge key: ${key}`);
+      pending.push((value as MergeableRecord)[key]);
     }
   }
+
+  const mergeOwn = (destination: MergeableRecord, incoming: MergeableRecord): MergeableRecord => {
+    for (const key of Object.keys(incoming)) {
+      if (key === '__proto__' || key === 'constructor' || key === 'prototype') throw new Error(`Unsafe merge key: ${key}`);
+      const own = Object.hasOwn(destination, key);
+      const sourceValue = own ? destination[key] : undefined;
+      const targetValue = incoming[key];
+      const value = isPlainObject(sourceValue) && isPlainObject(targetValue) ? mergeOwn(sourceValue, targetValue) : targetValue;
+      if (own) destination[key] = value;
+      else Object.defineProperty(destination, key, { value, writable: true, enumerable: true, configurable: true });
+    }
+    return destination;
+  };
+  mergeOwn(source, target);
   return source as T & U;
 };
 

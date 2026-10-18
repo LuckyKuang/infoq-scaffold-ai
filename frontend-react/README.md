@@ -9,10 +9,10 @@
 当前代码能直接确认的几个关键事实：
 
 - `RootProviders.tsx` 负责 Ant Design locale、主题 token、暗色模式和全局样式变量。
-- `AuthGuard.tsx` 负责 token 检查、登录后 `getInfo()` 和动态路由装配的引导；若用户初始化失败，会清理本地会话并带 redirect 回登录页。
+- `AuthGuard.tsx` 等待共享会话恢复、`getInfo()` 和动态路由装配；明确401回登录，403/503/网络失败显示可重试错误。
 - `BackendRouteView.tsx` 负责把后端返回的 `component` 字符串解析成真实页面组件，并同步 tags view。
 - `src/api/login.ts` 的登录、OAuth ticket、注册和忘记密码公开请求沿用既有加密请求约定；`GET /auth/code` 现在也是登录页公开能力位的真值来源。
-- `useUserStore` 在 password/OAuth ticket 登录成功后会初始化 SSE 和 WebSocket；已有 token 刷新进入受保护路由时，`AuthGuard` 会复用同一入口恢复实时通道。登出时会显式关闭连接，并且 `/auth/logout` 失败也会清理本地会话。
+- `useUserStore` 在 password/OAuth ticket 登录后先绑定 HttpOnly 浏览器恢复会话，access token 只保留内存；刷新通过受保护的同源CSRF恢复资源取回有效身份。用户与路由装载成功后才初始化 SSE/WebSocket；退出关闭连接、清理本地状态并调用专用 DELETE，服务端撤销失败显式报告。回归步骤见 [会话测试 SOP](./doc/auth-session-testing.md)。
 
 ## 模块导航
 

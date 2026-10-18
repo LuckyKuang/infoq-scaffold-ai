@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setToken, removeToken } from '@/utils/auth';
 import { useNoticeStore } from '@/store/modules/notice';
 import { closeSSE, initSSE } from '@/utils/sse';
 import { closeWebSocket, initWebSocket } from '@/utils/websocket';
@@ -49,7 +50,7 @@ describe('utils/realtime', () => {
     vi.stubEnv('VITE_APP_SSE', 'true');
     vi.stubEnv('VITE_APP_WEBSOCKET', 'true');
 
-    localStorage.setItem('Admin-Token', 'token-test');
+    setToken('token-test');
     refreshMock.mockResolvedValue(undefined);
     useNoticeStore.setState({ notices: [], unreadCount: 0, loading: false, refresh: refreshMock });
     MockEventSource.instances = [];
@@ -62,6 +63,7 @@ describe('utils/realtime', () => {
   afterEach(() => {
     closeSSE();
     closeWebSocket();
+    removeToken();
     vi.useRealTimers();
     vi.unstubAllGlobals();
     vi.unstubAllEnvs();
@@ -113,5 +115,21 @@ describe('utils/realtime', () => {
     vi.advanceTimersByTime(3000);
 
     expect(MockWebSocket.instances).toHaveLength(2);
+  });
+
+  it('keeps repeated init idempotent and cancels owned reconnect timers on logout', () => {
+    initSSE('/resource/sse');
+    initSSE('/resource/sse');
+    initWebSocket('/resource/ws');
+    initWebSocket('/resource/ws');
+    expect(MockEventSource.instances).toHaveLength(1);
+    expect(MockWebSocket.instances).toHaveLength(1);
+    MockWebSocket.instances[0].onclose?.();
+    removeToken();
+    closeSSE();
+    closeWebSocket();
+    vi.advanceTimersByTime(30000);
+    expect(MockWebSocket.instances).toHaveLength(1);
+    expect(MockEventSource.instances[0].close).toHaveBeenCalled();
   });
 });

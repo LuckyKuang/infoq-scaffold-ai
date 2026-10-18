@@ -67,4 +67,6 @@
 
 ## 生产边界
 
+浏览器恢复由 security 插件提供有限 scope opaque 映射与框架 CSRF，web 插件在 SecurityFilterChain 前执行优先严格 CORS；业务 API 的 Bearer 边界保持。配置、cookie/503 语义及回归见 [浏览器恢复会话](../doc/browser-session.md)。
+
 安全插件仅精确公开小程序能力 GET；OAuth 插件按受控部署 base 选择 callback；翻译插件采用字段独立 contextual serializer 并在失败时明确终止序列化；Push 逐通道报告 published/失败而不证明客户端送达；OSS 区分内部 endpoint 与外部签名 origin，生产 API RSA 由环境注入并核最少 2048 位。各叶子 README 与 [验证 SOP](../doc/production-verification.md) 是配置和测试入口。

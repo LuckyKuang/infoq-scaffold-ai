@@ -103,13 +103,8 @@ detect_public_base_url() {
     fail "生产安装必须在受控环境文件提供 INFOQ_PUBLIC_BASE_URL=https://...，禁止自动探测 HTTP 地址"
   fi
 
-  local first_ip
-  first_ip="$(hostname -I 2>/dev/null | awk '{print $1}' || true)"
-  if [[ -z "${first_ip}" ]]; then
-    first_ip="127.0.0.1"
-  fi
-  INFOQ_PUBLIC_BASE_URL="http://${first_ip}"
-  log "未显式设置 INFOQ_PUBLIC_BASE_URL，使用探测值: ${INFOQ_PUBLIC_BASE_URL}"
+  INFOQ_PUBLIC_BASE_URL="http://127.0.0.1"
+  log "未显式设置 INFOQ_PUBLIC_BASE_URL，使用开发 loopback 地址: ${INFOQ_PUBLIC_BASE_URL}"
 }
 
 normalize_frontend_target() {
@@ -232,6 +227,10 @@ write_env_file() {
     {
       write_env_line INFOQ_VERSION "${INFOQ_VERSION}"
       write_env_line INFOQ_PUBLIC_BASE_URL "${INFOQ_PUBLIC_BASE_URL}"
+      write_env_line INFOQ_BROWSER_SESSION_ORIGINS "${INFOQ_BROWSER_SESSION_ORIGINS}"
+      write_env_line INFOQ_BROWSER_SESSION_COOKIE_PATH "${INFOQ_BROWSER_SESSION_COOKIE_PATH}"
+      write_env_line INFOQ_BROWSER_SESSION_SECURE "${INFOQ_BROWSER_SESSION_SECURE}"
+      write_env_line INFOQ_BROWSER_SESSION_TTL_SECONDS "${INFOQ_BROWSER_SESSION_TTL_SECONDS}"
       write_env_line INFOQ_DEPLOY_ROOT "${INFOQ_DEPLOY_ROOT}"
       write_env_line INFOQ_FRONTEND_TARGET "${INFOQ_FRONTEND_TARGET}"
       write_env_line MYSQL_ROOT_PASSWORD "${MYSQL_ROOT_PASSWORD}"
@@ -284,10 +283,24 @@ generate_env_file() {
   INFOQ_ADMIN_USERNAME="admin_$(random_lower_alnum 12)"
   INFOQ_ADMIN_PASSWORD="$(generate_admin_password)"
   INFOQ_CONFIG_SOURCE=isolated-test
+  INFOQ_BROWSER_SESSION_ORIGINS="${INFOQ_PUBLIC_BASE_URL}"
+  INFOQ_BROWSER_SESSION_COOKIE_PATH=/prod-api/auth/browser-session
+  INFOQ_BROWSER_SESSION_SECURE=false
+  INFOQ_BROWSER_SESSION_TTL_SECONDS=2592000
   generate_rsa_config
 
   write_env_file
   write_credentials
+}
+
+emit_runtime_config() {
+  # Bash 3.2 会重解析进程替换中的 heredoc；独立函数保留 JavaScript 字面量。
+  node --input-type=module - "${SOURCE_DIR}/tools/production_config.mjs" "${INFOQ_ENV_FILE}" <<'NODE'
+import {pathToFileURL} from 'node:url';
+const {readProductionConfig, runtimeConfigEntries} = await import(pathToFileURL(process.argv[2]));
+for (const [key, value] of runtimeConfigEntries(readProductionConfig(process.argv[3]))) process.stdout.write(`${key}\0${value}\0`);
+process.stdout.write('INFOQ_ENV_LOAD_COMPLETE\0true\0');
+NODE
 }
 
 load_env_file() {
@@ -296,31 +309,29 @@ load_env_file() {
   node "${SOURCE_DIR}/tools/production_config.mjs" check --scope deploy --env-file "${INFOQ_ENV_FILE}" >/dev/null
   while IFS= read -r -d '' name && IFS= read -r -d '' value; do
     if [[ "${name}" == "INFOQ_ENV_LOAD_COMPLETE" ]]; then complete=true; else export "${name}=${value}"; fi
-  done < <(node --input-type=module - "${SOURCE_DIR}/tools/production_config.mjs" "${INFOQ_ENV_FILE}" <<'NODE'
-import {pathToFileURL} from 'node:url';
-const {readProductionConfig, runtimeConfigEntries} = await import(pathToFileURL(process.argv[2]));
-for (const [key, value] of runtimeConfigEntries(readProductionConfig(process.argv[3]))) process.stdout.write(`${key}\0${value}\0`);
-process.stdout.write('INFOQ_ENV_LOAD_COMPLETE\0true\0');
-NODE
-  )
+  done < <(emit_runtime_config)
   [[ "${complete}" == true ]] || fail "受控环境文件加载失败"
   [[ "${INFOQ_ENV_FILE}" == "${source_env_file}" ]] || fail "受控配置不得改变 INFOQ_ENV_FILE 指向"
   validate_install_paths
 }
 
-generate_rsa_config() {
-  local name value
-  while IFS= read -r -d '' name && IFS= read -r -d '' value; do
-    printf -v "${name}" '%s' "${value}"
-  done < <(node --input-type=module <<'NODE'
+emit_rsa_config() {
+  node --input-type=module <<'NODE'
 import {generateKeyPairSync} from 'node:crypto';
 for (const [publicName, privateName] of [['VITE_APP_RSA_PUBLIC_KEY', 'INFOQ_API_REQUEST_PRIVATE_KEY'], ['INFOQ_API_RESPONSE_PUBLIC_KEY', 'VITE_APP_RSA_PRIVATE_KEY']]) {
   const pair = generateKeyPairSync('rsa', {modulusLength: 2048, publicKeyEncoding: {format: 'der', type: 'spki'}, privateKeyEncoding: {format: 'der', type: 'pkcs8'}});
   process.stdout.write(`${publicName}\0${pair.publicKey.toString('base64')}\0${privateName}\0${pair.privateKey.toString('base64')}\0`);
 }
+process.stdout.write('INFOQ_RSA_LOAD_COMPLETE\0true\0');
 NODE
-  )
-  [[ -n "${INFOQ_API_REQUEST_PRIVATE_KEY:-}" && -n "${VITE_APP_RSA_PRIVATE_KEY:-}" ]] || fail "RSA 生成失败"
+}
+
+generate_rsa_config() {
+  local name value complete=false
+  while IFS= read -r -d '' name && IFS= read -r -d '' value; do
+    if [[ "${name}" == "INFOQ_RSA_LOAD_COMPLETE" ]]; then complete=true; else printf -v "${name}" '%s' "${value}"; fi
+  done < <(emit_rsa_config)
+  [[ "${complete}" == true && -n "${INFOQ_API_REQUEST_PRIVATE_KEY:-}" && -n "${VITE_APP_RSA_PRIVATE_KEY:-}" ]] || fail "RSA 生成失败"
 }
 
 require_env_values() {

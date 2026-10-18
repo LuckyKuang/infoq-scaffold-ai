@@ -8,6 +8,7 @@ import cc.infoq.common.mybatis.core.page.PageQuery;
 import cc.infoq.common.mybatis.core.page.TableDataInfo;
 import cc.infoq.common.mybatis.helper.DataPermissionHelper;
 import cc.infoq.common.security.auth.LoginUserContext;
+import cc.infoq.common.security.auth.SecurityTokenService;
 import cc.infoq.common.service.UserService;
 import cc.infoq.common.utils.MapstructUtils;
 import cc.infoq.common.utils.ObjectUtils;
@@ -56,6 +57,7 @@ public class SysUserServiceImpl implements SysUserService, UserService {
     private final SysPostMapper sysPostMapper;
     private final SysUserRoleMapper sysUserRoleMapper;
     private final SysUserPostMapper sysUserPostMapper;
+    private final SecurityTokenService securityTokenService;
 
     @Override
     public TableDataInfo<SysUserVo> selectPageUserList(SysUserBo user, PageQuery pageQuery) {
@@ -375,6 +377,7 @@ public class SysUserServiceImpl implements SysUserService, UserService {
         if (flag < 1) {
             throw new ServiceException("修改用户{}信息失败", user.getUserName());
         }
+        securityTokenService.revokeByUserId(user.getUserId());
         return flag;
     }
 
@@ -388,6 +391,9 @@ public class SysUserServiceImpl implements SysUserService, UserService {
     @Transactional(rollbackFor = Exception.class)
     public void insertUserAuth(Long userId, Long[] roleIds) {
         insertUserRole(userId, roleIds, true);
+        if (ArrayUtil.isNotEmpty(roleIds)) {
+            securityTokenService.revokeByUserId(userId);
+        }
     }
 
     /**
@@ -398,11 +404,16 @@ public class SysUserServiceImpl implements SysUserService, UserService {
      * @return 结果
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public int updateUserStatus(Long userId, String status) {
-        return sysUserMapper.update(null,
+        int rows = sysUserMapper.update(null,
             new LambdaUpdateWrapper<SysUser>()
                 .set(SysUser::getStatus, status)
                 .eq(SysUser::getUserId, userId));
+        if (rows > 0) {
+            securityTokenService.revokeByUserId(userId);
+        }
+        return rows;
     }
 
     /**
@@ -446,11 +457,16 @@ public class SysUserServiceImpl implements SysUserService, UserService {
      * @return 结果
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public int resetUserPwd(Long userId, String password) {
-        return sysUserMapper.update(null,
+        int rows = sysUserMapper.update(null,
             new LambdaUpdateWrapper<SysUser>()
                 .set(SysUser::getPassword, password)
                 .eq(SysUser::getUserId, userId));
+        if (rows > 0) {
+            securityTokenService.revokeByUserId(userId);
+        }
+        return rows;
     }
 
     /**
@@ -555,6 +571,7 @@ public class SysUserServiceImpl implements SysUserService, UserService {
         if (flag < 1) {
             throw new ServiceException("删除用户失败!");
         }
+        securityTokenService.revokeByUserId(userId);
         return flag;
     }
 
@@ -595,6 +612,7 @@ public class SysUserServiceImpl implements SysUserService, UserService {
         if (flag < 1) {
             throw new ServiceException("删除用户失败!");
         }
+        securityTokenService.revokeByUserIds(ids);
         return flag;
     }
 

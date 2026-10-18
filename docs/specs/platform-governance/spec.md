@@ -303,3 +303,69 @@ push/release CLI 的远程写命令 必须 默认预览且不产生远程写入�
 - 当本轮修复交付验收。
 - 则文档必须同步当前 config/SQL/依赖、性能、可观测性、回滚与残余风险，并按已执行证据关闭旧阻塞。
 - 并且`docs/plan/` 与 `openspec/changes/`必须继续 Git 忽略并由用户手动清理，长期规则必须应用到稳定规格与复用 SOP。
+
+### Requirement: CI 使用真实且一致的构建基线
+
+所有实际构建 backend 的 CI、Release 和安全扫描入口 MUST 在构建前建立可用的 JDK 21 与固定 Maven 3.9.12，下载 MUST 通过 SHA-512 完整性校验，输出版本并通过仓库 runner 执行；MUST NOT 依赖 runner 的浮动默认 Maven。仓库通用 runner SHALL 继续校验 Maven 3.9.x。仓库承诺的 macOS 部署工具路径 MUST 在 Bash 3.2 基线上保持嵌入脚本字面量和参数语义。
+
+#### Scenario: 新 runner 不提供 Maven 3.9.x
+
+- **WHEN** 新建 GitHub runner 的默认 Maven 缺失或为不受支持的主版本。
+- **THEN** workflow MUST 显式安装或选择受支持 Maven 并核验版本后构建；缺失依赖和安装失败 MUST 非零退出。
+- **AND** MUST NOT 通过放宽仓库版本基线、跳过单测或删除失败 job 继续发布。
+
+#### Scenario: macOS 默认 shell 执行密钥生成路径
+
+- **WHEN** 仓库工具在 Bash 3.2 下执行含嵌入 Node.js 代码的隔离安装或测试。
+- **THEN** JavaScript 的大括号、引用和换行 MUST 被正确传递，受控 fixture MUST 通过现有配置校验；失败 MUST 保留脱敏证据并阻止该任务报成功。
+
+### Requirement: 安全发现按证据分类且不得削弱门禁
+
+维护者 MUST 对当前候选 SHA 的每项 CodeQL 发现核验查询、来源、传播、sink 与影响；真实缺陷 MUST 修复根因并加入业务边界回归。非产品风险或误报 MUST 有局部可复核的数据流依据和处理记录。MUST NOT 全局关闭查询、排除整个工具/测试目录、删除负向断言、抬阈值或伪造成功消除告警。
+
+#### Scenario: 弱 RSA 只用于拒绝断言
+
+- **WHEN** CodeQL 标记 JavaScript 或 Java 中专用于验证生产或产品边界拒绝低强度 RSA 的负向 fixture。
+- **THEN** 维护者 MUST 核实 key 无生产输出或有效认证用途，并保留针对低强度 key 的实际拒绝断言。
+- **AND** 合理的局部澄清或 fixture 调整 MUST 不把密钥替换为合格强度后仍声称测试了弱 key，也 MUST 不削弱生产至少 2048 位的约束。
+
+#### Scenario: 表格转义或文档文本预处理被标记
+
+- **WHEN** case-matrix 的 Markdown 表格转义或文档链接检查器的文本预处理出现 annotation。
+- **THEN** 维护者 MUST 核验调用者是否限制输入、是否存在真实 HTML/正则危险 sink，以及处理器是否曾被当成安全 sanitizer。
+- **AND** 只有完整证据可支持误报结论；若输入可达且可攻击，MUST 修复对应边界并保留正常文档/矩阵主流程测试。
+
+#### Scenario: 当前候选发现未闭环或仍有检查失败
+
+- **WHEN** 当前候选发现尚未完成分类与处理，或 CI/CodeQL 只对旧候选通过。
+- **THEN** 交付结论 MUST 保留 blocker，MUST NOT 将检查标为 ready 或进入 tag/Release。
+
+### Requirement: 双端文本匹配与对象合并抵御注入
+
+React 与 Vue 路径 glob MUST 只赋予合同规定的 `*`、`**` 通配语义，其余正则元字符 MUST 按字面量处理，不可因输入生成意外正则或扩大匹配。递归合并 MUST 只处理自身允许的数据键，MUST 拒绝 `__proto__`、`constructor`、`prototype` 等危险路径，MUST NOT 修改任何对象原型或吞掉异常后继续成功。
+
+#### Scenario: 路径包含正则元字符
+
+- **WHEN** 路径规则包含括号、方括号、反斜杠、锚点、点号、加号或类似旧占位符的文本。
+- **THEN** 匹配 MUST 保持字面量语义，MUST 不抛出非预期正则语法错误；正常 `*`/`**` 匹配和拒绝场景 MUST 保持既有合同。
+
+#### Scenario: 恶意或继承属性进入递归合并
+
+- **WHEN** 合并对象在任意深度包含危险键、继承属性或可触发异常的属性访问。
+- **THEN** 工具 MUST 拒绝危险输入并显式暴露失败，MUST 不污染 `Object.prototype`、源对象原型或其他无关对象。
+- **AND** 正常嵌套数据合并 MUST 继续符合原有业务行为。
+
+### Requirement: 运维协议与 smoke 不泄露秘密
+
+S3 分页解析 MUST 按 XML 协议单次解码实体，MUST 不因替换顺序递归还原；无效分页 MUST 显式失败。smoke 中用于凭据或安全标识的随机值 MUST 来自密码学安全随机源；任何模式下 MUST NOT 向终端、日志或上传证据输出完整 bearer token、密码或私钥。
+
+#### Scenario: XML 分页 token 包含嵌套实体文本
+
+- **WHEN** S3 返回包含 `&amp;lt;` 等合法实体文本的分页 token。
+- **THEN** 下次请求 MUST 使用协议规定的单次解码值，MUST 不把它进一步转换为 `<`；正常分页、循环/缺失 token 和无效实体 MUST 有明确结果和边界测试。
+
+#### Scenario: smoke 登录成功并请求输出 token
+
+- **WHEN** smoke 成功获取真实 token，或调用者使用旧的打印 token 选项。
+- **THEN** 正常证据 MUST 只包含脱敏结果；旧秘密输出选项 MUST 明确拒绝或被移除并同步文档，MUST 不静默打印或将 token 藏入错误消息。
+- **AND** 自动生成的临时凭据 MUST 使用安全随机源，并在测试后按 owned 资源规则收口。

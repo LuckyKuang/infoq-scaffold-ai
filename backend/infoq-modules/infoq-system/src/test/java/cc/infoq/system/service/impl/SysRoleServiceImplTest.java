@@ -539,10 +539,28 @@ class SysRoleServiceImplTest {
 
             assertEquals(2, updateRows);
             assertEquals(2, scopeRows);
+            verify(securityTokenService).revokeByRoleId(77L);
             verify(sysRoleMenuMapper).delete(any());
             verify(sysRoleDeptMapper).delete(any());
             verify(sysRoleMenuMapper).insertBatch(any());
             verify(sysRoleDeptMapper).insertBatch(any());
+        }
+    }
+
+    @Test
+    void dataScopeRejectsZeroRowAndFailedRelationWritesWithoutRevokingSessions() {
+        SysRoleServiceImpl service = newService();
+        SysRoleBo bo = new SysRoleBo(); bo.setRoleId(77L); bo.setDeptIds(new Long[]{20L});
+        SysRole role = new SysRole(); role.setRoleId(77L);
+        try (MockedStatic<MapstructUtils> conversion = mockStatic(MapstructUtils.class)) {
+            conversion.when(() -> MapstructUtils.convert(bo, SysRole.class)).thenReturn(role);
+            when(sysRoleMapper.updateById(role)).thenReturn(0);
+            assertThrows(ServiceException.class, () -> service.authDataScope(bo));
+            verifyNoInteractions(sysRoleDeptMapper, securityTokenService);
+            when(sysRoleMapper.updateById(role)).thenReturn(1);
+            when(sysRoleDeptMapper.insertBatch(any())).thenReturn(false);
+            assertThrows(ServiceException.class, () -> service.authDataScope(bo));
+            verifyNoInteractions(securityTokenService);
         }
     }
 

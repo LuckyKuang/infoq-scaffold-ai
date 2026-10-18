@@ -21,6 +21,25 @@ describe('utils/validate', () => {
     expect(isPathMatch('/a/*', '/a/b/c')).toBe(false);
   });
 
+  it.each(['.', '+', '?', '^', '$', '|', '(', ')', '[', ']', '{', '}', '\\', '__DOUBLE_STAR__'])(
+    'treats the non-wildcard character or old placeholder %j as literal input',
+    (literal) => {
+      expect(isPathMatch(`/a/${literal}`, `/a/${literal}`)).toBe(true);
+      expect(isPathMatch(`/a/${literal}`, '/a/anything')).toBe(false);
+      expect(isPathMatch(`/a/${literal}*`, `/a/${literal}tail`)).toBe(true);
+      expect(isPathMatch(`/a/${literal}*`, '/a/anything')).toBe(false);
+    }
+  );
+
+  it('does not interpret injected expressions or malformed regex text', () => {
+    expect(isPathMatch('/a/(public|admin)', '/a/admin')).toBe(false);
+    expect(isPathMatch('/a/file.txt', '/a/fileXtxt')).toBe(false);
+    expect(isPathMatch('/a/[', '/a/[')).toBe(true);
+    expect(isPathMatch('/a/\\d+$', '/a/123')).toBe(false);
+    expect(isPathMatch('/a/__DOUBLE_STAR__', '/a/b/c')).toBe(false);
+    expect(isPathMatch('/a/**/file.*', '/a/b/c/file.txt')).toBe(true);
+  });
+
   it('checks http and external urls', () => {
     expect(isHttp('https://infoq.cc')).toBe(true);
     expect(isHttp('http://infoq.cc')).toBe(true);

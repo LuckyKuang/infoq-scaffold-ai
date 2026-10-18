@@ -146,16 +146,32 @@ export const parseStrEmpty = <T extends PrimitiveValue>(str: T): Exclude<T, null
 
 // 数据合并
 export const mergeRecursive = (source: Record<string, unknown>, target: Record<string, unknown>) => {
-  for (const key of Object.keys(target)) {
-    const sourceValue = source[key];
-    const targetValue = target[key];
-    if (isRecord(sourceValue) && isRecord(targetValue)) {
-      source[key] = mergeRecursive(sourceValue, targetValue);
-      continue;
+  const pending: unknown[] = [source, target];
+  const visited = new WeakSet<object>();
+  // 先检查完整输入图，覆盖直接赋值的对象与数组，避免部分合并后才发现危险键。
+  while (pending.length > 0) {
+    const value = pending.pop();
+    if (typeof value !== 'object' || value === null || visited.has(value)) continue;
+    visited.add(value);
+    for (const key of Object.getOwnPropertyNames(value)) {
+      if (key === '__proto__' || key === 'constructor' || key === 'prototype') throw new Error(`Unsafe merge key: ${key}`);
+      pending.push((value as Record<string, unknown>)[key]);
     }
-    source[key] = targetValue;
   }
-  return source;
+
+  const mergeOwn = (destination: Record<string, unknown>, incoming: Record<string, unknown>): Record<string, unknown> => {
+    for (const key of Object.keys(incoming)) {
+      if (key === '__proto__' || key === 'constructor' || key === 'prototype') throw new Error(`Unsafe merge key: ${key}`);
+      const own = Object.hasOwn(destination, key);
+      const sourceValue = own ? destination[key] : undefined;
+      const targetValue = incoming[key];
+      const value = isRecord(sourceValue) && isRecord(targetValue) ? mergeOwn(sourceValue, targetValue) : targetValue;
+      if (own) destination[key] = value;
+      else Object.defineProperty(destination, key, { value, writable: true, enumerable: true, configurable: true });
+    }
+    return destination;
+  };
+  return mergeOwn(source, target);
 };
 
 /**

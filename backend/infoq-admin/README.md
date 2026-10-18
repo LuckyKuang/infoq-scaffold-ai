@@ -60,6 +60,10 @@
 
 ## 生产安全配置
 
+浏览器恢复配置位于 `security.browser-session`，由 `INFOQ_DEPLOY_MODE`、`INFOQ_PUBLIC_BASE_URL` 和四个 `INFOQ_BROWSER_SESSION_*` 环境变量注入。prod profile 默认要求 production/HTTPS/Secure；显式 development 仍仅支持受控 HTTP loopback，不从代理 header 推测安全属性。部署端必须注入实际外部 `/prod-api/...` 或 `/dev-api/...` cookie Path，详见 [配置合同与验证 SOP](../doc/browser-session.md)。
+
+`application-prod.yml` 为七个会话安全/Push logger 精确启用 INFO，保留其他业务 WARN。`ProductionObservabilityLoggingTest` 使用真实 prod 过滤配置及 Logback 验证同步/异步输出；它属于 prod 组，不能替代 dev 完整业务单测，CI/发布均分别执行两组。
+
 prod 通过必需环境变量 `INFOQ_API_REQUEST_PRIVATE_KEY` 与 `INFOQ_API_RESPONSE_PUBLIC_KEY` 注入请求解密私钥和响应加密公钥；分别匹配前端请求公钥与响应私钥，不能当成同一组。启动期检查 RSA 格式与至少 2048 位，四方向配对/受控来源由生产预检完成。英文认证四键由真实 MessageSource 回归，详见 [后端生产边界回归](../doc/production-verification.md)。
 
 Compose 后端构建 context 为 `backend/`；该目录的 `.dockerignore` 排除本机 `application-local*`、`.env*`、证书/私钥和 credentials 文件，保留受管的 `application.yml`、`application-dev.yml` 与 `application-prod.yml`。本机构建不得依赖把受控配置复制进镜像层；实际镜像层复核仍需 Linux Docker 验收。

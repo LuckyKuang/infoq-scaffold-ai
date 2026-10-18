@@ -48,7 +48,7 @@ node skills/push-cli/scripts/test_push_cli.mjs
 ## 校验矩阵
 
 - `--profile docs`：`node tools/validate_utf8.mjs`、`node tools/check_readme_sync.mjs`、`node tools/check_release_version.mjs`、`node tools/check_doc_links.mjs`、`node skills/compress-cli/scripts/agents_check.mjs check`，并在存在 active change 时运行 `node tools/openspec_check.mjs <change-id>`。
-- `--profile ci`：覆盖 `.github/workflows/ci.yml` 的本机核心步骤：UTF-8、README、版本、文档链接 + release-cli/bump/version/assets/policy 五组回归 + React/Vue lint/test/build + `node tools/backend_mvn.mjs -- -B -ntp -DskipTests=false clean package -P dev`。不包含 agents_check / openspec_check，也不代替远端 OS 矩阵、安全扫描或运行态验收。生产前端构建须先按 `docs/RELEASING.md` 准备受控或显式隔离构建输入。
+- `--profile ci`：覆盖 `.github/workflows/ci.yml` 的本机核心步骤：UTF-8、README、版本、文档链接 + 固定 Maven 安装器回归 + release-cli/bump/version/assets/policy 五组回归 + React/Vue lint/test/build + `node tools/backend_mvn.mjs -- -B -ntp -DskipTests=false clean package -P dev` 与同命令的 `-P prod`，分别覆盖完整业务单测和生产配置回归。不包含 agents_check / openspec_check，也不代替远端 OS 矩阵、安全扫描或运行态验收。Maven 安装器回归需要访问 Maven Central 与可用 Java；生产前端构建须先按 `docs/RELEASING.md` 准备受控或显式隔离构建输入。
 - `--profile full`：docs 矩阵（含 agents_check / active openspec_check）+ CI 矩阵；用于发布前完整本地门禁。
 - 任一命令失败即为硬失败；禁止把失败标记为通过后继续推送。
 

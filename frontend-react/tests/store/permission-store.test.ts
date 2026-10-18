@@ -99,4 +99,16 @@ describe('store/permission', () => {
 
     expect(homeRoutes).toHaveLength(1);
   });
+
+  it('does not install a menu response after its owning session was invalidated', async () => {
+    let finish!: (value: { data: AppRoute[] }) => void;
+    let current = true;
+    getRouters.mockImplementation(() => new Promise((resolve) => { finish = resolve; }));
+    const request = usePermissionStore.getState().generateRoutes(() => current);
+    current = false;
+    finish({ data: [{ path: '/old-user', component: 'system/user/index' }] });
+    await expect(request).resolves.toEqual([]);
+    expect(usePermissionStore.getState().routes).toEqual([]);
+    expect(usePermissionStore.getState().routeComponentMap).toEqual({});
+  });
 });

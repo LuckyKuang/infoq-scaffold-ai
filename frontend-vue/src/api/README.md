@@ -23,7 +23,7 @@
 ## 4. 依赖方向
 
 - 上游依赖主要是 `views/*` 与 `store/modules/*`。
-- 下游统一依赖 `../utils/request.ts`。
+- 普通业务接口依赖 `../utils/request.ts`；浏览器恢复资源用独立 fetch，避免附带旧 Bearer、缓存到 `sessionObj` 或触发普通 401 注销循环。
 - 类型定义与返回体约束来自本目录 `types.ts` 或各子模块 `types.ts`。
 
 ## 5. 典型调用链
@@ -44,6 +44,8 @@ View / Store
 - `GET /auth/code` 同时提供验证码与注册、忘记密码、邮件等公开能力位；`POST /auth/email/code` 和 `POST /auth/forgot-password` 复用公开加密请求约定。
 - 需要跳过 token、关闭重复提交拦截或启用请求加密时，优先通过请求头开关表达。
 - 统一错误处理不在 API 文件里重复实现，而是下沉到 `utils/request.ts`。
+- 浏览器会话例外遵循专用协议：`GET /auth/browser-session/csrf` 取得内存 CSRF，`PUT` 绑定显式新 Bearer，`POST` 恢复与 `DELETE` 退出不附 Bearer；全部带 `clientid`、`X-InfoQ-Browser-Session: vue`，写操作另带 `X-XSRF-TOKEN`。HTTP 与 ApiResult 必须同时成功，网络/403/503 明确失败。
+- cookie 只由服务端通过 HttpOnly/Secure/SameSite=Strict 设置；仅支持相对 `VITE_APP_BASE_API` 的同源代理，不能改成跨站 credentials。生产仍需 HTTPS。`logout(token)` 只用于绑定失败时撤销尚未提交的新 token，不用于浏览器正常退出。
 
 ## 7. 已知边界
 

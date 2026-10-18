@@ -2,6 +2,7 @@ package cc.infoq.common.security.filter;
 
 import cc.infoq.common.domain.model.LoginUser;
 import cc.infoq.common.security.auth.*;
+import cc.infoq.common.security.browser.BrowserSessionGuardFilter;
 import cc.infoq.common.utils.StringUtils;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -38,12 +39,25 @@ public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter {
     }
 
     @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        return BrowserSessionGuardFilter.isResource(request) && !"PUT".equals(request.getMethod());
+    }
+
+    @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
         Optional<SecurityResolvedToken> resolvedToken = Optional.empty();
         try {
-            resolvedToken = tokenResolver.resolve(request);
+            if (BrowserSessionGuardFilter.isResource(request) && "PUT".equals(request.getMethod())) {
+                String authorization = request.getHeader("Authorization");
+                if (authorization == null || !authorization.matches("(?i)Bearer [^\\s]+")) {
+                    throw new SecurityAuthenticationException("browser session requires an explicit HEADER Bearer");
+                }
+                resolvedToken = Optional.of(new SecurityResolvedToken(authorization.substring(7), SecurityTokenSource.HEADER));
+            } else {
+                resolvedToken = tokenResolver.resolve(request);
+            }
             if (resolvedToken.isPresent()) {
                 SecurityResolvedClientId clientId = tokenResolver.resolveClientId(request)
                     .orElseThrow(() -> new SecurityAuthenticationException("request clientId is required"));

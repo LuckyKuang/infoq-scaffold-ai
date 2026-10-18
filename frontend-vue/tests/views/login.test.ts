@@ -188,7 +188,7 @@ describe('views/login', () => {
     }
   );
 
-  it('stores remembered credentials when rememberMe is true', async () => {
+  it('remembers only the username across a successful login and reload', async () => {
     const wrapper = mountView();
     await flushPromises();
 
@@ -207,8 +207,61 @@ describe('views/login', () => {
     await flushPromises();
 
     expect(window.localStorage.getItem('username')).toBe('remember-user');
-    expect(window.localStorage.getItem('password')).toBe('remember-pass');
+    expect(window.localStorage.getItem('password')).toBeNull();
     expect(window.localStorage.getItem('rememberMe')).toBe('true');
+    expect(loginMocks.userLogin).toHaveBeenCalledWith(expect.objectContaining({ password: 'remember-pass' }));
+    wrapper.unmount();
+    const reloaded = mountView();
+    await flushPromises();
+    const form = (reloaded.vm as unknown as { loginForm: { username: string; password: string; rememberMe: boolean } }).loginForm;
+    expect(form).toMatchObject({ username: 'remember-user', password: '', rememberMe: true });
+    expect(reloaded.text()).toContain('login.rememberUsername');
+    expect(window.localStorage.getItem('password')).toBeNull();
+  });
+
+  it('removes a legacy password without reading or restoring it', async () => {
+    window.localStorage.setItem('username', 'remember-user');
+    window.localStorage.setItem('password', 'legacy-secret');
+    window.localStorage.setItem('rememberMe', 'true');
+    const read = vi.spyOn(window.localStorage, 'getItem');
+    const wrapper = mountView();
+    await flushPromises();
+    const form = (wrapper.vm as unknown as { loginForm: { username: string; password: string } }).loginForm;
+    expect(form).toMatchObject({ username: 'remember-user', password: '' });
+    expect(read).not.toHaveBeenCalledWith('password');
+    expect(window.localStorage.getItem('password')).toBeNull();
+  });
+
+  it('immediately forgets the username when the choice is cleared', async () => {
+    window.localStorage.setItem('username', 'remember-user');
+    window.localStorage.setItem('rememberMe', 'true');
+    const wrapper = mountView();
+    await flushPromises();
+    const form = (wrapper.vm as unknown as { loginForm: { rememberMe: boolean } }).loginForm;
+    form.rememberMe = false;
+    await flushPromises();
+    expect(window.localStorage.getItem('username')).toBeNull();
+    expect(window.localStorage.getItem('rememberMe')).toBeNull();
+    expect(loginMocks.userLogin).not.toHaveBeenCalled();
+    wrapper.unmount();
+    const reloaded = mountView();
+    await flushPromises();
+    expect((reloaded.vm as unknown as { loginForm: { username: string; password: string } }).loginForm).toMatchObject({ username: '', password: '' });
+  });
+
+  it('does not persist a password after a failed remembered login', async () => {
+    loginMocks.userLogin.mockRejectedValueOnce(new Error('login-failed'));
+    const wrapper = mountView();
+    await flushPromises();
+    const write = vi.spyOn(window.localStorage, 'setItem');
+    const form = (wrapper.vm as unknown as { loginForm: { username: string; password: string; rememberMe: boolean } }).loginForm;
+    Object.assign(form, { username: 'remember-user', password: 'failed-secret', rememberMe: true });
+    await wrapper.find('button.login-submit-btn').trigger('click');
+    await flushPromises();
+    expect(loginMocks.getCodeImg).toHaveBeenCalledTimes(2);
+    expect(window.localStorage.getItem('username')).toBe('remember-user');
+    expect(window.localStorage.getItem('password')).toBeNull();
+    expect(write.mock.calls.some(([key]) => key === 'password')).toBe(false);
   });
 
   it('stops submit when form validation fails', async () => {

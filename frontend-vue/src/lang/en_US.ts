@@ -11,7 +11,7 @@ export default {
     login: 'Login',
     logging: 'Logging...',
     code: 'Verification Code',
-    rememberPassword: 'Remember me',
+    rememberUsername: 'Remember username',
     switchRegisterPage: 'Sign up now',
     switchForgotPasswordPage: 'Forgot password',
     oauthDivider: 'Third-party login',

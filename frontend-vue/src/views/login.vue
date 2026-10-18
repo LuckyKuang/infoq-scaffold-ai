@@ -38,7 +38,7 @@
           <img :src="codeUrl" class="login-code-img" @click="getCode" />
         </div>
       </el-form-item>
-      <el-checkbox v-model="loginForm.rememberMe" style="margin: 0 0 25px 0">{{ proxy.$t('login.rememberPassword') }}</el-checkbox>
+      <el-checkbox v-model="loginForm.rememberMe" style="margin: 0 0 25px 0">{{ proxy.$t('login.rememberUsername') }}</el-checkbox>
       <el-form-item style="width: 100%">
         <el-button :loading="loading" size="large" type="primary" style="width: 100%" @click.prevent="handleLogin">
           <span v-if="!loading">{{ proxy.$t('login.login') }}</span>
@@ -98,6 +98,17 @@ const loginForm = ref<LoginData>({
   uuid: ''
 } as LoginData);
 
+watch(
+  () => loginForm.value.rememberMe,
+  (rememberMe) => {
+    if (!rememberMe) {
+      localStorage.removeItem('username');
+      localStorage.removeItem('rememberMe');
+      localStorage.removeItem('password');
+    }
+  }
+);
+
 const loginRules: ElFormRules = {
   username: [{ required: true, trigger: 'blur', message: t('login.rule.username.required') }],
   password: [{ required: true, trigger: 'blur', message: t('login.rule.password.required') }],
@@ -130,10 +141,8 @@ const handleLogin = () => {
       }
       redirectError.value = false;
       loading.value = true;
-      // 勾选了需要记住密码设置在 localStorage 中设置记住用户名和密码
       if (loginForm.value.rememberMe) {
         localStorage.setItem('username', String(loginForm.value.username));
-        localStorage.setItem('password', String(loginForm.value.password));
         localStorage.setItem('rememberMe', String(loginForm.value.rememberMe));
       } else {
         // 否则移除
@@ -148,6 +157,7 @@ const handleLogin = () => {
         loading.value = false;
       } else {
         loading.value = false;
+        ElMessage.error(err instanceof Error ? err.message : '登录失败，请重试');
         // 重新获取验证码
         if (captchaEnabled.value) {
           await getCode();
@@ -206,20 +216,21 @@ const loadOAuthProviders = async () => {
 };
 
 const getLoginData = () => {
-  const username = localStorage.getItem('username');
-  const password = localStorage.getItem('password');
-  const rememberMe = localStorage.getItem('rememberMe');
-  loginForm.value = {
-    username: username === null ? String(loginForm.value.username) : username,
-    password: password === null ? String(loginForm.value.password) : String(password),
-    rememberMe: rememberMe === null ? false : rememberMe === 'true'
-  } as LoginData;
+  localStorage.removeItem('password');
+  const rememberMe = localStorage.getItem('rememberMe') === 'true';
+  if (!rememberMe) {
+    localStorage.removeItem('username');
+    localStorage.removeItem('rememberMe');
+  }
+  loginForm.value.username = rememberMe ? localStorage.getItem('username') || '' : '';
+  loginForm.value.password = '';
+  loginForm.value.rememberMe = rememberMe;
 };
 
 onMounted(() => {
+  getLoginData();
   getCode();
   loadOAuthProviders();
-  getLoginData();
 });
 </script>
 

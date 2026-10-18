@@ -53,6 +53,15 @@ jobs:
           node skills/release-cli/scripts/test_release_policy.mjs
           node skills/release-cli/scripts/test_release_assets.mjs
 
+      - name: Setup JDK 21 for installer verification
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Validate pinned Maven installer
+        run: node tools/test_setup_ci_maven.mjs
+
   backend:
     name: Backend Build
     runs-on: ubuntu-latest
@@ -74,11 +83,17 @@ jobs:
           java-version: "21"
           cache: maven
 
-      - name: Resolve Maven environment
+      - name: Setup pinned Maven
+        run: node tools/setup_ci_maven.mjs
+
+      - name: Verify Maven environment
         run: node tools/backend_mvn.mjs --dry-run -- -B -ntp -DskipTests=false clean package -P dev
 
       - name: Build backend
         run: node tools/backend_mvn.mjs -- -B -ntp -DskipTests=false clean package -P dev
+
+      - name: Verify production configuration and package
+        run: node tools/backend_mvn.mjs -- -B -ntp -DskipTests=false clean package -P prod
 
   node-cli-platforms:
     name: Node CLI (${{ matrix.os }})

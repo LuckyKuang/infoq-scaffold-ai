@@ -23,7 +23,7 @@
 ## 4. 依赖方向
 
 - 上游依赖主要是 `pages/*` 和 `store/modules/*`。
-- 下游统一依赖 `../utils/request.ts`。
+- 业务 API 下游依赖 `../utils/request.ts`；专用浏览器恢复资源使用 `browser-session.ts` 的独立 axios 实例。
 - 类型定义与返回体约束来自本目录 `types.ts` 或各子模块 `types.ts`。
 
 ## 5. 典型调用链
@@ -64,3 +64,11 @@ Page / Store
 - 绑定 `redirect` 必须来自 `utils/auth-redirect.ts` 生成的安全站内浏览器路径，例如 `/react/user/profile`，不得包含 origin；该参数保留部署前缀供服务端直接回跳，Router 内部导航再移除一次。
 - `system/message` 是个人收件箱契约，提供列表、未读数、单条已读、全部已读和软删除。调用者不传也不能指定用户 ID，数据范围由当前 token 决定。
 - 这些 API 不缓存实时 payload。状态层和页面只从 `/system/message/*` 的成功响应读取标题、正文和阅读状态。
+
+## 10. 专用浏览器恢复资源
+
+`browser-session.ts` 只调用同源代理的 `/auth/browser-session` 与 `/csrf`：GET 引导、PUT 绑定、POST 恢复、DELETE 退出。每次携带 `clientid` 和 `X-InfoQ-Browser-Session: react`；写操作使用内存中的 `X-XSRF-TOKEN`，只有 PUT 附显式新 Bearer。POST/DELETE/GET 不从业务 token 自动补 Authorization，不使用 `sessionObj` 或普通401重登拦截器，响应同时验证HTTP与业务code。
+
+CSRF cookie由服务端设为HttpOnly，前端只从GET响应获取token。恢复响应必须匹配当前clientId且剩余寿命为正；不会续签JWT。DELETE清CSRF内存，即使服务端失败也必须报告，不能据本地退出断言服务端已撤销。`login.ts logout(token)` 仅供新会话绑定失败时显式撤销该Bearer。
+
+本tab的完整CSRF引导与PUT/POST/DELETE按FIFO顺序执行，后一个操作等待前一个响应完成后才发送。旧DELETE或失效恢复的Set-Cookie不能在新绑定后覆盖恢复cookie；前一操作失败仍原样拒绝调用方，后续显式操作可继续，不自动重试。

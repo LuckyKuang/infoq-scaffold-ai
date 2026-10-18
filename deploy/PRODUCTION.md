@@ -20,6 +20,16 @@ node tools/production_config.mjs check --scope deploy --env-file /etc/infoq-scaf
 
 双端 `all` 允许安全的不同 context path（默认 `/vue/`、`/react/`），builder、网关和 OAuth callback map 使用同源值。单端使用 `/`；生产管理页面仍须通过网关访问。
 
+## 浏览器会话与同源代理配置
+
+受控环境文件必须显式提供 `INFOQ_BROWSER_SESSION_COOKIE_PATH=/prod-api/auth/browser-session` 与 `INFOQ_BROWSER_SESSION_SECURE=true`。生产会话仅允许 `INFOQ_PUBLIC_BASE_URL` 的 HTTPS Origin，`INFOQ_BROWSER_SESSION_ORIGINS` 必须为空；不得以请求 Host、forwarded header、跨域 API 地址或页面 context path 推断信任来源。React/Vue 页面可分别位于 `/react/`、`/vue/` 等路径，两端 API 均由同一网关 `/prod-api` 转发；生产构建拒绝其他 `VITE_APP_BASE_API`。
+
+`INFOQ_BROWSER_SESSION_TTL_SECONDS` 缺省 `2592000`，显式值必须为 `1..2592000` 的十进制正整数。它只是恢复映射的最大寿命，不能延长 JWT 的原有绝对或活跃过期时间。预检 JSON 的 `browserSession` 给出最终 mode、允许 Origin、cookie Path、Secure 与 TTL；其中没有凭据，可与实际 `Set-Cookie` 属性核对。应用通过 Compose env 与 `managed-security.yml` 的同名占位符读取同一受控来源，不手改生成配置。
+
+升级既有部署时先备份受控环境文件，补齐上述 Path/Secure，并将生产 ORIGINS 留空；运行本页预检成功后才按既有生命周期重建应用容器。浏览器验收须覆盖登录、受保护路由刷新、退出再刷新，以及 Origin/CSRF 拒绝；只检查 readiness 无法证明会话恢复安全。发现越界 cookie、跨 Origin 可读、刷新或退出失败时停止上线，按精确 cookie name/path 清理测试会话并保留脱敏证据，不恢复旧 token 持久化方案。
+
+本机 HTTP 开发必须显式 `INFOQ_DEPLOY_MODE=development`，仅允许精确 loopback Origin（含合法 `*.localhost`），可设 `Secure=false`。Compose 网关开发仍用 `/prod-api/auth/browser-session`；本机 Vite 与 Apple 后端联调使用 `/dev-api/auth/browser-session`，具体步骤见 [APPLE_CONTAINER.md](APPLE_CONTAINER.md)。生产配置不可通过切换开发模式绕过 HTTPS 门禁。
+
 ## 网络与私有存储
 
 Compose 的 MySQL、Redis、MinIO、后端、独立前端端口默认仅绑定 `127.0.0.1`；`INFOQ_INTERNAL_BIND_HOST` 只接受 loopback。公网只开放网关 80/443，80 执行 HTTPS 重定向。Docker socket 属于高权限接口，不通过开放 socket 或 `0777` 修复权限。

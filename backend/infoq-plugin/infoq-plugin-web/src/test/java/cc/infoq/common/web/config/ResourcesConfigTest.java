@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.format.support.DefaultFormattingConversionService;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.web.filter.CorsFilter;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
@@ -26,7 +27,7 @@ class ResourcesConfigTest {
     @Test
     @DisplayName("corsFilter/globalExceptionHandler: should create configured web beans")
     void corsFilterAndGlobalExceptionHandlerShouldCreateConfiguredWebBeans() {
-        CorsFilter corsFilter = resourcesConfig.corsFilter();
+        CorsFilter corsFilter = resourcesConfig.corsFilter(Mockito.mock(ObjectProvider.class), new tools.jackson.databind.ObjectMapper());
         GlobalExceptionHandler exceptionHandler = resourcesConfig.globalExceptionHandler();
 
         assertNotNull(corsFilter);

@@ -57,7 +57,7 @@ frontend-vue/src/views/<component>.vue
 触发条件：固定路由、页面组件、SQL 菜单或矩阵生成器发生变化。
 
 1. 对照两端固定路由源码和菜单 SQL 确认来源；不要为消除缺口而随意把未映射页面加入忽略列表。
-2. 先在临时目录生成、校验，检查新增/缺失用例和客户端匹配，再执行生成器回归。
+2. 先在临时目录生成、校验，检查新增/缺失用例和客户端匹配，再执行生成器回归。回归通过隔离的 SQL → Markdown 主流程确认菜单名中的反斜杠与 `|` 均作为表格单元格文本保留，不得只转义管道符而破坏列边界。
 
 ```bash
 node skills/test-cli/scripts/generate-case-matrix.mjs --output-dir tmp/test-cli/matrix-preview

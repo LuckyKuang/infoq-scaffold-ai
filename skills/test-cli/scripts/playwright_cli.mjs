@@ -79,6 +79,8 @@ Behavior:
 
 Options:
   --frontend-origin <origin>
+  --client <vue|react>             Browser application scope. Default: vue.
+  --api-prefix </dev-api|/prod-api> Same-origin API proxy prefix. Default: /dev-api.
   --route <route>
   --backend-url <url>
   --client-id <id>
@@ -179,6 +181,8 @@ function parseFlowArgs(args) {
 
 function parseAdminProbeArgs(args) {
   const options = {
+    client: 'vue',
+    apiPrefix: '/dev-api',
     frontendOrigin: '',
     route: '/index',
     backendUrl: 'http://127.0.0.1:8080',
@@ -199,6 +203,14 @@ function parseAdminProbeArgs(args) {
     switch (arg) {
       case '--frontend-origin':
         options.frontendOrigin = requireValue(args, index, arg);
+        index += 1;
+        break;
+      case '--client':
+        options.client = requireValue(args, index, arg);
+        index += 1;
+        break;
+      case '--api-prefix':
+        options.apiPrefix = requireValue(args, index, arg);
         index += 1;
         break;
       case '--route':
@@ -260,6 +272,9 @@ function parseAdminProbeArgs(args) {
     throw new Error('--frontend-origin is required unless --list-routes is used.');
   }
 
+  if (!['react', 'vue'].includes(options.client) || !['/dev-api', '/prod-api'].includes(options.apiPrefix)) {
+    throw new Error('Admin probe requires --client react|vue and --api-prefix /dev-api|/prod-api.');
+  }
   return options;
 }
 

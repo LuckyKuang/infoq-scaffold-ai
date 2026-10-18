@@ -88,6 +88,29 @@ interface RequestInstance extends Omit<AxiosInstance, 'request' | 'get' | 'delet
 
 // 是否显示重新登录
 export const isRelogin = { show: false };
+const handleUnauthorized = (authorization: unknown) => {
+  // 旧请求晚到的 401 不能清掉刚绑定的新身份。
+  const currentToken = getToken();
+  if (!currentToken || authorization !== `Bearer ${currentToken}`) return;
+  useUserStore().invalidateSession();
+  if (isRelogin.show) return;
+  isRelogin.show = true;
+  ElMessage.error('登录状态已过期，请重新登录');
+  void router
+    .replace({
+      path: '/login',
+      query: { redirect: encodeURIComponent(router.currentRoute.value.fullPath || '/') }
+    })
+    .then(
+      () => {
+        isRelogin.show = false;
+      },
+      () => {
+        isRelogin.show = false;
+        ElMessage.error('无法跳转登录页，请刷新页面');
+      }
+    );
+};
 export const globalHeaders = () => {
   return {
     Authorization: 'Bearer ' + getToken(),
@@ -211,28 +234,8 @@ service.interceptors.response.use(
     // 获取错误信息
     const msg = errorCode[code] || res.data.msg || errorCode['default'];
     if (code === 401) {
-      // prettier-ignore
-      if (!isRelogin.show) {
-        isRelogin.show = true;
-        ElMessageBox.confirm('登录状态已过期，您可以继续留在该页面，或者重新登录', '系统提示', {
-          confirmButtonText: '重新登录',
-          cancelButtonText: '取消',
-          type: 'warning'
-        }).then(() => {
-          isRelogin.show = false;
-          useUserStore().logout().then(() => {
-            router.replace({
-              path: '/login',
-              query: {
-                redirect: encodeURIComponent(router.currentRoute.value.fullPath || '/')
-              }
-            })
-          });
-        }).catch(() => {
-          isRelogin.show = false;
-        });
-      }
-      return Promise.reject('无效的会话，或者会话已过期，请重新登录。');
+      handleUnauthorized(res.config?.headers?.Authorization);
+      return Promise.reject(Object.assign(new Error('无效的会话，或者会话已过期，请重新登录。'), { status: 401 }));
     } else if (code === HttpStatus.SERVER_ERROR) {
       ElMessage({ message: msg, type: 'error' });
       return Promise.reject(new Error(msg));
@@ -247,6 +250,7 @@ service.interceptors.response.use(
     }
   },
   (error: unknown) => {
+    if (axios.isAxiosError(error) && error.response?.status === 401) handleUnauthorized(error.config?.headers?.Authorization);
     let message = getResponseErrorMessage(error);
     if (message == 'Network Error') {
       message = '后端接口连接异常';
@@ -286,8 +290,8 @@ export function download(url: string, params: Record<string, unknown>, fileName:
         ElMessage.error(errMsg);
       }
       downloadLoadingInstance?.close();
-    }).catch((r: unknown) => {
-      console.error(r);
+    }).catch(() => {
+      console.error('下载请求失败');
       ElMessage.error('下载文件出现错误，请联系管理员！');
       downloadLoadingInstance?.close();
     });

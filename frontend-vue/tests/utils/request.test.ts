@@ -6,8 +6,9 @@ vi.mock('file-saver', () => ({
 
 const requestMocks = vi.hoisted(() => ({
   logout: vi.fn(() => Promise.resolve()),
+  invalidateSession: vi.fn(),
   router: {
-    replace: vi.fn(),
+    replace: vi.fn(() => Promise.resolve()),
     currentRoute: {
       value: {
         fullPath: '/system/user?tab=1'
@@ -18,7 +19,8 @@ const requestMocks = vi.hoisted(() => ({
 
 vi.mock('@/store/modules/user', () => ({
   useUserStore: () => ({
-    logout: requestMocks.logout
+    logout: requestMocks.logout,
+    invalidateSession: requestMocks.invalidateSession
   })
 }));
 
@@ -53,7 +55,7 @@ import service, { download, globalHeaders, isRelogin } from '@/utils/request';
 import { removeToken, setToken } from '@/utils/auth';
 import { HttpStatus } from '@/enums/RespEnum';
 import FileSaver from 'file-saver';
-import { ElMessage, ElMessageBox, ElNotification } from 'element-plus/es';
+import { ElMessage, ElNotification } from 'element-plus/es';
 
 type RequestConfig = {
   method: string;
@@ -69,6 +71,7 @@ type ResponsePayload = {
     responseType: string;
   };
   headers: Record<string, string>;
+  config?: { headers: { Authorization: string } };
 };
 
 type InterceptorEntry<TInput, TOutput> = {
@@ -96,7 +99,6 @@ const responseErrorHandler = interceptorService.interceptors.response.handlers[0
 const messageMock = ElMessage as unknown as ReturnType<typeof vi.fn> & {
   error: ReturnType<typeof vi.fn>;
 };
-const messageConfirmMock = ElMessageBox.confirm as unknown as ReturnType<typeof vi.fn>;
 const notificationMock = ElNotification as unknown as {
   error: ReturnType<typeof vi.fn>;
 };
@@ -148,6 +150,12 @@ describe('utils/request', () => {
 
     await requestHandler(config);
     await expect(requestHandler(config)).rejects.toThrow('数据正在处理，请勿重复提交');
+  });
+
+  it.each(['/auth/login', '/auth/oauth/ticket'])('does not cache credentials from %s when repeatSubmit is false', async (url) => {
+    const credential = url.endsWith('ticket') ? { loginTicket: 'one-time-ticket' } : { password: 'not-for-storage' };
+    await requestHandler({ method: 'post', url, headers: { isToken: false, repeatSubmit: false }, data: credential });
+    expect(window.sessionStorage.getItem('sessionObj')).toBeNull();
   });
 
   it('updates repeat-submit cache when same request is sent after interval', async () => {
@@ -275,35 +283,49 @@ describe('utils/request', () => {
     await expect(responseHandler(missingTotalResp)).rejects.toThrow('分页响应 total 必须是有限数字');
   });
 
-  it('handles 401 relogin flow for confirm and cancel branches', async () => {
+  it('clears and redirects the current expired session without a keep-page confirmation', async () => {
+    setToken('expired-token');
     const unauthorizedResp = {
       data: { code: 401, msg: 'expired' },
       request: { responseType: '' },
-      headers: {}
+      headers: {},
+      config: { headers: { Authorization: 'Bearer expired-token' } }
     } as ResponsePayload;
-
-    messageConfirmMock.mockResolvedValueOnce(true);
-    await expect(responseHandler(unauthorizedResp)).rejects.toBe('无效的会话，或者会话已过期，请重新登录。');
+    await expect(responseHandler(unauthorizedResp)).rejects.toMatchObject({ status: 401 });
     await Promise.resolve();
-    await Promise.resolve();
-    expect(requestMocks.logout).toHaveBeenCalledTimes(1);
-    expect(requestMocks.router.replace).toHaveBeenCalledWith({
-      path: '/login',
-      query: {
-        redirect: encodeURIComponent('/system/user?tab=1')
-      }
-    });
+    expect(requestMocks.invalidateSession).toHaveBeenCalledTimes(1);
+    expect(requestMocks.logout).not.toHaveBeenCalled();
+    expect(requestMocks.router.replace).toHaveBeenCalledWith({ path: '/login', query: { redirect: encodeURIComponent('/system/user?tab=1') } });
     expect(isRelogin.show).toBe(false);
+  });
 
-    messageConfirmMock.mockRejectedValueOnce(new Error('cancel'));
-    await expect(responseHandler(unauthorizedResp)).rejects.toBe('无效的会话，或者会话已过期，请重新登录。');
-    await Promise.resolve();
-    expect(requestMocks.logout).toHaveBeenCalledTimes(1);
-    expect(isRelogin.show).toBe(false);
+  it('does not invalidate a newly bound session for an older request 401', async () => {
+    setToken('new-token');
+    const response = {
+      data: { code: 401 },
+      request: { responseType: '' },
+      headers: {},
+      config: { headers: { Authorization: 'Bearer old-token' } }
+    } as ResponsePayload;
+    await expect(responseHandler(response)).rejects.toMatchObject({ status: 401 });
+    expect(requestMocks.invalidateSession).not.toHaveBeenCalled();
+    expect(requestMocks.router.replace).not.toHaveBeenCalled();
+  });
 
-    isRelogin.show = true;
-    await expect(responseHandler(unauthorizedResp)).rejects.toBe('无效的会话，或者会话已过期，请重新登录。');
-    expect(ElMessageBox.confirm).toHaveBeenCalledTimes(2);
+  it('correlates raw HTTP 401 with its original Bearer before clearing authentication', async () => {
+    setToken('new-token');
+    const error = {
+      isAxiosError: true,
+      message: 'Request failed with status code 401',
+      response: { status: 401 },
+      config: { headers: { Authorization: 'Bearer old-token' } }
+    };
+    await expect(responseErrorHandler(error as unknown as Error)).rejects.toBe(error);
+    expect(requestMocks.invalidateSession).not.toHaveBeenCalled();
+    error.config.headers.Authorization = 'Bearer new-token';
+    await expect(responseErrorHandler(error as unknown as Error)).rejects.toBe(error);
+    expect(requestMocks.invalidateSession).toHaveBeenCalledTimes(1);
+    expect(requestMocks.router.replace).toHaveBeenCalledTimes(1);
   });
 
   it('decrypts encrypted response payload when encrypt header is present', () => {

@@ -1,11 +1,15 @@
-const TOKEN_KEY = 'Admin-Token';
+let accessToken = '';
 
-export const getToken = (): string => localStorage.getItem(TOKEN_KEY) || '';
+// 清理旧版本的持久凭据；恢复身份仅由受保护的 HttpOnly 会话入口提供。
+localStorage.removeItem('Admin-Token');
+sessionStorage.removeItem('Admin-Token');
+
+export const getToken = (): string => accessToken;
 
 export const setToken = (token: string): void => {
-  localStorage.setItem(TOKEN_KEY, token);
+  accessToken = token;
 };
 
 export const removeToken = (): void => {
-  localStorage.removeItem(TOKEN_KEY);
+  accessToken = '';
 };

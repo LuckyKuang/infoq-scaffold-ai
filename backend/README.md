@@ -2,6 +2,8 @@
 
 这份 README 只描述 `backend` 当前仓库实现，不试图抽象成一套通用架构蓝图。
 
+浏览器刷新恢复使用专用 HttpOnly opaque cookie 资源，普通 API 继续只接受 Bearer；生产新增受控 Origin/Path/Secure/TTL 配置及用户安全变更撤销边界，详见 [浏览器恢复会话与验证 SOP](./doc/browser-session.md)。
+
 如果后续代码结构继续演进，应优先以源码为准，再回写本文档。
 
 ## 当前实现概览
@@ -89,3 +91,5 @@
 - 如果你要改动登录、权限、Redis、Quartz、日志或 Mapper XML，建议先把上面两份文档看完再动手。
 
 认证/通知/翻译/签名及生产 RSA 的回归入口见 [后端生产边界回归](./doc/production-verification.md)。精确小程序 GET 探测保持匿名可读；双端 OAuth 用受控 base→callback 映射；字段翻译失败明确失败；Push 按通道记录发布/失败，均不替代 Linux Docker 运行态验收。
+
+CI/发布分别运行 dev 完整业务测试与 prod 真实配置回归；prod 为七个会话/Push logger 精确启用 INFO，其余业务保持 WARN。实际 Logback 输出、日志脱敏与分组命令见 [会话与生产日志 SOP](./doc/browser-session.md)。

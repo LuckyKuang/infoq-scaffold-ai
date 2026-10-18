@@ -74,12 +74,12 @@ node skills/release-cli/scripts/release_cli.mjs tag --version 3.0.1 --execute
 
 ### 3.4 Release
 
-推送 tag 后，`.github/workflows/release.yml` 从已校验的 tag 确定渠道。RC 仍执行版本门禁和后端 prod 单测/打包，但不上传 jar，不运行 `package-admin`，不读取 `production-build` secrets。只有 verify 成功且 package-admin 因 RC 跳过时，才创建 `draft=false`、`prerelease=true`、`make_latest=false` 的源码 Release，附加资产必须为空。下载使用 GitHub 自动提供的 Source code 归档；部署者在目标环境用受控配置构建。任何上游失败或取消均阻止发布。
+推送 tag 后，`.github/workflows/release.yml` 从已校验的 tag 确定渠道。RC 仍执行版本门禁、后端完整 dev 业务单测与真实 prod 配置回归/打包，但不上传 jar，不运行 `package-admin`，不读取 `production-build` secrets。只有 verify 成功且 package-admin 因 RC 跳过时，才创建 `draft=false`、`prerelease=true`、`make_latest=false` 的源码 Release，附加资产必须为空。下载使用 GitHub 自动提供的 Source code 归档；部署者在目标环境用受控配置构建。任何上游失败或取消均阻止发布。
 
 正式版自动执行：
 
 1. `node tools/check_release_version.mjs --tag "$GITHUB_REF_NAME"`。
-2. 后端单测与 `clean package -P prod`。
+2. 后端先执行 `clean test -P dev` 完整业务单测，再执行 `clean package -P prod` 生产配置回归与打包（均通过 `node tools/backend_mvn.mjs -- ...`，显式 `-DskipTests=false`）。Surefire 按 profile 选择标签，prod 组不能替代 dev 全量，见 [CI 验证](CI_VALIDATION.md)。
 3. Vue / React 在受保护 `production-build` environment 获取 `FRONTEND_PRODUCTION_CONFIG`，按 5.1 的四向 RSA 规则预检后执行 `pnpm install --frozen-lockfile` 与 `pnpm run build:prod`。缺少受控输入直接失败。
 4. `node tools/production_config.mjs check-artifact --dir <workspace>/dist` 检查实际协议密钥、指纹、无服务端私钥/仓库示例、可发布来源，再上传 `infoq-admin.jar`、`vue-dist.tar.gz`、`react-dist.tar.gz`；`always()` 清理 runner 内的受控配置。
 5. 按 `backend-jar`、`vue-dist`、`react-dist` 下载到 `tmp/release-assets/` 下各自同名目录，运行 `node skills/release-cli/scripts/verify_release_assets.mjs tmp/release-assets --version <version>`，要求每个目录仅含对应非空普通文件；缺失、跨 artifact 重名、错误名称、额外、空资产和符号链接失败，避免合并下载覆盖重名文件。

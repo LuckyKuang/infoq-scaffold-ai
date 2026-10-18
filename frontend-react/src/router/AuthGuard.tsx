@@ -1,78 +1,84 @@
-import { type ReactElement, useEffect, useState } from 'react';
+import { type ReactElement, useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { Spin } from 'antd';
-import { getToken } from '@/utils/auth';
+import { Button, Result, Spin } from 'antd';
 import { isWhiteListRoute } from '@/router/public-routes';
 import { useUserStore } from '@/store/modules/user';
-import { usePermissionStore } from '@/store/modules/permission';
-import modal from '@/utils/modal';
 
-type AuthGuardProps = {
-  children: ReactElement;
-};
+type AuthGuardProps = { children: ReactElement };
 
 export default function AuthGuard({ children }: AuthGuardProps) {
   const location = useLocation();
-  const [loading, setLoading] = useState(true);
-  const [bootstrapFailed, setBootstrapFailed] = useState(false);
-  const token = getToken();
-  const roles = useUserStore((state) => state.roles);
+  const sessionState = useUserStore((state) => state.sessionState);
+  const sessionError = useUserStore((state) => state.sessionError);
+  const ready = useUserStore((state) => state.bootstrapReady);
+  const token = useUserStore((state) => state.token);
+  const logoutState = useUserStore((state) => state.logoutState);
+  const isPublic = isWhiteListRoute(location.pathname);
   const redirectTarget = `${location.pathname}${location.search}${location.hash}`;
 
   useEffect(() => {
-    let disposed = false;
+    if (!isPublic && logoutState === 'idle')
+      void useUserStore
+        .getState()
+        .bootstrapSession()
+        .catch(() => {
+          /* 错误由状态面板呈现，可显式重试。 */
+        });
+  }, [isPublic, token, logoutState]);
 
-    const bootstrap = async () => {
-      if (!token) {
-        if (!disposed) {
-          setBootstrapFailed(false);
-          setLoading(false);
+  if (logoutState === 'pending')
+    return (
+      <div role="status">
+        <Spin />
+        正在退出，请稍候
+      </div>
+    );
+  if (logoutState === 'failed') {
+    return (
+      <Result
+        status="error"
+        title="退出未完成"
+        subTitle={sessionError}
+        extra={
+          <Button
+            onClick={() =>
+              void useUserStore
+                .getState()
+                .logout()
+                .catch(() => {})
+            }
+          >
+            重试退出
+          </Button>
         }
-        return;
-      }
-
-      try {
-        if (!roles || roles.length === 0) {
-          await useUserStore.getState().getInfo();
-          await usePermissionStore.getState().generateRoutes();
+      />
+    );
+  }
+  if (isPublic) return children;
+  if (sessionState === 'failed') {
+    return (
+      <Result
+        status="error"
+        title="会话初始化失败"
+        subTitle={sessionError}
+        extra={
+          <Button
+            onClick={() =>
+              void useUserStore
+                .getState()
+                .bootstrapSession(true)
+                .catch(() => {})
+            }
+          >
+            重试
+          </Button>
         }
-        useUserStore.getState().initializeRealtimeChannels();
-        if (!disposed) {
-          setBootstrapFailed(false);
-        }
-      } catch (error) {
-        if (!disposed) {
-          setBootstrapFailed(true);
-        }
-        modal.msgError(error);
-        try {
-          await useUserStore.getState().logout();
-        } catch (logoutError) {
-          modal.msgError(logoutError);
-        }
-      } finally {
-        if (!disposed) {
-          setLoading(false);
-        }
-      }
-    };
-
-    bootstrap();
-    return () => {
-      disposed = true;
-    };
-  }, [token, roles]);
-
-  if (!token || bootstrapFailed) {
-    if (isWhiteListRoute(location.pathname)) {
-      return children;
-    }
+      />
+    );
+  }
+  if (sessionState === 'anonymous') {
     return <Navigate to={`/login?redirect=${encodeURIComponent(redirectTarget)}`} replace />;
   }
-
-  if (loading) {
-    return <Spin />;
-  }
-
+  if (!ready) return <Spin />;
   return children;
 }

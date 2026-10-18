@@ -6,6 +6,7 @@ import cc.infoq.common.exception.ServiceException;
 import cc.infoq.common.mybatis.core.page.PageQuery;
 import cc.infoq.common.mybatis.core.page.TableDataInfo;
 import cc.infoq.common.security.auth.LoginUserContext;
+import cc.infoq.common.security.auth.SecurityTokenService;
 import cc.infoq.common.utils.MapstructUtils;
 import cc.infoq.common.utils.SpringUtils;
 import cc.infoq.system.TableInfoTestInitializer;
@@ -56,6 +57,8 @@ class SysUserServiceImplTest {
     private SysUserRoleMapper sysUserRoleMapper;
     @Mock
     private SysUserPostMapper sysUserPostMapper;
+    @Mock
+    private SecurityTokenService securityTokenService;
 
     @BeforeEach
     void setUp() {
@@ -291,6 +294,7 @@ class SysUserServiceImplTest {
         assertTrue(avatarUpdated);
         assertFalse(avatarNotUpdated);
         assertEquals(2, pwdRows);
+        verify(securityTokenService).revokeByUserId(9L);
     }
 
     @Test
@@ -395,6 +399,7 @@ class SysUserServiceImplTest {
 
         assertEquals(1, statusRows);
         assertEquals(2, profileRows);
+        verify(securityTokenService).revokeByUserId(99L);
     }
 
     @Test
@@ -521,6 +526,7 @@ class SysUserServiceImplTest {
                 && inserted.getRoleId().equals(2L)
                 && inserted.getUserId().equals(2L);
         }));
+        verify(securityTokenService).revokeByUserId(2L);
     }
 
     @Test
@@ -537,6 +543,7 @@ class SysUserServiceImplTest {
         }
 
         assertTrue(ex.getMessage().contains("没有权限访问角色的数据"));
+        verifyNoInteractions(securityTokenService);
     }
 
     @Test
@@ -644,6 +651,7 @@ class SysUserServiceImplTest {
         verify(sysUserRoleMapper).delete(any());
         verify(sysUserPostMapper).delete(any());
         verify(sysUserMapper).deleteByIds(eq(List.of(2L, 3L)));
+        verify(securityTokenService).revokeByUserIds(List.of(2L, 3L));
     }
 
     @Test
@@ -796,7 +804,8 @@ class SysUserServiceImplTest {
             sysRoleMapper,
             sysPostMapper,
             sysUserRoleMapper,
-            sysUserPostMapper
+            sysUserPostMapper,
+            securityTokenService
         );
     }
 

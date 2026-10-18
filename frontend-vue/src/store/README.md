@@ -19,8 +19,8 @@
 
 | 模块 | 当前职责 |
 | --- | --- |
-| `user` | token、用户信息、角色权限、password/OAuth ticket 登录登出、SSE 清理、退出失败时的本地会话清理 |
-| `permission` | 动态菜单拉取、路由转换、侧栏/顶栏缓存 |
+| `user` | 内存 token、去重恢复、用户权限、password/OAuth ticket 绑定后登录、退出与实时清理 |
+| `permission` | 动态菜单拉取、路由转换、owned 动态路由注册/移除、侧栏/顶栏缓存 |
 | `app` | 语言、设备、界面偏好等应用级状态 |
 | `settings` | 主题、布局与显示设置 |
 | `tagsView` | 已访问标签页与缓存视图 |
@@ -38,18 +38,19 @@
 ```text
 登录成功
 -> user.login() / user.loginByOAuthTicket()
--> token 持久化
--> permission.ts 调 user.getInfo()
--> permission.generateRoutes()
+-> GET csrf -> PUT browser-session（成功后才写内存 token）
+-> permission.ts 等待 user.bootstrap()
+-> getInfo -> permission.generateRoutes() -> installRoutes()
 -> router / layout / views 使用 store 结果
 ```
 
 ```text
 会话退出或过期重登
 -> user.logout()
--> closeSSE()
--> 尝试 POST /auth/logout
--> 无论后端退出是否成功，都清理本地 token / 用户信息 / 角色权限
+-> 立即清内存 token / 用户信息 / 角色权限 / 动态路由 / 消息 / 标签页
+-> closeSSE() + closeWebSocket()（含重连 timer）
+-> GET csrf -> DELETE browser-session（不附 Bearer）
+-> 失败明确提示服务端注销未确认；不会显示完全注销成功
 ```
 
 ## 6. 公共约束
@@ -57,6 +58,10 @@
 - 影响主链路的 store 变更，至少要同步 `README.md`、`doc/data-flow.md` 和本文件。
 - `user` 与 `permission` 的职责分界应保持明确：前者管会话，后者管路由。
 - `dict`、`notice` 等辅助状态不应混入路由装配职责。
+- `bootstrapState` 为 `unknown/restoring/authenticated/anonymous/failed`，并发调用复用一个恢复 Promise；仅恢复 401 进入匿名，403/503/网络错误停止恢复并显示重试入口。
+- 首载先 GET CSRF、POST 恢复，再加载资料/路由；有效内存 token 不再恢复。旧 `Admin-Token` 启动时只删除、不读取，密码/OAuth 绑定失败尝试以新 Bearer 撤销，并明确报告清理失败。
+- 同 `vue` scope、clientId 的 tab 通过无凭据 storage 事件立即清状态并重载；React 或其他 clientId 的通知不会互相覆盖。
+- 定向测试与真实运行态的标准步骤见 [浏览器会话回归 SOP](../../doc/browser-session-testing.md)。
 
 ## 7. 已知边界
 

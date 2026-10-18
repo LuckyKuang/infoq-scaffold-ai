@@ -350,11 +350,18 @@ public class SysRoleServiceImpl implements SysRoleService, RoleService {
     public int authDataScope(SysRoleBo bo) {
         SysRole role = MapstructUtils.convert(bo, SysRole.class);
         // 修改角色信息
-        sysRoleMapper.updateById(role);
+        if (sysRoleMapper.updateById(role) < 1) {
+            throw new ServiceException("修改角色数据权限失败");
+        }
         // 删除角色与部门关联
         sysRoleDeptMapper.delete(new LambdaQueryWrapper<SysRoleDept>().eq(SysRoleDept::getRoleId, role.getRoleId()));
         // 新增角色和部门信息（数据权限）
-        return insertRoleDept(bo);
+        int rows = insertRoleDept(bo);
+        if (rows < 1) {
+            throw new ServiceException("修改角色部门权限失败");
+        }
+        securityTokenService.revokeByRoleId(bo.getRoleId());
+        return rows;
     }
 
     /**

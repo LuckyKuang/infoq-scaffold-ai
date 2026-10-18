@@ -1,8 +1,8 @@
 # 文档审计与生产缺口修复（2026-10-18）
 
-本页保留两轮独立证据：下方“覆盖口径”至“验证边界与命令”记录已提交 `825df05` 的文档/工具审计；“生产缺口修复与目标环境条件”记录此后用户授权的产品、构建、部署及运维修复。历史数量和通过结果不作为本轮产品验证证据。**仓库修复及本机隔离回归不等于生产验收**，生产基线为 Linux Docker。
+本页保留分轮独立证据：下方“覆盖口径”至“验证边界与命令”记录已提交的文档/工具审计；“生产缺口修复与目标环境条件”记录此后用户授权的产品、构建、部署及运维修复。历史数量和通过结果不作为后续产品验证证据。**仓库修复及本机隔离回归不等于生产验收**，生产基线为 Linux Docker。
 
-本轮以提交 `93d817511e1aa2a652a507a7dcbc9888556c3a84` 为起点重新发现文件和验证行为，没有把上一轮清单或通过结果当作本轮证据。唯一验收约定保留在忽略的本地 change；耐久要求见[平台治理规格](./specs/platform-governance/spec.md)。
+文档复审独立重新发现文件和验证行为，没有把上一轮清单或通过结果当作本轮证据。唯一验收约定保留在忽略的本地 change；耐久要求见[平台治理规格](./specs/platform-governance/spec.md)。
 
 ## 覆盖口径
 
@@ -71,6 +71,8 @@ git diff --check
 
 `check --profile docs` 执行全仓 UTF-8、README 同步、本地链接、根 AGENTS 路由与版本门禁。上述 OpenSpec 命令仅适用于保留本地 change 的本次工作区，重新审计应使用自己的 change ID。回归使用临时 Git/假 gh、回环 HTTP、合成配置、假浏览器/Redis/Docker 和自有进程；不向真实数据库、Redis、远端或容器栈写入。
 
+文档标题/HTML 标签处理变更时，先用 `node tools/test_check_doc_links.mjs` 在隔离 Git fixture 验证真实 CLI：常规锚点、属性内 `>`、混合标签、注释、多行属性、转义/行内代码与不完整标签文本都应保留预期语义，再运行全仓链接检查。标题提取器只为索引生成文本，不是 HTML 安全过滤器；禁止以删掉异常用例、放宽锚点失败或改成忽略所有 HTML 来消除静态告警。
+
 | 检查 | 本轮结果与边界 |
 | --- | --- |
 | 根工具回归 | 链接 13、OpenSpec 17、连接配置 25、MCP 包/退出 9、compress 27、共享运行时 16 场景通过；独立复核复现的进程树、超时、连接池参数和 metadata 假通过已关闭 |
@@ -87,7 +89,7 @@ git diff --check
 
 ## 生产缺口修复与目标环境条件
 
-本轮基于 `825df05` 修复实际实现，未执行 commit/push/Release、远程 Actions、生产部署或凭据轮换。验收约定与执行计划继续只保留在 Git 忽略目录，耐久要求已同步到 `docs/specs/`。本轮证据在 `tmp/production-readiness/`；不得用前述文档审计数字替代下列结果。
+该轮在文档/工具复审后修复实际实现；当时未执行 commit/push/Release、远程 Actions、生产部署或凭据轮换。验收约定与执行计划继续只保留在 Git 忽略目录，耐久要求已同步到 `docs/specs/`。该轮证据在 `tmp/production-readiness/`；不得用前述文档审计数字替代下列结果。
 
 | 领域 | 仓库修复与本机验证 | 目标环境关闭条件 |
 | --- | --- | --- |
@@ -139,6 +141,33 @@ node tools/verify/linux_acceptance.mjs --run-id acceptance-001
 本次影响检查：配置预检与工具身份校验位于构建/部署阶段，不新增业务请求 IO；首次 mc 工具准备新增 Node/BusyBox 固定镜像和官方 GitHub 下载，失败显式阻断。部署错误和回读错误保留安全阶段/代码，恢复/回滚及 owned 清理已在隔离实例演练；生产告警与容量仍待目标证据。新增随机测试配置只用于隔离环境，无冻结 SQL、package/POM 依赖或 lockfile 变更；旧共享策略/目录迁移仍须预览、备份与明确授权。
 
 受控构建见[发布流程](RELEASING.md)，生产部署与迁移见[生产配置](../deploy/PRODUCTION.md)，隔离验收/恢复/回滚/告警/容量及其边界见[生产保障](PRODUCTION-OPS.md)，前端回归与真实业务限制见[测试政策](TESTING.md)。真实凭据、证书和生产数据无需发入对话，只通过目标受控文件/环境提供。
+
+## RC 安全门禁修复
+
+后续真实 PR 检查发现 Maven runner 默认版本漂移、macOS Bash 3.2 heredoc 边界、依赖图谱未启用，以及 18 条 CodeQL 提示。按完整数据流处理：两条弱 RSA 提示为必须保留的生产拒绝负例，逐条按测试用途分类；其他路径修复实现，不关闭扫描或放宽测试。当前 SHA 的最终远端结果必须独立核验，语言扫描 job 成功不等于 aggregate 无告警。
+
+| 范围 | 修复与验证 |
+| --- | --- |
+| 浏览器认证 | 双端只记用户名、内存 token，同源 CSRF/Origin 保护的 HttpOnly 恢复资源，React/Vue scope 隔离；普通 API 保持 Bearer-only。绑定后提交身份，刷新恢复同一 JWT，不续期；退出显示真实完成状态，旧响应不覆盖新身份/cookie |
+| 权限失效 | 用户状态/密码/角色/删除和角色数据范围变更在成功事务边界撤销旧 JWT；Redis 失败返回脱敏 503 并回滚数据库，部分已撤销 JWT 不复活；用户索引和会话有限批量处理 |
+| 工具与输入 | 完整 glob/Markdown 转义、危险合并键拒绝、XML 实体单次解码、quote-aware 标题提取；smoke 使用安全随机与私有 IPC，登录 CLI 拒绝 token stdout，浏览器日志/异常/报告对已知凭据脱敏 |
+| 构建与配置 | CI 固定 Maven 3.9.12 并验证 SHA-512；真实 Bash 3.2 安装回归通过。生产 Origin/Path/Secure/TTL 在预检、Compose、安装器与 Apple 开发配置一致，使用显式 deployment mode |
+
+本地独立回归：React 286、Vue 487、backend 135 项目标测试通过（后端目标测试合计 7.955 秒）；四份根/子路径产物的 44 项真实 DOM 流程通过。DOM 使用隔离 HTTP/Provider 替身，包含 503 停止恢复、延迟 DELETE 不提前显示登录、刷新、退出和 cookie/存储边界；不替代真实 Spring/Redis/HTTPS。真实 Chromium 另外验证 WebSocket401 自动诊断中的 query token 脱敏，并核验进程退出与端口重绑。
+
+完整本地 `push-cli check --profile full` 当轮全部通过：React 50 文件/286 项、Vue 102 文件/487 项单测及两端 lint/受控隔离生产构建；后端 clean/package 覆盖 235 个 suite、1,141 项单测，失败/错误/跳过均为 0，suite 时间合计 45.370 秒。固定 Maven 安装器、五组发布回归、文档/编码/规约和本地 active change 检查一并通过。隔离构建产物另经秘密与配对指纹检查，标记为不可部署；此结果不代替远端三平台、安全扫描或生产验收。
+
+追加 Colima 真实首登发现：恢复 HTTP401 清除了服务端 CSRF cookie，双端仍缓存旧值，导致随后的绑定 HTTP403。两端已在有序恢复操作失败前清缓存；403/503 保留有效缓存且不自动重试。新增真实 cookie/header 反例先复现旧实现失败，修复后最终 React **289**、Vue **491** 项全量单测、lint、四份根/子路径重建及产物扫描通过。原 286/487 项结果仅对应修复前的 full 矩阵，不替代最终结果；后端代码未再改变，仍采用同轮 1,141 项和 45.370 秒证据。
+
+HTTP/Provider 替身同步真实后端在恢复401时清除恢复及 CSRF cookie 的行为后，最终四份产物统一 **48** 项 DOM 验收通过，覆盖旧 CSRF 被拒绝、新引导后同 tab 首次绑定成功，以及原有 OAuth、刷新、隔离、撤销、过期和退出断言。runner 与四产物 SHA-256 已记录，浏览器实际退出、4 个自有端口不可达；原 44 项证据保留为历史，不能替代这轮严格 fixture 的通过结果。
+
+生产日志追加反例：Maven prod 的通用 WARN 级别实际屏蔽了 INFO 会话审计及正常 Push 分类。现仅七个精确 logger 启用 INFO，无关业务仍 WARN；真实生产过滤配置经 Spring Boot/Logback 验证同步和异步写出。`clean package -P prod` 通过（prod 配置测试 1 项、0.391 秒），临时目录初始化补齐后定向复验 1 项通过（0.453 秒）；这些不替代 dev 的 1,141 项业务测试。CI、发布与 push-cli 矩阵已分别执行两组，避免 prod 少量配置测试被误称全量；dev/prod suite 时间合计 45.761 秒。
+
+最新 Colima `rc-browser-008` 使用冻结产品源码与受控隔离配置，四份真实 Docker 产物通过 6 次 UI 验证码密码首登、匿名受保护入口回跳、profile/reload、实际 DELETE/匿名 reload、Cookie/CSRF/Origin 拒绝、cookie-only 401 和独立 JWT 的 scope 隔离。实际生产日志记录 success/revoked/csrf_rejected/origin_rejected，均有 clientId/requestId；自然登录未产生 Push result 行，因此本轮不声称真实 Push 投递或 ACK 验收。state 为 passed，浏览器及 owned 容器/卷/网络清理为 verified；专用 infoq-verify 已停止，sub2api 保持运行，宿主 Docker context 保持 default。产物、源码与镜像身份及交付脚本/文档/测试差异在本地证据单独核对。
+
+会话合同和 SOP 见 [认证规范](specs/auth/spec.md)、[后端恢复会话](../backend/doc/browser-session.md)、双端 `doc/` 测试说明和 [CI 覆盖](CI_VALIDATION.md)。全量本地矩阵、当前源码 Colima 集成与新 SHA 远端门禁的最终证据保留在 `tmp/`，交付时逐项核对；未完成不能视作发布就绪。
+
+性能影响限于首载/绑定/恢复/退出和安全变更撤销，不在每次业务请求新增数据库查询；Redis 映射有界 TTL。可观测性保留 action/category/clientId/短摘要/requestId，故障显式失败；生产精确审计日志增加有限写入，不扩大全局 INFO，容量和外部告警接收仍需目标测量。回滚须代码与受控配置一起回退，按精确 name/path 清本 scope cookie，不恢复明文持久 token、不复活已撤销 JWT。无冻结 SQL、依赖或 lockfile 变更；生产秘密、可信 HTTPS、真实 Provider、容量和外部告警仍须目标环境验收。
 
 ## 可复用审计与回归 SOP
 

@@ -96,7 +96,7 @@ INFOQ_TEST_REDIS_HOST=127.0.0.1 \
 INFOQ_TEST_REDIS_PORT=6379 \
 INFOQ_TEST_REDIS_DATABASE=0 \
 INFOQ_TEST_REDIS_PASSWORD="$REDIS_PASSWORD" \
-node skills/test-cli/scripts/captcha_login.mjs --backend-url http://127.0.0.1:8080 --print-token
+node skills/test-cli/scripts/captcha_login.mjs --backend-url http://127.0.0.1:8080 --json
 ```
 
 也支持 `--redis-host`、`--redis-port`、`--redis-database`、`--redis-username`、`--redis-password`、`--redis-tls`、`--redis-key-prefix`。答案默认 `2468`，可用 `--captcha-answer` 覆盖。
@@ -107,7 +107,7 @@ node skills/test-cli/scripts/captcha_login.mjs --backend-url http://127.0.0.1:80
 - `--redis-key-prefix` 是完整验证码键前缀，默认 `global:captcha_codes:`。如果后端 `redisson.keyPrefix=example`，应使用 `example:global:captcha_codes:`；脚本会在该值之后拼接 `uuid`，不能只传 `example`。
 - 该模式只允许在已授权的测试环境使用，禁止指向生产 Redis。
 - 种子 key 与后端校验一致，TTL 默认 120 秒，只能消费一次。
-- `--print-token` 和登录证据包含有效会话信息；证据留在 `tmp/` 并限制访问，不粘贴到共享日志或提交到仓库。运行后按测试账号生命周期撤销会话。
+- 登录 CLI 只输出脱敏摘要；旧 `--print-token` 显式拒绝，内部 runner 直接复用 `loginWithRealCaptcha`，token 仅在进程内传递。证据留在 `tmp/` 并限制访问；运行后按测试账号生命周期撤销会话。
 
 ## 6. 前端单测与界面测试
 
@@ -164,7 +164,7 @@ node tools/production_config.mjs check-artifact --dir frontend-react/dist
 ### 6.5 当前自动化边界与交付证据
 
 - `generate-case-matrix.mjs` 生成设计清单，不执行测试；默认更新 `docs/testing/`。审计预览用 `--output-dir tmp/test-cli/matrix-preview`，确认变更后才更新受管产物。`gaps.md` 只报告静态组件/菜单匹配缺口，不代表完整运行态覆盖率。
-- `run_admin_e2e.mjs` 从实时菜单接口选取非参数化路由，支持 `--include-route`、`--exclude-route`、`--route-limit`；尚未读取 `case-matrix.json`，不会自动覆盖固定公开页、消息中心、浏览器登录表单和多角色权限矩阵。它通过 API 登录后注入 `Admin-Token`。
+- `run_admin_e2e.mjs` 从实时菜单接口选取非参数化路由，支持 `--include-route`、`--exclude-route`、`--route-limit`；尚未读取 `case-matrix.json`，不会自动覆盖固定公开页、消息中心、浏览器登录表单和多角色权限矩阵。它通过 API 登录后，经同源 CSRF 引导/绑定资源建立 HttpOnly 浏览器会话，不向 localStorage 注入 `Admin-Token`。`--api-prefix` 默认 `/dev-api`，部署产物须使用 `/prod-api` 并与后端 Cookie Path/Origin 一致；React/Vue scope 互相隔离。
 - `playwright_core.mjs` 检查导航 HTTP 状态、URL、可选可见文本和 console/pageerror，并采集截图；HTTP 失败不能通过，但 HTTP 200 返回的空白页或 401/404 页面 DOM 仍需业务可见内容断言和截图审阅。`networkidle` 超时会继续取证，不能仅依据 runner 退出码宣布页面完整验收。
 - E2E 自管栈记录 backend/frontend 的 `state.json` 并清理 owned 进程；`--no-start-stack` 复用的服务由其所有者管理。通用 Playwright 状态在 `tmp/test-cli/browser/states/`，CRUD 浏览器状态在当前 run 的 `browser-state.json`，DevTools 子进程状态/日志在 `tmp/test-cli/browser/chrome-devtools-mcp/`。Playwright 通过 pipe 通信，状态的 `pid` 是 runner PID、`port=null`，不是 Chromium OS PID；以 awaited `browser.close()` 和 `browserClosed` 留存关闭证据。DevTools 记录真实子进程 PID 并核验 owned 进程树退出。
 - 自管栈的 HTTP 就绪探针接受 2xx–4xx；它不能证明验证码、数据库与 Redis 真正可用，也不能确认已复用服务的 profile/身份。`VITE_APP_PROXY_TARGET` 若已设置会优先于 `--backend-port` 推导值；执行前必须把 API 登录地址、浏览器代理和目标实例核对为同一环境。`--keep-stack-after` 仅在验证及报告落盘均成功后保留栈；落盘失败或期间收到中断会撤销保留决定并关闭 owned 进程，清理错误与原始错误同时保留。
@@ -181,7 +181,7 @@ node tools/production_config.mjs check-artifact --dir frontend-react/dist
 - 正常、普通异常及 SIGINT/SIGTERM/SIGHUP 都进入统一收口：取消当前工作，先以独立 30 秒预算尝试当前 run API cleanup/DB 核对，再停止 owned 栈并保存最终报告；主要失败和 cleanup 失败同时保留。Maven 构建、JDBC 子进程及就绪探针可取消。硬终止、掉电、凭据失效或清理超时仍须根据 `test-data.json` 人工恢复；不要依靠下一次运行清理前次数据。
 - `captcha_login.mjs` 与 route smoke 中显式 `--username` / `--password` 只是优先账号，失败后仍会尝试候选列表。隔离测试必须显式配置 `--login-candidates` 或 `LOGIN_CANDIDATES` 为已授权测试账号集合，不能依赖脚本内置示例候选；重试可能产生登录失败记录或锁定账号。
 - 登录脚本始终发送加密请求，`--rsa-public-key` 或 `RSA_PUBLIC_KEY` 必须与目标后端的请求解密私钥匹配。`admin-route-probe` 不透传该 flag，应通过 `RSA_PUBLIC_KEY` 环境变量配置。前端构建密钥另由 `VITE_APP_RSA_*` 提供，不能认为覆盖登录脚本就同时覆盖了前端。
-- `--print-token` 会输出真实会话；截图、测试数据与报告还可能包含个人数据、验证码答案和生成的 fixture 凭据。证据限本地受控 `tmp/`，不得公开上传。登录及 E2E 的 `--run-id` 强制使用字母或数字开头、仅含字母/数字/点/下划线/连字符的简单 slug，最长 120 字符；登录 `--run-dir` 校验必须在仓库 `tmp/` 内。停止进程不等于撤销测试登录会话，需另行退出/撤销。
+- token 不进入 stdout、浏览器持久存储、trace/HAR 或公开 storageState；截图、测试数据与报告仍可能包含个人数据、验证码答案和生成的 fixture 凭据。证据限本地受控 `tmp/`，不得公开上传。登录及 E2E 的 `--run-id` 强制使用字母或数字开头、仅含字母/数字/点/下划线/连字符的简单 slug，最长 120 字符；登录 `--run-dir` 校验必须在仓库 `tmp/` 内。停止进程不等于撤销测试登录会话，需另行退出/撤销。
 
 恢复步骤与禁止事项遵循第 2–4 节及 [数据运维](./DATA-OPS.md)。工具隔离回归 SOP 见 [CRUD 模式](../skills/test-cli/references/crud/crud-patterns.md)；本轮采用假 HTTP/Redis/浏览器与临时进程验证工具行为，未执行真实 Redis/数据库写入、浏览器 CRUD 或生产验收。后端 smoke 的请求超时、监听及脱敏门禁另见 [后端验证 SOP](../tools/verify/README.md)。
 

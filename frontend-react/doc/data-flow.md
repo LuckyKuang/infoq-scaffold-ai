@@ -30,9 +30,9 @@ LoginPage
 -> api/login.ts login()
 -> utils/request.ts
 -> POST /auth/login
--> setToken()
--> initSSE()
--> initWebSocket()
+-> GET /auth/browser-session/csrf
+-> PUT /auth/browser-session（显式新Bearer + CSRF）
+-> setToken()（仅内存，绑定失败则撤销新Bearer）
 ```
 
 OAuth 登录沿用同一个 token 落地路径，但授权发起和回调多两段公开接口：
@@ -46,15 +46,16 @@ LoginPage
 -> userStore.loginByOAuthTicket()
 -> exchangeOAuthTicket()
 -> POST /auth/oauth/ticket
--> setToken()
--> initSSE()
--> initWebSocket()
+-> GET /auth/browser-session/csrf
+-> PUT /auth/browser-session（显式新Bearer + CSRF）
+-> setToken()（仅内存，绑定失败则撤销新Bearer）
 ```
 
 登录成功后，真正把当前用户资料和动态菜单装进前端状态的动作并不发生在登录页面本身，而是在 `AuthGuard.tsx`：
 
 ```text
 AuthGuard
+-> userStore.bootstrapSession()（共享in-flight）
 -> userStore.getInfo()
 -> permissionStore.generateRoutes()
 -> userStore.initializeRealtimeChannels()
@@ -64,7 +65,7 @@ AuthGuard
 因此当前 React admin 的登录闭环是“两段式”的：先拿 token，再由守卫补齐用户信息与动态路由。
 
 在提交密码、离开页面发起 OAuth 或兑换一次性 ticket 前，页面先校验已解析的 `redirect`。缺省为 `/index`，非法值显式拒绝且不创建会话。守卫保留 pathname/query/hash；授权和绑定 API 使用 `/react/user/profile` 等安全站内浏览器路径，返回后移除当前前缀一次交给 Router，保留 query 中的 `%26` 等原始编码。
-当浏览器刷新后本地已有 token 时，`AuthGuard` 也会沿用这条守卫启动路径，并在用户信息和动态路由恢复成功后重新初始化 SSE/WebSocket。若用户信息或动态路由初始化失败，守卫会提示错误、执行本地会话清理，并带当前路径 redirect 回到登录页，不继续渲染受保护布局。
+刷新后内存为空，`AuthGuard` 先 GET csrf → POST `/auth/browser-session` 恢复，再装载用户和动态路由，成功后启动实时连接。401进入匿名并保留redirect回登录；403/503/网络错误清本地状态、显示错误和显式重试，不假装匿名。旧 `Admin-Token` 在模块启动删除，不读取或迁移。
 
 ## 1.1 登录前公开认证能力与自助认证页
 
@@ -141,13 +142,13 @@ API 模块本身主要承担：
 `utils/request.ts` 的响应拦截器在收到 `401` 时会：
 
 ```text
-检测 isRelogin.show
+立即 userStore.invalidateSession()
+-> 清内存、权限、路由、标签、消息和owned实时连接
 -> modal.confirm(...)
--> userStore.logout()
 -> navigateTo('/login')
 ```
 
-这条链路说明当前 React admin 不会静默吞掉过期会话，而是显式弹窗并让用户决定是否重新登录。若 token 已被后端撤销，`userStore.logout()` 仍会在 `/auth/logout` 失败后清理本地会话，避免继续携带旧 token 请求受保护接口。
+401立即停止使用旧Bearer，弹窗用于提示重登。专用恢复资源不经过此拦截器；绑定失败的新Bearer清理请求也不触发再次logout的循环。
 
 ## 5. 登出与消息通道关闭
 
@@ -157,9 +158,10 @@ API 模块本身主要承担：
 userStore.logout()
 -> closeSSE()
 -> closeWebSocket()
--> POST /auth/logout
--> finally removeToken()
--> 清空用户状态
+-> invalidateSession()（先清内存、路由、标签、消息）
+-> GET csrf + DELETE /auth/browser-session（无Bearer）
+-> 失败明确报告，不能声称服务端已撤销
+-> 同scope/clientId通知其他tab清内存
 ```
 
 因此当前登录态相关的副作用资源都挂在 `user` store 生命周期上。

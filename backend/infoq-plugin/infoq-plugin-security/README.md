@@ -4,6 +4,8 @@
 
 提供 backend 的请求鉴权入口，负责 Spring Security 过滤链、JWT access token 签发与校验、Redis session / revocation / online index、客户端 ID 一致性校验，以及健康检查等免鉴权路径的统一排除。
 
+浏览器恢复使用独立 `BrowserSessionService`、有界 Redis opaque 映射、按 React/Vue 隔离的 HttpOnly cookie 和 Spring CSRF；普通业务接口继续只认 Bearer。精确 HTTP 合同、受控配置、故障与测试 SOP 见 [浏览器恢复会话](../../doc/browser-session.md)。用户安全变更及角色数据范围变更在事务提交前撤销会话，批量撤销以 500 个索引/会话为组使用 Redisson OSS 批处理。
+
 ## 2. 关键入口
 
 - [`SecurityConfig`](./src/main/java/cc/infoq/common/security/config/SecurityConfig.java)

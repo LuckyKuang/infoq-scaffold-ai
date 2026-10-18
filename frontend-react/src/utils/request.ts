@@ -166,16 +166,23 @@ service.interceptors.response.use(
     const msg = errorCode[code] || res.data.msg || errorCode.default;
 
     if (code === 401) {
+      if (res.config.headers?.skipRelogin) {
+        return Promise.reject(new Error('新会话撤销未获确认（401）'));
+      }
+      const currentToken = getToken();
+      if (!currentToken || res.config.headers?.Authorization !== `Bearer ${currentToken}`) {
+        return Promise.reject(new Error('无效的会话，或者会话已过期，请重新登录。'));
+      }
+      useUserStore.getState().invalidateSession();
       if (!isRelogin.show) {
         isRelogin.show = true;
-        modal.confirm('登录状态已过期，您可以继续留在该页面，或者重新登录').then(async (ok) => {
+        modal.confirm('登录状态已过期，请重新登录').then((ok) => {
           if (!ok) {
             isRelogin.show = false;
             return;
           }
           isRelogin.show = false;
-          await useUserStore.getState().logout();
-          navigateTo('/login');
+          if (!getToken()) navigateTo('/login');
         });
       }
       return Promise.reject(new Error('无效的会话，或者会话已过期，请重新登录。'));
@@ -194,6 +201,15 @@ service.interceptors.response.use(
     return Promise.resolve(res.data);
   },
   (error: AxiosError) => {
+    const currentToken = getToken();
+    if (
+      error.response?.status === 401 &&
+      !error.config?.headers?.skipRelogin &&
+      currentToken &&
+      error.config?.headers?.Authorization === `Bearer ${currentToken}`
+    ) {
+      useUserStore.getState().invalidateSession();
+    }
     let messageText = error.message || '请求失败';
     if (messageText === 'Network Error') {
       messageText = '后端接口连接异常';

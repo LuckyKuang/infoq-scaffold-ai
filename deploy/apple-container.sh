@@ -410,22 +410,35 @@ cmd_init() {
         die "Apple local stack requires explicit INFOQ_DEPLOY_MODE=development; use Linux Docker for production."
     fi
     replace_env_value INFOQ_DEPLOY_MODE development
-    node --input-type=module - "${REPO_ROOT}/tools/production_config.mjs" "${ENV_FILE}" <<'NODE'
+    node --input-type=module - "${REPO_ROOT}/tools/production_config.mjs" "${ENV_FILE}" "${created}" <<'NODE'
 import fs from 'node:fs';
 import {pathToFileURL} from 'node:url';
 import {generateKeyPairSync} from 'node:crypto';
-const {readProductionConfig} = await import(pathToFileURL(process.argv[2]));
+const {readProductionConfig, validateBrowserSessionConfig} = await import(pathToFileURL(process.argv[2]));
 const file = process.argv[3], env = readProductionConfig(file);
+const created = process.argv[4] === 'true';
+const updates = new Map();
+if (created || !env.INFOQ_PUBLIC_BASE_URL || env.INFOQ_PUBLIC_BASE_URL === 'https://app.example.com') updates.set('INFOQ_PUBLIC_BASE_URL', `http://127.0.0.1:${env.APPLE_CONTAINER_HOST_PORT || '19090'}`);
+for (const [name, value] of [
+  ['INFOQ_BROWSER_SESSION_ORIGINS', 'http://localhost,http://127.0.0.1,http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://127.0.0.1:5174'],
+  ['INFOQ_BROWSER_SESSION_COOKIE_PATH', '/dev-api/auth/browser-session'], ['INFOQ_BROWSER_SESSION_SECURE', 'false']
+]) if (created || !env[name]) updates.set(name, value);
+if (!env.INFOQ_BROWSER_SESSION_TTL_SECONDS) updates.set('INFOQ_BROWSER_SESSION_TTL_SECONDS', '2592000');
+validateBrowserSessionConfig({...env, ...Object.fromEntries(updates)}, {apiPrefix: '/dev-api'});
 const names = ['VITE_APP_RSA_PUBLIC_KEY', 'INFOQ_API_REQUEST_PRIVATE_KEY', 'VITE_APP_RSA_PRIVATE_KEY', 'INFOQ_API_RESPONSE_PUBLIC_KEY'];
 if (names.some((name) => env[name]) && !names.every((name) => env[name])) throw new Error('RSA 配置不完整；拒绝自动轮换已有密钥，请提供四项配对配置');
 if (!names.every((name) => env[name])) {
-  let text = fs.readFileSync(file, 'utf8');
   for (const [publicName, privateName] of [[names[0], names[1]], [names[3], names[2]]]) {
     const pair = generateKeyPairSync('rsa', {modulusLength: 2048, publicKeyEncoding: {format: 'der', type: 'spki'}, privateKeyEncoding: {format: 'der', type: 'pkcs8'}});
-    for (const [name, value] of [[publicName, pair.publicKey], [privateName, pair.privateKey]]) {
-      text = text.replace(new RegExp(`^${name}=.*(?:\\r?\\n|$)`, 'mu'), '');
-      text += `\n${name}=${value.toString('base64')}\n`;
-    }
+    updates.set(publicName, pair.publicKey.toString('base64'));
+    updates.set(privateName, pair.privateKey.toString('base64'));
+  }
+}
+if (updates.size) {
+  let text = fs.readFileSync(file, 'utf8');
+  for (const [name, value] of updates) {
+    text = text.replace(new RegExp(`^${name}=.*(?:\\r?\\n|$)`, 'mu'), '');
+    text += `\n${name}=${value}\n`;
   }
   fs.writeFileSync(file, text, {encoding: 'utf8', mode: 0o600});
 }
@@ -564,6 +577,14 @@ REDIS_PASSWORD=${REDIS_PASSWORD}
 DEPLOY_ID=${DEPLOY_ID}
 JAVA_OPTS=-Xms512m -Xmx1024m
 ENV
+    node --input-type=module - "${REPO_ROOT}/tools/production_config.mjs" "${ENV_FILE}" "${ADMIN_ENV_FILE}" <<'NODE'
+import fs from 'node:fs';
+import {pathToFileURL} from 'node:url';
+const {readProductionConfig} = await import(pathToFileURL(process.argv[2]));
+const env = readProductionConfig(process.argv[3]);
+const names = ['INFOQ_DEPLOY_MODE', 'INFOQ_PUBLIC_BASE_URL', 'INFOQ_BROWSER_SESSION_ORIGINS', 'INFOQ_BROWSER_SESSION_COOKIE_PATH', 'INFOQ_BROWSER_SESSION_SECURE', 'INFOQ_BROWSER_SESSION_TTL_SECONDS'];
+fs.appendFileSync(process.argv[4], names.map(name => `${name}=${env[name] ?? (name === 'INFOQ_BROWSER_SESSION_TTL_SECONDS' ? '2592000' : '')}`).join('\n') + '\n', 'utf8');
+NODE
     chmod 600 "${ADMIN_ENV_FILE}"
 }
 

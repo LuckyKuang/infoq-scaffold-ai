@@ -55,20 +55,31 @@ pnpm --dir skills/test-cli/scripts run playwright-cli admin-route-probe --backen
 再对目标路由执行浏览器探测：
 
 ```bash
-pnpm --dir skills/test-cli/scripts run playwright-cli admin-route-probe --frontend-origin "http://127.0.0.1:5174" --route "/index"
+pnpm --dir skills/test-cli/scripts run playwright-cli admin-route-probe --client react --frontend-origin "http://127.0.0.1:5174" --route "/index"
 ```
 
 示例使用 React E2E 自管栈端口 `5174`；手动 `pnpm run dev` 默认端口是 `80`，请按实际 origin 调整。
 
 该命令会：
 
-1. 直接调用 `skills/test-cli/scripts/captcha_login.mjs --print-token`，通过 Redis 种子答案获取真实 token，并把证据写入 `tmp/test-cli/e2e/captcha-login/`。
-2. 在页面加载前写入 `Admin-Token`。
+1. 在进程内复用 `captcha_login.mjs` 的 `loginWithRealCaptcha`，通过 Redis 种子答案获取真实 token，脱敏证据写入 `tmp/test-cli/e2e/captcha-login/`；token 不经命令行或 stdout。
+2. 使用浏览器 cookie jar 经同源 `GET /auth/browser-session/csrf` → `PUT /auth/browser-session` 建立受保护的 HttpOnly 会话；不写入 `Admin-Token`。`--client` 选择应用 scope，`--api-prefix` 默认 `/dev-api`，部署产物使用 `/prod-api`，均须与后端受控 Origin 和 Cookie Path 一致。
 3. 打开目标前端路由。
 4. 输出截图与 console 日志路径。
 5. 默认把 `console error` / `pageerror` 视为失败。
 
 当前执行器拒绝失败的导航 HTTP 状态，但不自动判定截图空白或 HTTP 200 的错误页 DOM；必须补充业务可见元素断言并审阅截图。URL 匹配与 console 无错不足以证明页面正确。状态落在 `tmp/test-cli/browser/states/`，包括 runner PID、`port=null`、pipe 通信、console 路径和 `browserClosed`；正常、失败及可捕获中断都等待浏览器关闭。完整边界见 `docs/TESTING.md` 第 6.5 节。
+
+### 浏览器凭据证据回归 SOP
+
+触发条件：修改管理端会话播种、实时连接、console/pageerror 采集、Playwright 异常或 CRUD 报告。浏览器自身的 WebSocket 握手错误也会包含带 token 的完整 URL，不能只检查应用是否调用 `console.log(token)`。
+
+1. 使用已授权的隔离 fixture，记录本轮取得的管理端与在线强退测试 token；token 清除或失效后，脱敏集合仍保留到本轮结束。
+2. 认证浏览器证据统一经过 `tools/lib/browser_evidence.mjs`：在 console text/location、pageerror、异常 message/stack/cause、状态与 JSON/Markdown 报告落盘前替换已知 token 原文和 URL 编码形式。保留错误类别、数量、状态及失败退出；不因脱敏跳过检查。在线测试用户的会话编号截图使用 Playwright mask。
+3. 先运行 `node tools/test_browser_evidence.mjs`，用真实 Chromium 的 WebSocket 401、脚本错误和 locator 超时检查秘密缺失、错误仍失败、owned 浏览器 PID 退出及 HTTP 端口重绑。再运行 `node skills/test-cli/scripts/test_browser_runtime.mjs`，检查 CRUD 临时 token、console location、清理失败、取消与返回 JSON 边界。
+4. 证据保留在 `tmp/test-cli/browser/browser-evidence-*/`；只说明实际执行范围。fixture 通过不等于真实后端、OAuth Provider 或生产验收通过。
+
+常见反模式：原样存 `message.text()` / `error.stack`；只过滤 `Bearer ` 而漏掉 URL 编码或纯 token；token 失效后丢失脱敏记录；为使日志“干净”而丢弃错误、放宽断言或自动接受 console error；新增带凭据的 trace、HAR 或公开 `storageState`。
 
 ### 4. DevTools CLI
 

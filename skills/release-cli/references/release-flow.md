@@ -55,6 +55,7 @@ verify --version <version>  ->  release 非 draft；RC 为 prerelease、非 Late
 
 - 创建前共同执行 `release_cli.mjs publish --version <version> --dry-run`，只读核验来源并拒绝已有 Release；禁止重跑覆盖公开资产或并发创建同一 Release。
 - 当前默认路径由 `.github/workflows/release.yml` 在 tag 推送后发布，不再运行手工 `publish`，避免竞争与重复发布。
+- verify job 先执行 dev 完整业务单测，再执行 prod 生产配置回归与打包；Surefire 按 profile 选组，不能把 prod 组当作完整业务覆盖。两轮任一失败都阻止发布，命令见 `docs/CI_VALIDATION.md`。
 - RC workflow 仅源码 Pre-release，明确 `prerelease=true`、`make_latest=false`；不读生产 secret、不进入 package-admin、不上传/下载编译产物。verify 成功且 package-admin 为 skipped 才发布；失败/取消停止。
 - 正式版 workflow 按 `backend-jar`、`vue-dist`、`react-dist` 下载到独立同名目录，再执行 `verify_release_assets.mjs`，要求每个目录只含对应非空普通文件，禁止跨 artifact 重名、额外和错误名称，拒绝符号链接；仅把精确文件列表交给发布 action，避免合并下载覆盖掩盖重复资产。
 - 独立手工发布场景的 `publish` 使用 `gh release create <tag> --verify-tag`，RC 追加 `--prerelease --latest=false`；缺少远端 tag 时失败。默认只预览，显式 `--execute` 才写入；它不打包、不上传构建产物，也不等待自动 workflow。

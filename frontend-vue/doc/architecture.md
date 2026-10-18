@@ -42,8 +42,8 @@ main.ts
 | --- | --- | --- |
 | `main.ts` | 注册 router、Pinia、i18n、插件、指令与开发者工具保护 | `app.use(...)`、`directive(app)`、`initDevToolsProtection()` |
 | `router/index.ts` | 固定认证入口、受保护页面、错误及重定向路由 | `constantRoutes` |
-| `permission.ts` | 登录态检查、白名单放行、`getInfo()` 与动态路由注入 | `router.beforeEach(...)` |
-| `store/modules/user.ts` | 登录、获取用户信息、登出、SSE 关闭、退出失败本地清理 | `login()`、`getInfo()`、`logout()` |
+| `permission.ts` | 等待会话/资料/动态路由恢复，白名单及回跳 | `router.beforeEach(...)` |
+| `store/modules/user.ts` | 内存 token、绑定、去重恢复、资料/路由 bootstrap、退出与实时清理 | `login()`、`bootstrap()`、`logout()` |
 | `store/modules/permission.ts` | 拉取后端菜单并解析成 Vue Router 路由对象 | `generateRoutes()`、`filterAsyncRouter()` |
 | `utils/request.ts` | 统一请求头、重复提交拦截、可选加解密、401 处理和下载 | axios request/response interceptors |
 | `views/*` | 登录、首页、系统管理、监控、错误页和跳转页 | `src/views/**` |
@@ -106,10 +106,14 @@ const modules = import.meta.glob('./../../views/**/*.vue')
 - 补 `Authorization` 与 `clientid`
 - GET 参数串行化
 - 500ms 内重复提交拦截
-- 401 会话过期弹窗与路由跳转
+- 401 与原请求 Bearer 相关后立即清理和路由跳转
 - 下载流处理
 
 因此 `src/api/*` 主要负责 URL、方法与类型约束，不重复实现异常处理。
+
+专用 `/auth/browser-session` 使用独立同源 fetch，不附旧 Bearer、不进入重复提交缓存或普通 401 弹窗。GET 返回仅存内存的 CSRF；PUT 绑定显式新 Bearer 成功后才提交登录状态；POST 通过 HttpOnly cookie 恢复原 token；DELETE 无 Bearer 注销。全部带 `clientid` 与 `X-InfoQ-Browser-Session: vue`，写方法另带 `X-XSRF-TOKEN`，HTTP 与 ApiResult 同时验证。
+
+access token 仅存内存，旧 `Admin-Token` 启动时直接删除。首载共享一个 `unknown/restoring/authenticated/anonymous/failed` bootstrap，GET csrf→POST 恢复→getInfo→getRouters 完成后才渲染布局并初始化 SSE/WebSocket。401 匿名，403/503/网络失败显式停止并允许重试。OAuth callback 先交换并绑定新 ticket，不恢复旧账号。仅支持相对 `VITE_APP_BASE_API` 的同源代理，生产 HTTPS 与受控 cookie Origin/Path/Secure 配置必须同时满足。
 
 ## 5. 状态边界
 
@@ -131,7 +135,7 @@ const modules = import.meta.glob('./../../views/**/*.vue')
 
 - 后端路由组件名必须能在 `src/views` 中解析到真实页面。
 - 登录、注册与写请求的加密能力依赖 `VITE_APP_CLIENT_ID`、`VITE_APP_BASE_API` 和 RSA/AES 配置。
-- 后端退出接口失败不阻断本地 token、用户状态和角色权限清理。
+- DELETE 浏览器会话失败仍清本地 token、角色权限、owned 动态路由、消息、标签页和实时连接，但明确提示服务端注销未确认。同 vue scope/clientId 的 tab 只发无凭据通知，React 和其他 clientId 保持隔离。
 - 本工作区默认使用 Element Plus、Pinia 与 Vue Router 的既有模式，不套用 React admin 的状态实现。
 
 ## 7. 已知边界

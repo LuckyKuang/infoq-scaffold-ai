@@ -107,8 +107,8 @@ describe('pages/login', () => {
     expect(screen.queryByRole('link', { name: '忘记密码' })).not.toBeInTheDocument();
   });
 
-  it('keeps remembered account when checkbox checked', async () => {
-    render(
+  it('remembers only the username across a successful login and reload', async () => {
+    const first = render(
       <MemoryRouter>
         <Routes>
           <Route path="*" element={<LoginPage />} />
@@ -122,13 +122,64 @@ describe('pages/login', () => {
     fireEvent.change(usernameInput, { target: { value: 'demo' } });
     fireEvent.change(passwordInput, { target: { value: 'pwd' } });
     fireEvent.change(codeInput, { target: { value: '2222' } });
-    fireEvent.click(screen.getByText('记住我'));
+    fireEvent.click(screen.getByRole('checkbox', { name: '记住用户名' }));
     fireEvent.click(screen.getByRole('button', { name: /^登\s*录$/ }));
 
     await waitFor(() => {
       expect(localStorage.getItem('username')).toBe('demo');
       expect(localStorage.getItem('rememberMe')).toBe('true');
+      expect(localStorage.getItem('password')).toBeNull();
     });
+    await waitFor(() => expect(loginMock).toHaveBeenCalledTimes(1));
+    first.unmount();
+    render(<MemoryRouter><LoginPage /></MemoryRouter>);
+    expect(await screen.findByPlaceholderText('用户名')).toHaveValue('demo');
+    expect(screen.getByPlaceholderText('密码')).toHaveValue('');
+    expect(screen.getByRole('checkbox', { name: '记住用户名' })).toBeChecked();
+    expect(localStorage.getItem('password')).toBeNull();
+  });
+
+  it('removes a legacy password without reading or restoring it', async () => {
+    localStorage.setItem('username', 'remembered-user');
+    localStorage.setItem('password', 'legacy-secret');
+    localStorage.setItem('rememberMe', 'true');
+    const read = vi.spyOn(localStorage, 'getItem');
+    render(<MemoryRouter><LoginPage /></MemoryRouter>);
+    expect(await screen.findByPlaceholderText('用户名')).toHaveValue('remembered-user');
+    expect(screen.getByPlaceholderText('密码')).toHaveValue('');
+    expect(read).not.toHaveBeenCalledWith('password');
+    expect(localStorage.getItem('password')).toBeNull();
+  });
+
+  it('immediately forgets the username when the choice is cleared', async () => {
+    localStorage.setItem('username', 'remembered-user');
+    localStorage.setItem('rememberMe', 'true');
+    const first = render(<MemoryRouter><LoginPage /></MemoryRouter>);
+    const choice = await screen.findByRole('checkbox', { name: '记住用户名' });
+    expect(choice).toBeChecked();
+    fireEvent.click(choice);
+    expect(localStorage.getItem('username')).toBeNull();
+    expect(localStorage.getItem('rememberMe')).toBeNull();
+    expect(loginMock).not.toHaveBeenCalled();
+    first.unmount();
+    render(<MemoryRouter><LoginPage /></MemoryRouter>);
+    expect(await screen.findByPlaceholderText('用户名')).toHaveValue('');
+    expect(screen.getByPlaceholderText('密码')).toHaveValue('');
+  });
+
+  it('does not persist a password after a failed remembered login', async () => {
+    loginMock.mockRejectedValueOnce(new Error('login-failed'));
+    render(<MemoryRouter><LoginPage /></MemoryRouter>);
+    const write = vi.spyOn(localStorage, 'setItem');
+    fireEvent.change(await screen.findByPlaceholderText('用户名'), { target: { value: 'demo' } });
+    fireEvent.change(screen.getByPlaceholderText('密码'), { target: { value: 'failed-secret' } });
+    fireEvent.change(screen.getByPlaceholderText('验证码'), { target: { value: '2222' } });
+    fireEvent.click(screen.getByRole('checkbox', { name: '记住用户名' }));
+    fireEvent.click(screen.getByRole('button', { name: /^登\s*录$/ }));
+    await waitFor(() => expect(loginPageMocks.getCodeImg).toHaveBeenCalledTimes(2));
+    expect(localStorage.getItem('username')).toBe('demo');
+    expect(localStorage.getItem('password')).toBeNull();
+    expect(write.mock.calls.some(([key]) => key === 'password')).toBe(false);
   });
 
   it('renders enabled oauth providers', async () => {

@@ -12,6 +12,7 @@ const docsExtra = [
 ];
 
 const releaseGates = [
+  {name: 'maven-installer-test', command: 'node', args: ['tools/test_setup_ci_maven.mjs']},
   {name: 'release-cli-test', command: 'node', args: ['skills/release-cli/scripts/test_release_cli.mjs']},
   {name: 'release-bump-test', command: 'node', args: ['skills/release-cli/scripts/test_bump_version.mjs']},
   {name: 'release-version-test', command: 'node', args: ['tools/test_check_release_version.mjs']},
@@ -28,11 +29,18 @@ const frontend = [
   {name: 'vue-build', command: 'pnpm', args: ['--dir', 'frontend-vue', 'run', 'build:prod']}
 ];
 
-const backendCi = [{
-  name: 'backend-package',
-  command: 'node',
-  args: ['tools/backend_mvn.mjs', '--', '-B', '-ntp', '-DskipTests=false', 'clean', 'package', '-P', 'dev']
-}];
+const backendCi = [
+  {
+    name: 'backend-package',
+    command: 'node',
+    args: ['tools/backend_mvn.mjs', '--', '-B', '-ntp', '-DskipTests=false', 'clean', 'package', '-P', 'dev']
+  },
+  {
+    name: 'backend-prod-package',
+    command: 'node',
+    args: ['tools/backend_mvn.mjs', '--', '-B', '-ntp', '-DskipTests=false', 'clean', 'package', '-P', 'prod']
+  }
+];
 
 function uniqueByName(steps) {
   const seen = new Set();

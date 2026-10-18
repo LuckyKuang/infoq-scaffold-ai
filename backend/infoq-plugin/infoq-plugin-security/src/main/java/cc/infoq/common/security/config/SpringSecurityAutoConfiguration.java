@@ -1,6 +1,7 @@
 package cc.infoq.common.security.config;
 
 import cc.infoq.common.security.auth.*;
+import cc.infoq.common.security.browser.*;
 import cc.infoq.common.security.config.properties.SecurityProperties;
 import cc.infoq.common.security.config.properties.SseProperties;
 import cc.infoq.common.security.filter.SecurityTokenAuthenticationFilter;
@@ -21,6 +22,9 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.csrf.CsrfFilter;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
+import org.springframework.web.cors.CorsConfiguration;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -33,7 +37,7 @@ import java.util.Set;
 @AutoConfiguration
 @EnableWebSecurity
 @EnableMethodSecurity
-@EnableConfigurationProperties({SecurityProperties.class, SecurityTokenProperties.class, SseProperties.class})
+@EnableConfigurationProperties({SecurityProperties.class, SecurityTokenProperties.class, SseProperties.class, BrowserSessionProperties.class})
 public class SpringSecurityAutoConfiguration {
 
     static final String STRICT_AUTHENTICATION_PROPERTY = "security.spring-security.strict-authentication";
@@ -63,8 +67,8 @@ public class SpringSecurityAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public SecurityAuthenticationEntryPoint securityAuthenticationEntryPoint(ObjectMapper objectMapper) {
-        return new SecurityAuthenticationEntryPoint(objectMapper);
+    public SecurityAuthenticationEntryPoint securityAuthenticationEntryPoint(ObjectMapper objectMapper, BrowserSessionCookies cookies) {
+        return new SecurityAuthenticationEntryPoint(objectMapper, cookies);
     }
 
     @Bean
@@ -83,6 +87,51 @@ public class SpringSecurityAutoConfiguration {
     @ConditionalOnMissingBean
     public SecurityTokenStore securityTokenStore() {
         return new SecurityTokenStore();
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public BrowserSessionStore browserSessionStore() {
+        return new BrowserSessionStore();
+    }
+
+    @Bean
+    public BrowserSessionService browserSessionService(BrowserSessionProperties properties, BrowserSessionStore store,
+                                                       SecurityTokenStore tokenStore, SecurityTokenService tokenService) {
+        return new BrowserSessionService(properties, store, tokenStore, tokenService);
+    }
+
+    @Bean
+    public BrowserSessionCookies browserSessionCookies(BrowserSessionProperties properties) {
+        return new BrowserSessionCookies(properties);
+    }
+
+    @Bean
+    public BrowserSessionCsrfRepository browserSessionCsrfRepository(BrowserSessionProperties properties) {
+        return new BrowserSessionCsrfRepository(properties);
+    }
+
+    @Bean
+    public CorsConfiguration browserSessionCorsConfiguration(BrowserSessionProperties properties) {
+        CorsConfiguration cors = new CorsConfiguration() {
+            @Override
+            public String checkOrigin(String origin) {
+                if (origin == null) {
+                    return null;
+                }
+                try {
+                    return properties.getAllowedOrigins().contains(BrowserSessionProperties.normalizeOrigin(origin)) ? origin : null;
+                } catch (IllegalArgumentException exception) {
+                    return null;
+                }
+            }
+        };
+        cors.setAllowedOrigins(List.copyOf(properties.getAllowedOrigins()));
+        cors.setAllowedMethods(List.of("GET", "PUT", "POST", "DELETE", "OPTIONS"));
+        cors.setAllowedHeaders(List.of("Content-Type", "Authorization", "clientid", BrowserSessionCookies.SCOPE_HEADER, "X-XSRF-TOKEN"));
+        cors.setAllowCredentials(true);
+        cors.setMaxAge(600L);
+        return cors;
     }
 
     @Bean
@@ -114,11 +163,26 @@ public class SpringSecurityAutoConfiguration {
                                                    SecurityProperties securityProperties,
                                                    SseProperties sseProperties,
                                                    ObjectProvider<SecurityTokenAuthenticationFilter> tokenAuthenticationFilter,
+                                                   BrowserSessionProperties browserProperties,
+                                                   BrowserSessionCookies browserCookies,
+                                                   BrowserSessionCsrfRepository browserCsrf,
+                                                   ObjectMapper objectMapper,
                                                    Environment environment) throws Exception {
         List<String> publicMatchers = resolvePublicMatchers(securityProperties, sseProperties);
         boolean strictAuthentication = isStrictAuthentication(environment);
         http
-            .csrf(AbstractHttpConfigurer::disable)
+            .csrf(csrf -> csrf.csrfTokenRepository(browserCsrf)
+                // A stateless Bearer request is not a browser login event; keep CSRF stable until explicit DELETE.
+                .sessionAuthenticationStrategy(new org.springframework.security.web.authentication.session.NullAuthenticatedSessionStrategy())
+                .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler() {
+                    @Override
+                    public String resolveCsrfTokenValue(jakarta.servlet.http.HttpServletRequest request,
+                                                        org.springframework.security.web.csrf.CsrfToken token) {
+                        return request.getHeader(token.getHeaderName());
+                    }
+                })
+                .requireCsrfProtectionMatcher(request -> BrowserSessionGuardFilter.isResource(request)
+                    && !Set.of("GET", "HEAD", "OPTIONS", "TRACE").contains(request.getMethod())))
             .httpBasic(AbstractHttpConfigurer::disable)
             .formLogin(AbstractHttpConfigurer::disable)
             .logout(AbstractHttpConfigurer::disable)
@@ -128,6 +192,9 @@ public class SpringSecurityAutoConfiguration {
                 .accessDeniedHandler(accessDeniedHandler))
             .authorizeHttpRequests(authorize -> {
                 authorize.requestMatchers(HttpMethod.GET, "/auth/wechat-miniapp/enabled").permitAll();
+                authorize.requestMatchers(HttpMethod.GET, BrowserSessionCookies.PATH + "/csrf").permitAll();
+                authorize.requestMatchers(HttpMethod.POST, BrowserSessionCookies.PATH).permitAll();
+                authorize.requestMatchers(HttpMethod.DELETE, BrowserSessionCookies.PATH).permitAll();
                 if (!publicMatchers.isEmpty()) {
                     authorize.requestMatchers(publicMatchers.toArray(String[]::new)).permitAll();
                 }
@@ -137,6 +204,7 @@ public class SpringSecurityAutoConfiguration {
                     authorize.anyRequest().permitAll();
                 }
             });
+        http.addFilterBefore(new BrowserSessionGuardFilter(browserProperties, browserCookies, objectMapper), CsrfFilter.class);
         if (strictAuthentication) {
             http.addFilterBefore(tokenAuthenticationFilter.getObject(), UsernamePasswordAuthenticationFilter.class);
         }

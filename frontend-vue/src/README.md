@@ -28,7 +28,7 @@
 
 - `views` 依赖 `api`、`store`、`layout`、`utils`。
 - `permission.ts` 依赖 `router` 与 `store`，负责把动态菜单注入运行中的路由器。
-- `api` 统一依赖 `utils/request.ts`。
+- 普通 `api` 依赖 `utils/request.ts`；`api/login.ts` 的浏览器会话用同源 fetch，隔离恢复请求与普通 401、Bearer、重复提交缓存。
 - `store/modules/permission` 依赖 `router`、`layout` 和 `views` 组件解析。
 
 ## 5. 典型调用链

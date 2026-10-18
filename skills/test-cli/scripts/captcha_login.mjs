@@ -62,7 +62,6 @@ Options:
   --redis-key-prefix <prefix>     Captcha key prefix. Default: ${DEFAULT_CAPTCHA_LOGIN_OPTIONS.redisKeyPrefix}
   --run-id <slug>                 Evidence run id under tmp/test-cli/e2e/captcha-login/.
   --run-dir <path>                Explicit evidence directory.
-  --print-token                   Print TOKEN=<token> for script consumers.
   --json                          Print machine-readable JSON summary.
   -h, --help                      Show help.`);
 }
@@ -84,7 +83,6 @@ function parseArgs(argv) {
     password: process.env.PASSWORD || '',
     loginCandidates: process.env.LOGIN_CANDIDATES || DEFAULT_CAPTCHA_LOGIN_OPTIONS.loginCandidates,
     rsaPublicKey: process.env.RSA_PUBLIC_KEY || DEFAULT_CAPTCHA_LOGIN_OPTIONS.rsaPublicKey,
-    printToken: false,
     json: false,
     runId: '',
     runDir: ''
@@ -165,8 +163,7 @@ function parseArgs(argv) {
         index += 1;
         break;
       case '--print-token':
-        options.printToken = true;
-        break;
+        throw new Error('--print-token is no longer supported; import loginWithRealCaptcha for private in-process use.');
       case '--json':
         options.json = true;
         break;
@@ -425,9 +422,6 @@ async function main() {
   };
   writeJson(path.join(runDir, 'result.json'), result);
 
-  if (options.printToken) {
-    console.log(`TOKEN=${login.token}`);
-  }
   if (options.json) {
     console.log(JSON.stringify(result));
   } else {

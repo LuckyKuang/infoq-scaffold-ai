@@ -45,6 +45,24 @@ try {
   for (const item of gatedWrites) assert.equal(item.priority, 'P2', `${item.id} changes gated resources`);
   assert.equal(run('validate-case-matrix.mjs', [matrixPath]).status, 0);
 
+  // Exercise real SQL -> Markdown rendering without editing the repository menu baseline.
+  const isolatedRepo = path.join(fixtureDir, 'repository');
+  for (const relative of ['skills/test-cli/scripts/generate-case-matrix.mjs', 'tools/lib/skill_runtime.mjs']) {
+    const target = path.join(isolatedRepo, relative);
+    fs.mkdirSync(path.dirname(target), {recursive: true});
+    fs.copyFileSync(path.join(repoRoot, relative), target);
+  }
+  fs.writeFileSync(path.join(isolatedRepo, 'AGENTS.md'), '# Fixture\n', 'utf8');
+  fs.mkdirSync(path.join(isolatedRepo, 'sql'));
+  const menuName = String.raw`left\|middle\\|right|end`;
+  fs.writeFileSync(path.join(isolatedRepo, 'sql/infoq_scaffold_update_20261018.sql'),
+    `INSERT INTO sys_menu (menu_id, menu_name, parent_id, menu_type, path, component) VALUES ('1', '${menuName}', '0', 'C', 'fixture', 'fixture/index');\n`, 'utf8');
+  const isolatedOutput = path.join(fixtureDir, 'escaped-output');
+  const escaped = spawnSync(process.execPath, [path.join(isolatedRepo, 'skills/test-cli/scripts/generate-case-matrix.mjs'), '--output-dir', isolatedOutput], {encoding: 'utf8', timeout: 10000});
+  assert.equal(escaped.status, 0, escaped.stderr);
+  const rendered = fs.readFileSync(path.join(isolatedOutput, 'case-matrix.md'), 'utf8');
+  assert.ok(rendered.includes(String.raw`left\\\|middle\\\\\|right\|end`), 'literal backslashes must remain distinct from table separators');
+
   matrix.cases.push({ ...messageCase });
   matrix.summary.totalCases += 1;
   const duplicatePath = path.join(fixtureDir, 'duplicate.json');

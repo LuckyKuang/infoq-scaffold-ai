@@ -1,28 +1,51 @@
 import { createPinia, setActivePinia } from 'pinia';
 import { useUserStore } from '@/store/modules/user';
-import { getToken, setToken } from '@/utils/auth';
+import { getToken, removeToken, setToken } from '@/utils/auth';
 import type { ApiResponse, LoginData, LoginResult } from '@/api/types';
 import type { UserInfo } from '@/api/system/user/types';
 
-vi.mock('@/api/login', () => ({
+vi.mock('@/api/login', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/api/login')>()),
   login: vi.fn(),
   exchangeOAuthTicket: vi.fn(),
   logout: vi.fn(() => Promise.resolve()),
-  getInfo: vi.fn()
+  getInfo: vi.fn(),
+  bindBrowserSession: vi.fn(() => Promise.resolve()),
+  restoreBrowserSession: vi.fn(),
+  deleteBrowserSession: vi.fn(() => Promise.resolve()),
+  clearBrowserSessionCsrf: vi.fn()
 }));
+
+const sessionMocks = vi.hoisted(() => ({
+  resetRoutes: vi.fn(),
+  generateRoutes: vi.fn(() => Promise.resolve([{ path: '/system/user' }])),
+  installRoutes: vi.fn(),
+  closeWebSocket: vi.fn(),
+  clearNotice: vi.fn(),
+  resetSessionViews: vi.fn()
+}));
+vi.mock('@/store/modules/permission', () => ({ usePermissionStore: () => sessionMocks }));
+vi.mock('@/store/modules/tagsView', () => ({ useTagsViewStore: () => sessionMocks }));
+vi.mock('@/store/modules/notice', () => ({ useNoticeStore: () => sessionMocks }));
+vi.mock('@/utils/websocket', () => ({ closeWebSocket: sessionMocks.closeWebSocket }));
 
 vi.mock('@/utils/sse', () => ({
   initSSE: vi.fn(),
   closeSSE: vi.fn()
 }));
 
-const { login, exchangeOAuthTicket, getInfo, logout } = await import('@/api/login');
+const { login, exchangeOAuthTicket, getInfo, logout, bindBrowserSession, restoreBrowserSession, deleteBrowserSession, BrowserSessionError } =
+  await import('@/api/login');
 const { initSSE, closeSSE } = await import('@/utils/sse');
 
 describe('store/user', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
     vi.clearAllMocks();
+    removeToken();
+    vi.mocked(getInfo).mockResolvedValue({
+      data: { user: { userName: 'admin', nickName: 'Admin', avatar: '', userId: 1 }, roles: ['admin'], permissions: [] }
+    } as ApiResponse<UserInfo>);
   });
 
   it('login success should update token and defer sse init to layout', async () => {
@@ -110,14 +133,14 @@ describe('store/user', () => {
     await store.logout();
 
     expect(closeSSE).toHaveBeenCalled();
-    expect(logout).toHaveBeenCalled();
+    expect(deleteBrowserSession).toHaveBeenCalled();
     expect(store.token).toBe('');
     expect(store.roles).toEqual([]);
     expect(store.permissions).toEqual([]);
   });
 
   it('logout should clear local session when logout api fails', async () => {
-    vi.mocked(logout).mockRejectedValueOnce(new Error('logout unauthorized'));
+    vi.mocked(deleteBrowserSession).mockRejectedValueOnce(new Error('logout unauthorized'));
     setToken('expired-token');
     const store = useUserStore();
     store.token = 'expired-token';
@@ -131,7 +154,7 @@ describe('store/user', () => {
     await expect(store.logout()).rejects.toBeTruthy();
 
     expect(closeSSE).toHaveBeenCalled();
-    expect(logout).toHaveBeenCalled();
+    expect(deleteBrowserSession).toHaveBeenCalled();
     expect(getToken()).toBeNull();
     expect(store.token).toBe('');
     expect(store.roles).toEqual([]);
@@ -146,5 +169,147 @@ describe('store/user', () => {
     const store = useUserStore();
     store.setAvatar('https://new-avatar.png');
     expect(store.avatar).toBe('https://new-avatar.png');
+  });
+
+  it('waits for binding before committing password token and revokes it when binding fails', async () => {
+    vi.mocked(login).mockResolvedValue({ data: { access_token: 'new-token' } } as ApiResponse<LoginResult>);
+    let rejectBind!: (error: Error) => void;
+    vi.mocked(bindBrowserSession).mockReturnValueOnce(
+      new Promise((_, reject) => {
+        rejectBind = reject;
+      })
+    );
+    const store = useUserStore();
+    const pending = store.login({ username: 'admin' } as LoginData);
+    await vi.waitFor(() => expect(bindBrowserSession).toHaveBeenCalledWith('new-token'));
+    expect(getToken()).toBeNull();
+    rejectBind(new Error('bind failed'));
+    await expect(pending).rejects.toThrow('bind failed');
+    expect(logout).toHaveBeenCalledWith('new-token');
+    expect(getToken()).toBeNull();
+  });
+
+  it('reports rollback failure without committing OAuth authentication', async () => {
+    vi.mocked(exchangeOAuthTicket).mockResolvedValue({ data: { access_token: 'oauth-token' } } as ApiResponse<LoginResult>);
+    vi.mocked(bindBrowserSession).mockRejectedValueOnce(new Error('bind failed'));
+    vi.mocked(logout).mockRejectedValueOnce(new Error('cleanup failed'));
+    const store = useUserStore();
+    await expect(store.loginByOAuthTicket('ticket')).rejects.toThrow('撤销未确认');
+    expect(store.token).toBe('');
+    expect(getToken()).toBeNull();
+  });
+
+  it('deduplicates restoration and loads profile before routes without starting realtime', async () => {
+    vi.mocked(restoreBrowserSession).mockResolvedValueOnce({ access_token: 'restored-token' });
+    const store = useUserStore();
+    const first = store.bootstrap();
+    const second = store.bootstrap();
+    expect(store.bootstrapState).toBe('restoring');
+    await expect(first).resolves.toBe(true);
+    await expect(second).resolves.toBe(true);
+    expect(restoreBrowserSession).toHaveBeenCalledTimes(1);
+    expect(getInfo).toHaveBeenCalledTimes(1);
+    expect(sessionMocks.generateRoutes).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(getInfo).mock.invocationCallOrder[0]).toBeLessThan(sessionMocks.generateRoutes.mock.invocationCallOrder[0]);
+    expect(sessionMocks.installRoutes).toHaveBeenCalledWith([{ path: '/system/user' }]);
+    expect(store.bootstrapState).toBe('authenticated');
+    expect(initSSE).not.toHaveBeenCalled();
+    await expect(store.bootstrap()).resolves.toBe(false);
+    expect(restoreBrowserSession).toHaveBeenCalledTimes(1);
+  });
+
+  it('treats only restore 401 as anonymous and never retries implicitly', async () => {
+    vi.mocked(restoreBrowserSession).mockRejectedValueOnce(new BrowserSessionError(401, 'expired', 'POST'));
+    const store = useUserStore();
+    await expect(store.bootstrap()).resolves.toBe(false);
+    expect(store.bootstrapState).toBe('anonymous');
+    await expect(store.bootstrap()).resolves.toBe(false);
+    expect(restoreBrowserSession).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([403, 503])('keeps restore %s as an explicit failure with local cleanup', async (status) => {
+    vi.mocked(restoreBrowserSession).mockRejectedValueOnce(new BrowserSessionError(status, `failure-${status}`));
+    const store = useUserStore();
+    await expect(store.bootstrap()).rejects.toThrow(`failure-${status}`);
+    expect(store.bootstrapState).toBe('failed');
+    expect(sessionMocks.resetRoutes).toHaveBeenCalled();
+    expect(sessionMocks.closeWebSocket).toHaveBeenCalled();
+    await expect(store.bootstrap()).rejects.toThrow(`failure-${status}`);
+    expect(restoreBrowserSession).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not revive an in-flight restored token after logout', async () => {
+    let resolveRestore!: (data: LoginResult) => void;
+    vi.mocked(restoreBrowserSession).mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveRestore = resolve;
+      })
+    );
+    const store = useUserStore();
+    const pending = store.bootstrap();
+    await vi.waitFor(() => expect(restoreBrowserSession).toHaveBeenCalled());
+    await store.logout();
+    resolveRestore({ access_token: 'late-token' });
+    await expect(pending).resolves.toBe(false);
+    expect(getToken()).toBeNull();
+    expect(store.bootstrapState).toBe('anonymous');
+    expect(getInfo).not.toHaveBeenCalled();
+  });
+
+  it('does not turn CSRF bootstrap 401 into an anonymous restore result', async () => {
+    vi.mocked(restoreBrowserSession).mockRejectedValueOnce(new BrowserSessionError(401, 'CSRF endpoint denied', 'GET'));
+    const store = useUserStore();
+    await expect(store.bootstrap()).rejects.toThrow('CSRF endpoint denied');
+    expect(store.bootstrapState).toBe('failed');
+  });
+
+  it('revokes a delayed password login response after logout before binding it', async () => {
+    let finishLogin!: (data: ApiResponse<LoginResult>) => void;
+    vi.mocked(login).mockReturnValueOnce(
+      new Promise((resolve) => {
+        finishLogin = resolve;
+      })
+    );
+    const store = useUserStore();
+    const pending = store.login({ username: 'admin' } as LoginData);
+    await store.logout();
+    finishLogin({ code: 200, data: { access_token: 'late-login-token' } });
+    await expect(pending).rejects.toThrow('会话已发生变化');
+    expect(bindBrowserSession).not.toHaveBeenCalled();
+    expect(logout).toHaveBeenCalledWith('late-login-token');
+    expect(getToken()).toBeNull();
+  });
+
+  it('waits for a pending server logout before starting a new login', async () => {
+    let finishDelete!: () => void;
+    vi.mocked(deleteBrowserSession).mockReturnValueOnce(
+      new Promise((resolve) => {
+        finishDelete = resolve;
+      })
+    );
+    vi.mocked(login).mockResolvedValueOnce({ code: 200, data: { access_token: 'next-token' } });
+    const store = useUserStore();
+    const exiting = store.logout();
+    const entering = store.login({ username: 'admin' } as LoginData);
+    await Promise.resolve();
+    expect(login).not.toHaveBeenCalled();
+    finishDelete();
+    await exiting;
+    await entering;
+    expect(store.token).toBe('next-token');
+    expect(bindBrowserSession).toHaveBeenCalledWith('next-token');
+  });
+
+  it('does not replace interceptor-driven anonymous state with failed during profile bootstrap', async () => {
+    vi.mocked(restoreBrowserSession).mockResolvedValueOnce({ access_token: 'expired-at-profile' });
+    const store = useUserStore();
+    vi.mocked(getInfo).mockImplementationOnce(async () => {
+      store.invalidateSession();
+      throw Object.assign(new Error('expired'), { status: 401 });
+    });
+    await expect(store.bootstrap()).resolves.toBe(false);
+    expect(store.bootstrapState).toBe('anonymous');
+    expect(store.bootstrapError).toBe('');
+    expect(getToken()).toBeNull();
   });
 });

@@ -5,11 +5,20 @@
  * @returns {Boolean}
  */
 export function isPathMatch(pattern: string, path: string) {
-  const regexPattern = pattern
-    .replace(/\//g, '\\/')
-    .replace(/\*\*/g, '__DOUBLE_STAR__')
-    .replace(/\*/g, '[^\\/]*')
-    .replace(/__DOUBLE_STAR__/g, '.*');
+  let regexPattern = '';
+  for (let index = 0; index < pattern.length; index += 1) {
+    const character = pattern[index];
+    if (character === '*') {
+      if (pattern[index + 1] === '*') {
+        regexPattern += '.*';
+        index += 1;
+      } else {
+        regexPattern += '[^/]*';
+      }
+    } else {
+      regexPattern += '\\^$.*+?()[]{}|'.includes(character) ? `\\${character}` : character;
+    }
+  }
   const regex = new RegExp(`^${regexPattern}$`);
   return regex.test(path);
 }

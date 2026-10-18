@@ -134,6 +134,17 @@ try {
     assert.equal(data.checkedAnchors, 1);
   });
 
+  test('heading anchor text ignores complete tags with quoted delimiters, not literal or malformed text', () => {
+    const directory = fixture('heading-tags', {
+      'README.md': '[quoted](target.md#hello)\n[mixed](target.md#hello-world)\n[comment](target.md#after-comment)\n[literal](target.md#1--2)\n[malformed](malformed.md#broken-titleunterminatedhello)\n[multiline](target.md#heading)\n[code](target.md#bcodeb)\n[escaped](target.md#btextb)\n',
+      'target.md': '# <span title="a>b">Hello</span>\n# <i title=\'x>y\'>Hello</i> <b>World</b>\n<!-- hidden > markup -->\n# After comment\n# 1 < 2\n<span\n title="line > delimiter"\n id="heading">text</span>\n# `<b>Code</b>`\n# \\<b>Text\\</b>\n',
+      'malformed.md': '# <broken title="unterminated>Hello\n',
+    });
+    const {status, data} = run(directory);
+    assert.equal(status, 0, JSON.stringify(data));
+    assert.equal(data.checkedAnchors, 8);
+  });
+
   test('ignores code fences, spans, escaped brackets, comments, pre and code blocks', () => {
     const directory = fixture('code', {
       'README.md': [

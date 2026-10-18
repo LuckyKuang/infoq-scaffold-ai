@@ -50,4 +50,20 @@ describe('store/notice', () => {
     expect(messageMocks.listMessages).toHaveBeenCalledWith({ pageNum: 1, pageSize: 10 });
     expect(store.state.unreadCount).toBe(0);
   });
+
+  it('does not repopulate the previous inbox after session cleanup', async () => {
+    const store = useNoticeStore();
+    let resolveList!: (value: unknown) => void;
+    messageMocks.listMessages.mockReturnValue(
+      new Promise((resolve) => {
+        resolveList = resolve;
+      })
+    );
+    messageMocks.getUnreadMessageCount.mockResolvedValue({ data: 3 });
+    const pending = store.refresh();
+    store.clearNotice();
+    resolveList({ rows: [{ messageId: 101, title: 'previous user' }], total: 1 });
+    await pending;
+    expect(store.state).toEqual({ notices: [], unreadCount: 0, loading: false });
+  });
 });

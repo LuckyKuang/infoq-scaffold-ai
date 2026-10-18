@@ -1,6 +1,16 @@
 --- # 生产运行与优雅停机
 server:
   shutdown: graceful
+# 保留安全与 Push 结果审计；其他 cc.infoq 日志继续继承生产 WARN。
+logging:
+  level:
+    cc.infoq.system.controller.login.BrowserSessionController: info
+    cc.infoq.common.security.browser.BrowserSessionGuardFilter: info
+    cc.infoq.common.security.handler.SecurityAccessDeniedHandler: info
+    cc.infoq.common.security.handler.SecurityAuthenticationEntryPoint: info
+    cc.infoq.common.web.config.ResourcesConfig: info
+    cc.infoq.common.push.service.DefaultPushService: info
+    cc.infoq.system.listener.SysMessagePushListener: info
 api-decrypt:
   private-key: ${INFOQ_API_REQUEST_PRIVATE_KEY}
   public-key: ${INFOQ_API_RESPONSE_PUBLIC_KEY}
@@ -116,6 +126,15 @@ redisson:
     tcpNoDelay: true
     # 发布和订阅连接池大小
     subscriptionConnectionPoolSize: 50
+
+security:
+  browser-session:
+    deployment-mode: ${INFOQ_DEPLOY_MODE:production}
+    public-base-url: ${INFOQ_PUBLIC_BASE_URL}
+    origins: ${INFOQ_BROWSER_SESSION_ORIGINS:}
+    cookie-path: ${INFOQ_BROWSER_SESSION_COOKIE_PATH}
+    secure: ${INFOQ_BROWSER_SESSION_SECURE}
+    ttl-seconds: ${INFOQ_BROWSER_SESSION_TTL_SECONDS:2592000}
 
 infoq:
   quartz:

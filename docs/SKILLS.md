@@ -117,7 +117,7 @@ node tools/openspec_check.mjs <change-id>
 node skills/test-cli/scripts/generate-case-matrix.mjs --output-dir tmp/test-cli/matrix-preview
 node skills/test-cli/scripts/validate-case-matrix.mjs docs/testing/case-matrix.json
 # 先配置 INFOQ_TEST_REDIS_* 或 --redis-*，且与后端使用同一 Redis
-node skills/test-cli/scripts/captcha_login.mjs --backend-url http://127.0.0.1:8080 --print-token
+node skills/test-cli/scripts/captcha_login.mjs --backend-url http://127.0.0.1:8080 --json
 node skills/test-cli/scripts/run_admin_e2e.mjs --client vue
 node skills/test-cli/scripts/run_admin_e2e.mjs --client react
 node skills/test-cli/scripts/run_admin_crud_e2e.mjs --client vue

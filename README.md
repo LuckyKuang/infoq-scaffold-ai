@@ -100,7 +100,7 @@ Use skills for admin route smoke or captcha login:
 # Captcha-based E2E seeds the answer into the backend Redis.
 # Set INFOQ_TEST_REDIS_HOST/PORT/DATABASE/PASSWORD (and optional TLS) first.
 node skills/test-cli/scripts/run_admin_e2e.mjs --client vue --route-limit 1
-node skills/test-cli/scripts/captcha_login.mjs --backend-url http://127.0.0.1:8080 --print-token
+node skills/test-cli/scripts/captcha_login.mjs --backend-url http://127.0.0.1:8080 --json
 
 # Prepare the selected runtime env file first; see deploy/README.md.
 # Deployment status: macOS selects Apple; Linux/WSL2 selects Docker
@@ -144,6 +144,12 @@ private configuration using [the template](deploy/.env.example) and
 `/vue/`, `/react/`, `/console-oss/`; private S3 URLs use the dedicated OSS origin
 without rewriting their signed path. Development HTTP requires an explicit mode.
 
+Admin access tokens stay in memory. Reload recovery uses a same-origin,
+CSRF-protected HttpOnly cookie, isolated between React and Vue. Verify
+`INFOQ_PUBLIC_BASE_URL`, `INFOQ_BROWSER_SESSION_COOKIE_PATH`,
+`INFOQ_BROWSER_SESSION_SECURE`, and `INFOQ_BROWSER_SESSION_TTL_SECONDS`
+against the reverse proxy before deployment; see [production configuration](deploy/PRODUCTION.md).
+
 Use the deployment guide for a pinned remote installer that is downloaded and
 reviewed before execution. macOS Colima uses the shell deployment scripts;
 the Node CLI selects Apple on macOS, and Apple `status` can start its daemon.
@@ -167,7 +173,7 @@ detailed configuration and maintenance.
 | [AGENTS.md](AGENTS.md) | Repository collaboration rules |
 | [Design system](docs/DESIGN.md) | Admin visual language |
 | [Release process](docs/RELEASING.md) | Version, tag, release workflow, and rollback |
-| [CI validation](docs/CI_VALIDATION.md) | Workflow coverage, local gates, and security scans |
+| [CI validation](docs/CI_VALIDATION.md) | Workflow coverage, dev/prod test groups, local gates, and security scans |
 
 ## Community
 

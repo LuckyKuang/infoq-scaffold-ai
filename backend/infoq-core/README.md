@@ -21,6 +21,7 @@
 ## 4. 依赖方向
 
 - `infoq-core-common` 是最基础的代码层，多个插件和业务模块直接依赖它。
+- 安全撤销的 `SecurityDependencyException` 位于 common，供 security 产生、web 映射为脱敏 HTTP 503，避免 web 反向依赖 security。
 - `infoq-core-data` 依赖 `infoq-plugin-mybatis`、`infoq-plugin-log`、`infoq-plugin-sensitive`、`infoq-plugin-translation`、`infoq-plugin-excel`、`infoq-plugin-jackson`，说明它不是“纯 POJO 仓库”，而是带持久化与序列化语义的领域数据层。
 - `infoq-system` 在业务层直接依赖 `infoq-core-common` 和 `infoq-core-data`。
 

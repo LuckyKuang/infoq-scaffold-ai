@@ -4,6 +4,8 @@
 
 `infoq-system` 是当前 backend 唯一的业务模块，承载登录注册、系统管理、监控与调度相关的 Controller 和 Service 实现。
 
+`BrowserSessionController` 提供 csrf 引导和浏览器会话绑定/恢复/退出，返回现有 `LoginVo` 字段，不签发新 JWT；恢复 cookie 不用于业务 API 鉴权。用户禁用、密码更新、角色改写、删除及角色数据权限变更在成功 SQL 写后、事务提交前撤销旧会话；依赖失败令事务失败，已撤销 token 不复活。接口、配置与测试 SOP 见 [浏览器恢复会话](../../doc/browser-session.md)。
+
 ## 2. 关键入口
 
 - 登录入口：[`controller/login/AuthController`](./src/main/java/cc/infoq/system/controller/login/AuthController.java)、[`CaptchaController`](./src/main/java/cc/infoq/system/controller/login/CaptchaController.java)、[`IndexController`](./src/main/java/cc/infoq/system/controller/login/IndexController.java)

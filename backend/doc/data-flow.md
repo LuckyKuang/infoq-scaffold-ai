@@ -1,5 +1,7 @@
 # backend 关键数据流
 
+管理端在密码/OAuth 登录后通过 `GET /auth/browser-session/csrf` → HEADER Bearer `PUT /auth/browser-session` 建立 HttpOnly 恢复能力；刷新通过 CSRF 保护的 POST 返回同一 JWT，再按原用户/路由装载链继续。DELETE 撤销 JWT 并发布退出审计，普通业务 API 不接受恢复 cookie。完整合同与可复跑验证见 [浏览器恢复会话](./browser-session.md)。
+
 本文档只记录当前代码能直接追到的几条主链路：
 
 - 验证码与登录

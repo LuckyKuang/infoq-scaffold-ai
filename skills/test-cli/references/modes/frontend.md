@@ -43,14 +43,16 @@ node skills/test-cli/scripts/run_admin_e2e.mjs --client vue --route-limit 1
 node skills/test-cli/scripts/run_admin_e2e.mjs --client react --route-limit 1
 ```
 
-需要真实 token 或后端路由清单时：
+需要验证真实登录或获取后端路由清单时：
 
 ```bash
-node skills/test-cli/scripts/captcha_login.mjs --backend-url http://127.0.0.1:8080 --print-token
+node skills/test-cli/scripts/captcha_login.mjs --backend-url http://127.0.0.1:8080 --json
 node skills/test-cli/scripts/playwright_cli.mjs admin-route-probe --list-routes
 ```
 
 验证码种子登录、登录态和动态路由 smoke 以 `run_admin_e2e.mjs` / `captcha_login.mjs` 为准，不要用关闭验证码的诊断后端替代验收。
+
+验证码 CLI 只输出脱敏结果；旧 `--print-token` 已移除并显式拒绝。runner 在进程内接收 token，用同源 CSRF 引导和绑定接口把 HttpOnly cookie 写入浏览器 cookie jar，然后导航真实页面。`--client react|vue` 必须匹配应用 scope，`--api-prefix /dev-api|/prod-api` 与目标代理一致；不能再注入 localStorage 的 `Admin-Token`。
 
 `admin-route-probe --list-routes` 也会调用验证码种子登录，不能作为生产只读检查。执行范围与 runner 尚未覆盖的断言见 `docs/TESTING.md` 第 6.5 节。
 
@@ -79,6 +81,18 @@ pnpm --dir frontend-vue run build:prod
 通过 `VITE_APP_CONTEXT_PATH=/react/` 或 `/vue/` 构建所需部署前缀；Router 使用 Vite `BASE_URL` 与资源前缀一致。具体受控来源与构建入口见 [`DEV_GUIDE.md`](../../../../DEV_GUIDE.md)。合成配置必须标明 `INFOQ_CONFIG_SOURCE=isolated-test`，产物 `production-build.json` 的 `deployable=false`；`check-artifact --allow-isolated` 只供隔离测试，不能据此发布。
 
 ## 认证回跳回归 SOP
+
+会话存储、用户名记忆、glob 或对象合并变更时，先验证两端正常登录与刷新、`*`/`**` 和嵌套/数组合并，再执行相应边界回归：
+
+```bash
+pnpm --dir frontend-react exec vitest --run tests/utils/validate.test.ts tests/utils/scaffold.test.ts tests/pages/login.test.tsx tests/api/login.test.ts tests/utils/request.test.ts
+pnpm --dir frontend-vue exec vitest --config vitest.config.ts --run tests/utils/validate.test.ts tests/utils/scaffold.test.ts tests/views/login.test.ts tests/api/login.test.ts tests/utils/request.test.ts
+node skills/test-cli/scripts/test_browser_session.mjs
+node skills/test-cli/scripts/test_browser_runtime.mjs
+node skills/test-cli/scripts/test_redis_captcha_seed.mjs
+```
+
+必须覆盖元字符字面量、危险键在任意深度和数组中的拒绝、继承属性不读取、原型保持与 getter 异常显式传播；登录初始化删除旧密码且不读不写、取消记忆立即清理、失败不持久化。浏览器会话回归使用真实 loopback HTTP 与 Playwright cookie jar 核验 CSRF/Origin/scope/外部路径、失败脱敏和禁止重定向外发凭据。旧 token stdout 选项在网络/Redis访问前拒绝；实际页面另需真实 backend 的登录/刷新/退出证据。反模式：吞 getter 异常、只检查顶层危险键、换用 sessionStorage 保存秘密、将 HTTP fixture 当成实际认证通过。
 
 触发条件：修改 Router base、登录守卫、密码登录、OAuth 授权/回调或个人中心身份绑定。
 

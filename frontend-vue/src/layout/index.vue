@@ -26,8 +26,9 @@ import SideBar from './components/Sidebar/index.vue';
 import { AppMain, Navbar, Settings, TagsView } from './components';
 import { useAppStore } from '@/store/modules/app';
 import { useSettingsStore } from '@/store/modules/settings';
-import { initWebSocket } from '@/utils/websocket';
+import { closeWebSocket, initWebSocket } from '@/utils/websocket';
 import { closeSSE, initSSE } from '@/utils/sse';
+import { useUserStore } from '@/store/modules/user';
 
 const settingsStore = useSettingsStore();
 const theme = computed(() => settingsStore.theme);
@@ -61,16 +62,15 @@ watchEffect(() => {
 const settingRef = ref<InstanceType<typeof Settings>>();
 
 onMounted(() => {
+  if (useUserStore().bootstrapState !== 'authenticated' || !useUserStore().profileLoaded) return;
   const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
   initWebSocket(protocol + window.location.host + import.meta.env.VITE_APP_BASE_API + '/resource/websocket');
-});
-
-onMounted(() => {
   initSSE(import.meta.env.VITE_APP_BASE_API + '/resource/sse');
 });
 
 onUnmounted(() => {
   closeSSE();
+  closeWebSocket();
 });
 
 const handleClickOutside = () => {
