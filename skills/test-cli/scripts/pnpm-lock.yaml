@@ -9,16 +9,16 @@ importers:
   .:
     devDependencies:
       chrome-devtools-mcp:
-        specifier: 0.25.0
-        version: 0.25.0
+        specifier: 1.1.0
+        version: 1.1.0
       playwright:
         specifier: 1.59.1
         version: 1.59.1
 
 packages:
 
-  chrome-devtools-mcp@0.25.0:
-    resolution: {integrity: sha512-A6Zh3iH+O7lvjhUOQNxbxMy6KJhKnMtVKb+37oy4QcnDp7JEJYKkeqtsw4hFXJG5ISfNTVlaWxKsKLxRdJAAUA==}
+  chrome-devtools-mcp@1.1.0:
+    resolution: {integrity: sha512-oxRGj24Wr1uhL4jVQFcxbiHjxcvOAiDPpjGQGsMylsiwfyjw0C5RGbPl5PCEw9FQlhBZ39djMh9cuJwG0TOzZQ==}
     engines: {node: ^20.19.0 || ^22.12.0 || >=23}
     hasBin: true
 
@@ -39,7 +39,7 @@ packages:
 
 snapshots:
 
-  chrome-devtools-mcp@0.25.0: {}
+  chrome-devtools-mcp@1.1.0: {}
 
   fsevents@2.3.2:
     optional: true

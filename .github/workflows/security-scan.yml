@@ -95,6 +95,10 @@ jobs:
         working-directory: frontend-vue
         run: pnpm audit --audit-level high
 
+      - name: Audit complete Web testing tools dependency graph
+        working-directory: skills/test-cli/scripts
+        run: pnpm audit --audit-level high
+
       - name: Review dependency changes
         if: github.event_name == 'pull_request'
         uses: actions/dependency-review-action@v4

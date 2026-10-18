@@ -38,7 +38,9 @@
 | `tools/resolve_backend_local_mcp_env.mjs` | 统一按 `application-local.yml -> application-dev.yml` 顺序解析 backend 本地配置，并抽取 MySQL / Redis 只读环境变量；当前同时被只读 MCP 启动脚本、`docs/DATA-OPS.md` 与 `tools/verify` 复用 | 内部 helper，不单独作为用户入口 |
 | `tools/launch_cached_mcp_package.mjs` | 优先复用本机 npm / npx cache 中已存在的 MCP 包；缓存未命中时再回退到 `npx -y <package>` 下载启动 | 内部 helper，不单独作为用户入口 |
 
-`playwright` MCP 启动时优先复用本机 npm / npx cache 中的 `@playwright/mcp`，缓存未命中时由共享 helper 回退到 `npx -y @playwright/mcp`。`chrome-devtools` MCP 固定使用 `skills/test-cli/scripts/chrome_devtools_cli.mjs`，版本由 `skills/test-cli/scripts/package.json` 的 `chrome-devtools-mcp@0.25.0` 决定。
+`playwright` MCP 启动时优先复用本机 npm / npx cache 中的 `@playwright/mcp`，缓存未命中时由共享 helper 回退到 `npx -y @playwright/mcp`。`chrome-devtools` MCP 固定使用 `skills/test-cli/scripts/chrome_devtools_cli.mjs`，版本由 `skills/test-cli/scripts/package.json` 的 `chrome-devtools-mcp@1.1.0` 决定。该版本修复 [roots路径符号链接边界](https://github.com/advisories/GHSA-8qf9-62x2-82pp) 与 [daemon.pid符号链接写入](https://github.com/advisories/GHSA-3pvj-jv98-qhjq)；不通过关闭审计或忽略公告保留旧版本。
+
+更新此工具依赖时，先保存 `pnpm --dir skills/test-cli/scripts audit --json` 的完整报告与退出码，再同步package/lock并执行 `pnpm --dir skills/test-cli/scripts install --frozen-lockfile`。运行 `pnpm --dir skills/test-cli/scripts exec playwright install --with-deps chromium` 后执行 `node skills/test-cli/scripts/test_chrome_devtools_runtime.mjs`，验证真实STDIO initialize、tools/list与本文件第3节四项显式审批工具的参数schema，并在隔离页面执行最小只读诊断，核验客户端stdin EOF后退出码0/signal null、owned MCP/Chromium进程退出和端口可重新绑定；此真实集成也由Node CLI三平台CI执行。POSIX平台另执行包含SIGTERM专项断言的 `node skills/test-cli/scripts/test_browser_runtime.mjs`，不把该专项当作Windows实测。所有状态、协议和审计证据写入 `tmp/`，关闭测试telemetry，不使用开发者已登录浏览器或真实凭据。不得仅以包安装成功代替协议/生命周期兼容验证，不能将MySQL/Redis的只读白名单误认为Chrome也配置了白名单；上游对snapshot/evaluate等工具的readOnlyHint并非true，本次只读限制由隔离测试的固定操作实现。
 
 `mysql` / `redis` MCP 默认行为：
 
