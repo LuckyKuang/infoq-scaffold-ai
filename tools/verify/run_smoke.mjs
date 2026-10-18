@@ -138,7 +138,7 @@ config.springProfile ||= backendConfigSelection.profile;
 const backendDir = path.join(repoRoot, 'backend');
 const jarPath = path.join(repoRoot, config.jarRelPath);
 const baseUrl = `http://${config.host}:${config.port}`;
-stateFile = resolveTmpPath(repoRoot, 'tools/verify', `run-smoke-${config.port}.state.json`);
+stateFile = resolveTmpPath(repoRoot, 'verify', `run-smoke-${config.port}.state.json`);
 
 async function isServerReady() {
   try {
@@ -231,7 +231,7 @@ async function main() {
     throw new Error(`[smoke] jar not found: ${jarPath}`);
   }
 
-  logFile = resolveTmpPath(repoRoot, 'tools/verify', `infoq-smoke-${config.port}.log`);
+  logFile = resolveTmpPath(repoRoot, 'verify', `infoq-smoke-${config.port}.log`);
   writeState({
     schemaVersion: 1,
     skill: 'tools/verify',

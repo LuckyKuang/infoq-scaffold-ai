@@ -26,8 +26,7 @@ coordinate disclosure based on severity and available fixes.
 - Validate external input at trust boundaries
 - Use parameterized database access (MyBatis-Plus)
 - Change default deployment passwords before exposing a stack
-- Keep `VITE_APP_ENCRYPT` / `TARO_APP_ENCRYPT=true` builds supplied with the
-  matching RSA key pair
+- Keep `VITE_APP_ENCRYPT=true` builds supplied with the matching RSA key pair
 
 The repository only allows Redisson OSS-compatible APIs. Do not introduce or
 keep Redisson PRO-only APIs such as `getLocalCachedMapCache` or rate-limiter

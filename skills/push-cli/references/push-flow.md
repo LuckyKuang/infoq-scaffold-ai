@@ -30,8 +30,8 @@ ensure -> check(可选) -> [默认分支? 新建工作分支] -> commit -> push 
 | profile | 覆盖 |
 | --- | --- |
 | `docs` | `tools/validate_utf8.mjs`、`tools/check_readme_sync.mjs`、`tools/check_release_version.mjs`、`tools/check_doc_links.mjs`、`skills/compress-cli/scripts/agents_check.mjs check`、存在 active change 时的 `tools/openspec_check.mjs <change-id>` |
-| `ci` | docs + React admin `lint`/`test`/`build:prod` + Vue admin `lint:eslint`/`test:unit`/`build:prod`（与 `.github/workflows/ci.yml` 对齐） |
-| `full` | ci + `tools/backend_mvn.mjs -- -DskipTests=false test` |
+| `ci` | 精确对齐 `.github/workflows/ci.yml`：UTF-8、README、版本、文档链接 + React/Vue lint/test/build + 后端 `clean package -P dev`；不含 agents_check / openspec_check |
+| `full` | docs（含 agents_check / active openspec_check）+ ci；用于发布前完整本地门禁 |
 
 失败语义：任一命令非零退出即硬失败，退出码与日志写入 `tmp/push-cli/<run-id>/`，不允许跳过或伪造通过。
 

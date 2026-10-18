@@ -26,7 +26,7 @@
 - Repo Skill Policy
 - Skill Runtime Policy
 - Encoding Gate
-- Documentation
+- Docs Sync
 - MCP Config Truth
 
 新增敏感类别时，必须同时更新 `scripts/agents_check.mjs` 的 `PROTECTED_CATEGORIES` 与本节。
@@ -51,7 +51,7 @@
 
 `AGENTS.md` 中被反引号包裹的仓库内路径必须真实存在：
 
-- 允许的根前缀：`tools/`、`docs/`、`deploy/`、`skills/`、`sql/`、`openspec/`、`.codex/`、`backend/`、`frontend-vue/`、`frontend-react/`、`tmp/`、`README.md`、`AGENTS.md`、`DEV_GUIDE.md`、`CONTRIBUTING.md`。
+- 允许的根前缀：`tools/`、`docs/`、`deploy/`、`skills/`、`sql/`、`openspec/`、`.codex/`、`backend/`、`frontend-vue/`、`frontend-react/`、`tmp/`、`README.md`、`README_CN.md`、`README_JA.md`、`README_ZH_TW.md`、`AGENTS.md`、`DEV_GUIDE.md`、`CONTRIBUTING.md`、`SECURITY.md`、`Makefile`。
 - 带通配符（`*`、`YYYYMMDD`、`x.y.z`、`<...>`）的路径按模式跳过。
 - 仅校验存在性；不校验内容正确性。
 

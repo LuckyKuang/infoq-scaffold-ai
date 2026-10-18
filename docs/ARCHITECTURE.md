@@ -64,7 +64,7 @@ profile 约定：
 
 `application-local.yml` 属于开发者本地配置，允许按个人调试环境指向本地或远端依赖；自动化脚本默认按 `application-local.yml -> application-dev.yml` 顺序解析配置。共享文档、示例命令和 skill 不得暴露个人测试环境的私有地址、账号或密码。
 
-共享真值端口保持为 `8080`。若开发者本地为了避开已有服务冲突，临时把 backend 改到 `8081` 或其他端口，应通过 `--server.port=<port>` 或 runtime skill `--backend-port <port>` 显式覆盖，而不是长期改写共享默认值。
+共享真值端口保持为 `8080`。若开发者本地为了避开已有服务冲突，临时把 backend 改到 `8081` 或其他端口，应通过 `--server.port=<port>` 或 test-cli 本地栈入口的 `--backend-port <port>` 显式覆盖，而不是长期改写共享默认值。
 
 共享示例的推荐基线保持为本地可复现环境：
 

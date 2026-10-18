@@ -27,6 +27,7 @@
 项目级 MCP 的本地启动入口位于：
 
 - `tools/mcp/start_playwright_mcp.mjs`
+- `skills/test-cli/scripts/chrome_devtools_cli.mjs`
 - `tools/mcp/start_mysql_mcp.mjs`
 - `tools/mcp/start_redis_mcp.mjs`
 
@@ -37,7 +38,7 @@
 | `tools/resolve_backend_local_mcp_env.mjs` | 统一按 `application-local.yml -> application-dev.yml` 顺序解析 backend 本地配置，并抽取 MySQL / Redis 只读环境变量；当前同时被只读 MCP 启动脚本、`docs/DATA-OPS.md` 与 `tools/verify` 复用 | 内部 helper，不单独作为用户入口 |
 | `tools/launch_cached_mcp_package.mjs` | 优先复用本机 npm / npx cache 中已存在的 MCP 包；缓存未命中时再回退到 `npx -y <package>` 下载启动 | 内部 helper，不单独作为用户入口 |
 
-`playwright` MCP 启动时优先复用本机 npm / npx cache 中的 `@playwright/mcp`，缓存未命中时由共享 helper 回退到 `npx -y @playwright/mcp`。
+`playwright` MCP 启动时优先复用本机 npm / npx cache 中的 `@playwright/mcp`，缓存未命中时由共享 helper 回退到 `npx -y @playwright/mcp`。`chrome-devtools` MCP 固定使用 `skills/test-cli/scripts/chrome_devtools_cli.mjs`，版本由 `skills/test-cli/scripts/package.json` 的 `chrome-devtools-mcp@0.25.0` 决定。
 
 `mysql` / `redis` MCP 默认行为：
 

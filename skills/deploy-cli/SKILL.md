@@ -30,13 +30,30 @@ macOS 需要完整前端栈时使用 Colima + Docker（`deploy/install.sh`）；
 2. 只读探测：读取 `deploy/.env`（或 `INFOQ_ENV_FILE`）、端口、运行时可用性与现有容器；
    Apple 路径先确认 `container --version` 与 `container system status`。
 3. 预检：确认 JDK 21/Maven 3.9.x（Apple 构建需要）、Docker/Compose（Docker 路径）、
-   `deploy/.env`、`sql/infoq_scaffold_3.0.0.sql` 存在；缺失时显式失败，不静默生成生产秘密。
-4. 执行：按 `init -> build -> up -> smoke` 的顺序操作；失败时保留现有栈并输出日志。
+   运行环境文件与 `sql/infoq_scaffold_3.0.0.sql` 存在。Apple 使用 `deploy/.env`；
+   Docker 使用 `INFOQ_ENV_FILE`（默认 `/etc/infoq-scaffold-ai/deploy.env`）。缺失时显式失败，不静默生成生产秘密。
+4. 执行：Apple 按 `init -> build -> up -> smoke`；Docker 按 `install.sh -> status/smoke` 或 `up --execute`；失败时保留现有栈并输出日志。
 5. 验证：readiness、liveness、验证码接口；Docker 路径额外验证 nginx 反代与双前端入口。
 6. 收口：成功写 `tmp/deploy-cli/state.json` 为 `passed`；停止/销毁写 `stopped`；
    失败写 `failed` 并保留 `tmp/deploy-cli/deploy.log`。
 
+## 命令矩阵
+
+| 命令 | Apple container | Docker（WSL2/Linux） |
+| --- | --- | --- |
+| `init` | 支持，生成 `deploy/.env` | 不支持，使用 `deploy/install.sh` 与 `INFOQ_ENV_FILE` |
+| `build` | 支持 | 不支持，使用 `deploy/install.sh` 构建 |
+| `up` | 支持 | 支持，必须显式 `--execute` |
+| `down` | 支持 | 支持，必须显式 `--execute`，同时停止后端与前端 |
+| `restart` | 支持 | 不支持，使用 `deploy/bin/infoq.sh restart` |
+| `status` / `smoke` | 支持 | 支持 |
+| `logs` | 支持 | 支持（后端日志；服务名以脚本实际支持为准） |
+| `destroy` | 支持，需 `--yes` | 不支持，使用 `deploy/uninstall.sh` |
+| `pull` | 支持 | 不支持，使用 `docker compose pull` |
+
 ## 默认命令
+
+Apple container：
 
 ```bash
 node skills/deploy-cli/scripts/deploy_cli.mjs init
@@ -47,6 +64,16 @@ node skills/deploy-cli/scripts/deploy_cli.mjs smoke
 node skills/deploy-cli/scripts/deploy_cli.mjs down
 node skills/deploy-cli/scripts/deploy_cli.mjs logs --service admin --follow
 node skills/deploy-cli/scripts/deploy_cli.mjs destroy --yes
+```
+
+Docker：
+
+```bash
+bash deploy/install.sh
+node skills/deploy-cli/scripts/deploy_cli.mjs status
+node skills/deploy-cli/scripts/deploy_cli.mjs smoke
+node skills/deploy-cli/scripts/deploy_cli.mjs up --execute
+node skills/deploy-cli/scripts/deploy_cli.mjs down --execute
 ```
 
 - `up` 默认先构建镜像；已有产物时用 `--no-build`，复用现有 jar 时用 `build --from-existing-jar`。
@@ -60,7 +87,7 @@ node skills/deploy-cli/scripts/deploy_cli.mjs destroy --yes
 - 日志：`tmp/deploy-cli/deploy.log`。
 - Apple 默认端口 `19090`（来自 `APPLE_CONTAINER_HOST_PORT`），默认部署根目录
   `$HOME/infoq-apple`；禁止复用 `/infoq` 或 `$HOME/infoq`。
-- Docker 默认后端端口 `9090`，网关默认 `80/443`；以 `deploy/.env` 与 Compose 为准。
+- Docker 默认后端端口 `9090`，网关默认 `80/443`；以 `INFOQ_ENV_FILE` 与 Compose 为准。
 - 验证结束、失败或中断时，必须把本技能启动的资源停掉或记录为 `stopped`；不得留下
   无人认领的端口。
 

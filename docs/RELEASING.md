@@ -8,7 +8,7 @@
 - 版本格式固定为 `x.y.z`，不接受预发布后缀或构建元数据。
 - Git tag 默认 `v<x.y.z>`；tag 必须指向已合并到默认分支并通过校验的提交。
 - 三个版本字段必须一致：backend `pom.xml` `<revision>`、`frontend-vue/package.json`、
-  `frontend-react/package.json`；`README.md` 与 `README_CN.md` 的 Version 徽标必须同步。
+  `frontend-react/package.json`；`README.md`、`README_CN.md`、`README_JA.md`、`README_ZH_TW.md` 的 Version 徽标必须同步。
 - `node tools/check_release_version.mjs` 会同时校验这些版本字段、README 徽标与部署文档中的版本引用。
 - 已存在的 tag 与 Release 一律拒绝复用，禁止重打、覆盖或强推。
 
@@ -18,6 +18,8 @@
 - `.github/workflows/ci.yml` 在候选提交上为绿。
 - `node tools/validate_utf8.mjs`、`node tools/check_readme_sync.mjs`、
   `node tools/check_release_version.mjs`、`node tools/check_doc_links.mjs` 通过。
+- `node skills/compress-cli/scripts/agents_check.mjs check` 与
+  `node skills/release-cli/scripts/test_bump_version.mjs` 通过。
 - 依赖版本与 lockfile 一致；SQL 基线 `sql/infoq_scaffold_3.0.0.sql` 未被修改。
 - 发布说明已准备：变更摘要、兼容性、迁移、已知问题、回滚方式。
 - 发布操作者具备 tag 与 Release 权限，且已完成 `gh auth status` 核验。

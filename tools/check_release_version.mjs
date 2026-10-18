@@ -61,6 +61,8 @@ function collectSources() {
   const reactPackage = JSON.parse(read('frontend-react/package.json'));
   const readme = read('README.md');
   const readmeCn = read('README_CN.md');
+  const readmeJa = read('README_JA.md');
+  const readmeZhTw = read('README_ZH_TW.md');
   const envExample = read('deploy/.env.example');
   const dockerDoc = read('deploy/DOCKER.md');
   const compose = read('deploy/docker/docker-compose.yml');
@@ -72,6 +74,8 @@ function collectSources() {
     ['frontend-react/package.json version', String(reactPackage.version ?? '')],
     ['README.md version badge', firstMatch(readme, /badge\/Version-([0-9]+\.[0-9]+\.[0-9]+)-/u, 'README badge')],
     ['README_CN.md version badge', firstMatch(readmeCn, /badge\/Version-([0-9]+\.[0-9]+\.[0-9]+)-/u, 'README_CN badge')],
+    ['README_JA.md version badge', firstMatch(readmeJa, /badge\/Version-([0-9]+\.[0-9]+\.[0-9]+)-/u, 'README_JA badge')],
+    ['README_ZH_TW.md version badge', firstMatch(readmeZhTw, /badge\/Version-([0-9]+\.[0-9]+\.[0-9]+)-/u, 'README_ZH_TW badge')],
     ['deploy/.env.example INFOQ_VERSION', firstMatch(envExample, /^INFOQ_VERSION=([^\s#]+)/mu, 'INFOQ_VERSION')],
     ['deploy/DOCKER.md baseline', firstMatch(dockerDoc, /当前文档对应项目基线版本为 `([^`]+)`/u, 'DOCKER.md baseline')],
     ['deploy/docker/docker-compose.yml infoq-admin tag', firstMatch(compose, /image:\s+infoq\/infoq-admin:([^\s]+)/u, 'admin image tag')],

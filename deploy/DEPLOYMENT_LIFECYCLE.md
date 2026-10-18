@@ -71,7 +71,7 @@
   不打印、不写入验证日志。
 - MySQL/Redis/MinIO 数据卷和 bind 目录在停止与普通清理中必须保留。
 - 生产使用仓库既有默认密码策略或显式注入的秘密；不得把占位符当作生产密码。
-- `VITE_APP_ENCRYPT/TARO_APP_ENCRYPT=true` 时构建环境必须提供对应 RSA 公私钥。
+- `VITE_APP_ENCRYPT=true` 时构建环境必须提供对应 RSA 公私钥。
 
 ## 7. 验证证据
 

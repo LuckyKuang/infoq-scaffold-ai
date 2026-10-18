@@ -70,6 +70,8 @@ const reactPackage = path.join(repoRoot, 'frontend-react', 'package.json');
 const vuePackage = path.join(repoRoot, 'frontend-vue', 'package.json');
 const readmeFile = path.join(repoRoot, 'README.md');
 const readmeCnFile = path.join(repoRoot, 'README_CN.md');
+const readmeJaFile = path.join(repoRoot, 'README_JA.md');
+const readmeZhTwFile = path.join(repoRoot, 'README_ZH_TW.md');
 const deployDoc = path.join(repoRoot, 'deploy', 'DOCKER.md');
 const manualDeployDoc = path.join(repoRoot, 'deploy', 'MANUAL.md');
 const systemdExample = path.join(repoRoot, 'deploy', 'examples', 'systemd', 'infoq-admin.service');
@@ -153,6 +155,8 @@ const filesToCheck = [
   vuePackage,
   readmeFile,
   readmeCnFile,
+  readmeJaFile,
+  readmeZhTwFile,
   deployDoc,
   manualDeployDoc,
   systemdExample,
@@ -274,6 +278,8 @@ for (const filePath of [
   vuePackage,
   readmeFile,
   readmeCnFile,
+  readmeJaFile,
+  readmeZhTwFile,
   deployDoc,
   manualDeployDoc,
   systemdExample,
@@ -299,6 +305,8 @@ replaceOrThrow(reactPackage, /("version"\s*:\s*")[^"]+(")/, `$1${targetVersion}$
 replaceOrThrow(vuePackage, /("version"\s*:\s*")[^"]+(")/, `$1${targetVersion}$2`, 'vue package version');
 replaceOrThrow(readmeFile, /(!\[Version\]\(https:\/\/img\.shields\.io\/badge\/Version-)\d+\.\d+\.\d+(-[^)]*\))/, `$1${targetVersion}$2`, 'README version badge');
 replaceOrThrow(readmeCnFile, /(!\[Version\]\(https:\/\/img\.shields\.io\/badge\/Version-)\d+\.\d+\.\d+(-[^)]*\))/, `$1${targetVersion}$2`, 'README_CN version badge');
+replaceOrThrow(readmeJaFile, /(!\[Version\]\(https:\/\/img\.shields\.io\/badge\/Version-)\d+\.\d+\.\d+(-[^)]*\))/, `$1${targetVersion}$2`, 'README_JA version badge');
+replaceOrThrow(readmeZhTwFile, /(!\[Version\]\(https:\/\/img\.shields\.io\/badge\/Version-)\d+\.\d+\.\d+(-[^)]*\))/, `$1${targetVersion}$2`, 'README_ZH_TW version badge');
 replaceOrThrow(deployDoc, /(当前文档对应项目基线版本为 `)[^`]+(`。)/, `$1${targetVersion}$2`, 'deploy doc baseline version');
 for (const [filePath, description] of deployIdExampleFiles) {
   replaceDeployIdVersionExamples(filePath, description);
@@ -318,6 +326,8 @@ assertContainsFixed(reactPackage, `"version": "${targetVersion}"`, 'react packag
 assertContainsFixed(vuePackage, `"version": "${targetVersion}"`, 'vue package version');
 assertContainsFixed(readmeFile, `![Version](https://img.shields.io/badge/Version-${targetVersion}-`, 'README version badge');
 assertContainsFixed(readmeCnFile, `![Version](https://img.shields.io/badge/Version-${targetVersion}-`, 'README_CN version badge');
+assertContainsFixed(readmeJaFile, `![Version](https://img.shields.io/badge/Version-${targetVersion}-`, 'README_JA version badge');
+assertContainsFixed(readmeZhTwFile, `![Version](https://img.shields.io/badge/Version-${targetVersion}-`, 'README_ZH_TW version badge');
 assertContainsFixed(deployDoc, `当前文档对应项目基线版本为 \`${targetVersion}\`。`, 'deploy doc baseline version');
 for (const [filePath, description] of deployIdExampleFiles) {
   assertDeployIdVersionExamples(filePath, description);

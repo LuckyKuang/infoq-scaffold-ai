@@ -40,6 +40,8 @@ const ALLOWED_PATH_PREFIXES = [
   'frontend-react/',
   'README.md',
   'README_CN.md',
+  'README_JA.md',
+  'README_ZH_TW.md',
   'AGENTS.md',
   'DEV_GUIDE.md',
   'CONTRIBUTING.md',
@@ -289,6 +291,10 @@ function checkReferencedPaths(skipRefs) {
   const checked = [];
   for (const match of agentsText.matchAll(/`([^`]+)`/g)) {
     const token = match[1];
+    if (token.startsWith('../') || token.startsWith('..\\')) {
+      fail(errors, `AGENTS.md 引用的路径逃逸仓库根目录：${token}`);
+      continue;
+    }
     if (!ALLOWED_PATH_PREFIXES.some((prefix) => token.startsWith(prefix))) {
       continue;
     }

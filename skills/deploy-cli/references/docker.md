@@ -9,11 +9,11 @@
 | --- | --- |
 | Windows | Docker CE 运行在 WSL2 Debian/Ubuntu 内；不要使用 Windows 宿主机 Docker Desktop |
 | Linux | Docker Engine + Compose v2 |
-| macOS | 不使用本路径；改走 Apple container |
+| macOS | 完整栈使用 Colima + Docker；Apple container 只提供后端栈 |
 
 ## 前置条件
 
-- `deploy/.env` 或 `INFOQ_ENV_FILE` 指向的部署环境文件存在且包含必需秘密。
+- Docker 使用 `INFOQ_ENV_FILE` 指向的部署环境文件（默认 `/etc/infoq-scaffold-ai/deploy.env`），并包含必需秘密；`deploy/.env` 是 Apple 路径文件。
 - `sql/infoq_scaffold_3.0.0.sql` 存在；初始化基线不得修改。
 - Compose 默认后端端口 `9090`，网关 `80/443`；前端目标由 `INFOQ_FRONTEND_TARGET`
   控制（`vue`、`react` 或 `all`）。

@@ -2,6 +2,7 @@
 import assert from 'node:assert/strict';
 import {
   buildSmokeChecks,
+  DOCKER_COMMANDS,
   normalizeBindHost,
   parseArgs,
   parseEnvFile,
@@ -112,6 +113,14 @@ test('buildSmokeChecks selects Docker frontend targets', () => {
   const vue = buildSmokeChecks({runtime: 'docker', baseUrl: 'http://127.0.0.1', frontendTarget: 'vue'});
   assert.ok(vue.some((check) => check.name === 'vue-console'));
   assert.ok(!vue.some((check) => check.name === 'react-console'));
+});
+
+test('Docker command gate only allows supported lifecycle commands', () => {
+  assert.deepEqual([...DOCKER_COMMANDS].sort(), ['down', 'logs', 'up']);
+  assert.equal(DOCKER_COMMANDS.has('up'), true);
+  assert.equal(DOCKER_COMMANDS.has('build'), false);
+  assert.equal(DOCKER_COMMANDS.has('restart'), false);
+  assert.equal(DOCKER_COMMANDS.has('destroy'), false);
 });
 
 test('resolveRuntime follows the supported platform matrix', () => {

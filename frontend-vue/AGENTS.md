@@ -5,8 +5,9 @@
 |Workspace Layout:src/views|src/components|src/api|src/store|src/router|src/utils|src/plugins|tests
 |Environment Baseline:Node 24.18.0|Docker builder 固定 node:24.18.0|pnpm >=10.34.1 <11|packageManager pnpm@10.34.1
 |Build Secrets:当 `VITE_APP_ENCRYPT=true` 时，Vue admin dev/build 环境必须提供 `VITE_APP_RSA_PUBLIC_KEY` 与 `VITE_APP_RSA_PRIVATE_KEY`。
-|Runtime Baseline:Vue admin 联调默认以后端 `http://127.0.0.1:8080` 为共享真值。|若开发者本地为避开冲突临时把 backend 改到 `8081` 或其他端口，必须显式设置 `VITE_APP_PROXY_TARGET` 或使用 runtime skill `--backend-port <port>` 对齐。|不得把一次性本地端口固化进共享默认配置。
+|Runtime Baseline:Vue admin 联调默认以后端 `http://127.0.0.1:8080` 为共享真值。|若开发者本地为避开冲突临时把 backend 改到 `8081` 或其他端口，必须显式设置 `VITE_APP_PROXY_TARGET` 或使用 test-cli 本地栈入口的 `--backend-port <port>` 对齐。|不得把一次性本地端口固化进共享默认配置。
 |Package And Formatting:默认使用 pnpm。|遵循本地 eslint 与 prettier 配置，前端使用 2-space formatting。|source、env、test files 保持 UTF-8。
+|Working Directory:本文件中的命令默认从仓库根目录执行；若已在对应工作区内，请按命令中的显式路径自行调整。
 |Commands:install=cd frontend-vue && pnpm install|dev=cd frontend-vue && pnpm run dev|test=cd frontend-vue && pnpm run test:unit|coverage=cd frontend-vue && pnpm run test:unit:coverage|lint=cd frontend-vue && pnpm run lint:eslint|lint:fix=cd frontend-vue && pnpm run lint:eslint:fix|build=cd frontend-vue && pnpm run build:prod
 |OpenSpec Routing:分级执行。|L3(强制):Vue admin 新功能、API 契约变更、跨工作区交付，编码前先创建或定位 `openspec/changes/<change-id>/`。|L2(Lite):单 Vue admin 行为变更且不改 API 契约，至少维护 `proposal.md`+`tasks.md`。|L1(可豁免):单 Vue admin 小修复且不改契约、改动范围小可不建 OpenSpec，但必须先写 acceptance contract。|不确定分级时默认 L3。|OpenSpec 文档正文默认中文，路径名称/命令/文件名保持英文原样。|实现与验证以 full artifacts 或 Lite artifacts 为准。
 |Component Boundary:优先使用 Element Plus 和现有 Vue patterns，再考虑自定义组件。|组件选型、API 与版本兼容核验遵循仓库根 `docs/DESIGN.md` 的「组件选型与 API 核验」章节，组件库版本以本工作区 `package.json` 与 lockfile 为准。|本工作区不要套用 React 或 Ant Design 规则。

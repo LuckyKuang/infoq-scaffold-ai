@@ -14,6 +14,10 @@
   - `![Version](https://img.shields.io/badge/Version-x.y.z-...)`
 - `README_CN.md`
   - `![Version](https://img.shields.io/badge/Version-x.y.z-...)`
+- `README_JA.md`
+  - `![Version](https://img.shields.io/badge/Version-x.y.z-...)`
+- `README_ZH_TW.md`
+  - `![Version](https://img.shields.io/badge/Version-x.y.z-...)`
 - `deploy/DOCKER.md`
   - `当前文档对应项目基线版本为 \`x.y.z\`。`
 - `deploy/MANUAL.md`
@@ -51,7 +55,7 @@
 - `deploy/bin/infoq.sh`
 - `deploy/docker/docker-compose.yml`
 
-`skills/` 下的文档不再作为版本受管目标；版本真值集中在 `README.md`、`README_CN.md`、`deploy/` 文档与后端配置。
+`skills/` 下的文档不再作为版本受管目标；版本真值集中在四套 README、`deploy/` 文档与后端配置。
 
 若这些引用与 `sql/` 下真实文件不一致，脚本会失败，并要求显式后续任务处理。
 

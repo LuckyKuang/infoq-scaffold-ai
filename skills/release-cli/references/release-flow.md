@@ -25,7 +25,7 @@ verify --version x.y.z  ->  release 已发布且非 draft/prerelease
 | BOM revision | `backend/infoq-core/infoq-core-bom/pom.xml` |
 | React 版本 | `frontend-react/package.json` `version` |
 | Vue 版本 | `frontend-vue/package.json` `version` |
-| README 徽标 | `README.md` / `README_CN.md` 版本徽标 |
+| README 徽标 | `README.md` / `README_CN.md` / `README_JA.md` / `README_ZH_TW.md` 版本徽标 |
 | deploy 基线 | `deploy/DOCKER.md`「当前文档对应项目基线版本」 |
 | Docker 镜像 tag | `deploy/docker/docker-compose.yml` |
 | SpringDoc 断言 | `infoq-plugin-doc` 下 `SpringDocConfigTest` / `SpringDocPropertiesTest` |
@@ -64,7 +64,7 @@ verify --version x.y.z  ->  release 已发布且非 draft/prerelease
 
 ## 7. 发布前检查
 
-- `node tools/validate_utf8.mjs`、`node tools/check_readme_sync.mjs`、`node skills/compress-cli/scripts/agents_check.mjs check` 通过。
+- `node tools/validate_utf8.mjs`、`node tools/check_readme_sync.mjs`、`node tools/check_release_version.mjs`、`node tools/check_doc_links.mjs`、`node skills/compress-cli/scripts/agents_check.mjs check` 通过。
 - `node skills/release-cli/scripts/test_bump_version.mjs` 通过。
 - CI 在合并提交上为绿；`push-cli watch` 已确认。
 - 显式记录 config / SQL / dependency / rollback / observability 影响；未检查项列入 residual risk。

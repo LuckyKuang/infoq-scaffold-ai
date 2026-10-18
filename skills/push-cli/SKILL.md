@@ -20,7 +20,7 @@ description: 把本地改动安全推送到 GitHub 远程并走完 PR 校验闭�
 
 1. 判定范围：确认是快速推送、完整 PR 提交、只看校验状态，还是修复校验失败。
 2. 只读探测：`ensure` 校验 gh 登录、仓库身份、默认分支与工作区状态；`status` 查看当前分支、脏文件与已打开的 PR。
-3. 本地校验：`check` 运行仓库校验矩阵（UTF-8、README 同步、版本一致性、文档链接、AGENTS 校验、前端 lint/test，可选 build 与 backend）。
+3. 本地校验：`check` 运行仓库校验矩阵（`docs` / `ci` / `full`；`ci` 精确镜像 GitHub CI，`full` 追加 docs 门禁）。
 4. 提交与推送：`submit-pr` 在非默认分支上提交并推送；失败的校验必须在本地修复后重跑，不允许带着红色校验推送。
 5. PR 与校验：`submit-pr` 创建或复用 PR，然后 `watch` 轮询 GitHub 校验；失败时输出失败 check 名称与失败日志摘要。
 6. 修复回流：根据失败日志修改代码 → 重新 `submit-pr`（同一个 PR 会被复用），直到校验全绿。
@@ -40,13 +40,14 @@ node skills/push-cli/scripts/push_cli.mjs submit-pr --message "fix: 修复 xxx" 
 node skills/push-cli/scripts/push_cli.mjs submit-pr --message "fix: 修复 xxx"
 node skills/push-cli/scripts/push_cli.mjs watch --pr <number>
 node skills/push-cli/scripts/push_cli.mjs merge --pr <number> --yes
+node skills/push-cli/scripts/test_push_cli.mjs
 ```
 
 ## 校验矩阵
 
 - `--profile docs`：`node tools/validate_utf8.mjs`、`node tools/check_readme_sync.mjs`、`node tools/check_release_version.mjs`、`node tools/check_doc_links.mjs`、`node skills/compress-cli/scripts/agents_check.mjs check`，并在存在 active change 时运行 `node tools/openspec_check.mjs <change-id>`。
-- `--profile ci`：docs 矩阵 + React admin（`lint`/`test`/`build:prod`）与 Vue admin（`lint:eslint`/`test:unit`/`build:prod`），与 `.github/workflows/ci.yml` 对齐。
-- `--profile full`：ci 矩阵 + `node tools/backend_mvn.mjs -- -DskipTests=false test`（需要 JDK 21 与 Maven 3.9.x）。
+- `--profile ci`：精确对齐 `.github/workflows/ci.yml`：UTF-8、README、版本、文档链接 + React/Vue lint/test/build + `node tools/backend_mvn.mjs -- -B -ntp -DskipTests=false clean package -P dev`。不包含 agents_check / openspec_check。
+- `--profile full`：docs 矩阵（含 agents_check / active openspec_check）+ CI 矩阵；用于发布前完整本地门禁。
 - 任一命令失败即为硬失败；禁止把失败标记为通过后继续推送。
 
 ## 证据目录

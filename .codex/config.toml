@@ -22,8 +22,8 @@ approval_mode = "approve"
 approval_mode = "approve"
 
 [mcp_servers.chrome-devtools]
-command = "npx"
-args = ["-y", "chrome-devtools-mcp@latest"]
+command = "node"
+args = ["skills/test-cli/scripts/chrome_devtools_cli.mjs"]
 enabled = true
 startup_timeout_sec = 20
 tool_timeout_sec = 120

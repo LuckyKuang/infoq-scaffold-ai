@@ -61,7 +61,7 @@ active change 在实现前和交付前都必须通过统一结构校验。
 
 - 当开发者为避开本机 `8080` 冲突，临时把 admin backend 改到 `8081` 或其他端口时
 - 则共享脚本、共享文档和真值配置仍必须保持 `8080` 作为默认值
-- 并且 runtime helper 必须支持通过 `--backend-port <port>` 显式覆盖本地端口
+- 并且 test-cli 本地栈 helper（`tools/lib/admin_dev_stack.mjs`）必须支持通过 `--backend-port <port>` 显式覆盖本地端口
 - 并且前端 dev 代理必须自动跟随该显式端口，除非调用者显式设置 `VITE_APP_PROXY_TARGET`
 - 并且该临时端口不得被沉淀为共享默认值
 

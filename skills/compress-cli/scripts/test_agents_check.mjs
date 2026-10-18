@@ -60,22 +60,19 @@ function writeFixture({agentsBody, skills = [{name: 'alpha-cli', withPrompt: tru
   fs.writeFileSync(path.join(fixtureRoot, 'docs', 'SKILLS.md'), `${rows.join('\n')}\n`, 'utf8');
 }
 
-function runChecker() {
-  return spawnSync(
-    process.execPath,
-    [
-      checker,
-      'check',
-      '--agents',
-      path.join(fixtureRoot, 'AGENTS.md'),
-      '--skills-dir',
-      path.join(fixtureRoot, 'skills'),
-      '--docs',
-      path.join(fixtureRoot, 'docs', 'SKILLS.md'),
-      '--skip-refs'
-    ],
-    {encoding: 'utf8'}
-  );
+function runChecker(skipRefs = true) {
+  const args = [
+    checker,
+    'check',
+    '--agents',
+    path.join(fixtureRoot, 'AGENTS.md'),
+    '--skills-dir',
+    path.join(fixtureRoot, 'skills'),
+    '--docs',
+    path.join(fixtureRoot, 'docs', 'SKILLS.md')
+  ];
+  if (skipRefs) args.push('--skip-refs');
+  return spawnSync(process.execPath, args, {encoding: 'utf8'});
 }
 
 const results = [];
@@ -135,6 +132,19 @@ assertCase(
   {agentsBody: validAgents(), docsRows: ['| `alpha-cli` | test | test |', '| `ghost-cli` | test | test |']},
   (status, output) => status === 1 && output.includes('在 skills/ 下不存在')
 );
+
+// Path traversal must fail instead of being silently skipped.
+writeFixture({
+  agentsBody: validAgents({'Path Ref': '`../outside.md`'})
+});
+const escapedPathRun = runChecker(false);
+const escapedPathOutput = `${escapedPathRun.stdout}${escapedPathRun.stderr}`;
+const escapedPathOk = escapedPathRun.status === 1 && escapedPathOutput.includes('逃逸仓库根目录');
+results.push({name: 'path traversal fails', ok: escapedPathOk});
+console.log(`${escapedPathOk ? '[PASS]' : '[FAIL]'} path traversal fails (exit=${escapedPathRun.status})`);
+if (!escapedPathOk) {
+  console.log(escapedPathOutput.trim());
+}
 
 const failed = results.filter((item) => !item.ok);
 console.log(`[agents-check-test] ${failed.length === 0 ? 'pass' : 'fail'} (${results.length - failed.length}/${results.length})`);

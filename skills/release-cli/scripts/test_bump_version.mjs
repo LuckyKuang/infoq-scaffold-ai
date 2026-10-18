@@ -25,6 +25,8 @@ const [initSqlRelPath] = initSqlCandidates;
 const files = [
   'README.md',
   'README_CN.md',
+  'README_JA.md',
+  'README_ZH_TW.md',
   'deploy/DOCKER.md',
   'deploy/MANUAL.md',
   'deploy/examples/systemd/infoq-admin.service',
@@ -68,6 +70,8 @@ assertContains('frontend-react/package.json', '"version": "9.9.9"');
 assertContains('frontend-vue/package.json', '"version": "9.9.9"');
 assertContains('README.md', 'Version-9.9.9-');
 assertContains('README_CN.md', 'Version-9.9.9-');
+assertContains('README_JA.md', 'Version-9.9.9-');
+assertContains('README_ZH_TW.md', 'Version-9.9.9-');
 assertContains('deploy/docker/docker-compose.yml', 'image: infoq/infoq-admin:9.9.9');
 assertContains('deploy/docker/docker-compose.yml', 'image: infoq/infoq-frontend-vue:9.9.9');
 assertContains('deploy/docker/docker-compose.yml', 'image: infoq/infoq-frontend-react:9.9.9');

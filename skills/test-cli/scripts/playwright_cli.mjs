@@ -25,7 +25,7 @@ function resolveEvidencePath(value) {
 }
 
 function buildDefaultFlowEvidencePath(extension) {
-  return path.join(repoRoot, 'tmp', 'test-cli', 'flow', `${formatTimestamp()}.${extension}`);
+  return path.join(repoRoot, 'tmp', 'test-cli', 'browser', 'flow', `${formatTimestamp()}.${extension}`);
 }
 
 function normalizeCommandArgs(rawArgs) {

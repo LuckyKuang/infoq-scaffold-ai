@@ -50,7 +50,7 @@ function getRouteList(nodes, prefix = '') {
 
 function buildDefaultEvidencePath(route, extension) {
   const normalizedRoute = route === '/' ? 'root' : route.replace(/^\/+/, '').replace(/\//g, '_');
-  return path.join(repoRoot, 'tmp', 'test-cli', 'admin-route-probe', `${normalizedRoute}.${formatTimestamp()}.${extension}`);
+  return path.join(repoRoot, 'tmp', 'test-cli', 'browser', 'admin-route-probe', `${normalizedRoute}.${formatTimestamp()}.${extension}`);
 }
 
 function collectProcessOutput(result) {

@@ -390,7 +390,7 @@ function resolveRunDir(options) {
     return path.isAbsolute(options.runDir) ? options.runDir : path.join(repoRoot, options.runDir);
   }
   const runId = options.runId || `captcha-login-${timestampSlug()}`;
-  return resolveTmpPath(repoRoot, 'test-cli', 'captcha-login', runId);
+  return resolveTmpPath(repoRoot, 'test-cli', 'e2e', 'captcha-login', runId);
 }
 
 async function main() {

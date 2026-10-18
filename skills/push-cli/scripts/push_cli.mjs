@@ -4,6 +4,7 @@ import path from 'node:path';
 import fs from 'node:fs';
 import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
+import {PROFILES, buildMatrix} from './push_matrix.mjs';
 import {normalizeForwardedArgs, resolveRepoRoot} from '../../../tools/lib/skill_runtime.mjs';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
@@ -84,7 +85,7 @@ function parseArgs(argv) {
   if (!['ensure', 'status', 'check', 'push', 'submit-pr', 'watch', 'merge'].includes(options.command)) {
     throw new Error(`unknown command: ${options.command}`);
   }
-  if (!['docs', 'ci', 'full'].includes(options.profile)) {
+  if (!PROFILES.includes(options.profile)) {
     throw new Error(`unknown profile: ${options.profile}`);
   }
   return options;
@@ -179,36 +180,12 @@ function activeChangeIds() {
     .sort();
 }
 
-function buildMatrix(profile) {
-  const docs = [
-    {name: 'utf8', command: 'node', args: ['tools/validate_utf8.mjs']},
-    {name: 'readme-sync', command: 'node', args: ['tools/check_readme_sync.mjs']},
-    {name: 'release-version', command: 'node', args: ['tools/check_release_version.mjs']},
-    {name: 'doc-links', command: 'node', args: ['tools/check_doc_links.mjs']},
-    {name: 'agents-check', command: 'node', args: ['skills/compress-cli/scripts/agents_check.mjs', 'check']}
-  ];
-  const frontend = [
-    {name: 'react-lint', command: 'pnpm', args: ['--dir', 'frontend-react', 'run', 'lint']},
-    {name: 'react-test', command: 'pnpm', args: ['--dir', 'frontend-react', 'run', 'test']},
-    {name: 'react-build', command: 'pnpm', args: ['--dir', 'frontend-react', 'run', 'build:prod']},
-    {name: 'vue-lint', command: 'pnpm', args: ['--dir', 'frontend-vue', 'run', 'lint:eslint']},
-    {name: 'vue-test', command: 'pnpm', args: ['--dir', 'frontend-vue', 'run', 'test:unit']},
-    {name: 'vue-build', command: 'pnpm', args: ['--dir', 'frontend-vue', 'run', 'build:prod']}
-  ];
-  const backend = [{name: 'backend-test', command: 'node', args: ['tools/backend_mvn.mjs', '--', '-DskipTests=false', 'test']}];
-  if (profile === 'docs') {
-    return docs;
-  }
-  if (profile === 'ci') {
-    return [...docs, ...frontend];
-  }
-  return [...docs, ...frontend, ...backend];
-}
-
 function runMatrix(profile) {
   const steps = [...buildMatrix(profile)];
-  for (const changeId of activeChangeIds()) {
-    steps.push({name: `openspec-check-${changeId}`, command: 'node', args: ['tools/openspec_check.mjs', changeId]});
+  if (profile !== 'ci') {
+    for (const changeId of activeChangeIds()) {
+      steps.push({name: `openspec-check-${changeId}`, command: 'node', args: ['tools/openspec_check.mjs', changeId]});
+    }
   }
   fs.mkdirSync(evidenceDir, {recursive: true});
   const failures = [];

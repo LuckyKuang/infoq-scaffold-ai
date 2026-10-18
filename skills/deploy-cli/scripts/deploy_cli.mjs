@@ -14,6 +14,7 @@ const deployEnvFile = path.join(repoRoot, 'deploy', '.env');
 const dockerComposeFile = path.join(repoRoot, 'deploy', 'docker', 'docker-compose.yml');
 const DEFAULT_APPLE_PORT = 19090;
 const DEFAULT_DOCKER_BACKEND_PORT = 9090;
+export const DOCKER_COMMANDS = new Set(['up', 'down', 'logs']);
 
 const COMMANDS = new Set([
   'help', 'init', 'build', 'up', 'down', 'restart', 'status', 'smoke', 'logs', 'destroy', 'pull',
@@ -402,12 +403,17 @@ async function main() {
     }
 
     if (runtime === 'docker') {
-      if (!['up', 'down', 'logs'].includes(command)) {
+      if (!DOCKER_COMMANDS.has(command)) {
         throw new Error(`${command} is Apple-only; use deploy/VERIFICATION.md for Docker lifecycle operations.`);
       }
       const plan = command === 'up'
         ? ['bash deploy/install.sh']
-        : [ `bash deploy/bin/infoq.sh ${command === 'down' ? 'stop' : command}` ];
+        : command === 'down'
+          ? [
+              'bash deploy/bin/infoq.sh stop',
+              `bash deploy/bin/deploy-frontend.sh stop ${process.env.INFOQ_FRONTEND_TARGET ?? env.INFOQ_FRONTEND_TARGET ?? 'all'}`
+            ]
+          : [`bash deploy/bin/infoq.sh ${command}`];
       if (command === 'logs' && values.service) plan[0] += ` ${values.service}`;
       if (!requireExplicitExecute(flags, command, plan)) {
         writeState({status: 'stopped', dryRun: true});
@@ -426,7 +432,7 @@ async function main() {
         await runOrThrow('bash', [
           path.join(repoRoot, 'deploy', 'bin', 'deploy-frontend.sh'),
           'stop',
-          env.INFOQ_FRONTEND_TARGET ?? 'all',
+          process.env.INFOQ_FRONTEND_TARGET ?? env.INFOQ_FRONTEND_TARGET ?? 'all',
         ]);
         writeState({status: 'stopped'});
         return;
@@ -473,14 +479,14 @@ function printUsage() {
 
 Commands:
   init                 Generate deploy/.env (Apple container only)
-  build                Package the backend and build the runtime image
+  build                Package the backend and build the runtime image (Apple only)
   up                   Build if needed, start the stack, then smoke test
   down                 Stop owned containers and preserve data
-  restart              Restart the stack in dependency order
+  restart              Restart the stack in dependency order (Apple only)
   status               Show runtime state and run bounded HTTP probes
   smoke                Run bounded HTTP probes only
   logs                 Follow one service log (--service mysql|redis|admin)
-  destroy              Delete owned containers/network (requires --yes)
+  destroy              Delete owned containers/network (requires --yes; Apple only)
   pull                 Pull runtime images (Apple container only)
   help                 Show this help
 

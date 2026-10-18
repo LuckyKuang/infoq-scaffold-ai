@@ -223,7 +223,7 @@ for (const [flag, value] of [
 const backendDir = path.join(repoRoot, 'backend');
 const jarPath = path.join(repoRoot, config.jarRelPath);
 const pyScriptPath = path.join(scriptDir, 'websocket_cluster_smoke.py');
-stateFile = resolveTmpPath(repoRoot, 'tools/verify', `run-cluster-smoke-${config.portA}-${config.portB}.state.json`);
+stateFile = resolveTmpPath(repoRoot, 'verify', `run-cluster-smoke-${config.portA}-${config.portB}.state.json`);
 
 async function isServerReady(baseUrl) {
   try {
@@ -377,8 +377,8 @@ async function main() {
     throw new Error(`[cluster-smoke] jar not found: ${jarPath}`);
   }
 
-  logA = resolveTmpPath(repoRoot, 'tools/verify', `infoq-cluster-smoke-${config.nodeIdA}.log`);
-  logB = resolveTmpPath(repoRoot, 'tools/verify', `infoq-cluster-smoke-${config.nodeIdB}.log`);
+  logA = resolveTmpPath(repoRoot, 'verify', `infoq-cluster-smoke-${config.nodeIdA}.log`);
+  logB = resolveTmpPath(repoRoot, 'verify', `infoq-cluster-smoke-${config.nodeIdB}.log`);
   writeState({
     schemaVersion: 1,
     skill: 'tools/verify',

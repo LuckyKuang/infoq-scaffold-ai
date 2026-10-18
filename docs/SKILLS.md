@@ -76,7 +76,7 @@
 1. `AGENTS.md` 是否需要新增或调整路由。
 2. `README.md` 与 `docs/*.md` 是否仍然准确。
 3. 如果 skill 依赖仓库级 MCP，`.codex/config.toml` 与 `docs/MCP-SERVERS.md` 是否仍然一致。
-4. 若变更了命令、环境变量、入口路径或默认行为，是否已执行 docs 站点同步。
+4. 若变更了命令、环境变量、入口路径或默认行为，是否已同步 `docs/` 与相关文档。
 5. `agents/openai.yaml` 的 `default_prompt` 是否显式包含 `$skill-name`，且 `display_name`、`short_description` 是否仍与 `SKILL.md` 一致。
 6. 若 skill 会启动 backend、frontend dev server、浏览器 runner 或其他长生命周期进程，是否已写入 `tmp/` 状态文件并覆盖端口收口。
 
@@ -170,6 +170,8 @@ node tools/verify/run_cluster_smoke.mjs
 
 当任务要求"在本机部署项目""用 Apple container 起栈""在 WSL2 / Linux Docker 部署""运行态 smoke""部署失败诊断"或"停止/清理本地栈"时使用。部署脚本真值在 `deploy/`，运行态编排入口是 `deploy-cli`。
 
+Apple container：
+
 ```bash
 node skills/deploy-cli/scripts/deploy_cli.mjs init
 node skills/deploy-cli/scripts/deploy_cli.mjs build
@@ -180,11 +182,23 @@ node skills/deploy-cli/scripts/deploy_cli.mjs down
 node skills/deploy-cli/scripts/deploy_cli.mjs destroy --yes
 ```
 
+Docker（WSL2/Linux）：
+
+```bash
+bash deploy/install.sh
+node skills/deploy-cli/scripts/deploy_cli.mjs status
+node skills/deploy-cli/scripts/deploy_cli.mjs smoke
+node skills/deploy-cli/scripts/deploy_cli.mjs up --execute
+node skills/deploy-cli/scripts/deploy_cli.mjs down --execute
+```
+
 说明：
 
+- 命令按运行时区分：`init`、`build`、`restart`、`destroy`、`pull` 仅 Apple；Docker 使用 `deploy/install.sh`、`deploy/bin/infoq.sh` 与 `deploy/uninstall.sh`。
 - macOS 需要完整栈时使用 Colima + Docker；Apple container 仅启动 MySQL、Redis 和后端，默认端口 `19090`，只操作 `infoq-apple*` 资源。Apple 细节见 `skills/deploy-cli/references/apple-containers.md`。
 - Windows 必须在 WSL2 Debian/Ubuntu 内执行；Linux 使用本地 Docker。Docker 细节见 `skills/deploy-cli/references/docker.md` 与 `deploy/VERIFICATION.md`。
-- `status` / `smoke` 只读；`up` / `down` 是运行态变更；Docker 路径的写操作必须显式 `--execute`。
+- Apple 环境文件是 `deploy/.env`；Docker 环境文件是 `INFOQ_ENV_FILE`（默认 `/etc/infoq-scaffold-ai/deploy.env`）。
+- `status` / `smoke` 只读；`up` / `down` 是运行态变更；Docker 路径的写操作必须显式 `--execute`；`down --execute` 同时停止后端与前端。
 - 状态写入 `tmp/deploy-cli/state.json`，日志写入 `tmp/deploy-cli/deploy.log`；完成、失败或中断都要收口。
 - 默认只使用免费商用运行时基线：WSL2 内 Docker CE、macOS Colima、原生 Linux Docker CE；不默认使用 Docker Desktop。
 - 证据写入 `tmp/deploy-cli/` 或 `tmp/deploy-verify/<run-id>/`。
@@ -217,6 +231,7 @@ node skills/push-cli/scripts/push_cli.mjs check --profile ci
 node skills/push-cli/scripts/push_cli.mjs submit-pr --message "fix: xxx"
 node skills/push-cli/scripts/push_cli.mjs watch --pr <number>
 node skills/push-cli/scripts/push_cli.mjs merge --pr <number> --yes
+node skills/push-cli/scripts/test_push_cli.mjs
 ```
 
 说明：
@@ -224,7 +239,7 @@ node skills/push-cli/scripts/push_cli.mjs merge --pr <number> --yes
 - 默认分支（`master`）禁止直推；在本分支上执行 `submit-pr` 时会自动 `git fetch` 最新默认分支并创建 `auto/<yyyymmdd-hhmmss>` 工作分支。
 - `submit-pr` = 本地校验矩阵 -> 提交 -> 推送 -> 创建或复用 PR -> 自动 `watch`；失败时输出失败 check 与失败日志摘要，修复后重跑即复用同一 PR。
 - `merge` 需要全绿 + 显式 `--yes`；禁止 `--admin` 绕过保护。
-- 校验矩阵：`docs`（UTF-8、README 同步、版本一致性、文档链接、AGENTS 校验、active change 的 OpenSpec 校验）、`ci`（对齐 `.github/workflows/ci.yml` 的双管理端 lint/test/build）、`full`（追加 backend 测试）。
+- 校验矩阵：`docs`（UTF-8、README 同步、版本一致性、文档链接、AGENTS 校验、active change 的 OpenSpec 校验）、`ci`（精确对齐 `.github/workflows/ci.yml`：仓库门禁 + 双管理端 lint/test/build + 后端 `clean package -P dev`，不含 agents/openspec）、`full`（docs + ci）。
 - 证据写入 `tmp/push-cli/<run-id>/`。
 
 ### 8.8 版本与 Release（release-cli）
@@ -287,7 +302,7 @@ node skills/release-cli/scripts/test_bump_version.mjs
 - `infoq-plugin-excel`
 - `infoq-plugin-log`
 
-可配置插件（默认关闭或按需，通过配置启停）：
+可配置插件（默认值不统一，以 9.4 开关矩阵和 application.yml 为准）：
 
 - `infoq-plugin-encrypt`
 - `infoq-plugin-mail`
@@ -298,7 +313,7 @@ node skills/release-cli/scripts/test_bump_version.mjs
 关键原则：
 
 1. 依赖保留在 `infoq-system`，保证可随时启用。
-2. 配置默认置为 `false`，生产按需开启。
+2. 生产按需开启；默认值以 9.4 开关矩阵和 `application.yml` 为准。
 3. 需要前后端联动的插件必须同步配置（如 encrypt/sse/websocket）。
 
 ### 9.3 当前依赖基线
