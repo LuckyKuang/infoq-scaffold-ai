@@ -9,18 +9,26 @@ importers:
   .:
     devDependencies:
       chrome-devtools-mcp:
-        specifier: 1.1.0
-        version: 1.1.0
+        specifier: 1.11.0
+        version: 1.11.0
       playwright:
         specifier: 1.59.1
         version: 1.59.1
 
 packages:
 
-  chrome-devtools-mcp@1.1.0:
-    resolution: {integrity: sha512-oxRGj24Wr1uhL4jVQFcxbiHjxcvOAiDPpjGQGsMylsiwfyjw0C5RGbPl5PCEw9FQlhBZ39djMh9cuJwG0TOzZQ==}
+  chrome-devtools-mcp@1.11.0:
+    resolution: {integrity: sha512-CytJ/5tnzrS+J/74be2P5aCOsS/mmGRHys/Si+IYC4ucrbnWAmES/dYdxGJjeUCECRcoFUilZAysdjlwqUjXIA==}
     engines: {node: ^20.19.0 || ^22.12.0 || >=23}
     hasBin: true
+    peerDependencies:
+      '@blackwell-systems/gcf': ^2.2.2
+      '@toon-format/toon': ^4.1.0
+    peerDependenciesMeta:
+      '@blackwell-systems/gcf':
+        optional: true
+      '@toon-format/toon':
+        optional: true
 
   fsevents@2.3.2:
     resolution: {integrity: sha512-xiqMQR4xAeHTuB9uWm+fFRcIOgKBMiOBP+eXiyT7jsgVCq1bkVygt00oASowB7EdtpOHaaPgKt812P9ab+DDKA==}
@@ -39,7 +47,7 @@ packages:
 
 snapshots:
 
-  chrome-devtools-mcp@1.1.0: {}
+  chrome-devtools-mcp@1.11.0: {}
 
   fsevents@2.3.2:
     optional: true
