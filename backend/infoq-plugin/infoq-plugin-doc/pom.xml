@@ -22,7 +22,7 @@
         </dependency>
 
         <dependency>
-            <groupId>org.springdoc</groupId>
+            <groupId>io.github.vpelikh</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-api</artifactId>
         </dependency>
 

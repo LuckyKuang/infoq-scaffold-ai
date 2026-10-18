@@ -52,5 +52,5 @@
 
 ## 依赖边界
 
-- Springdoc/Swagger `swagger-core` 仍传递 Jackson 2，仅用于 OpenAPI 文档生成。
-- 业务 JSON、Redis 和 Spring MVC 统一使用 Jackson 3；不要在本模块外新增 Jackson 2 业务依赖。
+- 使用 `io.github.vpelikh:springdoc-openapi-starter-webmvc-api:5.1.0`，其 `swagger-core 4.0.6` 基于 Jackson 3。
+- 业务 JSON、Redis、Spring MVC 与 OpenAPI 文档统一使用 Jackson 3；不要新增 Jackson 2 数据绑定依赖。

@@ -55,4 +55,4 @@ Spring Boot 4 MVC、业务 `JsonUtils` 与 Redis codec 全部使用 Jackson 3，
 
 - 只处理 JSON 相关语义，不处理权限、缓存或业务逻辑。
 - 项目模块的 JSON 数据绑定统一使用 Jackson 3；禁止在业务模块直接引入 Jackson 2 `databind`/`core`/`datatype`。
-- 例外：Springdoc/Swagger 的 `swagger-core` 仍传递 Jackson 2，仅用于 OpenAPI 文档内部，不参与业务 JSON；若要求依赖树零 Jackson 2，需要移除或替换 Springdoc。
+- Springdoc 使用 `io.github.vpelikh:springdoc-openapi-starter-webmvc-api:5.1.0`，其 Swagger 链路同样基于 Jackson 3，不再有 Jackson 2 数据绑定例外。

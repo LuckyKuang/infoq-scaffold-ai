@@ -150,7 +150,7 @@ profile 约定：
 
 插件治理的详细矩阵见 [Skills 与插件](./SKILLS.md) 的插件目录章节。
 
-> Springdoc/Swagger 的 `swagger-core` 仍传递 Jackson 2，仅用于 OpenAPI 文档生成；业务 JSON、Redis 和 MVC 统一使用 Jackson 3。
+> 接口文档使用 `io.github.vpelikh:springdoc-openapi-starter-webmvc-api:5.1.0`，其 Swagger 链路基于 Jackson 3；业务 JSON、Redis、MVC 与 OpenAPI 文档统一使用 Jackson 3。
 
 ## 8. 当前默认的基础安全与校验策略
 

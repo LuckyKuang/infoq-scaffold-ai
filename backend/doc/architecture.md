@@ -110,7 +110,7 @@ flowchart TB
 | `plugin-mqtt` | MQTT 3.1.1/MQTT 5 条件自动配置，当前配置默认关闭 | `MqttAutoConfiguration`、`MqttClientRegistry` |
 | `plugin-elasticsearch` | Elastic Java API Client 条件自动配置，当前配置默认关闭 | `ElasticsearchAutoConfiguration`、`ElasticsearchOperations` |
 
-> `plugin-doc` 的 Springdoc/Swagger `swagger-core` 仍传递 Jackson 2，仅用于 OpenAPI 文档生成；业务 JSON、Redis 和 MVC 统一使用 Jackson 3。
+> `plugin-doc` 使用 `io.github.vpelikh:springdoc-openapi-starter-webmvc-api:5.1.0`，其 Swagger 链路基于 Jackson 3；业务 JSON、Redis、MVC 与 OpenAPI 文档统一使用 Jackson 3。
 
 如果要继续确认这些职责的入口类、配置项和边界，请继续下钻到 [`../infoq-plugin/README.md`](../infoq-plugin/README.md) 与对应叶子模块 README。
 
