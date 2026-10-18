@@ -1,7 +1,7 @@
 # AGENTS.md
 |IMPORTANT: Prefer retrieval-led reasoning over pre-training-led reasoning for any project tasks. Read repository files before relying on framework pretraining data.
 |Scope:本文件适用于 `frontend-react` 及其子目录，用于把根规则收窄到 React admin 语境。
-|Stack:React 19.2.7|TypeScript 6.0.3|Vite 8.0.16|Ant Design 6.4.3|React Router 7.16.0|Zustand|Vitest 4.1.8|Testing Library
+|Stack:React 19.2.7|TypeScript 6.0.3|Vite 8.0.16|Ant Design 6.4.3|React Router 7.18.2|Zustand|Vitest 4.1.11|Testing Library
 |Workspace Layout:src/pages|src/components|src/api|src/store|src/router|src/utils|src/hooks|tests
 |Environment Baseline:Node 24.18.0|Docker builder 固定 node:24.18.0|pnpm >=10.34.1 <11|packageManager pnpm@10.34.1
 |Build Secrets:当 `VITE_APP_ENCRYPT=true` 时，React admin dev/build 环境必须提供 `VITE_APP_RSA_PUBLIC_KEY` 与 `VITE_APP_RSA_PRIVATE_KEY`。|production build 使用 INFOQ_PRODUCTION_CONFIG_FILE 指定受控配置并由 tools/production_config.mjs 交叉校验两组独立2048位以上 RSA；后端请求私钥只参与校验，禁止进入前端产物或构建层。|临时 fixture 构建不等于生产配置验收；浏览器协议私钥是公开内容，公网仍须 HTTPS。

@@ -8,7 +8,7 @@
 ![Version](https://img.shields.io/badge/Version-3.0.0--rc1-f66a39)
 ![JDK](https://img.shields.io/badge/JDK-21-1677FF)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1.1-6DB33F)
-![Vue](https://img.shields.io/badge/Vue-3.5.35-42B883)
+![Vue](https://img.shields.io/badge/Vue-3.5.42-42B883)
 ![React](https://img.shields.io/badge/React-19.2.7-61DAFB)
 [![License](https://img.shields.io/badge/License-MIT-F7C948)](LICENSE)
 

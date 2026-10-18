@@ -29,8 +29,8 @@ infoq-scaffold-ai
 | --- | --- |
 | 后端 | Spring Boot 4.1.1、JDK 21、MyBatis-Plus 3.5.17、Spring Security、Redisson、Jackson 3 |
 | Web 容器 | Spring Boot 官方默认 Tomcat |
-| Vue 管理端 | Vue 3.5.35、Vite 8.0.16、Element Plus 2.14.1、Pinia、Vitest 4.1.8 |
-| React 管理端 | React 19.2.7、Vite 8.0.16、Ant Design 6.4.3、Zustand、Vitest 4.1.8 |
+| Vue 管理端 | Vue 3.5.42、Vite 8.0.16、Element Plus 2.14.1、Pinia、Vitest 4.1.11 |
+| React 管理端 | React 19.2.7、Vite 8.0.16、Ant Design 6.4.3、Zustand、Vitest 4.1.11 |
 | 基础设施 | MySQL 8、Redis 7、MinIO、Nginx |
 
 前端本机开发、CI 和 Docker builder 统一使用 Node.js `24.18.0`。如需同时启动两套管理端，请先为其中一个 dev server 调整端口。

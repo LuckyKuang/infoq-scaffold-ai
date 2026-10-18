@@ -64,6 +64,12 @@ Windows 可直接使用上面的 pnpm 命令。`bin/package.bat`、`bin/run-web.
 
 Vue Router history 与 Vite 的 `BASE_URL` 一致，支持根及 `/vue/` 等受控子路径。密码/OAuth 登录、回调和身份绑定统一验证站内回跳；API 使用无 origin、带当前前缀一次的浏览器路径，应用内导航由 Router base 生成最终地址。空值、数组、错码、协议相对路径、反斜杠、控制字符和点段在登录/授权/ticket 兑换前明确拒绝；安全 query/hash 保留原编码。真实 Provider、目标 Linux nginx 与生产登录仍需分别验收，构建或 HTTP 替身不能替代这些证据。具体边界见 [测试政策](../docs/TESTING.md) 第 6.5–6.6 节。
 
+## 依赖安全与 ESLint 配置
+
+依赖审计从仓库根目录执行 `pnpm --dir frontend-vue audit --json`，包含开发依赖；将报告、stderr 与退出码保存到 `tmp/`。存在漏洞时命令会非零退出，必须区分有效漏洞报告与 registry/API 失败，不把网络错误认定为零漏洞。更新须保持 `package.json` 与 lockfile 一致，Vue runtime、compiler 与 renderer 使用一致补丁版本；传递依赖优先在上游兼容范围内更新 lockfile，并执行 `pnpm --dir frontend-vue install --frozen-lockfile` 验证，不为清除告警新增永久 override 或审计忽略项。
+
+ESLint 直接组合 `typescript-eslint`、`eslint-plugin-vue` 与 `vue-eslint-parser`，避免引入含无补丁 `braces` 的聚合包装依赖。迁移或调整配置时，先保存 TS、TSX、JS 与 Vue 代表文件的 `ESLint.calculateConfigForFile` 结果，再逐项比较有效规则、parser/options、globals/plugins，并验证 `dist`、`dist-ssr`、`coverage` 的忽略规则；使用真实违规片段确认 TS 推荐规则、Vue essential 与 `vue/block-lang` 仍生效。完成配置等价验证后运行全量单测、lint 和受控构建，不以空配置或禁用规则消除依赖告警。
+
 ## P1-P3 身份与消息边界
 
 - 个人中心通过 `/system/user/profile/oauth/*` 管理当前用户的第三方身份。绑定只使用服务端生成的授权地址和回调 ticket；解绑是否要求当前密码以身份列表返回的 `passwordConfirmationRequired` 为准。

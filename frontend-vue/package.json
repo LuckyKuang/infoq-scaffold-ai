@@ -30,7 +30,7 @@
     "@vueuse/core": "14.3.0",
     "animate.css": "4.1.1",
     "await-to-js": "3.0.0",
-    "axios": "1.16.1",
+    "axios": "1.20.0",
     "crypto-js": "4.2.0",
     "echarts": "6.1.0",
     "element-plus": "2.14.1",
@@ -40,7 +40,7 @@
     "jsencrypt": "3.5.4",
     "nprogress": "0.2.0",
     "pinia": "3.0.4",
-    "vue": "3.5.35",
+    "vue": "3.5.42",
     "vue-cropper": "1.1.4",
     "vue-i18n": "11.4.4",
     "vue-json-pretty": "2.6.0",
@@ -55,11 +55,10 @@
     "@types/node": "^22.19.19",
     "@types/nprogress": "0.2.3",
     "@vitejs/plugin-vue": "6.0.7",
-    "@vitest/coverage-v8": "^4.1.8",
-    "@vue/compiler-dom": "3.5.35",
-    "@vue/compiler-sfc": "3.5.35",
+    "@vitest/coverage-v8": "4.1.11",
+    "@vue/compiler-dom": "3.5.42",
+    "@vue/compiler-sfc": "3.5.42",
     "@vue/eslint-config-prettier": "10.2.0",
-    "@vue/eslint-config-typescript": "14.7.0",
     "@vue/test-utils": "^2.4.10",
     "autoprefixer": "10.5.0",
     "eslint": "10.4.1",
@@ -70,6 +69,7 @@
     "prettier": "3.8.3",
     "sass": "1.100.0",
     "typescript": "~6.0.3",
+    "typescript-eslint": "8.60.1",
     "unocss": "66.7.0",
     "unplugin-auto-import": "21.0.0",
     "unplugin-icons": "23.0.1",
@@ -79,7 +79,8 @@
     "vite-plugin-compression": "0.5.1",
     "vite-plugin-svg-icons-ng": "^1.9.1",
     "vite-plugin-vue-devtools": "8.1.2",
-    "vitest": "^4.1.8"
+    "vitest": "4.1.11",
+    "vue-eslint-parser": "10.4.0"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
@@ -95,8 +96,8 @@
       "@typescript-eslint/tsconfig-utils": "8.60.1",
       "@typescript-eslint/type-utils": "8.60.1",
       "@typescript-eslint/utils": "8.60.1",
-      "@vue/compiler-core": "3.5.35",
-      "@vue/compiler-dom": "3.5.35",
+      "@vue/compiler-core": "3.5.42",
+      "@vue/compiler-dom": "3.5.42",
       "vite-plugin-inspect": "11.4.1"
     },
     "patchedDependencies": {

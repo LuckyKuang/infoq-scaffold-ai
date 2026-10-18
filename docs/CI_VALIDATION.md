@@ -92,8 +92,11 @@ CI 不负责创建 tag、推送镜像或执行生产部署。
 
 - CodeQL Java/Kotlin 使用 `build-mode: none`，避免在扫描中重复 Maven 构建。
 - CodeQL JavaScript/TypeScript 覆盖两个管理端源码。
-- Dependency Review 只在 PR 上运行，`high` 及以上严重度阻断。
+- `Dependency Review` job 在安全工作流各触发场景运行双端完整 `pnpm audit --audit-level high`，包含运行时与 dev 依赖，不需要安装 node_modules；`high`/`critical` 或 registry 错误均阻断。先固定 Node/pnpm 基线再审计，不使用 registry-error 豁免或 advisory allowlist。工作区锁文件必须存在。
+- PR 上再由 Dependency Review action 检查相对默认分支的依赖差异，`high` 及以上严重度阻断；增量图谱存在更新延迟，不能替代上述完整审计。push/定时/手动场景仅跳过比较 action，不跳过完整审计。
 - Dependency Review 要求仓库启用 Dependency Graph；本仓库已开启图谱与 Dependabot alerts，自动安全升级 PR 未开启。实际 compare/job 失败仍按失败处理，不用配置开关代替运行证据。
+- 本地对应命令为 `pnpm --dir frontend-react audit --audit-level high` 与 `pnpm --dir frontend-vue audit --audit-level high`；`push-cli check --profile ci/full` 不包含远端安全扫描，发布前仍须单独运行这两项及等待当前 SHA 的 Security Scan。`--json` 用于留存完整分级报告，不能将其默认遇低级漏洞的非零退出码误判为 registry 失败，也不能把 API 错误解释成零漏洞。
+- 修复依赖审计时，先保留官方公告、实际父链和共同安全版本，再选择上游允许范围内的最小可用补丁，核对 npm deprecation、peer 和锁文件完整性；用于生成候选的临时约束只留 `tmp/`，不得变成无必要的永久 override。无补丁的依赖优先通过上游安全版本或移除不必要的依赖链解决；若调整 lint 包装，须比较有效规则/parser/options/ignores并保留真实违规仍被拒绝的证据，不能删规则换取通过。之后 frozen install、完整 audit、相关测试/lint/受控构建和实际运行验收依次通过，再推送复验。
 - Security Scan 默认只读 `contents`，仅两个 CodeQL job 获得 `security-events: write` 与 `actions: read`；Dependency Review 不继承写权限。
 - 安全扫描失败按真实失败处理，不得通过关闭 job 或降低严重度阈值绕过。
 - 1024 位 RSA 专用于验证生产预检必须拒绝弱密钥的 Node/Java 负例；保留生成与拒绝断言。对 `tools/test_production_config.mjs` 和 `ProductionApiKeyValidatorTest.java` 的两条对应告警已逐条按 `used in tests` 分类，证据保留在本地 `tmp/`。不得由此排除整个测试目录或关闭查询；后续告警须重新核对实际数据流。

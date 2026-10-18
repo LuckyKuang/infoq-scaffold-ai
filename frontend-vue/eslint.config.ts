@@ -1,10 +1,11 @@
 import pluginVue from 'eslint-plugin-vue';
 import globals from 'globals';
 import prettier from 'eslint-plugin-prettier';
-import { defineConfigWithVueTs, vueTsConfigs } from '@vue/eslint-config-typescript';
+import tseslint from 'typescript-eslint';
+import vueParser from 'vue-eslint-parser';
 import skipFormatting from '@vue/eslint-config-prettier/skip-formatting';
 
-export default defineConfigWithVueTs(
+export default tseslint.config(
   {
     name: 'app/files-to-lint',
     files: ['**/*.{js,cjs,ts,mts,tsx,vue}']
@@ -20,7 +21,32 @@ export default defineConfigWithVueTs(
     }
   },
   pluginVue.configs['flat/essential'],
-  vueTsConfigs.recommended,
+  tseslint.configs.recommended.map((config) => ({
+    ...config,
+    ...(config.files?.includes('**/*.ts') ? { files: [...config.files, '**/*.vue'] } : {})
+  })),
+  ...pluginVue.configs['flat/base'],
+  {
+    name: 'app/vue-typescript-parser',
+    files: ['*.vue', '**/*.vue'],
+    languageOptions: {
+      parser: vueParser,
+      parserOptions: {
+        parser: {
+          js: 'espree',
+          jsx: 'espree',
+          ts: tseslint.parser,
+          tsx: tseslint.parser
+        },
+        ecmaVersion: 2024,
+        ecmaFeatures: { jsx: false },
+        extraFileExtensions: ['.vue']
+      }
+    },
+    rules: {
+      'vue/block-lang': ['error', { script: { lang: ['ts'], allowNoLang: false } }]
+    }
+  },
   skipFormatting,
   {
     plugins: { prettier },

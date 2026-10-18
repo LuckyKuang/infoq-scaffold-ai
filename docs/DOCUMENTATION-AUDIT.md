@@ -169,11 +169,21 @@ HTTP/Provider 替身同步真实后端在恢复401时清除恢复及 CSRF cookie
 
 追加远端检查发现 `bcprov-jdk15to18:1.84` 命中 [GHSA-9pwp-9qqc-pr26](https://github.com/advisories/GHSA-9pwp-9qqc-pr26) 与 [GHSA-qp49-qgx5-5m26](https://github.com/advisories/GHSA-qp49-qgx5-5m26)。仅将后端统一版本属性升至两个公告指定的首个修复版 **1.85**，未降低 Dependency Review 阈值；RSA/SM2/AES/SM4 主流程 3 项及生产 RSA、过滤器、包装器、MyBatis 等 22 项目标测试通过。同期 backend CI 暴露 Excel 测试上下文漏注册真实 Jackson mapper：按失败类顺序复现后，仅修测试的依赖注册、context 恢复与 ValidatorFactory 关闭；原失败顺序 9 项和模块全量 43 项均通过，产品 `JsonUtils` 保留缺失依赖时显式失败。可复用步骤见 [Excel 单测 SOP](../backend/infoq-plugin/infoq-plugin-excel/README.md#11-导入与监听器单测-sop)。这些目标结果不替代升级后完整 dev/prod 打包、实际依赖解析、新后端镜像与新 SHA 的远端门禁。
 
-性能影响限于首载/绑定/恢复/退出和安全变更撤销，不在每次业务请求新增数据库查询；Redis 映射有界 TTL。可观测性保留 action/category/clientId/短摘要/requestId，故障显式失败；生产精确审计日志增加有限写入，不扩大全局 INFO，容量和外部告警接收仍需目标测量。回滚须代码与受控配置一起回退，按精确 name/path 清本 scope cookie，不恢复明文持久 token、不复活已撤销 JWT；若新 provider 引发兼容或安全回归，阻断发布并选择安全修复方案，不回退漏洞版后宣称就绪。冻结 SQL 与前端 lockfile 不变，本轮依赖变更仅为上述安全补丁；生产秘密、可信 HTTPS、真实 Provider、容量和外部告警仍须目标环境验收。
+性能影响限于首载/绑定/恢复/退出和安全变更撤销，不在每次业务请求新增数据库查询；Redis 映射有界 TTL。可观测性保留 action/category/clientId/短摘要/requestId，故障显式失败；生产精确审计日志增加有限写入，不扩大全局 INFO，容量和外部告警接收仍需目标测量。回滚须代码与受控配置一起回退，按精确 name/path 清本 scope cookie，不恢复明文持久 token、不复活已撤销 JWT；若新 provider 引发兼容或安全回归，阻断发布并选择安全修复方案，不回退漏洞版后宣称就绪。冻结 SQL 不变，依赖与锁文件变更包含上述 Bouncy Castle 及下述双端安全补丁；生产秘密、可信 HTTPS、真实 Provider、容量和外部告警仍须目标环境验收。
 
 依赖和 Excel 修复后的完整后端 `clean package` 重新通过：dev **235 suite / 1,141 项、37.377 秒**，prod 真实日志配置 **1 项、0.376 秒**，两轮均零失败/错误/跳过，suite 时间合计 **37.753 秒**。实际 dependency tree 及两轮打包 JAR 均仅包含 `bcprov-jdk15to18:1.85`，provider SHA-256 与新运行镜像一致；完整日志和统计已按轮次保留，未混用被 clean 覆盖的报告。
 
 依赖修复后的 Colima `rc-browser-009` 独立构建新后端镜像，直接核验运行 JAR 内仅有 `bcprov-jdk15to18-1.85.jar`，provider manifest、JAR、镜像和源码摘要一致。复用两端固定子路径前端镜像，真实 HTTPS 加密验证码首登、profile/reload 恢复、UI DELETE 退出、CSRF/Origin/cookie-only 拒绝及 scope 隔离通过；会话审计分类与 clientId/requestId 已实际核验。产品源码漂移为 0，后续 Excel 修改仅影响测试 setup 与 SOP；本轮不重复声称四产物或恢复演练。所有 owned 容器、卷、网络、进程与监听已清理，专用 VM 停止，其他栈及宿主 context 保持。
+
+后续完整 pnpm 审计发现双端运行时及构建/测试依赖公告，原“前端 lockfile 未变”仅适用于此前 Bouncy Castle 轮次。两端 axios 升至 1.20.0，React Router 同族升至 7.18.2，Vue runtime/compiler/renderer 统一 3.5.42，Vitest/coverage 同族 4.1.11；其余按官方公告、父依赖范围和 npm 可用性选择有界安全补丁，保留原有必要 override，不新增永久安全 override。最终真实含 dev 的 audit 两端均为 **0 critical / 0 high / 0 moderate / 0 low / 0 info**，registry 请求及命令退出均成功；结果为本轮审计证据，不替代新提交的工作流和运行态验收。
+
+Vue 的 braces 3.0.3 没有官方修复版，已移除唯一引入链的聚合 ESLint 包装，以直接 typescript-eslint 与 Vue parser 组合维持配置。7 类 TS/TSX/JS/Vue 文件的有效 rules/parser/options/globals/plugins 深比较一致，真实违规仍被拒绝，忽略范围不变；无规则降级或审计豁免。Security Scan 现有 Dependency Review job 同时加入固定 Node/pnpm 的完整双端审计，各触发场景均执行，PR 额外比较增量图谱；在没有 node_modules 的隔离目录，仅复制旧 Vue package/lock 即实际复现 44 high、退出码1，复制最终 React/Vue package/lock 均全级别0、退出码0，证明门禁不依赖预先安装依赖。
+
+最终依赖冻结后重新执行验证：React 主流程 **79 项**、全量 **50 文件/289 项**（Vitest 4.1.11），Vue 全量 **102 文件/491 项**（Vitest 4.1.11）通过；两端 frozen install、lint、根/子路径受控构建与产物扫描通过，React 真实加密库双向 RSA 验证通过。源码、package/lock、配置及四产物摘要已逐项核对，未将中间版本或旧产物的通过结果套用至最终依赖。产物均标记 `isolated-test` / `deployable=false`，不能作为生产附件发布；React 两产物各约增加9.5KB，Vue 各约减少10KB，本轮未执行生产负载基准，不据此声称吞吐或延迟改善。
+
+这四份新产物再次通过严格 HTTP/Provider 替身浏览器验收 **48/48 项**，React `/`、`/react/` 与 Vue `/`、`/vue/` 各12项，未出现 console/page error 或非预期请求；包含恢复401清CSRF后的首次登录、OAuth、动态路由、延迟退出与scope隔离。运行前后源码/包锁/配置与产物摘要一致，浏览器和四个owned端口均已实际关闭。该结果仅覆盖新前端及HTTP替身合同，不能替代真实 Spring/Redis/TLS 验收。
+
+新依赖另以 Colima `rc-browser-011` 独立构建四份前端 Docker 镜像，固定复用已验证的 Bouncy Castle1.85 后端，实际 JAR/provider 摘要与此前一致；593份冻结前端输入及执行快照核对通过，产品/构建输入漂移为0。六次真实UI验证码首登、根/子路径受保护DOM、刷新恢复、DELETE退出、匿名reload、CSRF/Origin/cookie-only拒绝与fresh-JWT scope隔离通过。真实日志记录 success29、revoked8、csrf_rejected12、origin_rejected18，clientId/requestId关联完整；本轮无Push结果行，不据此声称投递或ACK验收。四个最终镜像的config/history及各9个导出gzip层均通过指定服务端RSA、六项凭据及TLS私钥PEM/DER/base64扫描；未扫描未导出的BuildKit中间cache。构建前曾因快照漏复制被Git忽略的生成类型而显式停止，补齐冻结manifest指定输入后新建011快照重验，未放宽摘要断言。owned容器/卷/网络/进程/端口均清零，专用VM停止，其他栈及宿主context保持；执行后仅耐久审计文档有追加。该隔离TLS验证不替代生产CA、凭据、外部Provider、告警及容量验收。
 
 ## 可复用审计与回归 SOP
 
