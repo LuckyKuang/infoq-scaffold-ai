@@ -5,17 +5,19 @@
 
 ## 1. 版本格式
 
-- 版本格式固定为 `x.y.z`，不接受预发布后缀或构建元数据。
-- Git tag 默认 `v<x.y.z>`；tag 必须指向已合并到默认分支并通过校验的提交。
+- 版本仅支持正式版 `x.y.z` 和预览版 `x.y.z-rcN`；`N` 是从 1 开始、无前导零的十进制整数，不接受其他后缀或构建元数据。
+- 按仓库 RC 编号规则比较：主/次/补丁号按数值排列，同基线满足 `3.0.0-rc1 < 3.0.0-rc2 < 3.0.0-rc10 < 3.0.0`。这不是任意 SemVer 标识的通用比较器。远端 RC tag 参与版本排序，不允许正式版发布后回到同基线 RC。
+- 四套 Shields 徽标将版本内的 `-` 编码为 `--`，例如 `Version-3.0.0--rc1-...`；版本门禁读取时还原完整后缀。
+- Git tag 必须精确为 `v<version>`，例如 `v3.0.0-rc1`；`--tag` 不允许指定与版本不符的名称；tag 必须指向已合并到默认分支并通过校验的提交。
 - 三个版本字段必须一致：backend `pom.xml` `<revision>`、`frontend-vue/package.json`、
   `frontend-react/package.json`；`README.md`、`README_CN.md`、`README_JA.md`、`README_ZH_TW.md` 的 Version 徽标必须同步。
 - `node tools/check_release_version.mjs` 会同时校验这些版本字段、README 徽标与部署文档中的版本引用。
-- 版本门禁接受 `--tag v<x.y.z>` 或 `--expect <x.y.z>`，也支持 `--tag=...` / `--expect=...`；同时指定时必须指向同一版本。空值、重复、未知参数及尾部垃圾均失败，不能用空预期绕过检查。
+- 版本门禁接受 `--tag v<version>` 或 `--expect <version>`，也支持 `--tag=...` / `--expect=...`；同时指定时必须指向同一版本。空值、重复、未知参数及尾部垃圾均失败，不能用空预期绕过检查。
 - 已存在的 tag 与 Release 一律拒绝复用，禁止重打、覆盖或强推。
 
 ## 2. 发布前置条件
 
-- 默认分支保护开启，PR 必需检查通过；禁止 `--admin` 绕过。
+- 默认分支保护开启，PR 必需检查和审批通过；禁止 `--admin` 绕过。执行时查询实际规则；缺少独立批准或 Code Owner 审核则保留可审阅 PR，停止合并与发布。
 - `.github/workflows/ci.yml` 在候选提交上为绿。
 - `node tools/validate_utf8.mjs`、`node tools/check_readme_sync.mjs`、
   `node tools/check_release_version.mjs`、`node tools/check_doc_links.mjs` 通过。
@@ -72,14 +74,18 @@ node skills/release-cli/scripts/release_cli.mjs tag --version 3.0.1 --execute
 
 ### 3.4 Release
 
-推送 tag 后，`.github/workflows/release.yml` 自动执行：
+推送 tag 后，`.github/workflows/release.yml` 从已校验的 tag 确定渠道。RC 仍执行版本门禁和后端 prod 单测/打包，但不上传 jar，不运行 `package-admin`，不读取 `production-build` secrets。只有 verify 成功且 package-admin 因 RC 跳过时，才创建 `draft=false`、`prerelease=true`、`make_latest=false` 的源码 Release，附加资产必须为空。下载使用 GitHub 自动提供的 Source code 归档；部署者在目标环境用受控配置构建。任何上游失败或取消均阻止发布。
+
+正式版自动执行：
 
 1. `node tools/check_release_version.mjs --tag "$GITHUB_REF_NAME"`。
 2. 后端单测与 `clean package -P prod`。
 3. Vue / React 在受保护 `production-build` environment 获取 `FRONTEND_PRODUCTION_CONFIG`，按 5.1 的四向 RSA 规则预检后执行 `pnpm install --frozen-lockfile` 与 `pnpm run build:prod`。缺少受控输入直接失败。
 4. `node tools/production_config.mjs check-artifact --dir <workspace>/dist` 检查实际协议密钥、指纹、无服务端私钥/仓库示例、可发布来源，再上传 `infoq-admin.jar`、`vue-dist.tar.gz`、`react-dist.tar.gz`；`always()` 清理 runner 内的受控配置。
-5. 按 `backend-jar`、`vue-dist`、`react-dist` 下载到 `release-assets/` 下各自同名目录，运行 `node skills/release-cli/scripts/verify_release_assets.mjs release-assets`，要求每个目录仅含对应非空普通文件；缺失、跨 artifact 重名、错误名称、额外、空资产和符号链接失败，避免合并下载覆盖重名文件。
+5. 按 `backend-jar`、`vue-dist`、`react-dist` 下载到 `tmp/release-assets/` 下各自同名目录，运行 `node skills/release-cli/scripts/verify_release_assets.mjs tmp/release-assets --version <version>`，要求每个目录仅含对应非空普通文件；缺失、跨 artifact 重名、错误名称、额外、空资产和符号链接失败，避免合并下载覆盖重名文件。
 6. 使用精确三文件列表和 GitHub 自动生成说明创建正式 Release。
+
+创建前共同执行 `release_cli.mjs publish --version <version> --dry-run`，只读核验 tag/提交来源并拒绝已有 Release；不得依靠重跑覆盖公开资产，且不能与其他发布者并发创建同一 Release。
 
 自动 workflow 是本仓库默认发布路径，不要在 tag 推送后并发运行 `publish`；这会与自动创建 Release 竞争。已发布 Release 补充说明属于独立的 `gh release edit` 写操作，应先审查具体内容并取得对应授权。仅在确认自动发布未运行、确需独立手工发布时，使用以下预览与执行；它不会构建或上传 jar/dist：
 
@@ -94,7 +100,21 @@ node skills/release-cli/scripts/release_cli.mjs publish --version 3.0.1 --notes-
 node skills/release-cli/scripts/release_cli.mjs verify --version 3.0.1
 ```
 
-CLI 校验工作区版本与请求一致、远端 tag 存在及 Release 非 draft/prerelease；不会校验 tag 提交 SHA 或资产完整性。另需核对远端 tag 指向候选提交、Release workflow 成功、资产名称/大小/来源和部署准备条件。出现身份、网络或 API 错误须停止，不能当作“Release 不存在”继续创建。
+CLI 校验工作区版本、精确 tag、远端 tag 提交与本地 HEAD、Release 非 draft 及渠道：RC 必须是 prerelease、不是 Latest 且无附加资产；正式版必须不是 prerelease，并且具有名称准确、非空的三件资产。它不下载或验证资产内容、签名与生产健康；另需核对候选 SHA 的 CI/Release workflow 结论、来源扫描和部署准备条件。手动正式 publish 不上传资产，因此只创建元数据不能满足完整交付验收。出现身份、网络或 API 错误须停止，不能当作“Release 不存在”继续创建。
+
+### 3.6 RC 示例
+
+```bash
+node skills/release-cli/scripts/release_cli.mjs bump --version 3.0.0-rc1 --dry-run
+node skills/release-cli/scripts/release_cli.mjs bump --version 3.0.0-rc1
+# 通过 PR、CI、审批合并后，在准确的默认分支提交上执行
+node skills/release-cli/scripts/release_cli.mjs tag --version 3.0.0-rc1
+node skills/release-cli/scripts/release_cli.mjs tag --version 3.0.0-rc1 --execute
+# 自动 workflow 完成后
+node skills/release-cli/scripts/release_cli.mjs verify --version 3.0.0-rc1
+```
+
+部署验收后再显式升级为 `3.0.0`；有缺陷先发 `rc2` 等后续版本，不覆盖 RC。隔离 Colima/Linux Docker 验收不替代真实凭据、公开 CA、Provider、告警接收、容量和业务 RTO/RPO。
 
 ## 4. 发布说明结构
 
@@ -110,6 +130,8 @@ CLI 校验工作区版本与请求一致、远端 tag 存在及 Release 非 draf
 
 ## 5. 产物
 
+RC 只提供 GitHub 自动源码归档，无 jar/dist 附件，不要求受控生产构建 secrets。以下三件编译资产仅适用于正式版；缺少受控配置时明确失败，不会自动转为源码发行。
+
 | 产物 | 来源 | 校验 |
 | --- | --- | --- |
 | `infoq-admin.jar` | `backend/infoq-admin/target/` | 后端单测与 prod 打包通过 |
@@ -117,7 +139,7 @@ CLI 校验工作区版本与请求一致、远端 tag 存在及 Release 非 draf
 | `react-dist.tar.gz` | `frontend-react/dist/` | React 生产构建通过 |
 | 容器镜像 | `deploy/docker/docker-compose.yml` 构建 | 由部署验证单独覆盖，不在 tag workflow 中推送 |
 
-Tag workflow 只发布源码与构建产物；镜像推送与实际部署是独立动作。
+正式 tag workflow 发布源码与经核验的构建产物；RC 仅源码；镜像推送与实际部署是独立动作。
 这三项不是完整运行交付包：外部配置、独立生产凭据、IPv6 地址库、SQL 增量、systemd/Nginx 与监控/备份资产按对应部署方式另行准备，见 `deploy/MANUAL.md` 与 `deploy/VERIFICATION.md`。资产检查只证明名称/数量/非空，不证明签名、内容安全或生产可用性。
 
 ### 5.1 生产构建配置边界
@@ -133,7 +155,7 @@ Tag workflow 只发布源码与构建产物；镜像推送与实际部署是独�
 
 前端公钥与前端私钥属于两组不同的配对；复用一组会把服务端请求私钥放入浏览器，所以明确拒绝。构建器只将前端两项注入 Vite，后端私钥仅用于内存中的配对核验。Docker 从仓库根 context 构建，使用 `--secret id=production_config,src=<受控绝对路径>`；不使用普通 ARG/ENV 传秘密，最终 nginx 镜像只复制 `dist/`。Compose 通过同名 build secret 接线。BuildKit 不因 secret 内容变化自动清除缓存，部署 helper 会为每次构建自动计算非秘密 `INFOQ_FRONTEND_CONFIG_DIGEST` build ARG 并复核构建后输入；直接 Docker/Compose 排障也必须按 [deploy/DOCKER.md](../deploy/DOCKER.md#11-直接使用-docker-compose-cli) 的命令即时计算，不手工保存或复用旧摘要。
 
-Release workflow 的 `package-admin` 使用 GitHub environment **`production-build`**，必须预先配置保护规则、受信任的 tag/审批条件与该 environment 的 **`FRONTEND_PRODUCTION_CONFIG` secret**（内容为上述受控 dotenv，而非文件路径）。只有 `VITE_APP_ENCRYPT` 与四项 RSA 就能进行前端预检；可附 `INFOQ_CONFIG_SOURCE=controlled-file`，不能标记为 `isolated-test`。维护者需单独确认来源、轮换及与目标后端匹配；工具不能从文件格式证明密钥管理器配置正确。不要把目标环境服务端私钥交给不可信 PR runner。
+仅正式 Release workflow 的 `package-admin` 使用 GitHub environment **`production-build`**，必须预先配置保护规则、受信任的 tag/审批条件与该 environment 的 **`FRONTEND_PRODUCTION_CONFIG` secret**（内容为上述受控 dotenv，而非文件路径）。只有 `VITE_APP_ENCRYPT` 与四项 RSA 就能进行前端预检；可附 `INFOQ_CONFIG_SOURCE=controlled-file`，不能标记为 `isolated-test`。维护者需单独确认来源、轮换及与目标后端匹配；工具不能从文件格式证明密钥管理器配置正确。不要把目标环境服务端私钥交给不可信 PR runner。
 
 受控本地重新构建示例（文件已由密钥管理器准备，不在命令中填秘密）：
 
@@ -180,7 +202,7 @@ node tools/production_config.mjs check-artifact --dir frontend-vue/dist --allow-
 | bump 未合并 | 审查本次受管文件差异，纠正版本或定向恢复本次修改，走修正 PR；不覆盖他人修改 |
 | tag 推送失败 | 本地 tag 可能已创建；记录错误与 SHA，确认远端是否接收，禁止盲目重试或覆盖 |
 | Release workflow 失败 | 读失败 job 日志与公开发布状态；同一提交的临时环境故障可重跑失败 job，代码/版本变更须经 PR 与新 tag 发布 |
-| Release 已公开且存在错误 | 保留历史 tag/Release，补充问题说明并发布修正 patch；不覆盖历史产物 |
+| Release 已公开且存在错误 | 保留历史 tag/Release，补充问题说明并发布后续 RC 或修正 patch；不覆盖历史产物 |
 | 运行部署后发现缺陷 | 按既有部署方案切回已验证旧产物和匹配配置；数据恢复单独使用备份/迁移回滚方案 |
 
 回滚不得删除已发布的历史 Release 来说明“未发布”；发布状态必须真实可审计。

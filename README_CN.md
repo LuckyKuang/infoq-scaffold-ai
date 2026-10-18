@@ -5,7 +5,7 @@
 # InfoQ-Scaffold-AI
 
 [![CI](https://github.com/LuckyKuang/infoq-scaffold-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/LuckyKuang/infoq-scaffold-ai/actions/workflows/ci.yml)
-![Version](https://img.shields.io/badge/Version-3.0.0-f66a39)
+![Version](https://img.shields.io/badge/Version-3.0.0--rc1-f66a39)
 ![JDK](https://img.shields.io/badge/JDK-21-1677FF)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1.1-6DB33F)
 ![Vue](https://img.shields.io/badge/Vue-3.5.35-42B883)
@@ -124,7 +124,7 @@ node skills/deploy-cli/scripts/deploy_cli.mjs status
 | macOS | 否，仅后端 | Apple container |
 | macOS | 否，后端 + 管理端 dev server | Apple container + `pnpm run dev` |
 
-镜像在目标主机上从源码构建，仓库不发布预构建应用镜像：Docker 路径在镜像内构建后端 jar 和前端产物；Apple container 路径先在宿主机打 jar，再启动仅包含 MySQL、Redis 和后端 API 的栈（不含 Vue/React 和 Nginx 网关）。Release 产物是 jar 与管理端 `dist` 压缩包，不是容器镜像。
+镜像在目标主机上从源码构建，仓库不发布预构建应用镜像：Docker 路径在镜像内构建后端 jar 和前端产物；Apple container 路径先在宿主机打 jar，再启动仅包含 MySQL、Redis 和后端 API 的栈（不含 Vue/React 和 Nginx 网关）。RC 仅提供源码归档，标记为 Pre-release，不设为 Latest；部署者须用目标环境的受控配置从源码构建。正式版按[受控构建策略](docs/RELEASING.md)提供 jar 与管理端 `dist` 压缩包，不包含容器镜像。
 
 ```bash
 # Linux / WSL2：从已审阅的目标 release tag 源码部署

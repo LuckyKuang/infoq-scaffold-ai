@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {normalizeForwardedArgs, resolveRepoRoot} from '../../../tools/lib/skill_runtime.mjs';
+import {parseReleaseVersion} from '../../../tools/lib/release_version.mjs';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const args = normalizeForwardedArgs(process.argv.slice(2));
@@ -11,7 +12,7 @@ let dryRun = false;
 let targetVersion = '';
 
 function usage() {
-  console.log(`Usage: node skills/release-cli/scripts/bump_version.mjs [--dry-run] [--repo-root <path>] <x.y.z>
+  console.log(`Usage: node skills/release-cli/scripts/bump_version.mjs [--dry-run] [--repo-root <path>] <x.y.z[-rcN]>
 
 Examples:
   node skills/release-cli/scripts/bump_version.mjs 2.0.3
@@ -25,14 +26,19 @@ function fail(message) {
 
 function readValue(index, flag) {
   const value = args[index + 1];
-  if (!value || value.startsWith('--')) {
+  if (!value || value.startsWith('-')) {
     fail(`missing value for ${flag}`);
   }
   return value;
 }
 
+const supplied = new Set();
 for (let index = 0; index < args.length; index += 1) {
   const arg = args[index];
+  if (arg.startsWith('-')) {
+    if (supplied.has(arg)) fail(`repeated option: ${arg}`);
+    supplied.add(arg);
+  }
   switch (arg) {
     case '--dry-run':
       dryRun = true;
@@ -47,6 +53,7 @@ for (let index = 0; index < args.length; index += 1) {
       process.exit(0);
       break;
     default:
+      if (arg.startsWith('-')) fail(`unknown option: ${arg}`);
       if (!targetVersion) {
         targetVersion = arg;
       } else {
@@ -60,9 +67,10 @@ if (!targetVersion) {
   process.exit(1);
 }
 
-if (!/^\d+\.\d+\.\d+$/.test(targetVersion)) {
-  fail(`target version must match x.y.z, got: ${targetVersion}`);
+if (!parseReleaseVersion(targetVersion)) {
+  fail(`target version must match x.y.z or x.y.z-rcN (N > 0, no leading zeros), got: ${targetVersion}`);
 }
+const badgeTargetVersion = targetVersion.replaceAll('-', '--');
 
 const rootPom = path.join(repoRoot, 'backend', 'pom.xml');
 const bomPom = path.join(repoRoot, 'backend', 'infoq-core', 'infoq-core-bom', 'pom.xml');
@@ -204,12 +212,12 @@ function replaceOrThrow(filePath, pattern, replacement, description) {
 }
 
 function replaceDeployIdVersionExamples(filePath, description) {
-  replaceOrThrow(filePath, /\b\d+\.\d+\.\d+(?=-\d{14}\b)/g, targetVersion, description);
+  replaceOrThrow(filePath, /\b\d+\.\d+\.\d+(?:-rc\d+)?(?=-\d{14}\b)/g, targetVersion, description);
 }
 
 function assertDeployIdVersionExamples(filePath, description) {
   const content = pendingChanges.get(filePath) ?? fs.readFileSync(filePath, 'utf8');
-  const matches = content.match(/\b\d+\.\d+\.\d+(?=-\d{14}\b)/g) ?? [];
+  const matches = content.match(/\b\d+\.\d+\.\d+(?:-rc\d+)?(?=-\d{14}\b)/g) ?? [];
   if (matches.length === 0) {
     fail(`verification failed for ${description} in ${filePath}; no deploy-id version examples found`);
   }
@@ -279,18 +287,18 @@ replaceOrThrow(rootPom, /<revision>[^<]+<\/revision>/, `<revision>${targetVersio
 replaceOrThrow(bomPom, /<revision>[^<]+<\/revision>/, `<revision>${targetVersion}</revision>`, 'bom revision');
 replaceOrThrow(reactPackage, /("version"\s*:\s*")[^"]+(")/, `$1${targetVersion}$2`, 'react package version');
 replaceOrThrow(vuePackage, /("version"\s*:\s*")[^"]+(")/, `$1${targetVersion}$2`, 'vue package version');
-replaceOrThrow(readmeFile, /(!\[Version\]\(https:\/\/img\.shields\.io\/badge\/Version-)\d+\.\d+\.\d+(-[^)]*\))/, `$1${targetVersion}$2`, 'README version badge');
-replaceOrThrow(readmeCnFile, /(!\[Version\]\(https:\/\/img\.shields\.io\/badge\/Version-)\d+\.\d+\.\d+(-[^)]*\))/, `$1${targetVersion}$2`, 'README_CN version badge');
-replaceOrThrow(readmeJaFile, /(!\[Version\]\(https:\/\/img\.shields\.io\/badge\/Version-)\d+\.\d+\.\d+(-[^)]*\))/, `$1${targetVersion}$2`, 'README_JA version badge');
-replaceOrThrow(readmeZhTwFile, /(!\[Version\]\(https:\/\/img\.shields\.io\/badge\/Version-)\d+\.\d+\.\d+(-[^)]*\))/, `$1${targetVersion}$2`, 'README_ZH_TW version badge');
+replaceOrThrow(readmeFile, /(!\[Version\]\(https:\/\/img\.shields\.io\/badge\/Version-)\d+\.\d+\.\d+(?:--rc[1-9]\d*)?(-[a-zA-Z0-9]+(?:\?[^)]*)?\))/, `$1${badgeTargetVersion}$2`, 'README version badge');
+replaceOrThrow(readmeCnFile, /(!\[Version\]\(https:\/\/img\.shields\.io\/badge\/Version-)\d+\.\d+\.\d+(?:--rc[1-9]\d*)?(-[a-zA-Z0-9]+(?:\?[^)]*)?\))/, `$1${badgeTargetVersion}$2`, 'README_CN version badge');
+replaceOrThrow(readmeJaFile, /(!\[Version\]\(https:\/\/img\.shields\.io\/badge\/Version-)\d+\.\d+\.\d+(?:--rc[1-9]\d*)?(-[a-zA-Z0-9]+(?:\?[^)]*)?\))/, `$1${badgeTargetVersion}$2`, 'README_JA version badge');
+replaceOrThrow(readmeZhTwFile, /(!\[Version\]\(https:\/\/img\.shields\.io\/badge\/Version-)\d+\.\d+\.\d+(?:--rc[1-9]\d*)?(-[a-zA-Z0-9]+(?:\?[^)]*)?\))/, `$1${badgeTargetVersion}$2`, 'README_ZH_TW version badge');
 replaceOrThrow(deployDoc, /(当前文档对应项目基线版本为 `)[^`]+(`。)/, `$1${targetVersion}$2`, 'deploy doc baseline version');
-replaceOrThrow(envExample, /^INFOQ_VERSION=\d+\.\d+\.\d+$/mu, `INFOQ_VERSION=${targetVersion}`, 'environment template version');
+replaceOrThrow(envExample, /^INFOQ_VERSION=\d+\.\d+\.\d+(?:-rc\d+)?$/mu, `INFOQ_VERSION=${targetVersion}`, 'environment template version');
 for (const [filePath, description] of deployIdExampleFiles) {
   replaceDeployIdVersionExamples(filePath, description);
 }
-replaceOrThrow(composeFile, /(image:\s+infoq\/infoq-admin:)\d+\.\d+\.\d+/, `$1${targetVersion}`, 'admin image tag');
-replaceOrThrow(composeFile, /(image:\s+infoq\/infoq-frontend-vue:)\d+\.\d+\.\d+/, `$1${targetVersion}`, 'vue image tag');
-replaceOrThrow(composeFile, /(image:\s+infoq\/infoq-frontend-react:)\d+\.\d+\.\d+/, `$1${targetVersion}`, 'react image tag');
+replaceOrThrow(composeFile, /(image:\s+infoq\/infoq-admin:)\d+\.\d+\.\d+(?:-rc[1-9]\d*)?(?=\s|$)/u, `$1${targetVersion}`, 'admin image tag');
+replaceOrThrow(composeFile, /(image:\s+infoq\/infoq-frontend-vue:)\d+\.\d+\.\d+(?:-rc[1-9]\d*)?(?=\s|$)/u, `$1${targetVersion}`, 'vue image tag');
+replaceOrThrow(composeFile, /(image:\s+infoq\/infoq-frontend-react:)\d+\.\d+\.\d+(?:-rc[1-9]\d*)?(?=\s|$)/u, `$1${targetVersion}`, 'react image tag');
 replaceOrThrow(springDocConfigTest, /(info\.setVersion\(")[^"]+("\);)/g, `$1${targetVersion}$2`, 'springdoc config test setVersion');
 replaceOrThrow(springDocConfigTest, /(assertEquals\(")[^"]+(",\s*openAPI\.getInfo\(\)\.getVersion\(\)\);)/g, `$1${targetVersion}$2`, 'springdoc config test assert');
 replaceOrThrow(springDocPropertiesTest, /(info\.setVersion\(")[^"]+("\);)/g, `$1${targetVersion}$2`, 'springdoc properties test setVersion');
@@ -301,10 +309,10 @@ assertContainsFixed(rootPom, `<revision>${targetVersion}</revision>`, 'backend r
 assertContainsFixed(bomPom, `<revision>${targetVersion}</revision>`, 'bom revision');
 assertContainsFixed(reactPackage, `"version": "${targetVersion}"`, 'react package version');
 assertContainsFixed(vuePackage, `"version": "${targetVersion}"`, 'vue package version');
-assertContainsFixed(readmeFile, `![Version](https://img.shields.io/badge/Version-${targetVersion}-`, 'README version badge');
-assertContainsFixed(readmeCnFile, `![Version](https://img.shields.io/badge/Version-${targetVersion}-`, 'README_CN version badge');
-assertContainsFixed(readmeJaFile, `![Version](https://img.shields.io/badge/Version-${targetVersion}-`, 'README_JA version badge');
-assertContainsFixed(readmeZhTwFile, `![Version](https://img.shields.io/badge/Version-${targetVersion}-`, 'README_ZH_TW version badge');
+assertContainsFixed(readmeFile, `![Version](https://img.shields.io/badge/Version-${badgeTargetVersion}-`, 'README version badge');
+assertContainsFixed(readmeCnFile, `![Version](https://img.shields.io/badge/Version-${badgeTargetVersion}-`, 'README_CN version badge');
+assertContainsFixed(readmeJaFile, `![Version](https://img.shields.io/badge/Version-${badgeTargetVersion}-`, 'README_JA version badge');
+assertContainsFixed(readmeZhTwFile, `![Version](https://img.shields.io/badge/Version-${badgeTargetVersion}-`, 'README_ZH_TW version badge');
 assertContainsFixed(deployDoc, `当前文档对应项目基线版本为 \`${targetVersion}\`。`, 'deploy doc baseline version');
 assertContainsFixed(envExample, `INFOQ_VERSION=${targetVersion}`, 'environment template version');
 for (const [filePath, description] of deployIdExampleFiles) {

@@ -2,6 +2,8 @@
 
 ## 版本字段更新范围
 
+下列 `x.y.z` 占位支持完整 `x.y.z-rcN`（N>0、无前导零）；冻结 SQL 文件名例外。Shields 徽标内 `-` 编码为 `--`，读取时还原；DEPLOY_ID 保持版本后原有14位日期。
+
 - `backend/pom.xml`
   - 根 `<revision>`
 - `backend/infoq-core/infoq-core-bom/pom.xml`
@@ -60,7 +62,7 @@ systemd 示例从受控 `EnvironmentFile` 读取实际 `DEPLOY_ID`，手动部�
 若这些引用与 `sql/` 下真实文件不一致，脚本会失败，并要求显式后续任务处理。
 所有替换与断言先在内存中校验，通过后才写入；dry-run 同样核验替换目标且不写入。实际写盘时的权限或 IO 失败仍可能造成部分更新，必须审查差异并仅恢复本次受管修改。
 
-一致性检查用 `node tools/check_release_version.mjs`；指定 `--tag v<x.y.z>` 或 `--expect <x.y.z>` 可要求候选版本。二者同时给出时必须一致，重复选项、空值与额外 `=` 内容不接受。`node tools/test_check_release_version.mjs` 在副本中验证这些失败语义与13来源一致性，不修改真实版本字段。
+一致性检查用 `node tools/check_release_version.mjs`；指定 `--tag v<version>` 或 `--expect <version>` 可要求候选版本。二者同时给出时必须一致，重复选项、空值与额外 `=` 内容不接受。`node tools/test_check_release_version.mjs` 在副本中验证这些失败语义与13来源一致性，不修改真实版本字段。
 
 ## 非目标
 

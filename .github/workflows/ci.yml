@@ -45,6 +45,14 @@ jobs:
       - name: Validate documentation links
         run: node tools/check_doc_links.mjs
 
+      - name: Validate release tool contracts
+        run: |
+          node skills/release-cli/scripts/test_release_cli.mjs
+          node skills/release-cli/scripts/test_bump_version.mjs
+          node tools/test_check_release_version.mjs
+          node skills/release-cli/scripts/test_release_policy.mjs
+          node skills/release-cli/scripts/test_release_assets.mjs
+
   backend:
     name: Backend Build
     runs-on: ubuntu-latest
@@ -92,6 +100,8 @@ jobs:
         run: node tools/verify/test_production_ops.mjs
       - name: Run Linux acceptance plan contracts
         run: node tools/verify/test_linux_acceptance.mjs
+      - name: Run release remote CLI contracts
+        run: node skills/release-cli/scripts/test_release_cli.mjs
       - name: Windows PowerShell 5.1 baseline
         if: runner.os == 'Windows'
         shell: powershell

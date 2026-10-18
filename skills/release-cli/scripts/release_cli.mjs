@@ -6,6 +6,7 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {normalizeForwardedArgs, resolveRepoRoot} from '../../../tools/lib/skill_runtime.mjs';
 import {githubRepositoryForRemote} from '../../push-cli/scripts/remote_target.mjs';
+import {parseReleaseVersion, releaseVersionFromTag, compareReleaseVersions} from '../../../tools/lib/release_version.mjs';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 let repoRoot = resolveRepoRoot(scriptDir);
@@ -26,11 +27,13 @@ Commands:
 Options:
   --repo-root <path>   指定仓库根（默认自动解析）
   --remote <name>      远端名，默认 origin
-  --tag <name>         覆盖默认 tag 名 v<x.y.z>（自动 workflow 仍要求 v<x.y.z>）
+  --tag <name>         精确 tag 名，必须等于 v<version>
   --json               仅 plan：以 JSON 输出结果
   --execute            执行 tag/publish 远程写入；默认仅预览
   --dry-run            显式预览（bump 也不写入）；与 --execute 互斥
-  -h, --help           显示帮助`);
+  -h, --help           显示帮助
+
+version 支持 x.y.z 或 x.y.z-rcN（N > 0，无前导零）。RC 为源码 Pre-release，禁止设为 Latest。`);
 }
 
 const options = {
@@ -56,7 +59,10 @@ for (let index = 0; index < args.length; index += 1) {
   if (valueOptions.has(arg) && (!args[index + 1] || args[index + 1].startsWith('-'))) {
     throw new Error(`missing value for ${arg}`);
   }
-  if (arg.startsWith('-')) supplied.add(arg);
+  if (arg.startsWith('-')) {
+    if (supplied.has(arg)) throw new Error(`repeated option: ${arg}`);
+    supplied.add(arg);
+  }
   if (arg === '--dry-run') explicitDryRun = true;
   else if (arg === '--execute') options.execute = true;
   else if (arg === '--json') options.json = true;
@@ -77,9 +83,10 @@ if (!options.command) {
 if (!['plan', 'bump', 'tag', 'publish', 'verify'].includes(options.command)) {
   throw new Error(`unknown command: ${options.command}`);
 }
-if (options.version && !/^\d+\.\d+\.\d+$/.test(options.version)) {
-  throw new Error(`--version 必须匹配 x.y.z，收到：${options.version}`);
+if (options.version && !parseReleaseVersion(options.version)) {
+  throw new Error(`--version 必须匹配 x.y.z 或 x.y.z-rcN（N > 0，无前导零），收到：${options.version}`);
 }
+if (options.tag && (!options.version || options.tag !== `v${options.version}`)) throw new Error('--tag 必须精确等于 v<version>，且须同时指定 --version');
 const allowed = {
   plan: ['--version', '--remote', '--repo-root', '--json'],
   bump: ['--version', '--repo-root', '--dry-run'],
@@ -100,7 +107,9 @@ function fail(message) {
 function exec(command, commandArgs, {capture = true, allowFailure = false} = {}) {
   if (command === 'gh') {
     const target = githubRepository();
-    commandArgs = commandArgs[0] === 'repo' && commandArgs[1] === 'view'
+    commandArgs = commandArgs[0] === 'api'
+      ? [...commandArgs, '--hostname', target.split('/')[0]]
+      : commandArgs[0] === 'repo' && commandArgs[1] === 'view'
       ? [...commandArgs.slice(0, 2), target, ...commandArgs.slice(2)]
       : [...commandArgs, '--repo', target];
   }
@@ -152,21 +161,8 @@ function assertVersionsConsistent(versions) {
   if (unique.size !== 1) {
     fail(`版本字段不一致：backend=${versions.backend} react=${versions.react} vue=${versions.vue}`);
   }
+  if (!parseReleaseVersion(versions.backend)) fail(`无效的工作区版本：${versions.backend}`);
   return versions.backend;
-}
-
-function parseSemver(value) {
-  const match = String(value).replace(/^v/, '').match(/^(\d+)\.(\d+)\.(\d+)$/);
-  if (!match) {
-    return null;
-  }
-  return {raw: value, major: Number(match[1]), minor: Number(match[2]), patch: Number(match[3])};
-}
-
-function compareSemver(a, b) {
-  if (a.major !== b.major) return a.major - b.major;
-  if (a.minor !== b.minor) return a.minor - b.minor;
-  return a.patch - b.patch;
 }
 
 function remoteTags() {
@@ -183,21 +179,47 @@ function remoteTags() {
 }
 
 function latestRemoteVersion() {
-  const versions = remoteTags().map(parseSemver).filter(Boolean);
+  const versions = remoteTags().map(tag => {
+    const parsed = releaseVersionFromTag(tag);
+    return parsed ? {...parsed, tag} : null;
+  }).filter(Boolean);
   if (versions.length === 0) {
     return null;
   }
-  versions.sort(compareSemver);
+  versions.sort(compareReleaseVersions);
   return versions[versions.length - 1];
 }
 
-function nextPatch(version) {
-  const parts = version.split('.').map(Number);
-  return `${parts[0]}.${parts[1]}.${parts[2] + 1}`;
+function nextVersion(version) {
+  const parsed = parseReleaseVersion(version);
+  const next = parsed.isPrerelease
+    ? `${parsed.major}.${parsed.minor}.${parsed.patch}-rc${parsed.rc + 1}`
+    : `${parsed.major}.${parsed.minor}.${parsed.patch + 1}`;
+  if (!parseReleaseVersion(next)) fail(`版本已超出可安全递增的范围：${version}`);
+  return next;
 }
 
 function tagName(version) {
-  return options.tag || `v${version}`;
+  return `v${version}`;
+}
+
+function assertNewRemoteVersion(version) {
+  const latest = latestRemoteVersion();
+  if (latest && compareReleaseVersions(version, latest) <= 0) fail(`目标版本 ${version} 不高于最新远端 tag ${latest.tag}；拒绝重复发布或降版`);
+}
+
+function assertRemoteTagCommit(name) {
+  githubRepository();
+  const result = git(['ls-remote', '--tags', options.remote, `refs/tags/${name}`, `refs/tags/${name}^{}`]);
+  const refs = new Map(result.stdout.trim().split(/\r?\n/u).filter(Boolean).map(line => {
+    const [sha, ref] = line.split(/\s+/u);
+    return [ref, sha];
+  }));
+  const commit = refs.get(`refs/tags/${name}^{}`) || refs.get(`refs/tags/${name}`);
+  if (!commit || !/^[a-f0-9]{40,64}$/u.test(commit)) fail(`远端缺少有效 tag SHA：${name}`);
+  const head = git(['rev-parse', 'HEAD']).stdout.trim();
+  if (head !== commit) fail(`远端 tag ${name} 的提交 SHA ${commit} 与已核验 HEAD ${head} 不一致`);
+  return commit;
 }
 
 function commitsSince(tag) {
@@ -217,7 +239,7 @@ function defaultBranchName() {
 }
 
 function releaseView(name) {
-  const result = exec('gh', ['release', 'view', name, '--json', 'tagName,isDraft,isPrerelease,url'], {allowFailure: true});
+  const result = exec('gh', ['release', 'view', name, '--json', 'tagName,isDraft,isPrerelease,url,assets'], {allowFailure: true});
   if (result.status !== 0) {
     if (/release not found/i.test(`${result.stderr || ''}\n${result.stdout || ''}`)) return null;
     fail(`无法读取 Release ${name}（exit=${result.status}）：${(result.stderr || result.stdout || '').trim()}`);
@@ -233,12 +255,12 @@ function commandPlan() {
   const versions = currentVersions();
   const current = assertVersionsConsistent(versions);
   const latest = latestRemoteVersion();
-  const latestText = latest ? latest.raw : '(none)';
-  const currentSemver = parseSemver(current);
-  const needsBump = latest ? compareSemver(currentSemver, latest) <= 0 : false;
-  const baseVersion = needsBump && latest ? latest.raw.replace(/^v/, '') : current;
-  const suggested = options.version || nextPatch(baseVersion);
-  const commits = commitsSince(latest ? latest.raw : '');
+  const latestText = latest ? latest.tag : '(none)';
+  const needsBump = latest ? compareReleaseVersions(current, latest) <= 0 : false;
+  const baseVersion = needsBump && latest ? latest.version : current;
+  const suggested = options.version || nextVersion(baseVersion);
+  if (options.version && latest && compareReleaseVersions(options.version, latest) <= 0) fail(`建议版本 ${options.version} 不高于最新远端 tag ${latest.tag}`);
+  const commits = commitsSince(latest ? latest.tag : '');
   const report = {
     currentVersion: current,
     latestRemoteTag: latestText,
@@ -265,6 +287,7 @@ function commandBump() {
   if (!options.version) {
     fail('bump 需要 --version x.y.z');
   }
+  assertNewRemoteVersion(options.version);
   const bumper = path.join(scriptDir, 'bump_version.mjs');
   const bumpArgs = [bumper, '--repo-root', repoRoot, ...(options.dryRun ? ['--dry-run'] : []), options.version];
   exec(process.execPath, bumpArgs, {capture: false});
@@ -293,6 +316,7 @@ function commandTag() {
   if (localExists || remoteExists) {
     fail(`tag ${name} 已存在（local=${localExists} remote=${remoteExists}）；拒绝复用`);
   }
+  assertNewRemoteVersion(options.version);
   console.log(`[release] 将在 ${head.slice(0, 8)} 创建标注 tag ${name}`);
   if (options.dryRun) {
     console.log(`[release] dry-run: git tag -a ${name} -m "Release ${name}" && git push ${options.remote} refs/tags/${name}`);
@@ -308,9 +332,17 @@ function commandPublish() {
     fail('publish 需要 --version x.y.z');
   }
   const name = tagName(options.version);
+  const current = assertVersionsConsistent(currentVersions());
+  if (current !== options.version) fail(`工作区版本 ${current} 与 --version ${options.version} 不一致`);
   if (!remoteTags().includes(name)) {
     fail(`远端不存在 tag ${name}；请先执行 tag --version ${options.version}`);
   }
+  const latest = latestRemoteVersion();
+  if (latest && compareReleaseVersions(options.version, latest) < 0) fail(`目标版本 ${options.version} 低于最新远端 tag ${latest.tag}；拒绝发布旧版本`);
+  assertRemoteTagCommit(name);
+  const defaultBranch = defaultBranchName();
+  git(['fetch', '--no-tags', options.remote, defaultBranch]);
+  if (git(['merge-base', '--is-ancestor', 'HEAD', `${options.remote}/${defaultBranch}`], true).status !== 0) fail(`发布提交尚未进入 ${options.remote}/${defaultBranch}`);
   if (releaseView(name)) {
     fail(`Release ${name} 已存在；重复发布被拒绝（如需更新说明请使用 gh release edit）`);
   }
@@ -319,6 +351,7 @@ function commandPublish() {
     fail(`notes 文件不存在：${options.notesFile}`);
   }
   const publishArgs = ['release', 'create', name, '--title', name, '--verify-tag'];
+  if (parseReleaseVersion(options.version).isPrerelease) publishArgs.push('--prerelease', '--latest=false');
   if (notesPath) {
     publishArgs.push('--notes-file', notesPath);
   } else {
@@ -344,17 +377,36 @@ function commandVerify() {
   if (!remoteTags().includes(name)) {
     fail(`远端缺少 tag ${name}`);
   }
+  const commit = assertRemoteTagCommit(name);
   const release = releaseView(name);
   if (!release) {
     fail(`GitHub Release ${name} 未找到`);
   }
-  if (release.isDraft) {
-    fail(`Release ${name} 仍是 draft`);
+  if (release.isDraft !== false) {
+    fail(`Release ${name} 仍是 draft 或缺少有效 draft 状态`);
   }
-  if (release.isPrerelease) {
-    fail(`Release ${name} 被标记为 prerelease，与正式发布不符`);
+  if (release.tagName !== name) fail(`Release 返回 tag ${release.tagName} 与目标 ${name} 不一致`);
+  const isPrerelease = parseReleaseVersion(options.version).isPrerelease;
+  if (release.isPrerelease !== isPrerelease) fail(`Release ${name} 的 prerelease=${release.isPrerelease} 与版本渠道不符（期望 ${isPrerelease}）`);
+  if (!Array.isArray(release.assets)) fail(`Release ${name} 缺少资产元数据`);
+  if (isPrerelease) {
+    if (release.assets.length !== 0) fail(`RC Release ${name} 必须只含自动源码归档，附加资产必须为空`);
+    const repositoryPath = githubRepository().split('/').slice(1).join('/');
+    const latest = exec('gh', ['api', `repos/${repositoryPath}/releases/latest`], {allowFailure: true});
+    if (latest.status !== 0) {
+      if (!/HTTP 404/u.test(latest.stderr || '')) fail(`无法核验 Latest Release（exit=${latest.status}）：${(latest.stderr || latest.stdout || '').trim()}`);
+    } else {
+      let latestRelease;
+      try { latestRelease = JSON.parse(latest.stdout); } catch (error) { fail(`Latest Release 返回无效 JSON：${error.message}`); }
+      if (typeof latestRelease.tag_name !== 'string') fail('Latest Release 缺少 tag_name');
+      if (latestRelease.tag_name === name) fail(`RC Release ${name} 被设为 Latest`);
+    }
+  } else {
+    const expected = ['infoq-admin.jar', 'react-dist.tar.gz', 'vue-dist.tar.gz'];
+    const names = release.assets.map(asset => asset.name).sort();
+    if (JSON.stringify(names) !== JSON.stringify(expected) || release.assets.some(asset => !Number.isSafeInteger(asset.size) || asset.size <= 0)) fail(`正式 Release ${name} 必须包含精确三个非空资产：${expected.join(', ')}`);
   }
-  console.log(`[release] verify PASS：${release.tagName} ${release.url}`);
+  console.log(`[release] verify PASS：${release.tagName} ${release.url} SHA=${commit} prerelease=${isPrerelease} assets=${release.assets.length}`);
 }
 
 switch (options.command) {

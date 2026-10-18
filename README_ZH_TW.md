@@ -5,7 +5,7 @@
 # InfoQ-Scaffold-AI
 
 [![CI](https://github.com/LuckyKuang/infoq-scaffold-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/LuckyKuang/infoq-scaffold-ai/actions/workflows/ci.yml)
-![Version](https://img.shields.io/badge/Version-3.0.0-f66a39)
+![Version](https://img.shields.io/badge/Version-3.0.0--rc1-f66a39)
 ![JDK](https://img.shields.io/badge/JDK-21-1677FF)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1.1-6DB33F)
 ![Vue](https://img.shields.io/badge/Vue-3.5.35-42B883)
@@ -127,8 +127,10 @@ node skills/deploy-cli/scripts/deploy_cli.mjs status
 
 映像在目標主機上從原始碼建置，儲存庫不發布預建應用程式映像：Docker 路徑會在
 映像內建置後端 jar 與前端產物；Apple container 路徑會先在主機打包 jar，再啟動
-僅包含 MySQL、Redis 與後端 API 的堆疊（不含 Vue/React 與 Nginx 閘道）。Release
-產物是 jar 與管理端 `dist` 壓縮包，不是容器映像。
+僅包含 MySQL、Redis 與後端 API 的堆疊（不含 Vue/React 與 Nginx 閘道）。RC 僅提供
+原始碼封存檔，標記為 Pre-release，不設為 Latest；部署者須使用目標環境的受控設定
+從原始碼建置。正式版依[受控建置策略](docs/RELEASING.md)提供 jar 與管理端 `dist`
+壓縮包，不包含容器映像。
 
 ```bash
 # Linux / WSL2：從已審閱的目標 release tag 原始碼部署

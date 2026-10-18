@@ -5,7 +5,7 @@
 # InfoQ-Scaffold-AI
 
 [![CI](https://github.com/LuckyKuang/infoq-scaffold-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/LuckyKuang/infoq-scaffold-ai/actions/workflows/ci.yml)
-![Version](https://img.shields.io/badge/Version-3.0.0-f66a39)
+![Version](https://img.shields.io/badge/Version-3.0.0--rc1-f66a39)
 ![JDK](https://img.shields.io/badge/JDK-21-1677FF)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1.1-6DB33F)
 ![Vue](https://img.shields.io/badge/Vue-3.5.35-42B883)
@@ -128,7 +128,7 @@ node skills/deploy-cli/scripts/deploy_cli.mjs status
 | macOS | No, backend only | Apple container |
 | macOS | No, backend + admin dev servers | Apple container + `pnpm run dev` |
 
-Images are built from source on the target host. The repository does not publish prebuilt application images: Docker builds the backend jar and admin bundles inside their images, while the Apple container path builds the jar on the host and starts a backend-only stack (MySQL, Redis, admin API; no Vue/React or Nginx gateway). Release artifacts are the jar and admin `dist` tarballs, not container images.
+Images are built from source on the target host. The repository does not publish prebuilt application images: Docker builds the backend jar and admin bundles inside their images, while the Apple container path builds the jar on the host and starts a backend-only stack (MySQL, Redis, admin API; no Vue/React or Nginx gateway). RC releases provide source archives only, are marked Pre-release, and are never Latest. Stable releases provide the jar and admin `dist` tarballs under the [controlled build policy](docs/RELEASING.md), not container images. Build RC sources with your target environment's controlled configuration before deployment.
 
 ```bash
 # Linux / WSL2: from a reviewed checkout of the intended release tag

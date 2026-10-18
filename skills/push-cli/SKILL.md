@@ -21,7 +21,7 @@ description: 预览或执行 GitHub 分支推送、PR 创建与校验回流、�
 
 1. 判定范围：确认是快速推送、完整 PR 提交、只看校验状态，还是修复校验失败。
 2. 探测：`ensure` 校验 gh 登录、仓库信息与写权限；`status` 查看当前分支、脏文件与已打开的 PR，并 fetch 默认分支以计算落后数量。它们不远程写入；`status` 会更新本地远程跟踪引用。
-3. 本地校验：`check` 运行仓库校验矩阵（`docs` / `ci` / `full`；`ci` 精确镜像 GitHub CI，`full` 追加 docs 门禁）。
+3. 本地校验：`check` 运行仓库校验矩阵（`docs` / `ci` / `full`；`ci` 覆盖本机 CI 核心检查，`full` 追加 docs 门禁）。
 4. 提交与推送：先预览 `submit-pr`，确认目标与影响后加 `--execute`；它在工作分支上校验、提交并推送。预览不会实际运行校验矩阵，不能把预览视为检查通过。
 5. PR 与校验：`submit-pr` 创建或复用 PR，然后 `watch` 轮询 GitHub 校验；失败时输出失败 check 名称与失败日志摘要。
 6. 修复回流：根据失败日志修改代码 → 重新 `submit-pr`（同一个 PR 会被复用），直到校验全绿。
@@ -48,7 +48,7 @@ node skills/push-cli/scripts/test_push_cli.mjs
 ## 校验矩阵
 
 - `--profile docs`：`node tools/validate_utf8.mjs`、`node tools/check_readme_sync.mjs`、`node tools/check_release_version.mjs`、`node tools/check_doc_links.mjs`、`node skills/compress-cli/scripts/agents_check.mjs check`，并在存在 active change 时运行 `node tools/openspec_check.mjs <change-id>`。
-- `--profile ci`：精确对齐 `.github/workflows/ci.yml`：UTF-8、README、版本、文档链接 + React/Vue lint/test/build + `node tools/backend_mvn.mjs -- -B -ntp -DskipTests=false clean package -P dev`。不包含 agents_check / openspec_check。
+- `--profile ci`：覆盖 `.github/workflows/ci.yml` 的本机核心步骤：UTF-8、README、版本、文档链接 + release-cli/bump/version/assets/policy 五组回归 + React/Vue lint/test/build + `node tools/backend_mvn.mjs -- -B -ntp -DskipTests=false clean package -P dev`。不包含 agents_check / openspec_check，也不代替远端 OS 矩阵、安全扫描或运行态验收。生产前端构建须先按 `docs/RELEASING.md` 准备受控或显式隔离构建输入。
 - `--profile full`：docs 矩阵（含 agents_check / active openspec_check）+ CI 矩阵；用于发布前完整本地门禁。
 - 任一命令失败即为硬失败；禁止把失败标记为通过后继续推送。
 

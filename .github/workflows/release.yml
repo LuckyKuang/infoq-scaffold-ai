@@ -20,6 +20,10 @@ jobs:
     name: Verify and package backend
     runs-on: ubuntu-latest
     timeout-minutes: 35
+    outputs:
+      version: ${{ steps.policy.outputs.version }}
+      channel: ${{ steps.policy.outputs.channel }}
+      artifact_policy: ${{ steps.policy.outputs.artifact_policy }}
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -39,10 +43,15 @@ jobs:
       - name: Check release version
         run: node tools/check_release_version.mjs --tag "${GITHUB_REF_NAME}"
 
+      - name: Classify release channel
+        id: policy
+        run: node skills/release-cli/scripts/release_policy.mjs classify --tag "${GITHUB_REF_NAME}" --github-output "${GITHUB_OUTPUT}"
+
       - name: Run backend tests and package
         run: node tools/backend_mvn.mjs -- -B -ntp -DskipTests=false clean package -P prod
 
       - name: Upload backend jar
+        if: steps.policy.outputs.artifact_policy == 'compiled'
         uses: actions/upload-artifact@v4
         with:
           name: backend-jar
@@ -54,6 +63,7 @@ jobs:
     name: Package ${{ matrix.name }} admin
     runs-on: ubuntu-latest
     needs: verify
+    if: needs.verify.outputs.artifact_policy == 'compiled'
     timeout-minutes: 30
     # Repository maintainers must protect this environment and supply controlled
     # four-direction RSA configuration; fixture keys are never Release inputs.
@@ -112,13 +122,15 @@ jobs:
         run: node tools/production_config.mjs check-artifact --dir "${{ matrix.workspace }}/dist"
 
       - name: Package dist
-        run: tar -czf "${{ matrix.name }}-dist.tar.gz" -C "${{ matrix.workspace }}/dist" .
+        run: |
+          mkdir -p tmp/release-bundles
+          tar -czf "tmp/release-bundles/${{ matrix.name }}-dist.tar.gz" -C "${{ matrix.workspace }}/dist" .
 
       - name: Upload admin bundle
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.name }}-dist
-          path: ${{ matrix.name }}-dist.tar.gz
+          path: tmp/release-bundles/${{ matrix.name }}-dist.tar.gz
           if-no-files-found: error
           retention-days: 7
 
@@ -132,6 +144,10 @@ jobs:
     needs:
       - verify
       - package-admin
+    if: >-
+      ${{ always() && !cancelled() && needs.verify.result == 'success' &&
+      ((needs.verify.outputs.artifact_policy == 'source-only' && needs.package-admin.result == 'skipped') ||
+      (needs.verify.outputs.artifact_policy == 'compiled' && needs.package-admin.result == 'success')) }}
     permissions:
       contents: write
     steps:
@@ -143,36 +159,81 @@ jobs:
         with:
           node-version-file: .node-version
 
+      - name: Verify upstream job results
+        env:
+          INFOQ_VERIFY_RESULT: ${{ needs.verify.result }}
+          INFOQ_ADMIN_RESULT: ${{ needs.package-admin.result }}
+        run: node skills/release-cli/scripts/release_policy.mjs gate --tag "${GITHUB_REF_NAME}" --verify-result "${INFOQ_VERIFY_RESULT}" --admin-result "${INFOQ_ADMIN_RESULT}"
+
+      - name: Prepare asset directory
+        run: node --input-type=module -e 'import fs from "node:fs"; fs.mkdirSync("tmp/release-assets", {recursive:true});'
+
       - name: Download backend asset
+        if: needs.verify.outputs.artifact_policy == 'compiled'
         uses: actions/download-artifact@v5
         with:
           name: backend-jar
-          path: release-assets/backend-jar
+          path: tmp/release-assets/backend-jar
 
       - name: Download Vue asset
+        if: needs.verify.outputs.artifact_policy == 'compiled'
         uses: actions/download-artifact@v5
         with:
           name: vue-dist
-          path: release-assets/vue-dist
+          path: tmp/release-assets/vue-dist
 
       - name: Download React asset
+        if: needs.verify.outputs.artifact_policy == 'compiled'
         uses: actions/download-artifact@v5
         with:
           name: react-dist
-          path: release-assets/react-dist
+          path: tmp/release-assets/react-dist
 
       - name: Verify release assets
-        run: node skills/release-cli/scripts/verify_release_assets.mjs release-assets
+        env:
+          INFOQ_RELEASE_VERSION: ${{ needs.verify.outputs.version }}
+        run: node skills/release-cli/scripts/verify_release_assets.mjs tmp/release-assets --version "${INFOQ_RELEASE_VERSION}"
 
-      - name: Create release
+      - name: Refuse existing release and verify merged source
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INFOQ_RELEASE_VERSION: ${{ needs.verify.outputs.version }}
+        run: node skills/release-cli/scripts/release_cli.mjs publish --version "${INFOQ_RELEASE_VERSION}" --dry-run
+
+      - name: Create source-only RC prerelease
+        if: needs.verify.outputs.artifact_policy == 'source-only'
+        uses: softprops/action-gh-release@v2
+        with:
+          body: |
+            这是供部署验收的非正式 RC 预览版本，尚未判定生产就绪。此版本只提供 GitHub 自动生成的源码归档，不附加 jar 或 React/Vue dist，也不发布镜像。
+
+            请从本 tag 构建，按 deploy/DOCKER.md 与 docs/RELEASING.md 注入部署者独立受控的配置和凭据；生产基线为 Linux Docker，构建前运行 tools/production_config.mjs 预检。浏览器协议密钥不能替代 HTTPS，禁止使用示例或隔离测试密钥部署生产。
+
+            已完成的隔离流程不替代真实凭据、公网 TLS、外部 Provider、告警接收、容量及业务 RTO/RPO 验收。正式版须等待部署验证及单独发布决策；发现问题时保留本 tag，使用后续 RC 修复，应用/数据恢复按已验证的回滚与备份方案执行。
+          generate_release_notes: true
+          draft: false
+          prerelease: true
+          make_latest: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create stable release
+        if: needs.verify.outputs.artifact_policy == 'compiled'
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            release-assets/backend-jar/infoq-admin.jar
-            release-assets/vue-dist/vue-dist.tar.gz
-            release-assets/react-dist/react-dist.tar.gz
+            tmp/release-assets/backend-jar/infoq-admin.jar
+            tmp/release-assets/vue-dist/vue-dist.tar.gz
+            tmp/release-assets/react-dist/react-dist.tar.gz
           generate_release_notes: true
           draft: false
           prerelease: false
+          fail_on_unmatched_files: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify published release metadata and assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INFOQ_RELEASE_VERSION: ${{ needs.verify.outputs.version }}
+        run: node skills/release-cli/scripts/release_cli.mjs verify --version "${INFOQ_RELEASE_VERSION}"

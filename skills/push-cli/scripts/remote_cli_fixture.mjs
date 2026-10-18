@@ -30,7 +30,7 @@ export function createRemoteFixture(repoRoot, name) {
   write('backend/pom.xml', '<project><revision>1.2.3</revision></project>\n');
   write('frontend-react/package.json', '{"version":"1.2.3"}\n');
   write('frontend-vue/package.json', '{"version":"1.2.3"}\n');
-  for (const rel of ['skills/push-cli/scripts/push_cli.mjs', 'skills/push-cli/scripts/push_matrix.mjs', 'skills/push-cli/scripts/remote_target.mjs', 'skills/release-cli/scripts/release_cli.mjs', 'skills/release-cli/scripts/bump_version.mjs', 'tools/lib/skill_runtime.mjs']) {
+  for (const rel of ['skills/push-cli/scripts/push_cli.mjs', 'skills/push-cli/scripts/push_matrix.mjs', 'skills/push-cli/scripts/remote_target.mjs', 'skills/release-cli/scripts/release_cli.mjs', 'skills/release-cli/scripts/bump_version.mjs', 'tools/lib/skill_runtime.mjs', 'tools/lib/release_version.mjs']) {
     const target = path.join(root, rel);
     fs.mkdirSync(path.dirname(target), {recursive: true});
     fs.copyFileSync(path.join(repoRoot, rel), target);
@@ -57,7 +57,9 @@ export function createRemoteFixture(repoRoot, name) {
     runLogStdout: '',
     runLogStderr: '',
     release: null,
-    releasesError: ''
+    releasesError: '',
+    latestRelease: {tag_name: 'v1.0.0'},
+    latestReleaseError: ''
   };
   function saveState() { fs.writeFileSync(stateFile, JSON.stringify(state), 'utf8'); }
   saveState();
@@ -88,6 +90,9 @@ cp.spawnSync = (command, args, options) => {
     if (state.releasesError || !state.release) { status = 1; stderr = state.releasesError || 'release not found'; }
     else value = state.release;
   } else if (args[0] === 'release' && args[1] === 'create') value = '';
+  else if (args[0] === 'api' && args[1] === 'repos/luckykuang/infoq-scaffold-ai/releases/latest') {
+    value = state.latestRelease; status = state.latestReleaseError ? 1 : 0; stderr = state.latestReleaseError;
+  }
   else throw new Error('unexpected gh fixture call: ' + args.join(' '));
   return {status, stdout: typeof value === 'string' ? value : JSON.stringify(value), stderr};
 };

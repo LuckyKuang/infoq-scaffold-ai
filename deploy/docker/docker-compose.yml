@@ -79,7 +79,7 @@ services:
     build:
       context: ../../backend
       dockerfile: infoq-admin/Dockerfile
-    image: infoq/infoq-admin:3.0.0
+    image: infoq/infoq-admin:3.0.0-rc1
     container_name: infoq-admin
     restart: unless-stopped
     stop_grace_period: 45s
@@ -130,7 +130,7 @@ services:
         INFOQ_FRONTEND_CONFIG_DIGEST: ${INFOQ_FRONTEND_CONFIG_DIGEST:-}
         VITE_APP_BASE_API: /prod-api
         VITE_APP_PORT: 9091
-    image: infoq/infoq-frontend-vue:3.0.0
+    image: infoq/infoq-frontend-vue:3.0.0-rc1
     container_name: infoq-frontend-vue
     restart: unless-stopped
     environment:
@@ -154,7 +154,7 @@ services:
         INFOQ_FRONTEND_CONFIG_DIGEST: ${INFOQ_FRONTEND_CONFIG_DIGEST:-}
         VITE_APP_BASE_API: /prod-api
         VITE_APP_PORT: 9092
-    image: infoq/infoq-frontend-react:3.0.0
+    image: infoq/infoq-frontend-react:3.0.0-rc1
     container_name: infoq-frontend-react
     restart: unless-stopped
     environment:

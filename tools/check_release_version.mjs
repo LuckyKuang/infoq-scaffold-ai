@@ -3,17 +3,19 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {normalizeForwardedArgs, resolveRepoRoot} from './lib/skill_runtime.mjs';
+import {parseReleaseVersion} from './lib/release_version.mjs';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolveRepoRoot(scriptDir);
 const args = normalizeForwardedArgs(process.argv.slice(2));
 
 function usage() {
-  console.log(`Usage: node tools/check_release_version.mjs [--tag vX.Y.Z] [--expect X.Y.Z]
+  console.log(`Usage: node tools/check_release_version.mjs [--tag vX.Y.Z[-rcN]] [--expect X.Y.Z[-rcN]]
 
 Checks that the backend revision, BOM revision, both admin package versions,
 README badges, deployment docs, and Compose image tags agree.
---tag accepts vX.Y.Z or X.Y.Z; --expect accepts X.Y.Z.
+--tag accepts vX.Y.Z[-rcN] or X.Y.Z[-rcN]; --expect accepts X.Y.Z[-rcN].
+N is a positive integer without leading zeros.
 Both options may be combined only when they name the same version.
 Empty values, repeated options, unknown arguments and malformed versions fail.`);
 }
@@ -48,8 +50,8 @@ function parseArgs(argv) {
     }
     throw new Error(`Unknown argument: ${token}`);
   }
-  if (parsed.tag && !/^v?[0-9]+\.[0-9]+\.[0-9]+$/u.test(parsed.tag)) throw new Error(`Invalid --tag: ${parsed.tag}`);
-  if (parsed.expect && !/^[0-9]+\.[0-9]+\.[0-9]+$/u.test(parsed.expect)) throw new Error(`Invalid --expect: ${parsed.expect}`);
+  if (parsed.tag && !parseReleaseVersion(parsed.tag.replace(/^v/u, ''))) throw new Error(`Invalid --tag: ${parsed.tag}`);
+  if (parsed.expect && !parseReleaseVersion(parsed.expect)) throw new Error(`Invalid --expect: ${parsed.expect}`);
   if (parsed.tag && parsed.expect && parsed.tag.replace(/^v/u, '') !== parsed.expect) throw new Error('--tag and --expect must name the same version');
   return parsed;
 }
@@ -66,6 +68,10 @@ function firstMatch(text, pattern, label) {
   const match = text.match(pattern);
   if (!match) throw new Error(`Cannot parse ${label}`);
   return match[1].trim();
+}
+
+function badgeVersion(text, label) {
+  return firstMatch(text, /badge\/Version-((?:[^\s)\-]|--)+)-[a-zA-Z0-9]+(?:\?[^)]*)?\)/u, label).replaceAll('--', '-');
 }
 
 function collectSources() {
@@ -86,10 +92,10 @@ function collectSources() {
     ['backend/infoq-core/infoq-core-bom/pom.xml <revision>', firstMatch(bomPom, /<revision>([^<]+)<\/revision>/u, 'BOM revision')],
     ['frontend-vue/package.json version', String(vuePackage.version ?? '')],
     ['frontend-react/package.json version', String(reactPackage.version ?? '')],
-    ['README.md version badge', firstMatch(readme, /badge\/Version-([0-9]+\.[0-9]+\.[0-9]+)-/u, 'README badge')],
-    ['README_CN.md version badge', firstMatch(readmeCn, /badge\/Version-([0-9]+\.[0-9]+\.[0-9]+)-/u, 'README_CN badge')],
-    ['README_JA.md version badge', firstMatch(readmeJa, /badge\/Version-([0-9]+\.[0-9]+\.[0-9]+)-/u, 'README_JA badge')],
-    ['README_ZH_TW.md version badge', firstMatch(readmeZhTw, /badge\/Version-([0-9]+\.[0-9]+\.[0-9]+)-/u, 'README_ZH_TW badge')],
+    ['README.md version badge', badgeVersion(readme, 'README badge')],
+    ['README_CN.md version badge', badgeVersion(readmeCn, 'README_CN badge')],
+    ['README_JA.md version badge', badgeVersion(readmeJa, 'README_JA badge')],
+    ['README_ZH_TW.md version badge', badgeVersion(readmeZhTw, 'README_ZH_TW badge')],
     ['deploy/.env.example INFOQ_VERSION', firstMatch(envExample, /^INFOQ_VERSION=([^\s#]+)/mu, 'INFOQ_VERSION')],
     ['deploy/DOCKER.md baseline', firstMatch(dockerDoc, /当前文档对应项目基线版本为 `([^`]+)`/u, 'DOCKER.md baseline')],
     ['deploy/docker/docker-compose.yml infoq-admin tag', firstMatch(compose, /image:\s+infoq\/infoq-admin:([^\s]+)/u, 'admin image tag')],
@@ -98,8 +104,6 @@ function collectSources() {
   ]);
 }
 
-const semverPattern = /^[0-9]+\.[0-9]+\.[0-9]+$/u;
-
 try {
   const options = parseArgs(args);
   const sources = collectSources();
@@ -107,13 +111,13 @@ try {
     ? options.tag.replace(/^v/u, '')
     : options.expect;
 
-  if (expected && !semverPattern.test(expected)) {
-    throw new Error(`Expected version must be x.y.z, got: ${expected}`);
+  if (expected && !parseReleaseVersion(expected)) {
+    throw new Error(`Expected version must be x.y.z or x.y.z-rcN, got: ${expected}`);
   }
 
   const mismatches = [];
   for (const [label, value] of sources) {
-    if (!semverPattern.test(value)) {
+    if (!parseReleaseVersion(value)) {
       mismatches.push(`${label}: invalid version "${value}"`);
       continue;
     }

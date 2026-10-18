@@ -43,6 +43,8 @@ const files = [
   'backend/infoq-modules/infoq-system/src/test/java/cc/infoq/system/runner/QuartzBootstrapCoordinatorTest.java',
   'frontend-react/package.json',
   'frontend-vue/package.json',
+  'frontend-react/pnpm-lock.yaml',
+  'frontend-vue/pnpm-lock.yaml',
   initSqlRelPath
 ];
 
@@ -105,7 +107,7 @@ for (const relPath of [
 }
 
 // Use the production consistency gate to detect missing managed version sources.
-for (const file of ['tools/check_release_version.mjs', 'tools/lib/skill_runtime.mjs']) {
+for (const file of ['tools/check_release_version.mjs', 'tools/lib/skill_runtime.mjs', 'tools/lib/release_version.mjs']) {
   fs.mkdirSync(path.dirname(path.join(fixtureRoot, file)), {recursive: true});
   fs.copyFileSync(path.join(repoRoot, file), path.join(fixtureRoot, file));
 }
@@ -113,6 +115,51 @@ fs.mkdirSync(path.join(fixtureRoot, 'skills'), {recursive: true});
 fs.writeFileSync(path.join(fixtureRoot, 'AGENTS.md'), '# AGENTS.md\n', 'utf8');
 const versionGate = spawnSync(process.execPath, [path.join(fixtureRoot, 'tools/check_release_version.mjs'), '--expect', '9.9.9'], {encoding: 'utf8'});
 assert.equal(versionGate.status, 0, versionGate.stdout + versionGate.stderr);
+
+// 完整反复同步必须保留 RC 后缀、徽标转义及部署日期，且不触碰 SQL 或依赖锁。
+for (const target of ['3.0.0-rc1', '3.0.0-rc2', '3.0.0-rc10', '3.0.0']) {
+  const bumped = spawnSync(process.execPath, [path.join(scriptDir, 'bump_version.mjs'), '--repo-root', fixtureRoot, target], {encoding: 'utf8'});
+  assert.equal(bumped.status, 0, bumped.stdout + bumped.stderr);
+  const checked = spawnSync(process.execPath, [path.join(fixtureRoot, 'tools/check_release_version.mjs'), '--tag', `v${target}`], {encoding: 'utf8'});
+  assert.equal(checked.status, 0, checked.stdout + checked.stderr);
+  for (const readme of ['README.md', 'README_CN.md', 'README_JA.md', 'README_ZH_TW.md']) assertContains(readme, `Version-${target.replaceAll('-', '--')}-`);
+  for (const relPath of [
+    'backend/infoq-admin/src/main/resources/application.yml',
+    'backend/infoq-admin/src/main/resources/application-prod.yml',
+    'backend/infoq-plugin/infoq-plugin-quartz/src/main/java/cc/infoq/common/quartz/properties/QuartzManagedProperties.java',
+    'backend/infoq-modules/infoq-system/src/test/java/cc/infoq/system/runner/QuartzBootstrapCoordinatorTest.java'
+  ]) {
+    const content = fs.readFileSync(path.join(fixtureRoot, relPath), 'utf8');
+    const deployIds = content.match(/\b\d+\.\d+\.\d+(?:-rc\d+)?-\d{14}\b/gu) ?? [];
+    assert.ok(deployIds.length > 0 && deployIds.every(id => id.startsWith(`${target}-`)), `invalid DEPLOY_ID in ${relPath}: ${deployIds}`);
+    const datesBefore = before.get(relPath).toString('utf8').match(/\d{14}/gu);
+    assert.deepEqual(content.match(/\d{14}/gu), datesBefore, `DEPLOY_ID date changed in ${relPath}`);
+    assert.ok(!content.includes('-rc1-rc') && !content.includes('-rc2-rc'), 'duplicated RC suffix');
+  }
+  for (const relPath of [initSqlRelPath, 'frontend-react/pnpm-lock.yaml', 'frontend-vue/pnpm-lock.yaml']) assert.deepEqual(fs.readFileSync(path.join(fixtureRoot, relPath)), before.get(relPath), `immutable file changed: ${relPath}`);
+}
+const beforeInvalidArgs = new Map(files.map(file => [file, fs.readFileSync(path.join(fixtureRoot, file))]));
+for (const invalidArgs of [
+  ['3.0.0-rc0'], ['3.0.0-rc01'], ['3.0.0-beta1'], ['3.0.0+build'], ['--bogus', '3.0.1'],
+  ['--dry-run', '--dry-run', '3.0.1'], ['--repo-root'], ['--repo-root', '--help', '3.0.1']
+]) {
+  const rejected = spawnSync(process.execPath, [path.join(scriptDir, 'bump_version.mjs'), '--repo-root', fixtureRoot, ...invalidArgs], {encoding: 'utf8'});
+  assert.equal(rejected.status, 1, rejected.stdout + rejected.stderr);
+  for (const [file, contents] of beforeInvalidArgs) assert.deepEqual(fs.readFileSync(path.join(fixtureRoot, file)), contents, `invalid arguments modified ${file}`);
+}
+for (const [file, from, to] of [
+  ['README.md', 'Version-3.0.0-', 'Version-3.0.0-rc1-'],
+  ['deploy/docker/docker-compose.yml', 'image: infoq/infoq-admin:3.0.0', 'image: infoq/infoq-admin:3.0.0-rc1-extra']
+]) {
+  const absolute = path.join(fixtureRoot, file);
+  const original = fs.readFileSync(absolute, 'utf8');
+  fs.writeFileSync(absolute, original.replace(from, to), 'utf8');
+  const snapshot = new Map(files.map(rel => [rel, fs.readFileSync(path.join(fixtureRoot, rel))]));
+  const rejected = spawnSync(process.execPath, [path.join(scriptDir, 'bump_version.mjs'), '--repo-root', fixtureRoot, '3.0.1'], {encoding: 'utf8'});
+  assert.equal(rejected.status, 1, rejected.stdout + rejected.stderr);
+  for (const [rel, contents] of snapshot) assert.deepEqual(fs.readFileSync(path.join(fixtureRoot, rel)), contents, `malformed source changed ${rel}`);
+  fs.writeFileSync(absolute, original, 'utf8');
+}
 
 // A late replacement failure must leave every managed file unchanged.
 const invalidReadme = path.join(fixtureRoot, 'README.md');

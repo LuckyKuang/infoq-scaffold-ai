@@ -11,6 +11,14 @@ const docsExtra = [
   {name: 'agents-check', command: 'node', args: ['skills/compress-cli/scripts/agents_check.mjs', 'check']}
 ];
 
+const releaseGates = [
+  {name: 'release-cli-test', command: 'node', args: ['skills/release-cli/scripts/test_release_cli.mjs']},
+  {name: 'release-bump-test', command: 'node', args: ['skills/release-cli/scripts/test_bump_version.mjs']},
+  {name: 'release-version-test', command: 'node', args: ['tools/test_check_release_version.mjs']},
+  {name: 'release-assets-test', command: 'node', args: ['skills/release-cli/scripts/test_release_assets.mjs']},
+  {name: 'release-policy-test', command: 'node', args: ['skills/release-cli/scripts/test_release_policy.mjs']}
+];
+
 const frontend = [
   {name: 'react-lint', command: 'pnpm', args: ['--dir', 'frontend-react', 'run', 'lint']},
   {name: 'react-test', command: 'pnpm', args: ['--dir', 'frontend-react', 'run', 'test']},
@@ -45,7 +53,7 @@ export function buildMatrix(profile) {
     return [...docGates, ...docsExtra];
   }
   if (profile === 'ci') {
-    return [...docGates, ...frontend, ...backendCi];
+    return [...docGates, ...releaseGates, ...frontend, ...backendCi];
   }
-  return uniqueByName([...docGates, ...docsExtra, ...frontend, ...backendCi]);
+  return uniqueByName([...docGates, ...docsExtra, ...releaseGates, ...frontend, ...backendCi]);
 }

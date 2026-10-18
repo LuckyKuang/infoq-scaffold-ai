@@ -10,7 +10,7 @@
 | `.github/workflows/ci.yml` | push / PR / 手动 | UTF-8、README 同步、版本一致性、文档链接、后端构建与单测、双管理端 lint/test/build |
 | `.github/workflows/linux-docker-acceptance.yml` | 手动 | 全新 owned project 的真实受控构建、TLS/鉴权/浏览器/私有对象、备份恢复、应用回滚与清理 |
 | `.github/workflows/security-scan.yml` | push `master`/`main` / PR / 每周 / 手动 | CodeQL（Java、JavaScript/TypeScript）与依赖审查 |
-| `.github/workflows/release.yml` | `v*` tag | 版本门禁、后端与双管理端产物、GitHub Release |
+| `.github/workflows/release.yml` | `v*` tag | 版本门禁、后端验证；RC 源码预览 / 正式双管理端受控产物与 GitHub Release |
 
 ## 2. 维护检查
 
@@ -38,7 +38,7 @@ node tools/backend_mvn.mjs -- -B -ntp -DskipTests=false clean package -P dev
 `24.18.0`，pnpm 由根 `package.json` 的 `packageManager` 固定为 `10.34.1`；
 CI 通过 `pnpm/action-setup` 的 `package_json_file` 直接读取该字段。
 
-`admin-frontend` 先运行 `tools/production_fixture.mjs` 生成独立临时 RSA/随机凭据/自签证书，通过 `INFOQ_PRODUCTION_CONFIG_FILE` 接入严格构建；安装依赖后以 `test_production_crypto.mjs --client react|vue` 验证实际 JSEncrypt 与 Node 两组 RSA 的协议互通。完成构建后运行 `production_config.mjs check-artifact --allow-isolated` 检查产物实际包含的前端密钥、配对指纹和服务端秘密缺失。这些产物为 `deployable=false` 的隔离构建，不能发布为生产资产。Release 独立使用受控 environment/secret，不能复用 CI fixture。
+`admin-frontend` 先运行 `tools/production_fixture.mjs` 生成独立临时 RSA/随机凭据/自签证书，通过 `INFOQ_PRODUCTION_CONFIG_FILE` 接入严格构建；安装依赖后以 `test_production_crypto.mjs --client react|vue` 验证实际 JSEncrypt 与 Node 两组 RSA 的协议互通。完成构建后运行 `production_config.mjs check-artifact --allow-isolated` 检查产物实际包含的前端密钥、配对指纹和服务端秘密缺失。这些产物为 `deployable=false` 的隔离构建，不能发布为生产资产。正式 Release 独立使用受控 environment/secret，不能复用 CI fixture；RC 不构建公开前端产物，仅发布源码。
 
 ## 3. 本地等价入口
 
@@ -63,19 +63,23 @@ CI 通过 `pnpm/action-setup` 的 `package_json_file` 直接读取该字段。
 - 该 runner 将 MySQL/Redis/MinIO 数据目录转换为 owned named volumes；UID/GID 写入检查不覆盖生产 bind mount 新空目录初始化。独立入口 `tools/verify/first_install_acceptance.mjs` 已在 Colima 原生 ext4 完成真实 `install.sh`、bind 权限/读写与重启持久性验收；目标生产文件系统仍须复验，不能因 named volume workflow 通过而关闭。
 - 2026-10-18 已在本机 Colima Ubuntu VM 内执行同源 runner，通过真实 Docker 整栈与四种前端产物的浏览器验证，并核验 owned 清理。本轮没有触发远程 workflow，原生 Linux 宿主与远程平台矩阵仍未验证；Colima 通过不是远端通过。
 
+版本发布工具回归由 Repository Gates 执行：`test_release_cli.mjs`、`test_bump_version.mjs`、`test_check_release_version.mjs`、`test_release_assets.mjs`、`test_release_policy.mjs`。Node CLI 三平台矩阵还实际运行 `test_release_cli.mjs`。本地 `push-cli check --profile ci|full` 同步包含发布检查；它不能替代远端三平台运行和安全扫描。
+
 ## 5. 发布门禁
 
 tag workflow 复用与 CI 相同的版本门禁，并额外要求：
 
 - `node tools/check_release_version.mjs --tag "$GITHUB_REF_NAME"` 通过。
 - 后端以 `-P prod` 完成单测与打包。
-- 双管理端以 `--frozen-lockfile` 完成生产构建。
-- Release 只在全部上游 job 成功后创建。
-- publish job 按 `backend-jar`、`vue-dist`、`react-dist` 下载到各自独立目录，`verify_release_assets.mjs` 要求每个目录仅有对应的 `infoq-admin.jar`、`vue-dist.tar.gz`、`react-dist.tar.gz` 非空普通文件，再把精确列表交给发布 action；缺失、跨 artifact 重名、错误名称、额外、空文件和符号链接阻止发布，避免下载合并覆盖掩盖重复资产。隔离回归：`node skills/release-cli/scripts/test_release_assets.mjs`。
+- 正式版双管理端以 `--frozen-lockfile` 完成受控生产构建；RC 跳过 package-admin 与编译资产上传/下载，不读取生产 secret。
+- 发布门禁按已验证 tag 判断：verify success 且 RC/package-admin skipped，或 verify success 且正式/package-admin success；任何失败或取消都不创建 Release。RC 为非 draft、prerelease、non-latest，公开资产必须为空。
+- 正式版 publish job 按 `backend-jar`、`vue-dist`、`react-dist` 下载到各自独立目录，`verify_release_assets.mjs` 要求每个目录仅有对应的 `infoq-admin.jar`、`vue-dist.tar.gz`、`react-dist.tar.gz` 非空普通文件，再把精确列表交给发布 action；缺失、跨 artifact 重名、错误名称、额外、空文件和符号链接阻止发布，避免下载合并覆盖掩盖重复资产。隔离回归：`node skills/release-cli/scripts/test_release_assets.mjs`。
 - 版本门禁拒绝空值、尾部垃圾、重复参数和冲突的 `--tag`/`--expect`；隔离回归：`node tools/test_check_release_version.mjs`。
 
+Release 创建前使用 `publish --dry-run` 拒绝已有 Release，避免重跑覆盖；创建后自动执行 `release_cli verify` 读取实际 tag SHA、渠道、Latest 与资产元数据，失败保留已公开历史。
+
 CI 不负责创建 tag、推送镜像或执行生产部署。
-发布 tag 由 `release-cli tag --version <x.y.z>` 默认预览，显式 `--execute` 才创建并推送；推送后自动 workflow 负责 Release，不能并发手工 `publish`。Release 使用 `production-build` environment 和 `FRONTEND_PRODUCTION_CONFIG` 受控来源，缺配置明确失败；现有 `.env.production` 示例密钥不能用于生产发布。来源批准/轮换和目标匹配仍需环境验收，见 `docs/RELEASING.md` 第 5.1 节。
+发布 tag 由 `release-cli tag --version <version>`（`x.y.z` 或 `x.y.z-rcN`） 默认预览，显式 `--execute` 才创建并推送；推送后自动 workflow 负责 Release，不能并发手工 `publish`。正式版 Release 使用 `production-build` environment 和 `FRONTEND_PRODUCTION_CONFIG` 受控来源，缺配置明确失败；现有 `.env.production` 示例密钥不能用于生产发布。来源批准/轮换和目标匹配仍需环境验收，见 `docs/RELEASING.md` 第 5.1 节。
 
 ## 6. 安全扫描
 

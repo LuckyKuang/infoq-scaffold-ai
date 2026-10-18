@@ -57,3 +57,67 @@ Linux Docker 生产部署和生产前端构建必须在副作用前验证必需�
 - 当新版本 readiness 或关键业务检查失败。
 - 则工具必须基于已核验旧镜像/产物与兼容配置执行授权的隔离回滚，保留数据并重新验证 readiness 与业务。
 - 并且SQL 或不兼容数据变更必须保持独立恢复审批，不能自动反向迁移。
+
+### 要求： RC 版本在发布链使用一致语义
+
+版本同步、版本一致性检查、版本规划与排序、tag、Release 发布和发布后验证 MUST 支持 `x.y.z` 与 `x.y.z-rcN`；`N` SHALL 是大于零且无前导零的十进制整数。所有受管版本来源 MUST 一致，不得为了预发布修改依赖版本、lockfile 或冻结初始化 SQL。其他预发布标识和构建元数据 MUST 显式拒绝，除非后续需求明确扩展。
+
+#### 场景： 同步首个 RC
+
+- **WHEN** 维护者预览并执行版本同步目标 `3.0.0-rc1`。
+- **THEN** 后端 revision、BOM、两个前端包版本、README 徽标、部署版本和受管示例 MUST 同步为完整的 `3.0.0-rc1`，版本门禁 MUST 接受 `v3.0.0-rc1` 且核验全部来源。
+- **AND** dry-run MUST 不写入，SQL 基线与第三方依赖/lockfile MUST 不变，任何缺失或漂移 MUST 在继续发布前失败。
+
+#### 场景： RC 递增并最终转正式版
+
+- **WHEN** 版本规划、tag 或发布操作比较当前版本与已公开 tag。
+- **THEN** 比较 MUST 按仓库 RC 编号规则执行：主/次/补丁号按数值排序，相同基线按 RC 编号数值比较并 MUST 满足 `3.0.0-rc1 < 3.0.0-rc2 < 3.0.0-rc10 < 3.0.0`；文档 MUST 不将其表述为完整 SemVer 比较。
+- **AND** 已存在 RC tag MUST 参与最新版本判断，重复版本、降版或从 `3.0.0` 返回同基线 RC MUST 被拒绝。
+
+#### 场景： 非法 RC 参数
+
+- **WHEN** 输入 `3.0.0-rc0`、`3.0.0-rc01`、缺少编号、其他后缀、构建元数据、重复/缺值/未知选项或版本/tag 不一致。
+- **THEN** 发布入口 MUST 显式失败，不得把输入截断为正式版、忽略后缀或执行远程写入。
+
+### 要求： 公共底座 RC 通过源码 Pre-release 交付
+
+`x.y.z-rcN` 的 GitHub Release MUST 标记 `prerelease=true`、`draft=false` 且 MUST NOT 设为 Latest。RC SHALL 使用 GitHub 自动生成的源码归档交付，不附加 jar、React/Vue dist、构建配置或凭据；RC 发布路径 MUST 不读取受控生产构建 secrets，不以仓库示例或隔离测试密钥生成公开编译包。正式版 SHALL 保留既有受控构建和产物校验要求。
+
+#### 场景： 自动发布 RC 源码
+
+- **WHEN** 已验证的默认分支提交推送 `v3.0.0-rc1` tag 并触发自动 Release workflow。
+- **THEN** workflow MUST 先通过对应版本与发布检查，再创建源码 Pre-release；RC 路径 MUST 不要求 `production-build` secrets，不上传编译资产，GitHub Latest MUST 保持正式版渠道。
+- **AND** 发布说明 MUST 明确源码构建、预览性质、部署者自备受控配置、已知生产验收边界及回滚建议。
+
+#### 场景： 验证 RC 和正式版的发布标记
+
+- **WHEN** 维护者对 RC 或正式版运行发布后验证。
+- **THEN** 验证 MUST 根据版本渠道检查 prerelease 状态，RC MUST 要求 true，正式版 MUST 要求 false；两者 MUST 拒绝 draft。
+- **AND** RC MUST 验证未设为 Latest、无附加编译资产；查询失败或渠道状态不匹配 MUST 明确失败，不能按版本名称推断成功。
+
+### 要求： 发布来源与失败恢复保持可审计
+
+发布提交 MUST 通过工作分支 PR、候选提交必需 CI 与默认分支保护后，才可创建精确标注 tag 和 Release；不得直推默认分支、以管理员方式绕过保护、覆盖已公开 tag 或并发创建同一 Release。远程写操作 SHALL 默认预览并要求显式 `--execute`，合并 SHALL 另需 `--yes`。执行和验证 MUST 留存不含秘密的 `tmp/` 证据。
+
+#### 场景： CI 通过后发布受保护合并提交
+
+- **WHEN** 维护者发布 `v3.0.0-rc1`。
+- **THEN** 执行者 MUST 核验仓库身份、候选提交 SHA、对应 CI 结果、受保护合并和默认分支最新 SHA，远端 tag MUST 指向已核验的合并提交。
+- **AND** 证据 MUST 记录 PR、CI、tag、Release URL/标记/资产与验证结果，不得记录访问 token 或任何配置秘密。
+
+#### 场景： 远端查询或发布部分失败
+
+- **WHEN** 鉴权、网络、API、CI、分支保护、tag 唯一性或 Release 验证失败，或远端操作已完成但后续步骤失败。
+- **THEN** 流程 MUST 停止并报告实际阶段及 blocker，MUST 重新读取公开状态后再决定恢复，不得把查询失败当作远端对象不存在。
+- **AND** 已公开 tag/Release 历史 MUST 保留；需要新的修复版本时 SHALL 使用后续 RC，不强推、不重打 tag，不以降版本或删除公开历史作为默认回滚。
+
+#### 场景： 必需独立批准尚未满足
+
+- **WHEN** 默认分支保护要求的独立 PR 批准或 codeowner review 尚未取得。
+- **THEN** 流程 MUST 保留已推送且经过可执行检查的 PR，并报告准确缺失条件；MUST 不自行批准、绕过保护或在未合并的分支上创建发布 tag。
+
+#### 场景： 预览发布不替代生产验收
+
+- **WHEN** 发布说明引用隔离 Linux Docker 或 Colima 验收结果。
+- **THEN** 说明 MUST 区分已验证的隔离流程和未完成的真实生产条件，不得声称已完成真实凭据、公开证书、Provider、外部告警、容量或业务 RTO/RPO 验收。
+- **AND** 正式 `v3.0.0` SHALL 等待用户后续部署验收和明确发布指令，本次 RC MUST 不自动部署生产或推送镜像。

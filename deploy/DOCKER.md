@@ -11,7 +11,7 @@ environment template lives in [`.env.example`](.env.example). Prerequisites
 本文件合并了 Compose 教程与脚本化部署流程：首次部署按第 1 - 6 节顺序执行；
 日常运维看第 7 - 9 节；可选中间件、排障与测试入口看第 10 - 15 节。
 
-当前文档对应项目基线版本为 `3.0.0`。
+当前文档对应项目基线版本为 `3.0.0-rc1`。
 
 生产先按 [PRODUCTION.md](PRODUCTION.md) 提供受控同源配置、TLS/独立 OSS 域名与私有存储，再完成 [部署生命周期验收](DEPLOYMENT_LIFECYCLE.md#9-当前生产准备阻塞)。本文 HTTP localhost 命令仅为显式 `development` 隔离模式。
 

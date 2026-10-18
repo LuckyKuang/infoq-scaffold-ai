@@ -5,7 +5,7 @@
 # InfoQ-Scaffold-AI
 
 [![CI](https://github.com/LuckyKuang/infoq-scaffold-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/LuckyKuang/infoq-scaffold-ai/actions/workflows/ci.yml)
-![Version](https://img.shields.io/badge/Version-3.0.0-f66a39)
+![Version](https://img.shields.io/badge/Version-3.0.0--rc1-f66a39)
 ![JDK](https://img.shields.io/badge/JDK-21-1677FF)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1.1-6DB33F)
 ![Vue](https://img.shields.io/badge/Vue-3.5.35-42B883)
@@ -133,8 +133,10 @@ node skills/deploy-cli/scripts/deploy_cli.mjs status
 アプリケーションイメージを公開していません。Docker パスではイメージ内でバックエンド
 jar と管理コンソールの成果物をビルドし、Apple container パスではホスト上で jar を
 作成してから、MySQL、Redis、バックエンド API のみを含むスタックを起動します
-（Vue/React と Nginx ゲートウェイは含みません）。Release の成果物は jar と管理
-コンソールの `dist` アーカイブであり、コンテナイメージではありません。
+（Vue/React と Nginx ゲートウェイは含みません）。RC はソースアーカイブのみを
+Pre-release として公開し、Latest には設定しません。対象環境の管理された設定を
+使ってソースからビルドしてください。正式版は[管理されたビルド方針](docs/RELEASING.md)
+に従って jar と管理コンソールの `dist` アーカイブを提供し、コンテナイメージは含みません。
 
 ```bash
 # Linux / WSL2：確認済みの対象 release tag のソースからデプロイ

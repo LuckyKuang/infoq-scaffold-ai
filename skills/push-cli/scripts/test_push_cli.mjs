@@ -26,6 +26,10 @@ assert.ok(ci.includes('backend-package'));
 assert.ok(ci.includes('vue-test'));
 assert.ok(ci.includes('react-test'));
 assert.ok(!ci.includes('agents-check'));
+for (const name of ['release-cli-test', 'release-bump-test', 'release-version-test', 'release-assets-test', 'release-policy-test']) {
+  assert.ok(ci.includes(name), `ci missing release contract ${name}`);
+  assert.ok(!docs.includes(name), `docs unexpectedly runs ${name}`);
+}
 
 const full = names('full');
 for (const name of docs) assert.ok(full.includes(name), `full missing ${name}`);

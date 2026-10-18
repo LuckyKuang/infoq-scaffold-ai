@@ -270,9 +270,9 @@ node skills/release-cli/scripts/test_release_cli.mjs
 - `plan` 会把「当前版本 <= 最新远程 tag」判为需要先 bump 并显式失败；版本升级需通过 `push-cli` 合并后再打 tag。
 - tag 必须在干净工作区且 `HEAD == origin/<default>` 时创建，已存在的 tag 拒绝复用；预览 fetch 使用 `--no-tags`，不隐式创建本地 tag。Git 与 gh 仓库目标绑定规则与 push 相同；`--json` 仅用于 `plan`。Release 已存在时 `publish` 失败（更新说明用 `gh release edit`）。
 - 远程写操作默认 dry-run，只有 `--execute` 才创建/推送 tag 或发布 Release；本地 `bump` 是版本文件写入，不受远程预览默认值保护。受管文件清单见 `skills/release-cli/references/targets.md`。
-- 推送 `vX.Y.Z` tag 会触发 Release workflow，应先等待工作流结束，再验证 Release；不要同时执行手工 `publish`。只有已明确不由工作流发布的独立场景才使用 `publish --version <version> --execute`，该命令不构建或上传发布资产。
-- workflow 将 `backend-jar`、`vue-dist`、`react-dist` artifact 下载到独立目录，发布前通过 `verify_release_assets.mjs` 校验各自恰好对应一个非空普通文件：`infoq-admin.jar`、`vue-dist.tar.gz`、`react-dist.tar.gz`，防止合并目录覆盖重名产物；该门禁不验证资产内容、签名或生产配置。
-- `verify` 只核对其实现列出的 tag/Release 元数据，不核验 tag 对应提交、资产完整性或生产健康；不能作为完整发布验收。
+- 版本支持 `x.y.z` 或 `x.y.z-rcN`，N>0 且无前导零，RC 编号按数值排序，正式版高于同基线全部 RC；精确 tag 为 `v<version>`。推送 tag 会触发 Release workflow，应先等待工作流结束，再验证 Release；不要同时执行手工 `publish`。只有已明确不由工作流发布的独立场景才使用 `publish --version <version> --execute`，该命令不构建或上传发布资产。
+- RC 只发布源码归档，标记 prerelease、非 Latest、无附加资产，不读取生产构建 secret；正式版 workflow 将 `backend-jar`、`vue-dist`、`react-dist` artifact 下载到独立目录，发布前通过 `verify_release_assets.mjs` 校验各自恰好对应一个非空普通文件：`infoq-admin.jar`、`vue-dist.tar.gz`、`react-dist.tar.gz`，防止合并目录覆盖重名产物；该门禁不验证资产内容、签名或生产配置。
+- `verify` 核对工作区版本、tag 提交与 HEAD、draft/渠道、RC 非 Latest 且资产为空，或正式三件非空资产的元数据；不验证下载内容、签名或生产健康。还须核对候选 SHA 的 CI、审批与 Release workflow 结论；不能作为完整生产验收。
 
 ### 8.9 域外能力（不在 `skills/` 下的验证与运维）
 
