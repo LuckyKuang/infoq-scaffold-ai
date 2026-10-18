@@ -187,6 +187,10 @@ Vue 的 braces 3.0.3 没有官方修复版，已移除唯一引入链的聚合 E
 
 默认分支依赖图刷新后，另发现 `skills/test-cli/scripts` 的 `chrome-devtools-mcp:0.25.0` 命中两项中危公告：[GHSA-8qf9-62x2-82pp](https://github.com/advisories/GHSA-8qf9-62x2-82pp)、[GHSA-3pvj-jv98-qhjq](https://github.com/advisories/GHSA-3pvj-jv98-qhjq)，分别涉及roots与daemon.pid的符号链接边界，package/lock被分别计数共4条。精确升级至共同首修 **1.1.0**，未改CLI启动入口或MCP审批配置；完整工具审计先复现2moderate/退出1，再全级别0/退出0，frozen install通过，无node_modules锁文件审计也全0。真实STDIO initialize/tools/list、四项显式审批工具的核心参数schema及隔离页面诊断通过，客户端stdin EOF正常关闭、退出码0/signal null、owned MCP/Chromium退出与两个端口重新绑定已验证。可复用命令与边界见 [MCP工具升级SOP](MCP-SERVERS.md#2-与-repo-owned-cli-的边界)。现有Dependency Review job与每周Dependabot配置已补齐该工具目录，Node CLI三平台矩阵增加真实协议/生命周期回归；未降低严重度阈值或忽略公告，本地结果不替代三个远程平台的实际运行。这项修复不改变产品、SQL或生产配置。
 
+PR#28合并后，其CI与Security Scan已通过，另由平台触发的两项Vue常规Dependabot更新在冷缓存下失败：锁定的electron-to-chromium1.5.459尚未满足更新器72小时发布冷却期。已用固定Node/pnpm和独立元数据缓存复现原始错误；只把browserslist允许范围内的该传递解析改为已成熟1.5.456，由pnpm生成integrity/edge/snapshot，未改manifest、其他依赖或冷却期政策。两条原更新命令在各自新缓存下通过，72小时frozen install及完整audit均通过；live Vue491单测、lint、根/子路径受控构建与扫描通过，两份新产物摘要与此前一致，来源锁摘要已更新。该包为构建数据，无SQL/API/生产配置或业务源码变更；源与产物manifest、命令和失败证据均保存在本地tmp。冷缓存复现与候选验证步骤已沉淀到 [CI安全扫描SOP](CI_VALIDATION.md#dependabot-冷缓存与发布冷却期)，远端仍以新候选及合并SHA的全部实际结果为准。
+
+新锁来源的四产物严格48case DOM已重新通过，验证前后输入/产物hash一致、浏览器与4端口收口。Colima `rc-browser-012` 只构建Vue根/子路径两镜像，真实复核并复用011的React两镜像及BC1.85后端；594冻结输入、2027份执行快照与实际JAR/provider核对通过，产品漂移为0。六次真实TLS验证码UI登录/恢复/退出、安全拒绝和scope隔离通过，日志success29/revoked8/csrf12/origin18且client/request关联完整，未据Push0声称投递ACK。四现用镜像config/history及各9个导出层的RSA/凭据/TLS私钥扫描通过，未扫描未导出的BuildKit中间cache；owned容器/卷/网络/进程/端口清零、验证VM停止、其他栈和宿主context保持。本轮只修构建数据解析，不改变业务和生产配置；目标环境的真实秘密/公开CA/Provider/告警/容量及RTO/RPO条件仍保留。
+
 ## 可复用审计与回归 SOP
 
 触发条件：全仓审计，或规则、skill、命令参数、环境前置条件、发布/部署入口变化。

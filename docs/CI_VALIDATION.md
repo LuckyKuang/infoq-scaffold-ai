@@ -103,6 +103,12 @@ CI 不负责创建 tag、推送镜像或执行生产部署。
 - 1024 位 RSA 专用于验证生产预检必须拒绝弱密钥的 Node/Java 负例；保留生成与拒绝断言。对 `tools/test_production_config.mjs` 和 `ProductionApiKeyValidatorTest.java` 的两条对应告警已逐条按 `used in tests` 分类，证据保留在本地 `tmp/`。不得由此排除整个测试目录或关闭查询；后续告警须重新核对实际数据流。
 - `.github/dependabot.yml` 每周检查 GitHub Actions、`backend` Maven、两个管理端及 `skills/test-cli/scripts` npm/pnpm；Actions 更新分组，其他生态的 open PR 上限各为 5。它不覆盖 Docker 镜像、工具安装器或根目录开发依赖，不能当作完整供应链审计。升级 PR 仍须遵守固定 Node/pnpm 基线并通过 lockfile 与相应检查。
 
+### Dependabot 冷缓存与发布冷却期
+
+触发条件：Dependabot 报 `ERR_PNPM_NO_MATURE_MATCHING_VERSION`，而本地更新成功。先保存远端完整命令、目标依赖、锁定版本及 `minimum-release-age`，将 package/lock/patches 复制到新的 `tmp/` 目录，并将 `npm_config_store_dir`、`npm_config_cache_dir`、`npm_config_state_dir` 指向三个新的隔离目录，使用固定 Node/pnpm 重放原命令。热元数据缓存可能保留过新锁定版本，本地退出0不能替代冷缓存复现。核对官方 registry 发布时间、父依赖允许范围和安全公告，再以 pnpm 在副本中生成满足同一冷却期的最小传递解析；不能关闭冷却期、加排除项或更新无关父包。
+
+例如本次远端使用72小时，即 `--config.minimum-release-age=4320`；先在冷缓存副本重放 `pnpm update globals@17.13.0 --lockfile-only --no-save -r --config.minimum-release-age=4320`，定位 browserslist 允许范围内的 electron-to-chromium 锁定版本。候选必须再用各自全新缓存验证这条命令和另一条原命令 `pnpm update @vue/compiler-sfc@3.5.44 --lockfile-only --no-save -r --config.minimum-release-age=4320`，以及 `pnpm install --frozen-lockfile --config.minimum-release-age=4320` 和完整 `pnpm audit --json --audit-level low`。同步 live 锁后还须相关单测/lint/受控构建与新产物运行验证，最后核对新 SHA 的实际远端工作流；不要把隔离候选、旧 SHA 失败重跑或仅安装通过当作交付完成。
+
 ## 7. 失败处理
 
 - 失败即阻断；不得通过削弱断言、放宽 mock、压警告或提高阈值让 job 变绿。
