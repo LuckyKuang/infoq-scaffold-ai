@@ -107,10 +107,32 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          package_json_file: package.json
+          run_install: false
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
           node-version-file: .node-version
+      - name: Install Web testing tools
+        working-directory: skills/test-cli/scripts
+        run: pnpm install --frozen-lockfile
+      - name: Install isolated Chromium
+        working-directory: skills/test-cli/scripts
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Verify real DevTools protocol and owned lifecycle
+        run: node skills/test-cli/scripts/test_chrome_devtools_runtime.mjs
+      - name: Preserve failed DevTools fixture evidence
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: devtools-failure-${{ matrix.os }}
+          path: |
+            tmp/test-cli/devtools-protocol-*/
+            tmp/test-cli/browser/chrome-devtools-mcp/
+          if-no-files-found: ignore
       - name: Run cross-platform operational contracts
         run: node tools/verify/test_production_ops.mjs
       - name: Run Linux acceptance plan contracts

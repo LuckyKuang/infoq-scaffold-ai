@@ -185,6 +185,8 @@ Vue 的 braces 3.0.3 没有官方修复版，已移除唯一引入链的聚合 E
 
 新依赖另以 Colima `rc-browser-011` 独立构建四份前端 Docker 镜像，固定复用已验证的 Bouncy Castle1.85 后端，实际 JAR/provider 摘要与此前一致；593份冻结前端输入及执行快照核对通过，产品/构建输入漂移为0。六次真实UI验证码首登、根/子路径受保护DOM、刷新恢复、DELETE退出、匿名reload、CSRF/Origin/cookie-only拒绝与fresh-JWT scope隔离通过。真实日志记录 success29、revoked8、csrf_rejected12、origin_rejected18，clientId/requestId关联完整；本轮无Push结果行，不据此声称投递或ACK验收。四个最终镜像的config/history及各9个导出gzip层均通过指定服务端RSA、六项凭据及TLS私钥PEM/DER/base64扫描；未扫描未导出的BuildKit中间cache。构建前曾因快照漏复制被Git忽略的生成类型而显式停止，补齐冻结manifest指定输入后新建011快照重验，未放宽摘要断言。owned容器/卷/网络/进程/端口均清零，专用VM停止，其他栈及宿主context保持；执行后仅耐久审计文档有追加。该隔离TLS验证不替代生产CA、凭据、外部Provider、告警及容量验收。
 
+默认分支依赖图刷新后，另发现 `skills/test-cli/scripts` 的 `chrome-devtools-mcp:0.25.0` 命中两项中危公告：[GHSA-8qf9-62x2-82pp](https://github.com/advisories/GHSA-8qf9-62x2-82pp)、[GHSA-3pvj-jv98-qhjq](https://github.com/advisories/GHSA-3pvj-jv98-qhjq)，分别涉及roots与daemon.pid的符号链接边界，package/lock被分别计数共4条。精确升级至共同首修 **1.1.0**，未改CLI启动入口或MCP审批配置；完整工具审计先复现2moderate/退出1，再全级别0/退出0，frozen install通过，无node_modules锁文件审计也全0。真实STDIO initialize/tools/list、四项显式审批工具的核心参数schema及隔离页面诊断通过，客户端stdin EOF正常关闭、退出码0/signal null、owned MCP/Chromium退出与两个端口重新绑定已验证。可复用命令与边界见 [MCP工具升级SOP](MCP-SERVERS.md#2-与-repo-owned-cli-的边界)。现有Dependency Review job与每周Dependabot配置已补齐该工具目录，Node CLI三平台矩阵增加真实协议/生命周期回归；未降低严重度阈值或忽略公告，本地结果不替代三个远程平台的实际运行。这项修复不改变产品、SQL或生产配置。
+
 ## 可复用审计与回归 SOP
 
 触发条件：全仓审计，或规则、skill、命令参数、环境前置条件、发布/部署入口变化。
