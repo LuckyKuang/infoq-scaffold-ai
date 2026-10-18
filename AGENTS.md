@@ -22,7 +22,7 @@
 |Unit Test Doctrine:不同类型单元测试必须按业务行为与边界条件编写，禁止脱离业务语义只为凑覆盖率。|单元测试失败时先检查并修复产品代码问题；仅在需求或断言错误且有证据时才允许改测试，禁止通过修改测试隐藏代码缺陷。|每种单测类型先跑通一个最小闭环后，必须沉淀一份仓库可复用 SOP（写入既有 skill 的 `references/`，或沉淀到 `tools/`、`docs/` 资产；不得因此新增 skill），含触发条件、标准步骤、验证命令与常见反模式，用于后续提效与节约 token。
 |Release Guardrails:可发布变更必须保持依赖版本与 lockfile 一致。|执行或部署前核验必需 env、config 和外部依赖。|影响共享环境、数据或部署状态的高风险/破坏性操作必须先获明确确认。
 |SQL Migration Policy:`sql/infoq_scaffold_3.0.0.sql` 是冻结初始化基线，永远不要修改。|所有新增、修改、删除表结构或初始化数据变更，只能新增 `sql/infoq_scaffold_update_YYYYMMDD.sql` 增量脚本承载。|若误改初始化 SQL，必须立即回退该文件，并把变更迁移到当前日期增量脚本。
-|Deployment Secrets:生产/Compose 部署必须使用独立受控凭据，禁止使用仓库默认密码、示例 token secret 或示例 RSA 私钥；未核验替换结果时不得判定生产就绪。|前端保持 VITE_APP_ENCRYPT=true 时必须在构建环境提供与后端对应的 RSA 公私钥；浏览器产物内的私钥不能承担服务端秘密保护，公网仍须 HTTPS。
+|Deployment Secrets:生产/Compose 部署必须使用独立受控凭据，禁止使用仓库默认密码、示例 token secret 或示例 RSA 私钥；未核验替换结果时不得判定生产就绪。|生产部署与构建先执行 `tools/production_config.mjs` 预检，受控构建文件通过 `INFOQ_PRODUCTION_CONFIG_FILE` 指定，生产基线为 Linux Docker。|前端保持 VITE_APP_ENCRYPT=true；请求公钥对应 INFOQ_API_REQUEST_PRIVATE_KEY，响应私钥对应 INFOQ_API_RESPONSE_PUBLIC_KEY，两组独立 RSA 均至少2048位；后端请求私钥禁止进入浏览器产物或构建层。|浏览器产物内的协议私钥是公开内容，公网仍须 HTTPS。
 |Pre-Release Checklist:发布或交付前显式检查 performance impact、alerting/observability coverage、rollback path/script、config/SQL/dependency impact；任何未检查项都要作为 residual risk 说明。
 |Instruction Layering:根 `AGENTS.md` 只保留跨仓规则。|backend、Vue admin、React admin 使用更近的 `AGENTS.md` 或 `AGENTS.override.md` 写栈内细则。|`GEMINI.md` 只允许作为同目录 `AGENTS.md` 的入口指针，不得重复维护规则。|当更近文件与根规则冲突时，以更近文件为准。
 |Workspace AGENTS:backend/AGENTS.md|frontend-vue/AGENTS.md|frontend-react/AGENTS.md

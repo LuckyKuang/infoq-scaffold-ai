@@ -47,6 +47,9 @@ App.tsx
 - 后端返回的特殊组件名 `Layout`、`ParentView`、`InnerLink` 由本目录做特殊处理。
 - 路由冲突需要在 `route-transform.ts` 阶段显式检测，而不是等运行时偶发 404。
 - token 已存在但用户信息或动态路由初始化失败时，守卫必须显式清理本地会话并重定向到登录页，不能继续渲染受保护布局。
+- `BrowserRouter.basename` 使用 Vite 的 `import.meta.env.BASE_URL`；`VITE_APP_CONTEXT_PATH` 经构建配置校验后决定同一个 base，菜单和应用内导航不手工拼接部署前缀。
+- `AuthGuard` 保留原路由的 pathname、query 与 hash。密码登录、OAuth 授权和 ticket 兑换在副作用前通过 `utils/auth-redirect.ts` 验证目标；只有未提供 `redirect` 时使用 `/index`，非法/重复参数显式显示错误。
+- OAuth API 交换的是无 origin 的站内浏览器路径，例如 `/react/user/profile`；`requireAppRedirect` 在 Router 导航前移除当前前缀一次，`toDeploymentRedirect` 在授权/绑定时添加一次。query/hash 保留原始安全编码，禁止无条件二次解码。
 
 ## 7. 已知边界
 

@@ -44,7 +44,7 @@ function RouterEffects() {
 
 export default function AppRouter() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={import.meta.env.BASE_URL}>
       <RouterEffects />
       <Suspense fallback={<Spin />}>
         <Routes>

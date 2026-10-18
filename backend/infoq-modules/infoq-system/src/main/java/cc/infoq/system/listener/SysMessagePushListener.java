@@ -21,14 +21,18 @@ public class SysMessagePushListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Async
     public void onMessageCommitted(SystemMessageCommittedEvent event) {
-        PushService pushService = pushServiceProvider.getIfAvailable();
-        if (pushService == null) return;
         try {
+            PushService pushService = pushServiceProvider.getIfAvailable();
+            if (pushService == null) {
+                log.info("Message Push result, correlationId:{}, messageId:{}, recipients:{}, channel:none, status:disabled, connection:unknown",
+                    event.correlationId(), event.messageId(), event.recipientUserIds().size());
+                return;
+            }
             pushService.push(new PushRequest(event.correlationId(), event.messageId(),
                 event.recipientUserIds().stream().map(PushRecipient::new).toList(),
                 "{\"type\":\"message\",\"messageId\":\"" + event.messageId() + "\"}"));
         } catch (RuntimeException e) {
-            log.warn("Message Push failed after commit, correlationId:{}, messageId:{}, recipients:{}, type:{}",
+            log.warn("Message Push failed after commit, correlationId:{}, messageId:{}, recipients:{}, channel:unknown, status:failed, type:{}",
                 event.correlationId(), event.messageId(), event.recipientUserIds().size(), e.getClass().getSimpleName());
         }
     }

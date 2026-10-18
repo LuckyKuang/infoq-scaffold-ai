@@ -83,6 +83,8 @@ public class OssClient {
         this.configKey = configKey;
         this.properties = ossProperties;
         try {
+            URI endpoint = URI.create(getEndpoint());
+            URI publicOrigin = URI.create(getDomain());
             // 创建 AWS 认证信息
             StaticCredentialsProvider credentialsProvider = StaticCredentialsProvider.create(
                 AwsBasicCredentials.create(properties.getAccessKey(), properties.getSecretKey()));
@@ -93,7 +95,7 @@ public class OssClient {
             // 创建AWS基于 Netty 的 S3 客户端
             this.client = S3AsyncClient.builder()
                 .credentialsProvider(credentialsProvider)
-                .endpointOverride(URI.create(getEndpoint()))
+                .endpointOverride(endpoint)
                 .region(of())
                 .forcePathStyle(isStyle)
                 .httpClient(NettyNioAsyncHttpClient.builder()
@@ -115,7 +117,7 @@ public class OssClient {
             this.presigner = S3Presigner.builder()
                 .region(of())
                 .credentialsProvider(credentialsProvider)
-                .endpointOverride(URI.create(getDomain()))
+                .endpointOverride(publicOrigin)
                 .serviceConfiguration(config)
                 .build();
 
@@ -123,7 +125,7 @@ public class OssClient {
             if (e instanceof OssException) {
                 throw e;
             }
-            throw new OssException("配置错误! 请检查系统配置:[" + e.getMessage() + "]");
+            throw new OssException("OSS配置错误，type: " + e.getClass().getSimpleName());
         }
     }
 
@@ -417,10 +419,7 @@ public class OssClient {
      * @return 终端点 URL
      */
     public String getEndpoint() {
-        // 根据配置文件中的是否使用 HTTPS，设置协议头部
-        String header = getIsHttps();
-        // 拼接协议头部和终端点，得到完整的终端点 URL
-        return header + properties.getEndpoint();
+        return requireOrigin(properties.getEndpoint());
     }
 
     /**
@@ -429,23 +428,25 @@ public class OssClient {
      * @return 终端点 URL
      */
     public String getDomain() {
-        // 从配置中获取域名、终端点、是否使用 HTTPS 等信息
         String domain = properties.getDomain();
-        String endpoint = properties.getEndpoint();
-        String header = getIsHttps();
+        return StringUtils.isNotEmpty(domain) ? requireOrigin(domain) : getEndpoint();
+    }
 
-        // 如果是云服务商，直接返回域名或终端点
-        if (StringUtils.containsAny(endpoint, OssConstant.CLOUD_SERVICE)) {
-            return StringUtils.isNotEmpty(domain) ? header + domain : header + endpoint;
+    private String requireOrigin(String address) {
+        try {
+            String value = address.startsWith(Constants.HTTPS) || address.startsWith(Constants.HTTP)
+                ? address : getIsHttps() + address;
+            URI origin = URI.create(value);
+            if (!("http".equals(origin.getScheme()) || "https".equals(origin.getScheme()))
+                || origin.getHost() == null || origin.getUserInfo() != null || origin.getQuery() != null
+                || origin.getFragment() != null || (origin.getRawPath() != null && !origin.getRawPath().isEmpty())
+                || origin.getPort() == 0 || origin.getPort() > 65535) {
+                throw new IllegalArgumentException();
+            }
+            return origin.toString();
+        } catch (RuntimeException e) {
+            throw new OssException("OSS endpoint/domain must be an HTTP(S) origin without credentials, path or query");
         }
-
-        // 如果是 MinIO，处理域名并返回
-        if (StringUtils.isNotEmpty(domain)) {
-            return domain.startsWith(Constants.HTTPS) || domain.startsWith(Constants.HTTP) ? domain : header + domain;
-        }
-
-        // 返回终端点
-        return header + endpoint;
     }
 
     /**
@@ -470,18 +471,14 @@ public class OssClient {
     public String getUrl() {
         String domain = properties.getDomain();
         String endpoint = properties.getEndpoint();
-        String header = getIsHttps();
         // 云服务商直接返回
         if (StringUtils.containsAny(endpoint, OssConstant.CLOUD_SERVICE)) {
-            return header + (StringUtils.isNotEmpty(domain) ? domain : properties.getBucketName() + "." + endpoint);
+            if (StringUtils.isNotEmpty(domain)) return getDomain();
+            URI origin = URI.create(getEndpoint());
+            return origin.getScheme() + "://" + properties.getBucketName() + "." + origin.getRawAuthority();
         }
         // MinIO 单独处理
-        if (StringUtils.isNotEmpty(domain)) {
-            // 如果 domain 以 "https://" 或 "http://" 开头
-            return (domain.startsWith(Constants.HTTPS) || domain.startsWith(Constants.HTTP)) ?
-                domain + StringUtils.SLASH + properties.getBucketName() : header + domain + StringUtils.SLASH + properties.getBucketName();
-        }
-        return header + endpoint + StringUtils.SLASH + properties.getBucketName();
+        return getDomain() + StringUtils.SLASH + properties.getBucketName();
     }
 
     /**

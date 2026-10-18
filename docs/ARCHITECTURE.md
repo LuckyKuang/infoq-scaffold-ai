@@ -271,7 +271,7 @@ Vue 与 React 管理端共享同一套后端、同一套菜单权限和大部分
 
 `src/router/AppRouter.tsx` 固定声明 `/login`、`/oauth/callback`、`/register`、`/forgot-password`、`/401`、`/redirect/*`、`/index`、`/user/profile`、`/message-center` 与 catch-all。首页、个人中心和消息中心位于 `AuthGuard` 内；受保护布局内的其他路径由 `BackendRouteView` 解析，无法匹配页面时展示 404。
 
-当前 `BrowserRouter` 未设置 `basename`。Vite `base` 只决定构建资源路径，不能据此声称 `/react/` 子路径导航和刷新已可用；生产子路径必须补实际路由验证，见 [测试政策](./TESTING.md)。
+`BrowserRouter` 使用 `import.meta.env.BASE_URL` 设置 `basename`，与 Vite 构建 base 同源。OAuth API 的 redirect 是不含 origin、带部署前缀一次的安全站内浏览器路径，进入 Router navigate 前移除一次前缀，再由 basename 添加。只有未提供 redirect 才默认 `/index`；非法输入在登录、授权或 ticket 交换前明确失败。组件回归与目标环境的刷新、代理链路验收分别记录，见[测试政策](./TESTING.md)。
 
 ### 12.3 动态路由转换
 

@@ -64,3 +64,7 @@
 2. 再进入对应叶子 README 查看职责、开关、入口、依赖和边界。
 3. 最终若要理解业务接线，回到 [`../infoq-modules/infoq-system/README.md`](../infoq-modules/infoq-system/README.md)。
 
+
+## 生产边界
+
+安全插件仅精确公开小程序能力 GET；OAuth 插件按受控部署 base 选择 callback；翻译插件采用字段独立 contextual serializer 并在失败时明确终止序列化；Push 逐通道报告 published/失败而不证明客户端送达；OSS 区分内部 endpoint 与外部签名 origin，生产 API RSA 由环境注入并核最少 2048 位。各叶子 README 与 [验证 SOP](../doc/production-verification.md) 是配置和测试入口。

@@ -120,6 +120,7 @@ import { getProfileOauthBindAuthorizeUrl, getUserProfile, listProfileOauthIdenti
 import { getOAuthProviders } from '@/api/login';
 import { getOnline } from '@/api/monitor/online';
 import { ProfileOauthIdentityVO, UserVO } from '@/api/system/user/types';
+import { toDeploymentRedirect } from '@/utils/auth-redirect';
 
 const activeTab = ref('userinfo');
 interface State {
@@ -178,7 +179,7 @@ const handleBind = async () => {
   }
   submitting.value = true;
   try {
-    const res = await getProfileOauthBindAuthorizeUrl(bindProvider.value, `${window.location.origin}/user/profile`);
+    const res = await getProfileOauthBindAuthorizeUrl(bindProvider.value, toDeploymentRedirect('/user/profile'));
     window.location.assign(res.data);
   } finally {
     submitting.value = false;

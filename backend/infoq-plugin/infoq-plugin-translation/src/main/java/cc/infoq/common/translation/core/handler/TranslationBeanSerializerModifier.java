@@ -5,6 +5,7 @@ import tools.jackson.databind.SerializationConfig;
 import tools.jackson.databind.ValueSerializer;
 import tools.jackson.databind.ser.BeanPropertyWriter;
 import tools.jackson.databind.ser.ValueSerializerModifier;
+import cc.infoq.common.translation.annotation.Translation;
 
 import java.util.List;
 
@@ -19,9 +20,9 @@ public class TranslationBeanSerializerModifier extends ValueSerializerModifier {
     public List<BeanPropertyWriter> changeProperties(SerializationConfig config, BeanDescription.Supplier beanDesc,
                                                      List<BeanPropertyWriter> beanProperties) {
         for (BeanPropertyWriter writer : beanProperties) {
-            ValueSerializer<Object> serializer = writer.getSerializer();
-            if (serializer instanceof TranslationHandler translationHandler) {
-                writer.assignNullSerializer(translationHandler);
+            Translation annotation = writer.getAnnotation(Translation.class);
+            if (annotation != null) {
+                writer.assignNullSerializer(new TranslationHandler(annotation, writer.getName()));
             }
         }
         return beanProperties;

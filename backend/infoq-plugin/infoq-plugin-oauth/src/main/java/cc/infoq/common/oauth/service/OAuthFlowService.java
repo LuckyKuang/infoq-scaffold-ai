@@ -35,6 +35,8 @@ public class OAuthFlowService {
 
     public OAuthAuthorizationResult createAuthorization(String providerCode, String clientId, String redirect, String browserBinding) {
         requireEnabled();
+        redirect = OAuthRedirectValidator.requireSafeRelativeRedirect(redirect);
+        properties.resolveFrontendCallbackPath(redirect);
         OAuthProperties.Provider provider = requireProvider(providerCode);
         OAuthProviderAdapter adapter = providerRegistry.requireAdapter(providerCode);
         if (!adapter.isConfigured(provider)) {
@@ -44,7 +46,7 @@ public class OAuthFlowService {
         OAuthPendingSession pendingSession = new OAuthPendingSession();
         pendingSession.setProviderCode(providerCode);
         pendingSession.setClientId(clientId);
-        pendingSession.setRedirect(OAuthRedirectValidator.requireSafeRelativeRedirect(redirect));
+        pendingSession.setRedirect(redirect);
         pendingSession.setState(OAuthPkceUtils.secureToken());
         pendingSession.setNonce(OAuthPkceUtils.secureToken());
         pendingSession.setBrowserBinding(browserBinding);

@@ -1,3 +1,4 @@
+import { frontendBuildConfig, productionBuildMetadataPlugin } from '../tools/production_config.mjs';
 import path from 'node:path';
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
@@ -6,8 +7,9 @@ import react from '@vitejs/plugin-react';
  * 如果是后端Docker部署，前端填写后端Docker名称加端口
  * 例如：'http://backend:8080'
  */
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ mode, command }) => {
   const env = loadEnv(mode, process.cwd(), '');
+  const productionBuild = frontendBuildConfig({ command, mode, env });
   const proxyTarget = env.VITE_APP_PROXY_TARGET || 'http://localhost:8080';
 
   const reactVendorPackages = [
@@ -108,8 +110,8 @@ export default defineConfig(({ mode }) => {
   };
 
   return {
-    base: env.VITE_APP_CONTEXT_PATH || '/',
-    plugins: [react()],
+    base: productionBuild.contextPath,
+    plugins: [react(), productionBuildMetadataPlugin(productionBuild.metadata)],
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src')

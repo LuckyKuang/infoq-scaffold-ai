@@ -50,8 +50,8 @@ class WebSocketTopicListenerTest {
 
             listener.dispatchMessage(dto);
 
-            webSocketUtils.verify(() -> WebSocketUtils.sendMessage(1L, "hello"));
-            webSocketUtils.verify(() -> WebSocketUtils.sendMessage(2L, "hello"), never());
+            webSocketUtils.verify(() -> WebSocketUtils.sendPublishedMessage(1L, dto));
+            webSocketUtils.verify(() -> WebSocketUtils.sendPublishedMessage(2L, dto), never());
         }
     }
 
@@ -68,8 +68,8 @@ class WebSocketTopicListenerTest {
 
             listener.dispatchMessage(dto);
 
-            webSocketUtils.verify(() -> WebSocketUtils.sendMessage(10L, "broadcast"));
-            webSocketUtils.verify(() -> WebSocketUtils.sendMessage(11L, "broadcast"));
+            webSocketUtils.verify(() -> WebSocketUtils.sendPublishedMessage(10L, dto));
+            webSocketUtils.verify(() -> WebSocketUtils.sendPublishedMessage(11L, dto));
         }
     }
 }

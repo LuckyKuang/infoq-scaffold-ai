@@ -32,6 +32,8 @@
 - 当前模块没有独立自动装配入口。
 - 真实 OSS 配置来自 Redis 中的系统 OSS 配置缓存与默认配置 key。
 - `SYS_OSS_CONFIG` 缓存值只保留 `OssProperties` 所需字段，不写入 `SysOssConfig` 主键、默认状态、审计字段或备注。
+- `endpoint` 支持显式协议（例如 `http://minio:9000`），用于服务端上传/下载；`domain` 是客户端可访问的签名 origin（例如 `https://oss.example.com`）。带协议值不再受 `isHttps` 重复拼接；无协议旧配置仍按 `isHttps` 解析。
+- 两者只接受无 userinfo/path/query/fragment 的 HTTP(S) origin。外部 S3 使用独立根域名，Host 与路径必须原样代理；不支持 `/oss/` 剥离重写签名。私有元数据 `accessPolicy=0`，业务层签名约 120 秒，禁止改成匿名 bucket 解决访问错误。
 
 ## 7. 关键数据流
 
@@ -53,3 +55,4 @@
 
 - 这是库模块，不依赖 `AutoConfiguration.imports` 自动注册。
 - 运行效果强依赖 Redis 中的 OSS 配置数据。
+- [签名回归](../../doc/production-verification.md) 不连接远程存储；实际 TLS、匿名拒绝、过期签名、代理 Host 与已有 bucket 策略必须在 Linux Docker 隔离环境验证。

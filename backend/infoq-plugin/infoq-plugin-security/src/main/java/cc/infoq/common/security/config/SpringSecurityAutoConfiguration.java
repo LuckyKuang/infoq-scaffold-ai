@@ -13,6 +13,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.env.Environment;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -126,6 +127,7 @@ public class SpringSecurityAutoConfiguration {
                 .authenticationEntryPoint(authenticationEntryPoint)
                 .accessDeniedHandler(accessDeniedHandler))
             .authorizeHttpRequests(authorize -> {
+                authorize.requestMatchers(HttpMethod.GET, "/auth/wechat-miniapp/enabled").permitAll();
                 if (!publicMatchers.isEmpty()) {
                     authorize.requestMatchers(publicMatchers.toArray(String[]::new)).permitAll();
                 }

@@ -5,6 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=deploy-paths.sh
 . "${SCRIPT_DIR}/deploy-paths.sh"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
+. "${SCRIPT_DIR}/runtime-env.sh"
 COMPOSE_FILE="${REPO_ROOT}/deploy/docker/docker-compose.yml"
 REDIS_CONF_SOURCE="${REPO_ROOT}/deploy/docker/redis/conf/redis.conf"
 SERVER_CONFIG_TEMPLATE="${REPO_ROOT}/deploy/docker/server/application-prod.yml"
@@ -32,7 +33,7 @@ usage() {
   deploy       prepare + Docker 构建后端镜像 + 启动依赖服务 + 自动初始化数据库 + 启动 infoq-admin
   start        准备配置、启动依赖并同步 SQL/账号/OSS/bucket，再启动现有 infoq-admin
   stop         停止 mysql、redis、minio、infoq-admin
-  restart      重启现有 infoq-admin 容器
+  restart      预检并重新加载受控配置/env，重建 infoq-admin（保留数据和批次）
   status       查看后端相关服务状态
   logs         查看服务日志，默认 infoq-admin，可选 mysql|redis|minio|infoq-admin
 
@@ -60,14 +61,14 @@ load_deploy_env() {
       echo "[backend] 指定的环境文件不存在: ${env_file}" >&2
       exit 1
     fi
-    set -a
-    # shellcheck disable=SC1090
-    . "${env_file}"
-    set +a
+    load_runtime_env_data "${env_file}"
     INFOQ_ENV_FILE="${env_file}"
   fi
 
   INFOQ_OSS_BUCKET="${INFOQ_OSS_BUCKET:-infoq}"
+  if [[ -z "${env_file}" && -n "${INFOQ_PRODUCTION_CONFIG_FILE:-}" ]]; then
+    load_runtime_env_data "${INFOQ_PRODUCTION_CONFIG_FILE}"
+  fi
 }
 
 require_env_vars() {
@@ -104,7 +105,7 @@ require_personalization_env() {
 }
 
 sql_escape() {
-  printf '%s' "$1" | sed "s/\\\\/\\\\\\\\/g; s/'/''/g"
+  printf '%s' "$1" | sed "s/'/''/g"
 }
 
 validate_docker_credential_helper() {
@@ -286,6 +287,40 @@ prepare_dirs() {
   fi
   chmod 0600 "${DEPLOY_ROOT}/server/config/application-prod.yml"
 
+  # Explicit final Spring location keeps validated security values authoritative,
+  # including on upgrades that preserve the application's existing config.
+  deploy_assert_file_target "${DEPLOY_ROOT}/server/config/managed-security.yml"
+  (umask 077; cat > "${DEPLOY_ROOT}/server/config/managed-security.yml" <<'YAML'
+spring:
+  datasource:
+    dynamic:
+      datasource:
+        master:
+          username: ${INFOQ_DB_USERNAME}
+          password: ${INFOQ_DB_PASSWORD}
+  data:
+    redis:
+      password: ${REDIS_PASSWORD}
+security:
+  token:
+    secret: ${SECURITY_TOKEN_SECRET}
+api-decrypt:
+  enabled: true
+  privateKey: ${INFOQ_API_REQUEST_PRIVATE_KEY}
+  publicKey: ${INFOQ_API_RESPONSE_PUBLIC_KEY}
+YAML
+  )
+  chmod 0600 "${DEPLOY_ROOT}/server/config/managed-security.yml"
+  {
+    printf '\noauth:\n  frontend-callback-paths:\n'
+    if [[ "${INFOQ_FRONTEND_TARGET:-all}" == "all" ]]; then
+      printf "    '[%s]': '%soauth/callback'\n" "${INFOQ_VUE_CONTEXT_PATH:-/vue/}" "${INFOQ_VUE_CONTEXT_PATH:-/vue/}"
+      printf "    '[%s]': '%soauth/callback'\n" "${INFOQ_REACT_CONTEXT_PATH:-/react/}" "${INFOQ_REACT_CONTEXT_PATH:-/react/}"
+    else
+      printf "    '[/]': '/oauth/callback'\n"
+    fi
+  } >> "${DEPLOY_ROOT}/server/config/managed-security.yml"
+
   echo "[backend] 使用部署根目录: ${DEPLOY_ROOT}"
   echo "[backend] 目录和配置已同步完成"
 }
@@ -362,7 +397,7 @@ wait_for_mysql() {
   local attempt=1
 
   echo "[backend] 等待 MySQL 就绪..."
-  until compose exec -T mysql mysqladmin ping -h 127.0.0.1 -uroot -p"${MYSQL_ROOT_PASSWORD}" --silent >/dev/null 2>&1; do
+  until compose exec -T mysql sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" exec mysqladmin ping -h 127.0.0.1 -uroot --silent' >/dev/null 2>&1; do
     if (( attempt >= max_attempts )); then
       echo "[backend] MySQL 启动超时" >&2
       exit 1
@@ -377,7 +412,7 @@ wait_for_redis() {
   local attempt=1
 
   echo "[backend] 等待 Redis 就绪..."
-  until compose exec -T redis redis-cli -a "${REDIS_PASSWORD}" ping 2>/dev/null | grep -q '^PONG$'; do
+  until compose exec -T redis sh -c 'REDISCLI_AUTH="$REDIS_PASSWORD" exec redis-cli --no-auth-warning ping' 2>/dev/null | grep -q '^PONG$'; do
     if (( attempt >= max_attempts )); then
       echo "[backend] Redis 启动超时" >&2
       exit 1
@@ -389,12 +424,22 @@ wait_for_redis() {
 
 mysql_query() {
   local sql="$1"
-  compose exec -T mysql mysql -uroot -p"${MYSQL_ROOT_PASSWORD}" -Nse "${sql}" 2>/dev/null | tr -d '\r'
+  local result
+  if ! result="$(printf "SET SESSION sql_mode='NO_BACKSLASH_ESCAPES';\n%s\n" "${sql}" |
+    compose exec -T mysql sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" exec mysql -uroot -N' 2>/dev/null)"; then
+    echo "[backend] MySQL 查询失败（SQL 与凭据未输出），停止部署" >&2
+    return 1
+  fi
+  printf '%s\n' "${result}" | tr -d '\r'
 }
 
 mysql_exec_root() {
   local sql="$1"
-  compose exec -T mysql mysql -uroot -p"${MYSQL_ROOT_PASSWORD}" -e "${sql}"
+  if ! printf "SET SESSION sql_mode='NO_BACKSLASH_ESCAPES';\n%s\n" "${sql}" |
+    compose exec -T mysql sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" exec mysql -uroot' >/dev/null 2>&1; then
+    echo "[backend] MySQL 更新失败（SQL 与凭据未输出），请按受控数据库诊断流程核查" >&2
+    return 1
+  fi
 }
 
 mysql_exec_infoq_file() {
@@ -407,7 +452,7 @@ mysql_exec_infoq_file() {
   fi
 
   echo "[backend] 导入 ${label}: ${sql_file##${REPO_ROOT}/}"
-  compose exec -T mysql mysql -uroot -p"${MYSQL_ROOT_PASSWORD}" infoq < "${sql_file}"
+  compose exec -T mysql sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" exec mysql -uroot infoq' < "${sql_file}"
 }
 
 discover_sql_update_files() {
@@ -612,8 +657,8 @@ sync_oss_config() {
   access_key="$(sql_escape "${MINIO_ROOT_USER}")"
   secret_key="$(sql_escape "${MINIO_ROOT_PASSWORD}")"
   bucket_name="$(sql_escape "${INFOQ_OSS_BUCKET}")"
-  endpoint="minio:9000"
-  domain="$(sql_escape "$(public_base_url)/oss")"
+  endpoint="http://minio:9000"
+  domain="$(sql_escape "${INFOQ_OSS_PUBLIC_ORIGIN%/}")"
   is_https="$(public_base_is_https)"
 
   custom_count="$(mysql_query "SELECT COUNT(*) FROM infoq.sys_oss_config WHERE config_key IN ('minio','image') AND NOT ((access_key='infoq' AND secret_key='infoq123') OR (access_key='${access_key}' AND secret_key='${secret_key}' AND bucket_name='${bucket_name}' AND endpoint='${endpoint}' AND domain='${domain}' AND is_https='${is_https}'));")"
@@ -628,14 +673,14 @@ sync_oss_config() {
     update_filter="config_key IN ('minio','image') AND ((access_key='infoq' AND secret_key='infoq123') OR access_key='${access_key}')"
   fi
 
-  mysql_exec_root "UPDATE infoq.sys_oss_config SET access_key='${access_key}', secret_key='${secret_key}', bucket_name='${bucket_name}', endpoint='${endpoint}', domain='${domain}', is_https='${is_https}', status=CASE WHEN config_key='minio' THEN '0' ELSE status END, update_by=-1, update_time=now() WHERE ${update_filter};"
-  synced_count="$(mysql_query "SELECT COUNT(*) FROM infoq.sys_oss_config WHERE config_key IN ('minio','image') AND access_key='${access_key}' AND secret_key='${secret_key}' AND bucket_name='${bucket_name}' AND endpoint='${endpoint}' AND domain='${domain}' AND is_https='${is_https}';")"
+  mysql_exec_root "UPDATE infoq.sys_oss_config SET access_key='${access_key}', secret_key='${secret_key}', bucket_name='${bucket_name}', endpoint='${endpoint}', domain='${domain}', is_https='${is_https}', access_policy='0', status=CASE WHEN config_key='minio' THEN '0' ELSE status END, update_by=-1, update_time=now() WHERE ${update_filter};"
+  synced_count="$(mysql_query "SELECT COUNT(*) FROM infoq.sys_oss_config WHERE config_key IN ('minio','image') AND access_key='${access_key}' AND secret_key='${secret_key}' AND bucket_name='${bucket_name}' AND endpoint='${endpoint}' AND domain='${domain}' AND is_https='${is_https}' AND access_policy='0';")"
   minio_active_count="$(mysql_query "SELECT COUNT(*) FROM infoq.sys_oss_config WHERE config_key='minio' AND status='0';")"
   if [[ "${synced_count}" != "2" || "${minio_active_count}" != "1" ]]; then
     echo "[backend] OSS 配置同步校验失败: synced=${synced_count}, minio_active=${minio_active_count}" >&2
     exit 1
   fi
-  echo "[backend] OSS 配置已同步: domain=$(public_base_url)/oss, bucket=${INFOQ_OSS_BUCKET}"
+  echo "[backend] OSS 配置已同步: domain=${INFOQ_OSS_PUBLIC_ORIGIN%/}, bucket=${INFOQ_OSS_BUCKET}"
 }
 
 hash_admin_password() {
@@ -686,21 +731,8 @@ sync_admin_credentials() {
 }
 
 ensure_minio_bucket() {
-  local max_attempts=60
-  local attempt=1
-
-  require_command docker
-  validate_docker_credential_helpers
-  echo "[backend] 等待 MinIO 就绪并确认 bucket..."
-  until docker run --rm --network container:minio --entrypoint /bin/sh minio/mc:latest -c 'mc alias set local "$1" "$2" "$3" >/dev/null && mc mb --ignore-existing "local/$4" >/dev/null && mc anonymous set download "local/$4" >/dev/null' sh "http://127.0.0.1:9000" "${MINIO_ROOT_USER}" "${MINIO_ROOT_PASSWORD}" "${INFOQ_OSS_BUCKET}"; do
-    if (( attempt >= max_attempts )); then
-      echo "[backend] MinIO bucket 初始化超时" >&2
-      exit 1
-    fi
-    attempt=$((attempt + 1))
-    sleep 2
-  done
-  echo "[backend] MinIO bucket 已确认: ${INFOQ_OSS_BUCKET}"
+  require_command node
+  node "${SCRIPT_DIR}/minio-policy.mjs" ensure --execute
 }
 
 ensure_database_initialized() {
@@ -716,15 +748,29 @@ ensure_database_initialized() {
   echo "[backend] 数据库初始化和增量 SQL 校验完成"
 }
 
+verify_volume_users() {
+  local services="$1"
+  local dir
+  local args=(--services "${services}" --execute)
+  for dir in "${INFOQ_NEW_DEPLOY_DIRS[@]:-}"; do
+    if [[ -d "${dir}" && -z "$(find "${dir}" -mindepth 1 -maxdepth 1 -print -quit)" ]]; then
+      args+=(--new-dir "${dir}")
+    fi
+  done
+  INFOQ_DEPLOY_ROOT="${DEPLOY_ROOT}" node "${SCRIPT_DIR}/prepare-volume-users.mjs" "${args[@]}"
+}
+
 start_dependencies() {
   require_runtime_env
+  compose pull mysql redis minio
+  verify_volume_users mysql,redis,minio,infoq-admin
   compose up -d mysql redis minio
   wait_for_mysql
   wait_for_redis
   ensure_database_initialized
   ensure_mysql_app_user
-  sync_oss_config
   ensure_minio_bucket
+  sync_oss_config
 }
 
 deploy_backend() {
@@ -746,7 +792,7 @@ start_backend() {
   prepare_dirs
   prepare_existing_deploy_id
   start_dependencies
-  compose start infoq-admin
+  compose up -d --no-build --no-deps --force-recreate infoq-admin
   echo "[backend] 服务已启动，访问端口: 9090"
 }
 
@@ -758,9 +804,11 @@ stop_backend() {
 
 restart_backend() {
   require_runtime_env
+  prepare_dirs
   resolve_compose_command
   prepare_existing_deploy_id
-  compose restart infoq-admin
+  verify_volume_users infoq-admin
+  compose up -d --no-build --no-deps --force-recreate infoq-admin
 }
 
 status_backend() {
@@ -777,6 +825,15 @@ show_logs() {
 }
 
 load_deploy_env
+
+case "${1:-}" in
+  prepare|package|build-image|deploy|start|restart)
+    require_command node
+    node "${REPO_ROOT}/tools/production_config.mjs" check --scope deploy
+    resolve_deploy_root
+    INFOQ_DEPLOY_ROOT="${DEPLOY_ROOT}" node "${SCRIPT_DIR}/render-gateway.mjs" check
+    ;;
+esac
 
 case "${1:-}" in
   prepare)

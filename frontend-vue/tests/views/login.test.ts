@@ -12,7 +12,7 @@ const loginMocks = vi.hoisted(() => {
     currentRoute: {
       value: {
         query: {
-          redirect: encodeURIComponent('/system/menu')
+          redirect: '/system/menu'
         }
       }
     },
@@ -94,6 +94,8 @@ describe('views/login', () => {
     });
     loginMocks.userLogin.mockResolvedValue(undefined);
     loginMocks.formValidate.mockImplementation((cb: (valid: boolean, fields?: unknown) => void) => cb(true, {}));
+    loginMocks.currentRoute.value.query.redirect = '/system/menu';
+    vi.stubEnv('BASE_URL', '/');
   });
 
   const mountView = () =>
@@ -111,6 +113,7 @@ describe('views/login', () => {
           'el-checkbox': passthroughStub('ElCheckbox'),
           'el-button': ElButtonStub,
           'el-divider': passthroughStub('ElDivider'),
+          'el-alert': { props: ['title'], template: '<div role="alert">{{ title }}</div>' },
           'router-link': true,
           'lang-select': true,
           'svg-icon': true
@@ -146,6 +149,44 @@ describe('views/login', () => {
     expect(loginMocks.getCodeImg).toHaveBeenCalledTimes(2);
     expect(loginMocks.routerPush).not.toHaveBeenCalled();
   });
+
+  it('strips the deployment prefix once and preserves encoded query values after login', async () => {
+    vi.stubEnv('BASE_URL', '/vue/');
+    loginMocks.currentRoute.value.query.redirect = '/vue/user/profile?name=a%26b#identity';
+    const wrapper = mountView();
+    await flushPromises();
+    await wrapper.find('button.login-submit-btn').trigger('click');
+    await flushPromises();
+    expect(loginMocks.routerPush).toHaveBeenCalledExactlyOnceWith('/user/profile?name=a%26b#identity');
+  });
+
+  it('rejects an array query before login', async () => {
+    const query = loginMocks.currentRoute.value.query as Record<string, unknown>;
+    query.redirect = ['/index', '/user/profile'];
+    const wrapper = mountView();
+    await flushPromises();
+    await wrapper.find('button.login-submit-btn').trigger('click');
+    await flushPromises();
+    expect(loginMocks.userLogin).not.toHaveBeenCalled();
+    expect(wrapper.get('[role="alert"]').text()).toBe('login.invalidRedirect');
+  });
+
+  it.each(['https://evil.test', '//evil.test', '/%252fevil.test', '/path%zz', '/%0apath', ''])(
+    'rejects %j before password login and OAuth authorization',
+    async (redirect) => {
+      loginMocks.currentRoute.value.query.redirect = redirect;
+      loginMocks.getOAuthProviders.mockResolvedValueOnce({ data: [{ providerCode: 'github', providerName: 'GitHub' }] });
+      const wrapper = mountView();
+      await flushPromises();
+      await wrapper.find('button.login-submit-btn').trigger('click');
+      await flushPromises();
+      expect(loginMocks.userLogin).not.toHaveBeenCalled();
+      expect(loginMocks.routerPush).not.toHaveBeenCalled();
+      expect(wrapper.get('[role="alert"]').text()).toBe('login.invalidRedirect');
+      await wrapper.findAll('button').at(-1)!.trigger('click');
+      expect(wrapper.get('[role="alert"]').text()).toBe('login.invalidRedirect');
+    }
+  );
 
   it('stores remembered credentials when rememberMe is true', async () => {
     const wrapper = mountView();

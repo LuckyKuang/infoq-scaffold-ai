@@ -58,16 +58,16 @@ class OAuthControllerTest {
     }
 
     @Test
-    @DisplayName("callback: should propagate service exception message")
-    void callbackShouldPropagateServiceExceptionMessage() {
+    @DisplayName("callback: should hide sensitive service exception message")
+    void callbackShouldHideServiceExceptionMessage() {
         when(oauthLoginService.handleCallback(eq("github"), any(), eq("")))
             .thenThrow(new ServiceException("business failure"));
-        when(oauthLoginService.buildErrorRedirect("business failure")).thenReturn("/oauth/callback?message=business");
+        when(oauthLoginService.buildErrorRedirect("auth.oauth.callback.failed")).thenReturn("/oauth/callback?message=generic");
 
         RedirectView view = controller.callback("github", Map.of("code", "code-1", "state", "state-1"), null);
 
-        assertEquals("/oauth/callback?message=business", view.getUrl());
-        verify(oauthLoginService).buildErrorRedirect("business failure");
+        assertEquals("/oauth/callback?message=generic", view.getUrl());
+        verify(oauthLoginService).buildErrorRedirect("auth.oauth.callback.failed");
     }
 
     @Test

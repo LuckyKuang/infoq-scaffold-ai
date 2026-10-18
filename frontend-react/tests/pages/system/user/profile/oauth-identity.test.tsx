@@ -1,10 +1,11 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import OauthIdentityPanel from '@/pages/system/user/profile/oauthIdentity';
 
 const oauthIdentityMocks = vi.hoisted(() => ({
   getOAuthProviders: vi.fn(),
   listProfileOauthIdentities: vi.fn(),
+  getProfileOauthBindAuthorizeUrl: vi.fn(),
   unbindProfileOauthIdentity: vi.fn()
 }));
 
@@ -15,10 +16,11 @@ vi.mock('@/api/login', () => ({
 vi.mock('@/api/system/user', () => ({
   listProfileOauthIdentities: oauthIdentityMocks.listProfileOauthIdentities,
   unbindProfileOauthIdentity: oauthIdentityMocks.unbindProfileOauthIdentity,
-  getProfileOauthBindAuthorizeUrl: vi.fn()
+  getProfileOauthBindAuthorizeUrl: oauthIdentityMocks.getProfileOauthBindAuthorizeUrl
 }));
 
 describe('pages/system/user/profile/oauthIdentity', () => {
+  afterEach(() => vi.unstubAllEnvs());
   beforeEach(() => {
     vi.clearAllMocks();
     oauthIdentityMocks.getOAuthProviders.mockResolvedValue({
@@ -73,5 +75,19 @@ describe('pages/system/user/profile/oauthIdentity', () => {
       expect(oauthIdentityMocks.unbindProfileOauthIdentity).toHaveBeenCalledWith(101, undefined);
       expect(oauthIdentityMocks.listProfileOauthIdentities).toHaveBeenCalledTimes(2);
     });
+  });
+
+  it.each(['/', '/react/'])('requests binding with a site-relative target under %s', async (base) => {
+    vi.stubEnv('BASE_URL', base);
+    // 保持请求 pending，断言真实表单事件提交参数，不触发 jsdom 不支持的外部导航。
+    oauthIdentityMocks.getProfileOauthBindAuthorizeUrl.mockReturnValue(new Promise(() => {}));
+    render(<OauthIdentityPanel />);
+    const bindButton = await screen.findByRole('button', { name: /绑定第三方账号/ });
+    await waitFor(() => expect(bindButton).toBeEnabled());
+    fireEvent.click(bindButton);
+    fireEvent.mouseDown(screen.getByRole('combobox'));
+    fireEvent.click(await screen.findByText('GitHub', { selector: '.ant-select-item-option-content' }));
+    fireEvent.click(screen.getByRole('button', { name: 'OK' }));
+    await waitFor(() => expect(oauthIdentityMocks.getProfileOauthBindAuthorizeUrl).toHaveBeenCalledExactlyOnceWith('github', `${base}user/profile`));
   });
 });

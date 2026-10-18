@@ -12,6 +12,7 @@
 4. 管理端页面上的用户、角色、菜单、字典、公告、OSS、定时任务等真实操作，改用 `test-cli` 的页面运维门禁（`skills/test-cli/references/ops/page-ops-guardrails.md`）。
 5. 后端接口、Mapper XML、Redisson OSS 或运行态 smoke 验证改用 `tools/verify`；登录/鉴权验证改用 `test-cli` 的验证码种子登录。
 6. 生产或共享环境数据变更、SQL 迁移、批量修复，必须联动 `docs/DELIVERY-WORKFLOW.md`。
+7. Linux Docker 隔离备份完整性、恢复、应用回滚、告警与容量测量使用[生产保障与隔离恢复](PRODUCTION-OPS.md)的 `tools/verify/production_ops.mjs`；默认预览，写入须显式 `--execute`，只接受已核验的隔离 owned project，不代替共享环境审批。
 
 ## 执行顺序
 
@@ -55,6 +56,8 @@ tmp/data-ops/
 MySQL DDL 可能隐式提交，不能用外层事务或 `ROLLBACK` 承诺撤销建表、改列或删表。先在兼容数据副本上验证锁等待、执行耗时、应用新旧版本兼容及恢复步骤；大表写入按有界批次执行，保留稳定筛选条件、预期与实际影响行数。超出目标集、行数不符、锁等待/延迟超预算或关键验证失败时停止后续批次，不盲目重跑。
 
 备份必须覆盖数据库及关联对象文件/配置，限制访问并确认可恢复；仅有备份文件不等于恢复演练通过。缓存失效、权限/会话索引、Quartz 发布批次等后续动作只针对已枚举对象执行，不全库 flush。恢复数据可能覆盖发布后的新写入，必须单独确认恢复点与数据损失窗口，不能把应用 jar 回滚当成数据回滚。
+
+受控生产部署的 bucket 策略与目录权限迁移见[生产配置与安全迁移](../deploy/PRODUCTION.md)。先枚举旧策略/owner/mode、实际镜像 UID/GID、挂载与备份，再显式执行；未知归属或恢复失败必须阻塞，不能以公开 bucket 或 `0777` 绕过。隔离恢复必须核数据库字段/关联、对象 hash、账号权限与业务 API；备份年龄不是 RPO，应用镜像回滚不自动逆向 SQL。目标 Linux Docker 缺失时，fixture 回归与真实演练分列记录。
 
 只读诊断同样需要资源预算：使用最小权限账号、参数化或已审阅的查询、限定字段/行数与超时，避免生产全表扫描、无界导出或 Redis `KEYS *`。MCP 的只读环境变量和工具白名单不代替数据库/Redis ACL；具体配置边界见 `docs/MCP-SERVERS.md`。
 

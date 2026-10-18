@@ -1,6 +1,9 @@
 --- # 生产运行与优雅停机
 server:
   shutdown: graceful
+api-decrypt:
+  private-key: ${INFOQ_API_REQUEST_PRIVATE_KEY}
+  public-key: ${INFOQ_API_RESPONSE_PUBLIC_KEY}
 spring:
   lifecycle:
     timeout-per-shutdown-phase: 30s

@@ -15,6 +15,7 @@ const resources = {
         switchForgotPasswordPage: '忘记密码',
         oauthDivider: '第三方登录',
         oauthProvider: '使用 {{provider}} 登录',
+        invalidRedirect: '登录回跳地址无效，请从站内页面重新进入',
         login: '登 录',
         logging: '登 录 中...',
         rule: {
@@ -171,6 +172,7 @@ const resources = {
         switchForgotPasswordPage: 'Forgot password',
         oauthDivider: 'Third-party login',
         oauthProvider: 'Continue with {{provider}}',
+        invalidRedirect: 'Invalid login redirect. Please return from an application page',
         login: 'Login',
         logging: 'Signing in...',
         rule: {

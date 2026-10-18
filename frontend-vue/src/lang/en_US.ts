@@ -16,6 +16,7 @@ export default {
     switchForgotPasswordPage: 'Forgot password',
     oauthDivider: 'Third-party login',
     oauthProvider: 'Continue with {provider}',
+    invalidRedirect: 'Invalid login redirect. Please return from an application page',
     rule: {
       username: {
         required: 'Please enter your account'

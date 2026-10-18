@@ -60,13 +60,26 @@
 - 并且不得修改其他用户的阅读或删除状态
 
 ### 要求：事务后实时 Push
-系统必须在消息与接收人记录成功提交后，才尝试将实时事件发送到可用通道。
 
-#### 场景：Push 通道不可用
+系统必须仅在消息与接收记录成功提交后执行异步 Push；关闭、通道不可用、可证实离线或发送异常必须不反转已提交的公告和持久化消息，且必须记录安全、准确的结果分类。
 
-- 当 Push 关闭、通道未连接或发送失败时
-- 则消息持久化和调用方主业务必须保持成功
-- 并且系统必须记录不包含消息正文的失败分类、消息 ID、通道和接收人数
+#### 场景：Push 关闭或无可用通道
+
+- 当提交后事件发生，而 Push 插件关闭或没有可用通道。
+- 则系统必须保持主业务成功，记录 disabled 或 channel_unavailable 等明确分类，以及 correlation ID、message ID、接收人数与通道状态。
+- 并且日志必须不包含消息正文、token 或用户明细。
+
+#### 场景：通道异常
+
+- 当SSE 或 WebSocket 通道发送抛出异常。
+- 则系统必须记录失败通道、异常类别及关联字段；一个通道的结果必须不冒充其他通道成功。
+- 并且提交后的持久化消息必须仍可按用户权限读取，异步异常必须不反转原事务。
+
+#### 场景：发布与客户端投递的证据不同
+
+- 当仅能证实向 Redis/通道发布成功而不能证实客户端收到。
+- 则系统必须记录 published 或等价的准确状态，必须 不宣称 delivered。
+- 并且连接状态可确定为离线时必须记录 offline；跨节点或状态不可确定时必须记录 unknown，必须 不把未知伪装为在线或离线。
 
 #### 场景：Push 插件关闭
 
@@ -76,6 +89,6 @@
 
 ## 实现符合性与待补证据
 
-`SysNoticeServiceImpl`、`SysMessageServiceImpl` 与 `SysMessagePushListener` 已采用公告事务内持久化和 `AFTER_COMMIT` 异步 Push；正常用户集合为空时不会创建无接收人的消息。当前 `SysMessagePushListener` 的异常日志含 correlation ID、消息 ID、接收人数与异常类别，缺少失败通道；Push 关闭时直接跳过，不记录失败分类。因此上文完整失败可观测性要求尚未满足，不能据此宣称通知链路已达生产验收。该业务实现缺口需单独修复及验证，本次文档审计不修改 Java 或弱化要求。
+`SysNoticeServiceImpl`、`SysMessageServiceImpl` 与 `SysMessagePushListener` 使用公告事务内持久化和 `AFTER_COMMIT` 异步 Push；正常用户集合为空时不创建无接收人的消息。Push 逐通道记录安全的发布/失败分类；无客户端 ACK 时只报告发布，连接状态无法确认时保持 unknown。WebSocket 接收人节点与心跳核验使用有限批量 Redis 操作，不逐人查询。
 
 消息接口以当前登录用户限制范围：`GET /system/message/list`、`GET /system/message/unread-count`、`POST /system/message/{messageId}/read`、`POST /system/message/read-all`、`DELETE /system/message/{messageIds}`。真实离线读取、通道故障、容量与告警演练仍需在隔离运行环境补证据。

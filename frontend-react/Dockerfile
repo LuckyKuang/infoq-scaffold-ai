@@ -1,4 +1,5 @@
-# 前端构建阶段：使用 Node 24.18.0 LTS 构建
+# syntax=docker/dockerfile:1.7
+# 从仓库根 context 构建；生产秘密仅通过 BuildKit secret 挂载。
 FROM node:24.18.0 AS builder
 
 LABEL maintainer="Pontus"
@@ -7,7 +8,7 @@ WORKDIR /infoq/react
 
 RUN corepack enable pnpm
 
-COPY package.json pnpm-lock.yaml ./
+COPY frontend-react/package.json frontend-react/pnpm-lock.yaml ./
 
 RUN pnpm install --frozen-lockfile --network-concurrency=2
 
@@ -22,9 +23,16 @@ ENV VITE_APP_CONTEXT_PATH=${VITE_APP_CONTEXT_PATH} \
     CI=true \
     NODE_OPTIONS=--max-old-space-size=1280
 
-COPY . ./
+COPY frontend-react/ ./
+COPY tools/production_config.mjs /infoq/tools/production_config.mjs
+COPY tools/production_config.d.mts /infoq/tools/production_config.d.mts
+COPY deploy/bin/render-gateway.mjs /infoq/deploy/bin/render-gateway.mjs
 
-RUN pnpm run build:prod
+# 自动生成的浏览器配置摘要参与 RUN 缓存；绝不通过 ARG 传密钥。
+ARG INFOQ_FRONTEND_CONFIG_DIGEST
+RUN --mount=type=secret,id=production_config,required=true \
+    INFOQ_FRONTEND_CONFIG_DIGEST=${INFOQ_FRONTEND_CONFIG_DIGEST} \
+    INFOQ_PRODUCTION_CONFIG_FILE=/run/secrets/production_config pnpm run build:prod
 
 # 运行阶段：使用 nginx 1.30.3 构建
 FROM nginx:1.30.3

@@ -35,15 +35,16 @@ public class WebSocketTopicListener implements ApplicationRunner, Ordered {
     }
 
     void dispatchMessage(cc.infoq.common.websocket.dto.WebSocketMessageDto message) {
-        log.info("WebSocket主题订阅收到消息session keys={} message={}", message.getSessionKeys(), message.getMessage());
+        log.debug("WebSocket topic received, correlationId:{}, messageId:{}, recipients:{}",
+            message.getCorrelationId(), message.getMessageId(), message.getSessionKeys() == null ? 0 : message.getSessionKeys().size());
         if (CollUtil.isNotEmpty(message.getSessionKeys())) {
             message.getSessionKeys().forEach(key -> {
                 if (WebSocketSessionHolder.existSession(key)) {
-                    WebSocketUtils.sendMessage(key, message.getMessage());
+                    WebSocketUtils.sendPublishedMessage(key, message);
                 }
             });
             return;
         }
-        WebSocketSessionHolder.getSessionsAll().forEach(key -> WebSocketUtils.sendMessage(key, message.getMessage()));
+        WebSocketSessionHolder.getSessionsAll().forEach(key -> WebSocketUtils.sendPublishedMessage(key, message));
     }
 }

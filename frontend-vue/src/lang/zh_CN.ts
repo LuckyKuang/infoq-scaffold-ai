@@ -16,6 +16,7 @@ export default {
     switchForgotPasswordPage: '忘记密码',
     oauthDivider: '第三方登录',
     oauthProvider: '使用 {provider} 登录',
+    invalidRedirect: '登录回跳地址无效，请从站内页面重新进入',
     rule: {
       username: {
         required: '请输入您的账号'

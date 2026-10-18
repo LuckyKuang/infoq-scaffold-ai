@@ -116,7 +116,7 @@ export const dynamicRoutes: RouteRecordRaw[] = [];
  * 创建路由
  */
 const router = createRouter({
-  history: createWebHistory(import.meta.env.VITE_APP_CONTEXT_PATH),
+  history: createWebHistory(import.meta.env.BASE_URL),
   routes: constantRoutes,
   // 刷新时，滚动条位置还原
   scrollBehavior(to, from, savedPosition) {

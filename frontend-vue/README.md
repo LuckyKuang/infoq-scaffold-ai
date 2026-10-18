@@ -62,7 +62,7 @@ Windows 可直接使用上面的 pnpm 命令。`bin/package.bat`、`bin/run-web.
 
 `VITE_APP_ENCRYPT=true` 时，dev/build 进程必须取得与目标后端对应的 `VITE_APP_RSA_PUBLIC_KEY` / `VITE_APP_RSA_PRIVATE_KEY`。浏览器中的私钥不能保护服务端秘密，生产仍须 HTTPS 与受控凭据。构建前执行 `node tools/validate_utf8.mjs`。
 
-OAuth 绑定页当前提交绝对 redirect，与后端相对路径校验冲突，需要独立修复和真实 Provider 回归。Vue Router 的 history base 已使用 `VITE_APP_CONTEXT_PATH`，但子路径刷新、登录回跳及代理仍需分别实测；构建、静态矩阵和路由 smoke 不能替代这些证据。具体边界见 [测试政策](../docs/TESTING.md) 第 6.5–6.6 节。
+Vue Router history 与 Vite 的 `BASE_URL` 一致，支持根及 `/vue/` 等受控子路径。密码/OAuth 登录、回调和身份绑定统一验证站内回跳；API 使用无 origin、带当前前缀一次的浏览器路径，应用内导航由 Router base 生成最终地址。空值、数组、错码、协议相对路径、反斜杠、控制字符和点段在登录/授权/ticket 兑换前明确拒绝；安全 query/hash 保留原编码。真实 Provider、目标 Linux nginx 与生产登录仍需分别验收，构建或 HTTP 替身不能替代这些证据。具体边界见 [测试政策](../docs/TESTING.md) 第 6.5–6.6 节。
 
 ## P1-P3 身份与消息边界
 

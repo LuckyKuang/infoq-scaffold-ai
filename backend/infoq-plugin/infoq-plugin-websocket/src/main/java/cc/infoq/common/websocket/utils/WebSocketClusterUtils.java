@@ -10,6 +10,8 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RSet;
+import org.redisson.api.RBatch;
+import org.redisson.api.RFuture;
 import org.springframework.core.env.Environment;
 
 import java.lang.management.ManagementFactory;
@@ -156,31 +158,37 @@ public class WebSocketClusterUtils {
         if (sessionKeys == null || sessionKeys.isEmpty()) {
             return routes;
         }
-        for (Long sessionKey : new LinkedHashSet<>(sessionKeys)) {
-            if (sessionKey == null) {
-                continue;
+        RBatch registryBatch = RedisUtils.getClient().createBatch();
+        Map<Long, RFuture<Set<String>>> registrations = new LinkedHashMap<>();
+        sessionKeys.stream().filter(java.util.Objects::nonNull).distinct().forEach(userId ->
+            registrations.put(userId, registryBatch.<String>getSet(userNodeSetKey(userId)).readAllAsync()));
+        if (registrations.isEmpty()) {
+            return routes;
+        }
+        registryBatch.execute();
+        Set<String> nodes = new LinkedHashSet<>();
+        registrations.values().forEach(result -> nodes.addAll(result.toCompletableFuture().join()));
+        if (nodes.isEmpty()) return routes;
+        RBatch heartbeatBatch = RedisUtils.getClient().createBatch();
+        Map<String, RFuture<Boolean>> heartbeats = new LinkedHashMap<>();
+        nodes.stream().filter(StrUtil::isNotBlank).forEach(nodeId ->
+            heartbeats.put(nodeId, heartbeatBatch.getBucket(nodeHeartbeatKey(nodeId)).isExistsAsync()));
+        heartbeatBatch.execute();
+        RBatch cleanupBatch = RedisUtils.getClient().createBatch();
+        boolean cleanupNeeded = false;
+        for (var registration : registrations.entrySet()) {
+            Set<String> staleNodes = new LinkedHashSet<>();
+            for (String nodeId : registration.getValue().toCompletableFuture().join()) {
+                if (heartbeats.containsKey(nodeId) && heartbeats.get(nodeId).toCompletableFuture().join()) {
+                    routes.computeIfAbsent(nodeId, key -> new ArrayList<>()).add(registration.getKey());
+                } else staleNodes.add(nodeId);
             }
-            RSet<String> nodeSet = RedisUtils.getClient().getSet(userNodeSetKey(sessionKey));
-            Set<String> nodeIds = nodeSet.readAll();
-            if (nodeIds == null || nodeIds.isEmpty()) {
-                continue;
-            }
-            List<String> staleNodeIds = new ArrayList<>();
-            for (String nodeId : nodeIds) {
-                if (isNodeAlive(nodeId)) {
-                    routes.computeIfAbsent(nodeId, key -> new ArrayList<>()).add(sessionKey);
-                } else {
-                    staleNodeIds.add(nodeId);
-                }
-            }
-            if (!staleNodeIds.isEmpty()) {
-                staleNodeIds.forEach(nodeSet::remove);
-                if (nodeSet.isEmpty()) {
-                    nodeSet.delete();
-                }
-                log.info("清理WebSocket失效节点注册, sessionKey={}, staleNodes={}", sessionKey, staleNodeIds);
+            if (!staleNodes.isEmpty()) {
+                cleanupBatch.getSet(userNodeSetKey(registration.getKey())).removeAllAsync(staleNodes);
+                cleanupNeeded = true;
             }
         }
+        if (cleanupNeeded) cleanupBatch.execute();
         return routes;
     }
 

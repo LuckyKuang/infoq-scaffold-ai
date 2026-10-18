@@ -76,8 +76,8 @@ node skills/release-cli/scripts/release_cli.mjs tag --version 3.0.1 --execute
 
 1. `node tools/check_release_version.mjs --tag "$GITHUB_REF_NAME"`。
 2. 后端单测与 `clean package -P prod`。
-3. Vue / React `pnpm install --frozen-lockfile` 与 `pnpm run build:prod`。
-4. 上传 `infoq-admin.jar`、`vue-dist.tar.gz`、`react-dist.tar.gz`。
+3. Vue / React 在受保护 `production-build` environment 获取 `FRONTEND_PRODUCTION_CONFIG`，按 5.1 的四向 RSA 规则预检后执行 `pnpm install --frozen-lockfile` 与 `pnpm run build:prod`。缺少受控输入直接失败。
+4. `node tools/production_config.mjs check-artifact --dir <workspace>/dist` 检查实际协议密钥、指纹、无服务端私钥/仓库示例、可发布来源，再上传 `infoq-admin.jar`、`vue-dist.tar.gz`、`react-dist.tar.gz`；`always()` 清理 runner 内的受控配置。
 5. 按 `backend-jar`、`vue-dist`、`react-dist` 下载到 `release-assets/` 下各自同名目录，运行 `node skills/release-cli/scripts/verify_release_assets.mjs release-assets`，要求每个目录仅含对应非空普通文件；缺失、跨 artifact 重名、错误名称、额外、空资产和符号链接失败，避免合并下载覆盖重名文件。
 6. 使用精确三文件列表和 GitHub 自动生成说明创建正式 Release。
 
@@ -122,20 +122,56 @@ Tag workflow 只发布源码与构建产物；镜像推送与实际部署是独�
 
 ### 5.1 生产构建配置边界
 
-当前 workflow 未注入 `VITE_APP_RSA_PUBLIC_KEY` / `VITE_APP_RSA_PRIVATE_KEY`，前端构建使用仓库 `.env.production`，其中的密钥是示例值。构建通过及资产发布不能证明这些包可用于生产；在确认独立受控密钥、与后端匹配及 HTTPS 前，生产部署保持阻塞。
+生产 `vite build --mode production` 现在默认严格：仓库 `.env.production` 只保存公共构建设置，两项 RSA 值留空。构建从绝对路径 `INFOQ_PRODUCTION_CONFIG_FILE` 读取权限仅限所有者的普通 UTF-8 dotenv 文件；受控 runner 也可显式声明 `INFOQ_CONFIG_SOURCE=managed-environment` 并通过进程环境提供输入。文件按数据解析，不执行 shell；不在命令行、日志或仓库提交中出现秘密。
 
-受控重新构建时，由密钥管理器或受控 runner 将 `VITE_APP_ENCRYPT=true`、`VITE_APP_RSA_PUBLIC_KEY`、`VITE_APP_RSA_PRIVATE_KEY` 注入实际运行 pnpm 的进程环境，优先于 Vite 的 `.env.production`。两项 RSA 值沿用对应工作区示例的密钥内容格式，使用独立生产值，不在命令行或日志打印。无需改写受管 `.env.production`；也不要把新值提交到仓库。在同一受控终端核验字段存在后构建：
+必需输入为 `VITE_APP_ENCRYPT=true` 及两组独立 RSA，全部至少 2048 位，仅接受单行 Base64 DER（public SPKI/private PKCS8），拒绝 PEM、字面转义或多行值，确保 Node 预检、浏览器 JSEncrypt 与后端使用同一格式：
+
+| 方向 | 浏览器构建输入 | 后端输入 |
+| --- | --- | --- |
+| 请求加密/解密 | `VITE_APP_RSA_PUBLIC_KEY` | `INFOQ_API_REQUEST_PRIVATE_KEY` |
+| 响应加密/解密 | `VITE_APP_RSA_PRIVATE_KEY` | `INFOQ_API_RESPONSE_PUBLIC_KEY` |
+
+前端公钥与前端私钥属于两组不同的配对；复用一组会把服务端请求私钥放入浏览器，所以明确拒绝。构建器只将前端两项注入 Vite，后端私钥仅用于内存中的配对核验。Docker 从仓库根 context 构建，使用 `--secret id=production_config,src=<受控绝对路径>`；不使用普通 ARG/ENV 传秘密，最终 nginx 镜像只复制 `dist/`。Compose 通过同名 build secret 接线。BuildKit 不因 secret 内容变化自动清除缓存，部署 helper 会为每次构建自动计算非秘密 `INFOQ_FRONTEND_CONFIG_DIGEST` build ARG 并复核构建后输入；直接 Docker/Compose 排障也必须按 [deploy/DOCKER.md](../deploy/DOCKER.md#11-直接使用-docker-compose-cli) 的命令即时计算，不手工保存或复用旧摘要。
+
+Release workflow 的 `package-admin` 使用 GitHub environment **`production-build`**，必须预先配置保护规则、受信任的 tag/审批条件与该 environment 的 **`FRONTEND_PRODUCTION_CONFIG` secret**（内容为上述受控 dotenv，而非文件路径）。只有 `VITE_APP_ENCRYPT` 与四项 RSA 就能进行前端预检；可附 `INFOQ_CONFIG_SOURCE=controlled-file`，不能标记为 `isolated-test`。维护者需单独确认来源、轮换及与目标后端匹配；工具不能从文件格式证明密钥管理器配置正确。不要把目标环境服务端私钥交给不可信 PR runner。
+
+受控本地重新构建示例（文件已由密钥管理器准备，不在命令中填秘密）：
 
 ```bash
-node -e "for (const key of ['VITE_APP_RSA_PUBLIC_KEY','VITE_APP_RSA_PRIVATE_KEY']) { if (!process.env[key]?.trim()) throw new Error('missing '+key); } if (process.env.VITE_APP_ENCRYPT !== 'true') throw new Error('VITE_APP_ENCRYPT must be true');"
-pnpm --dir frontend-vue install --frozen-lockfile
-pnpm --dir frontend-react install --frozen-lockfile
+export INFOQ_PRODUCTION_CONFIG_FILE=/controlled/infoq/production-build.env
+node tools/production_config.mjs check --scope frontend
 node tools/validate_utf8.mjs
 pnpm --dir frontend-vue run build:prod
+node tools/production_config.mjs check-artifact --dir frontend-vue/dist
 pnpm --dir frontend-react run build:prod
+node tools/production_config.mjs check-artifact --dir frontend-react/dist
 ```
 
-上述字段存在检查不证明密钥有效、独立或匹配；部署前仍须按 `deploy/VERIFICATION.md` 验证真实登录、请求/响应加解密与 HTTPS。浏览器包中包含的私钥不能承担服务端秘密保护。受控构建产物需要单独保留候选 SHA、配置来源标识和校验摘要，不覆盖已发布历史资产。
+`dist/production-build.json` 只记录 context path、来源标识、两项公钥指纹和浏览器配置摘要，不记录密钥。摘要只取浏览器输入与来源标识，不含时间、文件位置、后端请求私钥或密码；路径/API/端口独立通过 Docker ARG 参与缓存。产物检查还扫描实际包中的前端密钥、已知示例片段与服务端请求私钥，拒绝符号链接、超限/缺入口和指纹不符。静态扫描不能替代真实登录、HTTPS 与加解密验证；浏览器内响应私钥始终是可公开的协议材料，不能承担服务端秘密保护。
+
+#### 隔离构建回归 SOP
+
+触发条件：生产预检、前端 Dockerfile/Vite、RSA/env 或 Release 输入变更。先生成本轮新输入，再主流程预检、定向测试、实际 build 和产物检查：
+
+```bash
+node tools/production_fixture.mjs --output-dir tmp/production-readiness/build-example
+# 使用生成器返回的绝对 configFile 路径；不要打印其内容。
+export INFOQ_PRODUCTION_CONFIG_FILE="$PWD/tmp/production-readiness/build-example/production.env"
+node tools/production_config.mjs check --scope deploy
+node tools/test_production_config.mjs
+node tools/test_production_crypto.mjs
+node tools/test_frontend_build_cache.mjs
+VITE_APP_CONTEXT_PATH=/react/ pnpm --dir frontend-react run build:prod
+node tools/production_config.mjs check-artifact --dir frontend-react/dist --allow-isolated
+VITE_APP_CONTEXT_PATH=/vue/ pnpm --dir frontend-vue run build:prod
+node tools/production_config.mjs check-artifact --dir frontend-vue/dist --allow-isolated
+```
+
+`test_production_crypto.mjs` 需要两工作区已安装依赖，使用各自实际 JSEncrypt 对两方向做加解密；可用 `--client react|vue` 定向，不替代后端 Hutool 测试。生成器要求 `openssl`，仅写仓库 `tmp/` 下全新目录，生成随机独立凭据、两组 2048 位 RSA 和双域自签证书，拒绝覆盖；不是生产配置生成器。fixture 保持严格加密与四向核验，`production-build.json` 明确 `deployable=false`。只有回归可用 `--allow-isolated`；Release 从不传该参数。禁止以关闭加密、恢复示例密钥、伪造来源标识或删除失败检查通过门禁。Docker builder/镜像层检查仍需在 Linux Docker 实机执行，模拟 COPY 路径仅证明源码依赖闭合。证据保存在 `tmp/production-readiness/build/`，自签证书和测试产物不发布。
+
+`test_frontend_build_cache.mjs` 仅依赖 Node 与 Bash，验证稳定摘要、双方向轮换、挂载输入与摘要匹配，以及真实部署函数在旧摘要、构建失败和途中轮换时的行为；命令替身不证明真实 BuildKit 缓存。Dockerfile/受控输入链路变更后，在隔离 Linux Docker 中保持缓存依次构建密钥 A/B，检查新包指纹和实际密钥片段变为 B、A 与服务端私钥片段均不存在，再以同一 B 构建确认缓存可复用；不要用 `--no-cache` 掩盖失效缺陷，也不要把缓存命中本身当作配置正确证据。
+
+生产安装器默认要求现成受控 `INFOQ_ENV_FILE`，包含 TLS、四向 RSA、独立凭据及 `INFOQ_PRODUCTION_CONFIG_FILE` 指向同一文件；缺失在网络下载/daemon/宿主写入前拒绝。`curl | bash` 首次 bootstrap 尚无仓库校验工具，只在私有临时 staging 下载源码后立即完整预检，随后才复制安装源码并检测 daemon；该 staging 是明确的引导副作用。本地源码调用可在全部安装动作前完整校验。`INFOQ_DEPLOY_MODE=development` 才允许安装器生成本地随机配置，Apple 入口也仅支持该显式隔离模式。所有凭据只写 0600 受控文件，不输出日志。远程 bootstrap 仅自动替换带 `.infoq-installer-owned`（内容 `infoq-scaffold-ai`）的安装源码；无标记旧目录先备份并使用明确的空安装目录，或显式选择已有本地源码，不能为重装删除未知内容。
 
 ## 6. 失败与回滚
 

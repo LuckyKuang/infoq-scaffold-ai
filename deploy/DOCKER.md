@@ -13,7 +13,7 @@ environment template lives in [`.env.example`](.env.example). Prerequisites
 
 当前文档对应项目基线版本为 `3.0.0`。
 
-生产执行前必须关闭 [部署生命周期中的生产准备阻塞](DEPLOYMENT_LIFECYCLE.md#9-当前生产准备阻塞)。本教程的命令及历史经验不代表本次审计已经部署或验收目标环境。
+生产先按 [PRODUCTION.md](PRODUCTION.md) 提供受控同源配置、TLS/独立 OSS 域名与私有存储，再完成 [部署生命周期验收](DEPLOYMENT_LIFECYCLE.md#9-当前生产准备阻塞)。本文 HTTP localhost 命令仅为显式 `development` 隔离模式。
 
 ## 1. 教程目标
 
@@ -39,10 +39,10 @@ INFOQ_FRONTEND_TARGET=react|vue:
 
 http://localhost/prod-api/monitor/health/readiness
 http://localhost/console-oss/
-http://localhost/oss/
+http://oss.localhost/
 ```
 
-同时，基础服务直连端口应可用；前端直连端口按 `INFOQ_FRONTEND_TARGET` 决定：
+同时，基础服务直连端口默认仅 127.0.0.1 可用；前端直连端口按 `INFOQ_FRONTEND_TARGET` 决定：
 
 ```text
 Backend:   9090
@@ -174,10 +174,10 @@ mkdir -p /tmp/infoq-deploy "${INFOQ_DEPLOY_ROOT}/server/temp"
 
 ## 4. 一键安装入口
 
-仓库不发布预构建应用镜像；`deploy/install.sh` 会在目标主机上用 Docker builder 构建后端 jar 与前端镜像。首次部署推荐使用 `deploy/install.sh`，它会生成并持久化 MySQL、Redis、MinIO、后端安全密钥和默认管理员账号密码，随后调用后端、前端和 Nginx 部署脚本：
+仓库不发布预构建应用镜像；`deploy/install.sh` 会在目标主机上用 Docker builder 构建后端 jar 与前端镜像。生产安装使用同一个受控 `INFOQ_ENV_FILE`/`INFOQ_PRODUCTION_CONFIG_FILE`，预检通过才会调用后端、前端和 TLS 网关。以下 development 隔离示例才自动生成随机凭据及两组 RSA；生产输入步骤见 [PRODUCTION.md](PRODUCTION.md)：
 
 ```bash
-sudo env INFOQ_SOURCE_DIR="$(pwd)" INFOQ_FRONTEND_TARGET=all INFOQ_PUBLIC_BASE_URL=http://SERVER_IP INFOQ_DEPLOY_ROOT=/infoq INFOQ_PRINT_SECRETS=0 bash deploy/install.sh
+sudo env INFOQ_SOURCE_DIR="$(pwd)" INFOQ_FRONTEND_TARGET=all INFOQ_DEPLOY_MODE=development INFOQ_PUBLIC_BASE_URL=http://SERVER_IP INFOQ_OSS_PUBLIC_ORIGIN=http://oss.localhost INFOQ_DEPLOY_ROOT=/infoq INFOQ_PRINT_SECRETS=0 bash deploy/install.sh
 ```
 
 该入口的宿主机前置命令是 `curl`、`tar`、`openssl`、`docker`、`docker buildx` 和 Docker Compose；Java 与 Maven 由 Docker 镜像提供。
@@ -188,7 +188,7 @@ sudo env INFOQ_SOURCE_DIR="$(pwd)" INFOQ_FRONTEND_TARGET=all INFOQ_PUBLIC_BASE_U
 mkdir -p tmp/install
 curl -fSL https://raw.githubusercontent.com/LuckyKuang/infoq-scaffold-ai/v3.0.0/deploy/install.sh -o tmp/install/install.sh
 # 审阅脚本后执行；INFOQ_VERSION 必须与下载的 tag 一致
-sudo env INFOQ_VERSION=v3.0.0 INFOQ_FRONTEND_TARGET=all INFOQ_PUBLIC_BASE_URL=http://SERVER_IP INFOQ_DEPLOY_ROOT=/infoq INFOQ_PRINT_SECRETS=0 bash tmp/install/install.sh
+sudo env INFOQ_VERSION=v3.0.0 INFOQ_FRONTEND_TARGET=all INFOQ_DEPLOY_MODE=development INFOQ_PUBLIC_BASE_URL=http://SERVER_IP INFOQ_OSS_PUBLIC_ORIGIN=http://oss.localhost INFOQ_DEPLOY_ROOT=/infoq INFOQ_PRINT_SECRETS=0 bash tmp/install/install.sh
 ```
 
 `INFOQ_FRONTEND_TARGET` 是必填的前端安装目标，取值为 `react`、`vue` 或 `all`。选择单个前端时只构建并启动目标前端，网关根路径 `/` 直接进入该管理端。
@@ -196,7 +196,7 @@ sudo env INFOQ_VERSION=v3.0.0 INFOQ_FRONTEND_TARGET=all INFOQ_PUBLIC_BASE_URL=ht
 本地源码验证可显式指定源码路径：
 
 ```bash
-sudo env INFOQ_SOURCE_DIR="$(pwd)" INFOQ_FRONTEND_TARGET=all INFOQ_PUBLIC_BASE_URL=http://127.0.0.1 INFOQ_DEPLOY_ROOT=/infoq bash deploy/install.sh
+sudo env INFOQ_SOURCE_DIR="$(pwd)" INFOQ_FRONTEND_TARGET=all INFOQ_DEPLOY_MODE=development INFOQ_PUBLIC_BASE_URL=http://127.0.0.1 INFOQ_OSS_PUBLIC_ORIGIN=http://oss.localhost INFOQ_DEPLOY_ROOT=/infoq bash deploy/install.sh
 ```
 
 安装脚本会创建或复用：
@@ -226,7 +226,7 @@ Docker Compose 教程路径不要求宿主机安装 JDK 或 Maven。后端 Maven
 如果从 Windows PowerShell 调用 WSL2 Debian：
 
 ```powershell
-wsl.exe -d Debian -- bash -lc 'cd /mnt/c/DevTools/code/github/infoq-scaffold-ai && export INFOQ_DEPLOY_ROOT=/infoq && mkdir -p /tmp/infoq-deploy "${INFOQ_DEPLOY_ROOT}/server/temp" && sudo env INFOQ_SOURCE_DIR="$(pwd)" INFOQ_FRONTEND_TARGET=all INFOQ_PUBLIC_BASE_URL=http://127.0.0.1 INFOQ_DEPLOY_ROOT="${INFOQ_DEPLOY_ROOT}" bash deploy/install.sh'
+wsl.exe -d Debian -- bash -lc 'cd /mnt/c/DevTools/code/github/infoq-scaffold-ai && export INFOQ_DEPLOY_ROOT=/infoq && mkdir -p /tmp/infoq-deploy "${INFOQ_DEPLOY_ROOT}/server/temp" && sudo env INFOQ_SOURCE_DIR="$(pwd)" INFOQ_FRONTEND_TARGET=all INFOQ_DEPLOY_MODE=development INFOQ_PUBLIC_BASE_URL=http://127.0.0.1 INFOQ_OSS_PUBLIC_ORIGIN=http://oss.localhost INFOQ_DEPLOY_ROOT="${INFOQ_DEPLOY_ROOT}" bash deploy/install.sh'
 ```
 
 如果已经在 WSL shell 内：
@@ -235,7 +235,7 @@ wsl.exe -d Debian -- bash -lc 'cd /mnt/c/DevTools/code/github/infoq-scaffold-ai 
 cd /mnt/c/DevTools/code/github/infoq-scaffold-ai
 export INFOQ_DEPLOY_ROOT=/infoq
 mkdir -p /tmp/infoq-deploy "${INFOQ_DEPLOY_ROOT}/server/temp"
-sudo env INFOQ_SOURCE_DIR="$(pwd)" INFOQ_FRONTEND_TARGET=all INFOQ_PUBLIC_BASE_URL=http://127.0.0.1 INFOQ_DEPLOY_ROOT="${INFOQ_DEPLOY_ROOT}" bash deploy/install.sh
+sudo env INFOQ_SOURCE_DIR="$(pwd)" INFOQ_FRONTEND_TARGET=all INFOQ_DEPLOY_MODE=development INFOQ_PUBLIC_BASE_URL=http://127.0.0.1 INFOQ_OSS_PUBLIC_ORIGIN=http://oss.localhost INFOQ_DEPLOY_ROOT="${INFOQ_DEPLOY_ROOT}" bash deploy/install.sh
 ```
 
 如果 WSL distro 容易自动退出，可以先临时保持一个 WSL 会话：
@@ -254,7 +254,7 @@ docker context use colima
 export INFOQ_DEPLOY_ROOT="${HOME}/infoq"
 export DOCKER_HOST="unix://${HOME}/.colima/default/docker.sock"
 mkdir -p /tmp/infoq-deploy "${INFOQ_DEPLOY_ROOT}/server/temp"
-sudo env DOCKER_CONFIG="${DOCKER_CONFIG:-$HOME/.docker}" DOCKER_HOST="${DOCKER_HOST}" INFOQ_SOURCE_DIR="$(pwd)" INFOQ_FRONTEND_TARGET=all INFOQ_PUBLIC_BASE_URL=http://127.0.0.1 INFOQ_DEPLOY_ROOT="${INFOQ_DEPLOY_ROOT}" bash deploy/install.sh
+sudo env DOCKER_CONFIG="${DOCKER_CONFIG:-$HOME/.docker}" DOCKER_HOST="${DOCKER_HOST}" INFOQ_SOURCE_DIR="$(pwd)" INFOQ_FRONTEND_TARGET=all INFOQ_DEPLOY_MODE=development INFOQ_PUBLIC_BASE_URL=http://127.0.0.1 INFOQ_OSS_PUBLIC_ORIGIN=http://oss.localhost INFOQ_DEPLOY_ROOT="${INFOQ_DEPLOY_ROOT}" bash deploy/install.sh
 ```
 
 Colima 的 CPU、内存和磁盘参数按机器资源调整。首次构建前端镜像和后端镜像会占用较多 CPU、内存和磁盘空间；`INFOQ_FRONTEND_TARGET=all` 时会构建两个前端镜像，资源太小容易出现构建中断。
@@ -265,24 +265,24 @@ Colima 的 CPU、内存和磁盘参数按机器资源调整。首次构建前端
 cd /path/to/infoq-scaffold-ai
 export INFOQ_DEPLOY_ROOT=/infoq
 mkdir -p /tmp/infoq-deploy "${INFOQ_DEPLOY_ROOT}/server/temp"
-sudo env INFOQ_SOURCE_DIR="$(pwd)" INFOQ_FRONTEND_TARGET=all INFOQ_PUBLIC_BASE_URL=http://SERVER_IP INFOQ_DEPLOY_ROOT="${INFOQ_DEPLOY_ROOT}" bash deploy/install.sh
+sudo env INFOQ_SOURCE_DIR="$(pwd)" INFOQ_FRONTEND_TARGET=all INFOQ_DEPLOY_MODE=development INFOQ_PUBLIC_BASE_URL=http://SERVER_IP INFOQ_OSS_PUBLIC_ORIGIN=http://oss.localhost INFOQ_DEPLOY_ROOT="${INFOQ_DEPLOY_ROOT}" bash deploy/install.sh
 ```
 
 如果是远程服务器，部署前还要确认安全组、防火墙、反向代理和域名证书策略。默认教程只证明本机 `localhost` 和容器内服务链路，不代替生产发布评审。
 
 ## 6. 部署环境文件
 
-首次安装可指定 `INFOQ_PUBLIC_BASE_URL`、`INFOQ_DEPLOY_ROOT`、`INFOQ_VERSION` 和 `INFOQ_OSS_BUCKET`。安装器首次生成随机凭据及 `DEPLOY_ID`，不会采用调用环境中已有的密码或批次号；复用环境文件时，文件值覆盖同名调用变量。同一批滚动发布必须受控同步同一个 `DEPLOY_ID`，新批次必须更新文件中的值。源码定位/下载早于加载文件，`INFOQ_SOURCE_DIR` 指向本地 checkout 时不会按 `INFOQ_VERSION` 切换代码，不能仅改版本字段就当作完成升级。
+生产首次安装必须预置受控配置（见 [PRODUCTION.md](PRODUCTION.md)），显式隔离 development 首次安装可指定公共地址、部署路径、版本与 bucket，并生成随机凭据及 `DEPLOY_ID`；不会采用调用环境中已有的密码或批次号；复用环境文件时，文件值覆盖同名调用变量。同一批滚动发布必须受控同步同一个 `DEPLOY_ID`，新批次必须更新文件中的值。源码定位/下载早于加载文件，`INFOQ_SOURCE_DIR` 指向本地 checkout 时不会按 `INFOQ_VERSION` 切换代码，不能仅改版本字段就当作完成升级。
 
-安装器没有安全的 `--help` 或 dry-run；不要为探测而执行。它不生成 RSA；加密构建的两组密钥对应关系、Docker 构建传递限制和受控配置方法见 [README.md 第 1.4 节](README.md#14-配置检查项)。
+安装器没有安全的 `--help` 或 dry-run；不要为探测而执行。生产必须先提供受控同源配置；显式 development 隔离安装生成独立随机凭据和两组 RSA。加密构建的两组密钥方向、BuildKit secret 和受控配置方法见 [README.md 第 1.4 节](README.md#14-配置检查项)。
 
 如果需要直接调用底层脚本，先加载同一个环境文件：
 
 ```bash
 export INFOQ_ENV_FILE=/etc/infoq-scaffold-ai/deploy.env
-set -a
-. "${INFOQ_ENV_FILE}"
-set +a
+SCRIPT_DIR="$(pwd)/deploy/bin"
+. "${SCRIPT_DIR}/runtime-env.sh"
+load_runtime_env_data "${INFOQ_ENV_FILE}"
 ```
 
 脚本默认固定 `COMPOSE_PROJECT_NAME=infoq-scaffold-ai`，避免使用 Compose 文件目录名生成 `docker_default` 这类过于通用的网络名；确需覆盖时可显式设置 `INFOQ_COMPOSE_PROJECT_NAME` 或 `COMPOSE_PROJECT_NAME`。脚本优先使用 `docker compose`，当前环境缺少 Docker Compose plugin 时回退到 standalone `docker-compose`。
@@ -300,20 +300,21 @@ export INFOQ_DEPLOY_ROOT="$(pwd)/tmp/infoq-deploy"
 ```bash
 export INFOQ_DEPLOY_ROOT=/infoq
 export INFOQ_ENV_FILE=/etc/infoq-scaffold-ai/deploy.env
-set -a
-. "${INFOQ_ENV_FILE}"
-set +a
-bash deploy/bin/infoq.sh prepare
+SCRIPT_DIR="$(pwd)/deploy/bin"
+. "${SCRIPT_DIR}/runtime-env.sh"
+load_runtime_env_data "${INFOQ_ENV_FILE}"
 bash deploy/bin/infoq.sh deploy
 ```
+
+`deploy` 已在同一进程内准备目录、按实际镜像用户初始化新空目录并验证读写。首次安装不要额外先跑 `prepare`；已经分开执行时按 [PRODUCTION.md](PRODUCTION.md#首次部署的镜像用户与新目录) 核对并显式初始化这些新目录，不把旧空目录自动认领。
 
 从旧版升级且现有 `redis.conf` 含 `requirepass` 时，`prepare` / `deploy` / `start` 会在替换配置前核验现有 `redis` 容器的项目、只读配置挂载和完整认证命令。旧容器、密码不匹配或 inspect 失败都会停止并保留旧配置。先备份数据和受控配置，安排 Redis 重建窗口；在仓库根目录以能读取部署环境文件且能访问 Docker 的账号执行：
 
 ```bash
 export INFOQ_ENV_FILE=/etc/infoq-scaffold-ai/deploy.env
-set -a
-. "${INFOQ_ENV_FILE}"
-set +a
+SCRIPT_DIR="$(pwd)/deploy/bin"
+. "${SCRIPT_DIR}/runtime-env.sh"
+load_runtime_env_data "${INFOQ_ENV_FILE}"
 COMPOSE_PROJECT_NAME="${INFOQ_COMPOSE_PROJECT_NAME:-${COMPOSE_PROJECT_NAME:-infoq-scaffold-ai}}" \
   docker compose -f deploy/docker/docker-compose.yml up -d --no-deps --force-recreate redis
 bash deploy/bin/infoq.sh prepare
@@ -344,11 +345,12 @@ bash deploy/bin/infoq.sh stop
 ```bash
 export INFOQ_DEPLOY_ROOT=/infoq
 export INFOQ_ENV_FILE=/etc/infoq-scaffold-ai/deploy.env
-bash deploy/bin/deploy-frontend.sh prepare "${INFOQ_FRONTEND_TARGET}"
 bash deploy/bin/deploy-frontend.sh deploy "${INFOQ_FRONTEND_TARGET}"
 ```
 
-`deploy` 会先生成 `${INFOQ_DEPLOY_ROOT}/nginx/conf/nginx.conf`，再按目标顺序构建前端镜像，最后启动目标前端容器并强制重建 `nginx-web`，确保前端容器重建后的 upstream DNS 被刷新。本机 Docker 验证时不要直接用 `docker compose up --build ...` 并行构建替代脚本。
+`deploy` 会先生成 `${INFOQ_DEPLOY_ROOT}/nginx/conf/nginx.conf`，再按目标顺序构建前端镜像，启动前端并执行真实 `nginx -t`，通过后强制重建 `nginx-web`，确保前端容器重建后的 upstream DNS 被刷新。本机 Docker 验证时不要直接用 `docker compose up --build ...` 并行构建替代脚本。
+
+前端构建入口每次从受控文件自动计算 `INFOQ_FRONTEND_CONFIG_DIGEST`，覆盖环境或文件中的旧摘要，并在每个前端构建后重新核验。BuildKit secret 的内容变化本身不会清除缓存，此摘要作为非秘密 build ARG 让请求/响应 RSA 轮换重新触发打包；后端请求私钥与数据库密码不参与摘要。缺失/过期摘要在实际打包时明确失败，构建途中输入变化会在启动前停止，须使用稳定的同源配置重新构建。
 
 常用命令：
 
@@ -363,7 +365,7 @@ bash deploy/bin/deploy-frontend.sh stop "${INFOQ_FRONTEND_TARGET}"
 
 - `INFOQ_FRONTEND_TARGET=all`：`http://host/vue/`、`http://host/react/`
 - `INFOQ_FRONTEND_TARGET=react|vue`：`http://host/`
-- MinIO Console：`http://host/console-oss/`；MinIO OSS：`http://host/oss/`
+- MinIO Console：`http://host/console-oss/`；MinIO S3：`INFOQ_OSS_PUBLIC_ORIGIN` 独立主机根路径
 - Vue 直连端口：`9091`；React 直连端口：`9092`
 
 前端日志目录：Vue `${INFOQ_DEPLOY_ROOT}/vue/logs`（仅 `vue` 或 `all` 目标创建）、React `${INFOQ_DEPLOY_ROOT}/react/logs`（仅 `react` 或 `all` 目标创建）、网关 Nginx `${INFOQ_DEPLOY_ROOT}/nginx/log`。
@@ -377,7 +379,7 @@ bash deploy/bin/infoq.sh start
 bash deploy/bin/deploy-frontend.sh start "${INFOQ_FRONTEND_TARGET}"
 ```
 
-`start` 复用 `DEPLOY_ID` 并启动已有后端容器，但还会准备目录/Redis 配置、启动或更新依赖、补导缺失 SQL、同步数据库应用账号/OSS 并设置 MinIO bucket 策略。前端 `start` 会重新生成网关配置。它们不是无写入的进程恢复命令；执行前需备份并确认变更范围。发布新包应使用新的 `DEPLOY_ID` 执行 `deploy`。
+`start` 复用 `DEPLOY_ID`，但会 prepare、更新依赖、补缺失 SQL、同步应用账号/OSS，确认 bucket 已私有，最后重建应用容器以更新 env 和启动缓存。发现公开/未知 bucket 时停止，不自动改策略。`restart` 同样重建应用以加载受控 env；前端 start/restart 会重新渲染持久 TLS、经 nginx -t 后重建网关。执行前必须备份并确认变更范围；新批次用新的 `DEPLOY_ID` 执行 deploy。
 
 停止顺序建议先前端和网关，再后端和基础服务：
 
@@ -550,14 +552,34 @@ Elasticsearch cluster 固定为 `es01`、`es02`、`es03`：启用认证、HTTP T
 
 ```bash
 export INFOQ_ENV_FILE=/etc/infoq-scaffold-ai/deploy.env
-set -a
-. "${INFOQ_ENV_FILE}"
-set +a
+SCRIPT_DIR="$(pwd)/deploy/bin"
+. "${SCRIPT_DIR}/runtime-env.sh"
+load_runtime_env_data "${INFOQ_ENV_FILE}"
 docker compose -p "${INFOQ_COMPOSE_PROJECT_NAME:-${COMPOSE_PROJECT_NAME:-infoq-scaffold-ai}}" -f deploy/docker/docker-compose.yml ps
 docker compose -p "${INFOQ_COMPOSE_PROJECT_NAME:-${COMPOSE_PROJECT_NAME:-infoq-scaffold-ai}}" -f deploy/docker/docker-compose.yml logs -f infoq-admin
 ```
 
 如果当前环境只有 standalone CLI，则使用带相同 `-p` 和 `-f` 的 `docker-compose`。必须保持与 helper 相同的 project name；否则通用 `container_name` 会冲突。首次空数据目录会触发 SQL 初始化；已有环境保留数据，不得为触发初始化而清空目录。
+
+直接排查前端构建时，必须在每次构建前自动计算摘要，不能复用文件或上次命令留下的值；常规部署仍使用上面的 helper，它还会执行构建后完整性检查。沿用已加载的受控环境：
+
+```bash
+set -euo pipefail
+INFOQ_FRONTEND_CONFIG_DIGEST="$(node tools/production_config.mjs frontend-cache-key --env-file "${INFOQ_PRODUCTION_CONFIG_FILE}")"
+export INFOQ_FRONTEND_CONFIG_DIGEST
+docker compose -p "${INFOQ_COMPOSE_PROJECT_NAME:-${COMPOSE_PROJECT_NAME:-infoq-scaffold-ai}}" -f deploy/docker/docker-compose.yml build infoq-frontend-react
+```
+
+单独验证 Dockerfile 时从仓库根目录运行；Vue 将 Dockerfile 和 tag 中的 `react` 改为 `vue`。路径/API/端口仍由各自 build ARG 管理，以下默认构建根路径：
+
+```bash
+set -euo pipefail
+INFOQ_FRONTEND_CONFIG_DIGEST="$(node tools/production_config.mjs frontend-cache-key --env-file "${INFOQ_PRODUCTION_CONFIG_FILE}")"
+docker build --file frontend-react/Dockerfile \
+  --secret "id=production_config,src=${INFOQ_PRODUCTION_CONFIG_FILE}" \
+  --build-arg "INFOQ_FRONTEND_CONFIG_DIGEST=${INFOQ_FRONTEND_CONFIG_DIGEST}" \
+  --tag infoq-frontend-react:controlled-build .
+```
 
 ## 12. 镜像 tag 收口与 credential helper 排查
 

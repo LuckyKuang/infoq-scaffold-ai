@@ -19,6 +19,9 @@ description: 在本机部署并冒烟验证 InfoQ-Scaffold-AI：macOS 支持 App
 
 macOS 需要完整前端栈时使用 Colima + Docker（`deploy/install.sh`）；Apple container 路径只启动 MySQL、Redis 和后端。仅开发后端或做前后端联调时，见 `deploy/APPLE_CONTAINER.md`。
 
+生产基线为 Linux Docker；Apple 本地栈须显式 `INFOQ_DEPLOY_MODE=development`。
+生产安装先准备受控环境文件，默认严格预检，不再自动生成生产凭据。
+
 Node 入口按操作系统选择运行时：macOS 固定为 Apple，Linux 固定为 Docker；没有 `--runtime` 参数。macOS Colima 的状态、日志与验证使用 `deploy/bin/*.sh` 和 `deploy/VERIFICATION.md`，不要调用本入口误操作 Apple 栈。
 
 - 用户明确要求 Apple container 时才走 Apple 路径；默认不要切换到 Docker Desktop。
@@ -32,7 +35,7 @@ Node 入口按操作系统选择运行时：macOS 固定为 Apple，Linux 固定
    Apple 路径先确认 `container --version` 与 `container system status`。
 3. 预检：确认 Node 24.18.0、Python 3/openssl（Apple）、JDK 21/Maven 3.9.x（Apple 构建需要）、Docker/Compose（Docker 路径）、
    运行环境文件与 `sql/infoq_scaffold_3.0.0.sql` 存在。Apple 使用 `deploy/.env`；
-   Docker 使用 `INFOQ_ENV_FILE`（默认 `/etc/infoq-scaffold-ai/deploy.env`）。除显式 `init` / Docker 首次 `up --execute` 外，缺失时显式失败。Docker env 使用安装器生成的 shell 字面量赋值，Node 不执行表达式；Apple env 按未加引号的字面量读取。
+   Docker 使用 `INFOQ_ENV_FILE`（默认 `/etc/infoq-scaffold-ai/deploy.env`）；生产缺失时显式失败。Docker 使用 `tools/production_config.mjs` 的纯数据解析器，并合并 `INFOQ_PRODUCTION_CONFIG_FILE` 受控来源，不执行 shell 表达式；Unix 文件权限为 owner-only。Apple env 按未加引号的字面量读取。生产部署先检查独立凭据、两组独立 RSA、TLS 双域证书与路径；前端构建使用 `production_config` BuildKit secret，内部端口默认 loopback。
 4. 执行：Apple 按 `init -> up -> smoke`（`up` 默认构建；已单独构建则 `up --no-build`）；Docker 按 `install.sh -> status/smoke` 或 `up --execute`；失败记录日志，不能假设自动恢复旧容器或自动停栈。
 5. 验证：Apple 检查 readiness、liveness、验证码接口；Docker 检查本机 API、nginx 反代与所选前端入口。生产验收还需 `deploy/VERIFICATION.md` 的数据库、Redis、OSS 与登录验证。
 6. 收口：`up/status/smoke` 的探针通过后写 `tmp/deploy-cli/state.json` 为 `passed`；停止/销毁写 `stopped`；
@@ -70,6 +73,8 @@ node skills/deploy-cli/scripts/deploy_cli.mjs destroy --yes
 Docker：
 
 ```bash
+# 先按 deploy/.env.example 准备绝对路径的受控生产文件与 TLS 材料。
+# 在有部署权限的 Linux shell 设置 INFOQ_ENV_FILE、INFOQ_SOURCE_DIR 和 INFOQ_FRONTEND_TARGET。
 bash deploy/install.sh
 node skills/deploy-cli/scripts/deploy_cli.mjs status
 node skills/deploy-cli/scripts/deploy_cli.mjs smoke
@@ -81,7 +86,7 @@ node skills/deploy-cli/scripts/deploy_cli.mjs down --execute
 - `destroy --yes` 只删除容器与网络；删除卷必须显式追加 `--volumes`。
 - Docker 路径的 `up`/`down` 默认只打印计划，必须显式追加 `--execute` 才执行。
 - `smoke` 只做 HTTP 探测并更新本地证据；Docker `status` 额外读取容器状态。Apple `status` 底层会调用 `ensure_system`，daemon 未运行时会启动 Apple 服务；严格只读时使用 `container system status` / `container list` 与 `smoke`。
-- Docker 安装需要显式 `INFOQ_FRONTEND_TARGET=all|vue|react`、`INFOQ_PUBLIC_BASE_URL`，以及适用的 root 权限、Colima socket 或本地验证目录配置，完整命令见 `deploy/README.md`。安装默认只输出凭据文件路径；本入口强制 `INFOQ_PRINT_SECRETS=0`。
+- Docker 安装需要显式 `INFOQ_FRONTEND_TARGET=all|vue|react`、受控 `INFOQ_ENV_FILE`、`INFOQ_PRODUCTION_CONFIG_FILE`、应用与独立 OSS HTTPS origin、匹配证书，以及适用的 root 权限、Colima socket 或本地验证目录配置，完整命令见 `deploy/README.md`。安装只输出凭据文件路径，禁止输出秘密；本入口强制 `INFOQ_PRINT_SECRETS=0`。
 
 ## 状态与端口
 
@@ -103,6 +108,7 @@ node skills/deploy-cli/scripts/deploy_cli.mjs down --execute
 - 不自动删除 MySQL/Redis/MinIO 数据卷；`destroy --volumes` 必须由用户显式确认。
 - Docker `down --execute` 会停止 MySQL、Redis、MinIO、后端、目标前端与网关；不是只摘应用流量，生产滚动更新不要使用它。
 - 本技能不创建 tag、不发布 Release、不推送镜像。
+- 私有文件使用保留 Host/原路径的独立 OSS origin；旧 bucket 和数据权限迁移先预览、备份、核归属再显式执行。恢复与应用回滚走 `tools/verify/` 的运维 SOP，不将 fixture 或静态配置标成 Linux 实机验收。
 
 ## 参考
 

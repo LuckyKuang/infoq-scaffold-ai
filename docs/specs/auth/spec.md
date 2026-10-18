@@ -88,4 +88,28 @@
 
 当前接口与会话依据为 `AuthController`、`CaptchaController`、`PasswordAuthStrategy`、`EmailAuthStrategy`、`WechatMiniAppAuthStrategy` 及 `SecurityTokenService` / `SecurityTokenStore`。受保护请求须提交与登录一致的 `clientid`，公开 SSE 连接路径由控制器再次校验 token 与 clientId。文档核查不代表已执行真实 Provider、验证码登录或 Redis OSS 运行验证。
 
-当前 `GET /auth/wechat-miniapp/enabled` 虽已在 `AuthController` 暴露，但未进入 `SpringSecurityAutoConfiguration` 默认公开路径或受管 `application.yml` 的排除项。严格认证默认开启时，匿名小程序无法完成登录前的功能探测；因此该场景尚未满足，需独立修复公开路径并补匿名请求回归。不能通过关闭整体严格认证来绕过，本次文档审计不修改 Java 或弱化认证要求。
+`GET /auth/wechat-miniapp/enabled` 的匿名例外仅限该 GET，其他方法和路径继续经过严格认证；测试覆盖实际 Spring Security filter chain。真实 Provider 和 Redis OSS 运行验证须单独取得证据。
+
+### 要求：匿名小程序能力探测精确公开
+
+严格认证启用时，系统必须允许匿名读取 `GET /auth/wechat-miniapp/enabled`，响应必须仅表示功能开关，不泄露 appid、secret、session key 或 Provider 配置；公开规则必须不扩展为 `/auth/wechat-miniapp/**` 或整体关闭认证。
+
+#### 场景：匿名探测开关
+
+- 当无 token 客户端读取小程序能力探测，开关分别为 true 和 false。
+- 则系统必须返回对应布尔值，而不是认证失败。
+- 并且关闭时必须不创建微信客户端或执行远程身份交换。
+
+#### 场景：匿名访问受保护接口
+
+- 当无 token 客户端访问管理端用户数据或未定义的小程序受保护路径。
+- 则系统必须仍拒绝请求，必须 不因新增精确探测例外而放宽认证。
+
+### 要求：英文认证校验消息完整
+
+`messages_en_US.properties`必须提供 `email.code.scene.not.blank`、`email.code.scene.not.valid`、`user.email.already.exists`、`user.forgot.password.invalid` 对应英文消息。
+
+#### 场景：英文认证边界响应
+
+- 当英文 locale 下触发对应验证码场景、重复邮箱或密码找回校验。
+- 则系统必须返回可理解的英文消息，必须 不输出未解析消息键或错误语言的 fallback。

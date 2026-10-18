@@ -54,5 +54,5 @@
 ## 10. 已知边界
 
 - 只处理展示值翻译，不负责原始数据存储。
-- 当前 `TranslationHandler` 在没有翻译实现或翻译异常时输出原值，异常还会记录 type/value。这是现有实现的回退边界，并非所有翻译失败都会向调用方显式报错；敏感字段不要仅依赖翻译实现隐藏原值。是否保留该行为与日志字段需独立业务评审，本次文档审计不修改序列化行为。
+- `TranslationHandler` 为每个字段创建独立、不可变 contextual serializer；带 mapper 的 null 展示字段仍从其来源字段翻译，合法 null 来源输出 null。缺实现、mapper 读取失败和翻译异常均明确失败，不回写原值。日志与异常只包含 error ID、阶段、类型、字段和异常类别，不携带原值、原异常 message 或 cause。真实 Jackson 并发/OSS 翻译回归见 [生产边界验证](../../doc/production-verification.md)。
 

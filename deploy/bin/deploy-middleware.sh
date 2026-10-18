@@ -3,6 +3,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
+. "${SCRIPT_DIR}/runtime-env.sh"
 BASE_COMPOSE_FILE="${REPO_ROOT}/deploy/docker/docker-compose.yml"
 DEFAULT_DEPLOY_ROOT="/infoq"
 DEFAULT_ENV_FILE="/etc/infoq-scaffold-ai/deploy.env"
@@ -59,11 +60,11 @@ load_deploy_env() {
 
   if [[ -n "${env_file}" ]]; then
     [[ -f "${env_file}" ]] || fail "指定的环境文件不存在: ${env_file}"
-    set -a
-    # shellcheck disable=SC1090
-    . "${env_file}"
-    set +a
+    load_runtime_env_data "${env_file}"
     INFOQ_ENV_FILE="${env_file}"
+  fi
+  if [[ -z "${env_file}" && -n "${INFOQ_PRODUCTION_CONFIG_FILE:-}" ]]; then
+    load_runtime_env_data "${INFOQ_PRODUCTION_CONFIG_FILE}"
   fi
 }
 
@@ -392,6 +393,12 @@ load_deploy_env
 resolve_deploy_root
 select_topology
 validate_action
+
+case "${ACTION}" in
+  prepare|config|deploy|bootstrap)
+    node "${REPO_ROOT}/tools/production_config.mjs" check --scope deploy
+    ;;
+esac
 
 case "${ACTION}" in
   prepare)

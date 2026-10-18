@@ -20,6 +20,8 @@
 - `plugin-governance/`
 - `admin-routing/`
 - `platform-governance/`
+- `field-translation/`
+- `production-deployment/`
 
 ## 当前预置规范
 
@@ -31,3 +33,5 @@
 - `plugin-governance/spec.md`：插件分档、软开关策略、硬删除守则与治理护栏
 - `admin-routing/spec.md`：Vue / React 管理端固定路由、动态路由装配与组件映射
 - `platform-governance/spec.md`：OpenSpec 分级、影响矩阵、校验器要求与语言规范
+- `field-translation/spec.md`：返回字段翻译、Jackson 上下文隔离、显式失败与日志脱敏
+- `production-deployment/spec.md`：Linux Docker、受控 RSA 构建、TLS、权限迁移与恢复回滚

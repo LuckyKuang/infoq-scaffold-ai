@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import type { LoginData } from '@/api/types';
 import { useUserStore } from '@/store/modules/user';
 
@@ -56,7 +56,7 @@ describe('pages/login', () => {
     const codeInput = screen.getByPlaceholderText('验证码');
     fireEvent.change(codeInput, { target: { value: '1111' } });
 
-    fireEvent.click(screen.getByRole('button', { name: /登\s*录/ }));
+    fireEvent.click(screen.getByRole('button', { name: /^登\s*录$/ }));
 
     await waitFor(() => {
       expect(loginMock).toHaveBeenCalledWith(
@@ -123,7 +123,7 @@ describe('pages/login', () => {
     fireEvent.change(passwordInput, { target: { value: 'pwd' } });
     fireEvent.change(codeInput, { target: { value: '2222' } });
     fireEvent.click(screen.getByText('记住我'));
-    fireEvent.click(screen.getByRole('button', { name: /登\s*录/ }));
+    fireEvent.click(screen.getByRole('button', { name: /^登\s*录$/ }));
 
     await waitFor(() => {
       expect(localStorage.getItem('username')).toBe('demo');
@@ -145,5 +145,49 @@ describe('pages/login', () => {
     );
 
     expect(await screen.findByRole('button', { name: /使用 GitHub 登录/ })).toBeInTheDocument();
+  });
+
+  it('returns to a safe route without decoding query values a second time', async () => {
+    loginPageMocks.getCodeImg.mockResolvedValueOnce({ data: { captchaEnabled: false } });
+    const target = '/user/profile?name=a%26b#identity';
+    function Destination() {
+      const location = useLocation();
+      return <div data-testid="destination">{location.pathname + location.search + location.hash}</div>;
+    }
+    render(
+      <MemoryRouter initialEntries={[`/login?redirect=${encodeURIComponent(target)}`]}>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/user/profile" element={<Destination />} />
+        </Routes>
+      </MemoryRouter>
+    );
+    fireEvent.change(await screen.findByPlaceholderText('用户名'), { target: { value: 'admin' } });
+    fireEvent.change(screen.getByPlaceholderText('密码'), { target: { value: 'password' } });
+    fireEvent.click(screen.getByRole('button', { name: /^登\s*录$/ }));
+    expect(await screen.findByTestId('destination')).toHaveTextContent(target);
+    expect(loginMock).toHaveBeenCalledTimes(1);
+  });
+
+  it.each(['https://evil.test', '//evil.test', '/%252fevil.test', '/path%zz', '/%0apath', ''])('rejects invalid redirect %j before password login or OAuth authorization', async (target) => {
+    loginPageMocks.getCodeImg.mockResolvedValueOnce({ data: { captchaEnabled: false } });
+    loginPageMocks.getOAuthProviders.mockResolvedValueOnce({ data: [{ providerCode: 'github', providerName: 'GitHub' }] });
+    render(<MemoryRouter initialEntries={[`/login?redirect=${encodeURIComponent(target)}`]}><LoginPage /></MemoryRouter>);
+    fireEvent.change(await screen.findByPlaceholderText('用户名'), { target: { value: 'admin' } });
+    fireEvent.change(screen.getByPlaceholderText('密码'), { target: { value: 'password' } });
+    fireEvent.click(screen.getByRole('button', { name: /^登\s*录$/ }));
+    expect(await screen.findByText('登录回跳地址无效，请从站内页面重新进入')).toBeInTheDocument();
+    expect(loginMock).not.toHaveBeenCalled();
+    fireEvent.click(await screen.findByRole('button', { name: /使用 GitHub 登录/ }));
+    expect(loginMock).not.toHaveBeenCalled();
+    expect(screen.getByRole('alert')).toHaveTextContent('登录回跳地址无效');
+  });
+
+  it('rejects duplicate redirect values before OAuth authorization', async () => {
+    loginPageMocks.getOAuthProviders.mockResolvedValueOnce({ data: [{ providerCode: 'github', providerName: 'GitHub' }] });
+    render(<MemoryRouter initialEntries={['/login?redirect=%2Findex&redirect=%2Fuser%2Fprofile']}><LoginPage /></MemoryRouter>);
+    fireEvent.click(await screen.findByRole('button', { name: /使用 GitHub 登录/ }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('登录回跳地址无效');
+    expect(loginMock).not.toHaveBeenCalled();
   });
 });

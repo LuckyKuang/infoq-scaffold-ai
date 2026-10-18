@@ -17,7 +17,7 @@ export default function AuthGuard({ children }: AuthGuardProps) {
   const [bootstrapFailed, setBootstrapFailed] = useState(false);
   const token = getToken();
   const roles = useUserStore((state) => state.roles);
-  const redirectTarget = `${location.pathname}${location.search}`;
+  const redirectTarget = `${location.pathname}${location.search}${location.hash}`;
 
   useEffect(() => {
     let disposed = false;

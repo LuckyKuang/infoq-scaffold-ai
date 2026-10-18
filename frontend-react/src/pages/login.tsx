@@ -1,5 +1,5 @@
 import { GithubOutlined, LoginOutlined } from '@ant-design/icons';
-import { Button, Checkbox, Divider, Form, Input } from 'antd';
+import { Alert, Button, Checkbox, Divider, Form, Input } from 'antd';
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { getCodeImg, getOAuthProviders } from '@/api/login';
@@ -8,6 +8,7 @@ import AuthPageShell from '@/components/AuthPageShell';
 import SvgIcon from '@/components/SvgIcon';
 import { useUserStore } from '@/store/modules/user';
 import { useTranslation } from 'react-i18next';
+import { requireAppRedirect, toDeploymentRedirect } from '@/utils/auth-redirect';
 
 export default function LoginPage() {
   const [form] = Form.useForm<LoginData>();
@@ -19,6 +20,7 @@ export default function LoginPage() {
   const [forgotPasswordEnabled, setForgotPasswordEnabled] = useState(false);
   const [oauthProviders, setOauthProviders] = useState<OAuthProviderOption[]>([]);
   const [oauthLoadingProvider, setOauthLoadingProvider] = useState('');
+  const [redirectError, setRedirectError] = useState(false);
   const navigate = useNavigate();
   const login = useUserStore((state) => state.login);
   const { t } = useTranslation();
@@ -80,6 +82,15 @@ export default function LoginPage() {
   }, []);
 
   const onFinish = async (values: LoginData) => {
+    let redirect: string;
+    try {
+      const redirects = searchParams.getAll('redirect');
+      redirect = requireAppRedirect(redirects.length > 1 ? redirects : redirects[0]);
+    } catch {
+      setRedirectError(true);
+      return;
+    }
+    setRedirectError(false);
     setLoading(true);
     try {
       const submitValues = form.getFieldsValue(true) as LoginData;
@@ -93,8 +104,7 @@ export default function LoginPage() {
         localStorage.removeItem('rememberMe');
       }
       await login(submitValues);
-      const redirect = searchParams.get('redirect') || '/index';
-      navigate(decodeURIComponent(redirect));
+      navigate(redirect);
     } catch {
       if (captchaEnabled) {
         await getCode();
@@ -105,11 +115,16 @@ export default function LoginPage() {
   };
 
   const handleOAuthAuthorize = (provider: OAuthProviderOption) => {
-    const redirect = searchParams.get('redirect') || '/index';
-    const params = new URLSearchParams({
-      clientId: import.meta.env.VITE_APP_CLIENT_ID,
-      redirect
-    });
+    let redirect: string;
+    try {
+      const redirects = searchParams.getAll('redirect');
+      redirect = toDeploymentRedirect(redirects.length > 1 ? redirects : redirects[0]);
+    } catch {
+      setRedirectError(true);
+      return;
+    }
+    setRedirectError(false);
+    const params = new URLSearchParams({ clientId: import.meta.env.VITE_APP_CLIENT_ID, redirect });
     setOauthLoadingProvider(provider.providerCode);
     window.location.assign(`${import.meta.env.VITE_APP_BASE_API}/auth/oauth/${provider.providerCode}/authorize?${params.toString()}`);
   };
@@ -120,6 +135,7 @@ export default function LoginPage() {
 
   return (
     <AuthPageShell title={title}>
+      {redirectError && <Alert type="error" showIcon title={t('login.invalidRedirect')} style={{ marginBottom: 16 }} />}
       <Form className="auth-login-form" form={form} onFinish={onFinish} initialValues={{ rememberMe: false }}>
         <Form.Item name="uuid" hidden>
           <Input />

@@ -58,6 +58,8 @@ router.beforeEach
 
 因此当前 Vue admin 的登录闭环同样是“先拿 token，再由守卫补齐用户信息与动态菜单”。
 
+密码提交、OAuth 授权和 ticket 兑换前先校验 Router 已解析的 `redirect`；缺省目标为 `/index`，非法/空值/数组显式拒绝且不创建会话。授权与绑定 API 使用 `/vue/user/profile` 等安全站内浏览器路径；回调导航移除当前前缀一次交给 history base，query/hash 保留原编码，不重复解码。
+
 登录、注册与忘记密码页面通过 `GET /auth/code` 读取 `registerEnabled`、`forgotPasswordEnabled`、`mailEnabled` 等能力位；自助邮件验证码和密码重置分别调用 `POST /auth/email/code` 与 `POST /auth/forgot-password`。SSE/WebSocket 由 `layout/index.vue` 挂载时初始化，SSE 在布局卸载和登出时关闭。
 
 ## 2. 后端菜单到动态路由注入

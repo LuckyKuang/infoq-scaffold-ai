@@ -39,6 +39,8 @@
 1. `websocket.enabled=true` 时注册 WebSocket 端点和拦截器。
 2. 握手阶段通过 header 或 query token 完成认证，连接建立后会话进入 `WebSocketSessionHolder`。
 3. 集群消息通过 Redis topic 与 cluster utils 扩散。
+4. 定向路由以 Redisson OSS `RBatch` 分两批读取全部用户注册和去重节点心跳，仅在有失效注册时追加一批清理，不按每个用户/节点串行远程访问。
+5. Push correlation ID 和 message ID 随定向 DTO 传递到接收端；发布只记 `published`/连接 `unknown`，无存活路由记 `offline`（受心跳时效约束），客户端发送异常记录安全分类，不打印正文/用户列表/原异常 message。没有客户端 ACK，不能宣称送达。
 
 ## 8. 扩展点
 

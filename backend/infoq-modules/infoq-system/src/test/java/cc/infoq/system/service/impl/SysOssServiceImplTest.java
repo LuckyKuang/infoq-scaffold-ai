@@ -248,7 +248,7 @@ class SysOssServiceImplTest {
     }
 
     @Test
-    @DisplayName("upload(multipart): should save metadata and return converted vo")
+    @DisplayName("upload(multipart): should save unsigned metadata and return a private 120s URL")
     void uploadMultipartShouldPersistAndReturnVo() throws IOException {
         SysOssServiceImpl service = new SysOssServiceImpl(sysOssMapper);
         when(file.isEmpty()).thenReturn(false);
@@ -265,7 +265,8 @@ class SysOssServiceImplTest {
         OssClient storage = mock(OssClient.class);
         when(storage.uploadSuffix(any(byte[].class), eq(".png"), eq("image/png"))).thenReturn(uploadResult);
         when(storage.getConfigKey()).thenReturn("local");
-        when(storage.getAccessPolicy()).thenReturn(AccessPolicyType.PUBLIC);
+        when(storage.getAccessPolicy()).thenReturn(AccessPolicyType.PRIVATE);
+        when(storage.createPresignedGetUrl("avatar.png", java.time.Duration.ofSeconds(120))).thenReturn("https://oss.example.com/signed-avatar");
         when(sysOssMapper.insert(any(SysOss.class))).thenReturn(1);
         try (MockedStatic<OssFactory> ossFactory = mockStatic(OssFactory.class);
              MockedStatic<MapstructUtils> mapstructUtils = mockStatic(MapstructUtils.class)) {
@@ -280,8 +281,10 @@ class SysOssServiceImplTest {
             SysOssVo result = service.upload(file);
 
             assertEquals("avatar.png", result.getFileName());
-            assertEquals("https://bucket/avatar.png", result.getUrl());
-            verify(sysOssMapper).insert(any(SysOss.class));
+            assertEquals("https://oss.example.com/signed-avatar", result.getUrl());
+            ArgumentCaptor<SysOss> persisted = ArgumentCaptor.forClass(SysOss.class);
+            verify(sysOssMapper).insert(persisted.capture());
+            assertEquals("https://bucket/avatar.png", persisted.getValue().getUrl());
         }
     }
 

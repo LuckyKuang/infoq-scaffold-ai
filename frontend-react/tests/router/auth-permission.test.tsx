@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import AuthGuard from '@/router/AuthGuard';
 import { isWhiteListRoute } from '@/router/public-routes';
 import { useUserStore } from '@/store/modules/user';
@@ -43,6 +43,22 @@ describe('router/auth-permission', () => {
     await waitFor(() => {
       expect(screen.getByText('Login Page')).toBeInTheDocument();
     });
+  });
+
+  it.each(['/', '/react/'])('retains profile query and hash in an anonymous return target under %s', async (base) => {
+    function LoginLocation() {
+      const location = useLocation();
+      return <div data-testid="login-location">{new URLSearchParams(location.search).get('redirect')}</div>;
+    }
+    render(
+      <MemoryRouter basename={base} initialEntries={[`${base}user/profile?name=a%26b#identity`]}>
+        <Routes>
+          <Route path="/login" element={<LoginLocation />} />
+          <Route path="*" element={<AuthGuard><div>Protected</div></AuthGuard>} />
+        </Routes>
+      </MemoryRouter>
+    );
+    expect(await screen.findByTestId('login-location')).toHaveTextContent('/user/profile?name=a%26b#identity');
   });
 
   it('loads user info and routes when token exists and roles are empty', async () => {

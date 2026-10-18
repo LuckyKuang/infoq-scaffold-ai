@@ -62,6 +62,8 @@ AuthGuard
 ```
 
 因此当前 React admin 的登录闭环是“两段式”的：先拿 token，再由守卫补齐用户信息与动态路由。
+
+在提交密码、离开页面发起 OAuth 或兑换一次性 ticket 前，页面先校验已解析的 `redirect`。缺省为 `/index`，非法值显式拒绝且不创建会话。守卫保留 pathname/query/hash；授权和绑定 API 使用 `/react/user/profile` 等安全站内浏览器路径，返回后移除当前前缀一次交给 Router，保留 query 中的 `%26` 等原始编码。
 当浏览器刷新后本地已有 token 时，`AuthGuard` 也会沿用这条守卫启动路径，并在用户信息和动态路由恢复成功后重新初始化 SSE/WebSocket。若用户信息或动态路由初始化失败，守卫会提示错误、执行本地会话清理，并带当前路径 redirect 回到登录页，不继续渲染受保护布局。
 
 ## 1.1 登录前公开认证能力与自助认证页

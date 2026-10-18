@@ -121,7 +121,7 @@ public class SseEmitterManager {
             try {
                 sseEmitter.complete();
             } catch (Exception e) {
-                log.warn("SSE连接关闭失败, userId={}", userId, e);
+                log.warn("SSE连接关闭失败, type={}", e.getClass().getSimpleName());
             }
             if (emitters.isEmpty()) {
                 USER_TOKEN_EMITTERS.remove(userId);
@@ -186,6 +186,10 @@ public class SseEmitterManager {
      * @param message 要发送的消息内容
      */
     public void sendMessage(Long userId, String message) {
+        sendMessage(userId, message, null, null, 1);
+    }
+
+    private void sendMessage(Long userId, String message, String correlationId, Long messageId, int recipients) {
         Map<String, SseEmitter> emitters = USER_TOKEN_EMITTERS.get(userId);
         if (MapUtil.isNotEmpty(emitters)) {
             for (Map.Entry<String, SseEmitter> entry : emitters.entrySet()) {
@@ -194,7 +198,8 @@ public class SseEmitterManager {
                         .name("message")
                         .data(message));
                 } catch (Exception e) {
-                    log.warn("SSE消息发送失败, userId={}", userId, e);
+                    log.warn("Push client send failed, correlationId:{}, messageId:{}, recipients:{}, channel:SSE, status:failed, connection:unknown, type:{}",
+                        correlationId, messageId, recipients, e.getClass().getSimpleName());
                     removeEmitter(userId, entry.getKey(), entry.getValue(), true);
                 }
             }
@@ -224,7 +229,7 @@ public class SseEmitterManager {
         if (CollUtil.isNotEmpty(message.getUserIds())) {
             message.getUserIds().stream()
                 .filter(userId -> userId != null)
-                .forEach(userId -> sendMessage(userId, message.getMessage()));
+                .forEach(userId -> sendMessage(userId, message.getMessage(), message.getCorrelationId(), message.getMessageId(), message.getUserIds().size()));
             return;
         }
         sendMessage(message.getMessage());
@@ -252,7 +257,7 @@ public class SseEmitterManager {
             try {
                 emitter.complete();
             } catch (Exception e) {
-                log.warn("SSE连接关闭失败, userId={}", userId, e);
+                log.warn("SSE连接关闭失败, type={}", e.getClass().getSimpleName());
             }
         }
         if (emitters.isEmpty()) {
@@ -270,9 +275,10 @@ public class SseEmitterManager {
         broadcastMessage.setMessage(sseMessageDto.getMessage());
         broadcastMessage.setUserIds(sseMessageDto.getUserIds());
         broadcastMessage.setSourceNodeId(NODE_ID);
+        broadcastMessage.setCorrelationId(sseMessageDto.getCorrelationId());
+        broadcastMessage.setMessageId(sseMessageDto.getMessageId());
         RedisUtils.publish(SSE_TOPIC, broadcastMessage, consumer -> {
-            log.info("SSE发送主题订阅消息topic:{} session keys:{} message:{}",
-                SSE_TOPIC, sseMessageDto.getUserIds(), sseMessageDto.getMessage());
+            log.debug("SSE topic published, recipients:{}", sseMessageDto.getUserIds() == null ? 0 : sseMessageDto.getUserIds().size());
         });
         sendPublishedMessage(broadcastMessage);
     }
@@ -287,7 +293,7 @@ public class SseEmitterManager {
         broadcastMessage.setMessage(message);
         broadcastMessage.setSourceNodeId(NODE_ID);
         RedisUtils.publish(SSE_TOPIC, broadcastMessage, consumer -> {
-            log.info("SSE发送主题订阅消息topic:{} message:{}", SSE_TOPIC, message);
+            log.debug("SSE broadcast topic published");
         });
         sendPublishedMessage(broadcastMessage);
     }

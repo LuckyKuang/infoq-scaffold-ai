@@ -28,9 +28,14 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
+import org.slf4j.LoggerFactory;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -66,6 +71,27 @@ class WebSocketUtilsTest {
     void clearSessions() {
         List<Long> keys = new ArrayList<>(WebSocketSessionHolder.getSessionsAll());
         keys.forEach(WebSocketSessionHolder::removeSession);
+    }
+
+    @Test
+    void clientSendFailureContainsSafeCorrelationWithoutPayloadOrUserDetails() throws IOException {
+        WebSocketSession session = mock(WebSocketSession.class);
+        when(session.getId()).thenReturn("sensitive-session-id"); when(session.isOpen()).thenReturn(true);
+        Mockito.doThrow(new IOException("sensitive-payload" )).when(session).sendMessage(any(TextMessage.class));
+        WebSocketSessionHolder.addSession(9834501L, session);
+        WebSocketMessageDto message = new WebSocketMessageDto();
+        message.setCorrelationId("safe-correlation"); message.setMessageId(7L); message.setMessage("sensitive-payload");
+        message.setSessionKeys(List.of(9834501L));
+        Logger logger = (Logger) LoggerFactory.getLogger(WebSocketUtils.class);
+        ListAppender<ILoggingEvent> appender = new ListAppender<>(); appender.start(); logger.addAppender(appender);
+        try {
+            assertDoesNotThrow(() -> WebSocketUtils.sendPublishedMessage(9834501L, message));
+            assertEquals(1, appender.list.size());
+            String log = appender.list.getFirst().getFormattedMessage();
+            assertTrue(log.contains("safe-correlation") && log.contains("channel:WEBSOCKET") && log.contains("status:failed"));
+            assertTrue(!log.contains("sensitive-payload") && !log.contains("9834501") && !log.contains("sensitive-session-id"));
+            assertEquals(null, appender.list.getFirst().getThrowableProxy());
+        } finally { logger.detachAppender(appender); appender.stop(); }
     }
 
     @Test

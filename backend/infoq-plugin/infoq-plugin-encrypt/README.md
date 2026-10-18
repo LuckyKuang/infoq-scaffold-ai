@@ -34,6 +34,8 @@
 - `api-decrypt.enabled`
 - `mybatis-encryptor.enable`
 - `ApiDecryptProperties`、`EncryptorProperties`
+- prod 的 `api-decrypt.private-key` 由必需 `INFOQ_API_REQUEST_PRIVATE_KEY` 注入，对应前端请求公钥；`api-decrypt.public-key` 由必需 `INFOQ_API_RESPONSE_PUBLIC_KEY` 注入，对应前端响应私钥。两组可不同，不要求前端两把 key 互为一对。
+- 加密启用且 active profile 含 `prod` 时，启动期只接受单行 canonical Base64 DER（私钥 PKCS8、公钥 SPKI），拒绝 PEM、换行、缺失、无效或少于 2048 位的 RSA；四方向交叉配对和受控来源由统一生产配置预检负责。开发示例不能作为生产配置；浏览器内协议私钥属于公开产物，公网仍需 HTTPS。
 
 ## 7. 关键数据流
 

@@ -39,6 +39,24 @@ public class WebSocketUtils {
         sessions.forEach(session -> sendMessage(session, message));
     }
 
+    public static void sendPublishedMessage(Long userId, WebSocketMessageDto message) {
+        for (WebSocketSession session : WebSocketSessionHolder.getSessions(userId)) {
+            String status = "offline";
+            String type = "none";
+            try {
+                if (session.isOpen()) {
+                    session.sendMessage(new TextMessage(message.getMessage()));
+                    continue;
+                }
+            } catch (IOException | RuntimeException e) {
+                status = "failed";
+                type = e.getClass().getSimpleName();
+            }
+            log.warn("Push client send result, correlationId:{}, messageId:{}, recipients:{}, channel:WEBSOCKET, status:{}, connection:unknown, type:{}",
+                message.getCorrelationId(), message.getMessageId(), message.getSessionKeys() == null ? 0 : message.getSessionKeys().size(), status, type);
+        }
+    }
+
     /**
      * 订阅WebSocket消息主题，并提供一个消费者函数来处理接收到的消息
      *
@@ -62,21 +80,23 @@ public class WebSocketUtils {
      *
      * @param webSocketMessage 要发布的WebSocket消息对象
      */
-    public static void publishMessage(WebSocketMessageDto webSocketMessage) {
+    public static int publishMessage(WebSocketMessageDto webSocketMessage) {
         Map<String, List<Long>> routedSessionKeys = WebSocketClusterUtils.routeSessionKeysByNode(webSocketMessage.getSessionKeys());
         if (routedSessionKeys.isEmpty()) {
-            log.info("WebSocket定向消息未命中在线节点, session keys={}", webSocketMessage.getSessionKeys());
-            return;
+            log.info("WebSocket publish skipped, status:offline, recipients:{}", webSocketMessage.getSessionKeys().size());
+            return 0;
         }
         routedSessionKeys.forEach((nodeId, sessionKeys) -> {
             WebSocketMessageDto routedMessage = new WebSocketMessageDto();
             routedMessage.setMessage(webSocketMessage.getMessage());
             routedMessage.setSessionKeys(sessionKeys);
+            routedMessage.setCorrelationId(webSocketMessage.getCorrelationId());
+            routedMessage.setMessageId(webSocketMessage.getMessageId());
             RedisUtils.publish(WebSocketClusterUtils.nodeTopic(nodeId), routedMessage, consumer -> {
-                log.info("WebSocket发送节点主题订阅消息topic:{} session keys:{} message:{}",
-                    WebSocketClusterUtils.nodeTopic(nodeId), sessionKeys, webSocketMessage.getMessage());
+                log.debug("WebSocket node topic published, recipients:{}", sessionKeys.size());
             });
         });
+        return (int) routedSessionKeys.values().stream().flatMap(List::stream).distinct().count();
     }
 
     /**
@@ -88,7 +108,7 @@ public class WebSocketUtils {
         WebSocketMessageDto broadcastMessage = new WebSocketMessageDto();
         broadcastMessage.setMessage(message);
         RedisUtils.publish(WEB_SOCKET_TOPIC, broadcastMessage, consumer -> {
-            log.info("WebSocket发送主题订阅消息topic:{} message:{}", WEB_SOCKET_TOPIC, message);
+            log.debug("WebSocket broadcast topic published");
         });
     }
 
@@ -124,7 +144,7 @@ public class WebSocketUtils {
             try {
                 session.sendMessage(message);
             } catch (IOException e) {
-                log.error("[send] session({}) 发送消息({}) 异常", session, message, e);
+                log.warn("WebSocket client send failed, type:{}", e.getClass().getSimpleName());
             }
         }
     }

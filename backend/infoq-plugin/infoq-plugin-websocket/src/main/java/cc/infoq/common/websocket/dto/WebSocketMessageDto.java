@@ -26,4 +26,8 @@ public class WebSocketMessageDto implements Serializable {
      * 需要发送的消息
      */
     private String message;
+
+    private String correlationId;
+
+    private Long messageId;
 }

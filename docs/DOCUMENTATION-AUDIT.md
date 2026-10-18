@@ -1,6 +1,6 @@
-# 文档与交付入口复审（2026-10-18）
+# 文档审计与生产缺口修复（2026-10-18）
 
-本轮重新检查全部维护 Markdown、层级规约、五个 CLI 技能及独立发现的脚本/config，修正文档事实与直接支撑交付的工具缺陷。**文档和隔离回归已完成的检查不等于生产验收**；实际产品阻塞、环境条件和关闭标准见下文。
+本页保留两轮独立证据：下方“覆盖口径”至“验证边界与命令”记录已提交 `825df05` 的文档/工具审计；“生产缺口修复与目标环境条件”记录此后用户授权的产品、构建、部署及运维修复。历史数量和通过结果不作为本轮产品验证证据。**仓库修复及本机隔离回归不等于生产验收**，生产基线为 Linux Docker。
 
 本轮以提交 `93d817511e1aa2a652a507a7dcbc9888556c3a84` 为起点重新发现文件和验证行为，没有把上一轮清单或通过结果当作本轮证据。唯一验收约定保留在忽略的本地 change；耐久要求见[平台治理规格](./specs/platform-governance/spec.md)。
 
@@ -85,24 +85,60 @@ git diff --check
 
 没有修改产品业务实现或依赖，因此产品构建和业务单测不作为本次工具改动的验证替代；全部行为改动由对应工具回归覆盖。真实登录/CRUD、容量、恢复、远程 CI 与多平台执行仍未验证。
 
-## 仍需关闭的生产条件
+## 生产缺口修复与目标环境条件
 
-| 阻塞或未验证条件 | 事实、影响与关闭标准 |
-| --- | --- |
-| React 子路径与 OAuth 回跳 | `BrowserRouter` 缺少 basename，Vite base 不能独立实现子路径部署；双端 OAuth 绑定构造绝对 redirect 与回跳校验冲突。需补实现和路由/绑定回归，不能仅靠构建通过 |
-| 小程序登录前能力探测 | `/auth/wechat-miniapp/enabled` 未列入默认公开路径/`security.excludes`，严格认证下匿名探测被拦截。需修正公开探测权限契约并补允许/拒绝场景 |
-| Push 失败观测 | `SysMessagePushListener` 的失败日志缺通道字段，Push 关闭时直接返回且无规格要求的失败分类。需补实现与行为验证，保留现有通知规格要求 |
-| 返回字段翻译失败 | `TranslationHandler` 捕获异常后输出原值，并记录 type/value；失败不总是显式返回给调用方，敏感原值也不能靠翻译遮蔽。需独立核定允许回退的字段与失败语义、日志脱敏，再补序列化回归；本轮未改产品行为 |
-| 生产凭据与 RSA 构建 | 目标环境独立 DB/Redis/token/RSA 替换未核验；前端 Dockerfile 无 RSA build ARG 接口，Release 构建使用仓库示例 env，宿主运行时 env 不能替换浏览器构建产物。需受控构建、匹配核验和产物检查；浏览器内私钥不能保护服务端秘密 |
-| 权限迁移与实际镜像用户 | 已消除自动 `0777`，但未替已有目录批量 chmod/chown；现有目录必须按实际镜像 UID/GID、备份和挂载核验后迁移。需在目标镜像验证读写、重启/升级及最小权限 |
-| 网络/TLS 与对象存储 | Compose 多项端口默认对所有网卡发布，网关未启用 TLS；仅映射 443 不会提供 HTTPS。`minio/mc:latest` 仍浮动且初始化设置匿名下载；生产需固定受控镜像、收紧端口、验证 HTTPS 与私有文件授权 |
-| 真实测试数据恢复 | 工具已增加精确键、失败和收口断言，但未对真实 UI/API/DB 完成端到端运行；local JDBC 配置不自动识别后端 env 覆盖。执行前核对同一隔离实例，硬终止/掉电/凭据失效后按 run 证据人工恢复 |
-| 目标平台与远端 | Windows PowerShell 5.1、WSL2/Linux Docker、真实 Apple 栈、nginx/systemd 和 Release Actions 未运行；需取得实际 readiness、登录、端口归属、产物及退出/回滚证据 |
-| 运行保障 | 容量、告警触发/恢复、备份还原、迁移回退与恢复目标未演练。需要实际结果和责任人，静态配置不能代替上线保障 |
+本轮基于 `825df05` 修复实际实现，未执行 commit/push/Release、远程 Actions、生产部署或凭据轮换。验收约定与执行计划继续只保留在 Git 忽略目录，耐久要求已同步到 `docs/specs/`。本轮证据在 `tmp/production-readiness/`；不得用前述文档审计数字替代下列结果。
 
-后端 `messages_en_US.properties` 另缺少 `email.code.scene.not.blank`、`email.code.scene.not.valid`、`user.email.already.exists`、`user.forgot.password.invalid` 四项消息键，属于产品资源问题，尚未修复；需补齐并核验对应英文响应。
+| 领域 | 仓库修复与本机验证 | 目标环境关闭条件 |
+| --- | --- | --- |
+| React/Vue 路由与 OAuth | React basename 与 Vite BASE_URL 同源；双端安全站内回跳保留部署前缀一次，登录/授权/ticket 前拒绝非法输入。服务端由受控 base 映射选择 callback，无法识别客户端的多端失败显式返回脱敏错误。根/子路径真实产物、组件回归和 HTTP/Provider 替身浏览器检查覆盖主流与边界 | 目标 Linux 反代、刷新、真实会话/Provider、身份绑定及真实角色权限需实机验收；替身不是 Provider 或业务数据库验收 |
+| 小程序与英文消息 | 仅精确公开 GET 能力探测；真实 Spring Security filter chain 覆盖允许/拒绝，禁用时无远程调用。四项英文消息补齐并以 MessageSource 解析验证 | 真实微信 AppID/Secret、身份绑定与远程 code 登录需独立受控环境 |
+| Push 与 Redis | AFTER_COMMIT、通道故障隔离与持久消息保持；记录 disabled/channel_unavailable/offline/published/failed，跨节点不确定保持 unknown，不宣称客户端送达。节点/心跳核验使用有限批量 OSS API；安全日志不含正文或用户列表 | 真实 Redis OSS 多节点、浏览器通道、故障与告警接收需运行验证；无 ACK 不承诺送达 |
+| 返回字段翻译 | 不可变字段上下文，真实 Jackson 多字段/mapper/null/并发测试；缺实现/执行异常显式失败，不回写原值，日志与异常不携敏感原因 | 既有脏数据或缺失翻译实现会明确暴露；目标真实数据应验证，不能恢复静默原值 fallback |
+| 生产配置与构建 | 默认严格预检、受控文件/托管环境、两组独立2048位以上 RSA 交叉校验，拒缺项/示例/错配。Docker 使用 BuildKit secret；Release 使用受保护环境受控配置并核产物。隔离真实加密构建标记 deployable=false；后端请求私钥不得进入浏览器包或构建层 | 生产独立凭据来源/替换、环境审批、真实 artifact 与目标后端匹配须核验；仅格式/指纹通过不能证明来源受控，浏览器协议私钥公开可见 |
+| TLS、端口与私有 OSS | 生产网关受控 TLS 渲染并检查证书/私钥/域名/有效期，重跑保留 HTTPS；辅助端口默认 loopback。固定 mc，bucket 与后端元数据私有；内部 S3 HTTP 与独立外部 HTTPS 签名 origin 分离，保留 Host/path。真实 crypto/文件及 Docker 替身回归覆盖异常与恢复边界 | Linux Docker/nginx 配置加载、公开端口、真实 CA/DNS、授权签名/匿名/过期访问需实机证据；不将 X509/fixture 当生产信任链 |
+| 目录与策略迁移 | 预览默认、显式执行、归属/共享挂载/实际镜像账户/备份核验；同轮新建空目录按镜像用户初始化，旧目录只验证读写。保留权限/策略快照与恢复路径，不盲目递归 chown/chmod、不删除对象 | 新空 bind 首装与既有目录均须在实际镜像 daemon UID/GID 下验证读写、重启/升级及恢复；Linux runner 的数据 named volume 不替代生产 bind 初始化验收，本轮未迁移共享数据 |
+| 恢复、回滚与保障 | Node 运维工具覆盖备份完整性、全新 owned project 恢复、字段/关联及对象 hash、readiness/业务、固定镜像应用回滚。告警区分信号/触发/接收/恢复；容量有界并在 SLO 失败时失败。fixture/真实回环 HTTP 回归覆盖中断和清理失败 | 真实 Linux 恢复/跨版本回滚、真实告警回执、生产容量及业务 RTO/RPO 待验；备份年龄不是 RPO，应用回滚不逆向 SQL |
+| 平台与自动化 | 增加 Windows/macOS/Linux Node CLI 矩阵、PowerShell 5.1 job、手动 Linux Docker 全栈验收 workflow 与同源本地入口，明确目标、状态、失败及 owned 清理；Colima Ubuntu 内真实整栈已通过，见下文 | 原生 Linux 生产宿主、远程 Actions、Windows/WSL2/Apple 实机尚未验证；不以 Colima 替代其他平台或生产外部条件 |
 
-测试执行和人工恢复见[测试政策](./TESTING.md)与[数据运维](./DATA-OPS.md)；部署前提、迁移与回滚见[部署生命周期](../deploy/DEPLOYMENT_LIFECYCLE.md)和[部署验证](../deploy/VERIFICATION.md)。本轮未执行高风险环境操作或凭据轮换。
+本轮已执行：前端 React **94**、Vue **101** 项定向单测、双端 lint、根/子路径共 **4** 次真实 production 构建及产物扫描、**24** 项浏览器 HTTP/Provider 替身流程和 **8** 项 CLI/信号清理检查；后端完整 **31** 类 **172** 用例 package 后，OAuth/RSA 增量复验通过，当前所选测试集合合计 **176** 用例，每轮 Maven 均小于 60 秒。配置回归 **28** 项、双端真实 JSEncrypt **4** 方向、部署 CLI **26** 项、安全脚本 **29** 项、运行时 **20** 项和运维 **17** 项通过。后端增量不冒称单次全套结果，脚本替身不作为实际容器证据；命令、分轮日志、hash 与清理结果分别保留在本轮 `tmp/production-readiness/` 域汇总中。
+
+实际命令与复用 SOP：
+
+```text
+node tools/test_production_config.mjs
+node tools/test_production_crypto.mjs
+node skills/deploy-cli/scripts/test_deploy_cli.mjs
+node skills/deploy-cli/scripts/test_deploy_safety.mjs
+node deploy/bin/test-production-runtime.mjs
+node tools/verify/test_production_ops.mjs
+node tools/verify/test_linux_acceptance.mjs
+node tools/verify/linux_acceptance.mjs --run-id acceptance-001
+```
+
+最后一条只预览；真实执行须在可丢弃的本机 Linux Docker 环境显式追加 `--execute`，并核最终 cleanup。Node/Vitest/Maven、lint、实际 Vite build、产物扫描、浏览器替身和语法/文档门禁分别保存命令与结果；后续授权的 Colima 实测结果独立记录如下。
+
+## 2026-10-18 Colima 实测补充
+
+用户授权本机安装 Colima 并跑完整流程。已安装 Colima 0.10.3、Lima 2.2.1、Docker CLI 29.9.1、Compose 5.6.0 和 Buildx 0.38.0；独立 `infoq-verify` profile 为 Ubuntu 24.04.4 / ARM64、Docker Engine 29.5.2 / Compose 5.1.4，6 CPU / 8 GiB。宿主原 Docker context 为 `default`，未切换。源码与 bind 数据在 VM 原生 ext4 工作副本，避开本轮实际复现的 VirtioFS 文件创建权限问题；DNS 的 systemd-resolved 缺失也已修复。
+
+`linux-colima-007` 真实执行通过：Maven/双端 BuildKit 构建、双域 TLS/nginx、辅助端口归属、匿名拒绝、私有 S3 签名/匿名/过期、四类实际 daemon UID/GID 读写、真实 Redis 验证码加密登录和菜单、React/Vue 根/子路径 DOM/刷新、整库与对象备份/独立恢复、固定镜像与故障配置回滚。浏览器关闭及 owned project 容器/卷/网络删除已复查为 `verified`。四种镜像产物另通过 **24** 项 HTTP/Provider 替身浏览器流程；不冒称真实 Provider。
+
+实机发现并修正证书权限受 umask 影响、管理密码超过后端 30 字符契约、BuildKit secret 变化未使前端构建缓存失效、单文件 bind 对原子替换配置继续引用旧 inode，以及验收中的异步页面响应竞态。双端分别实际验证 A→密钥轮换 B→相同 B，轮换不命中旧构建，重复 B 命中缓存；抽取产物均扫描通过。当前配置 **30**、构建缓存 **15**、真实加密 **4**、首次安装安全 **7** 及运维 **17** 项隔离回归通过；新增反例保持严格失败语义。
+
+独立 `first-install-bind-first-003` 已直接运行真实 `install.sh`，在新 ext4 bind 目录通过首次初始化、实际账户/0750 权限与读写、TLS、私有 S3、重启前后真实登录/菜单和 SQL/对象持久性。原固定 `minio/mc` 镜像已不可匿名拉取，已改用官方固定 Release 二进制与双架构 SHA-256，自建工具镜像并核实际版本、架构与摘要；此安装已使用修复后的真实工具。首装 owned 容器、匿名卷及网络均已清理核验。
+
+两端 builder/final 共 **4** 个真实镜像另完成全部 **53** 层（约 3.60 GB 解压字节）、config/history 与 attestation 扫描，按固定镜像身份验证 OCI descriptor、大小和解压层摘要；本轮请求私钥的 DER/Base64/PEM 形式与六类服务端 fixture 凭据均未命中。原始层导出保留 `0600`；宿主仅复制脱敏结果。
+
+真实 bucket 策略往返另发现 MinIO `Action` 集合输出顺序不稳定，旧回读按 JSON 字符串比较会误判；已仅对该集合按语义比较，原始策略与备份 checksum/identity 完整性仍严格校验。`download`、`upload`、`public` 三类策略均通过预览零策略/备份写入、迁移 private、恢复原权限及对象内容保持，owned 容器已清理。新增身份、固定客户端来源、失败不重试、协议与策略篡改反例后，运行时回归当前 **30** 项通过。
+
+本地证据保留在 Git 忽略的 `tmp/production-readiness/colima/` 与 VM 同源 run root，包含脱敏状态、截图、镜像身份和清理结果；不能上传包含配置、私钥和备份的整个 `tmp/`。安装与复用步骤见 [Colima SOP](../deploy/COLIMA.md)。原生生产宿主、真实 CA/DNS、受控生产秘密来源、OAuth/微信 Provider、Redis 多节点通知、外部告警接收、容量 SLO、业务 RTO/RPO、跨真实版本回滚及远程平台矩阵仍须独立验收。
+
+收口：1,490 个构建/产品文件与 VM 当前工作副本 SHA-256 一致；18 份脱敏证据的大小/hash 经独立复核。19 个应用/浏览器端口可绑定、浏览器进程/容器/卷/owned 网络无残留，专用 VM 已停止，安装与证据保留，宿主原 `default` context 未变。本机修改不包含 commit/push 或远程 Actions。
+
+本次影响检查：配置预检与工具身份校验位于构建/部署阶段，不新增业务请求 IO；首次 mc 工具准备新增 Node/BusyBox 固定镜像和官方 GitHub 下载，失败显式阻断。部署错误和回读错误保留安全阶段/代码，恢复/回滚及 owned 清理已在隔离实例演练；生产告警与容量仍待目标证据。新增随机测试配置只用于隔离环境，无冻结 SQL、package/POM 依赖或 lockfile 变更；旧共享策略/目录迁移仍须预览、备份与明确授权。
+
+受控构建见[发布流程](RELEASING.md)，生产部署与迁移见[生产配置](../deploy/PRODUCTION.md)，隔离验收/恢复/回滚/告警/容量及其边界见[生产保障](PRODUCTION-OPS.md)，前端回归与真实业务限制见[测试政策](TESTING.md)。真实凭据、证书和生产数据无需发入对话，只通过目标受控文件/环境提供。
 
 ## 可复用审计与回归 SOP
 
@@ -118,9 +154,16 @@ git diff --check
 
 反模式：整批执行代码块、把查询异常记成空集合、把发出 kill 当作退出、将 daemon 失败当资源不存在、将 readonly 开关当服务端 ACL、用旧演练或示例凭据证明生产达标、用链接/语法通过代替操作语义。
 
-## 影响与回滚
+## 上一轮文档审计的影响与回滚
 
 - 性能：未改变业务请求路径；工具增加有限时请求、批量进程/资源核验及断言。真实应用容量与生产文件量未测。
 - 可观测性：保留阶段、退出码、未知残留、主错误与清理错误，敏感输出脱敏；生产指标与告警仍须演练。
 - 配置/SQL/依赖：调整部署目录/Redis认证与 IT 隔离、Release 资产校验和 CLI 行为；无 SQL 变更、依赖升级或 lockfile 漂移。旧部署采用新脚本前必须遵守迁移门禁，不能只覆盖文件后重启。
 - 回滚：若本轮修订失真、门禁弱化、行为回归或清理失控，按文件撤销对应自有修改块，保留其他协作者改动并重验。涉及 Redis 配置/认证方式时须同步恢复对应 Compose/容器配置；本轮未改真实环境，无运行态回滚已完成的声称。
+
+## 本轮生产修复的影响与回滚
+
+- 性能：OAuth 校验限解码深度，前端无新增远程查询；WebSocket 节点/心跳改有限批量读取并保留失败；翻译失败不返回原值。容量仍须真实生产目标测量。
+- 可观测性：Push 区分逐通道发布/失败与未知连接；翻译使用安全阶段/类型/字段/异常类别；CLI 保留主要错误与清理错误，SLO 失败和未知恢复证据保持非成功。生产告警收件与恢复仍须实际回执。
+- 配置/SQL/依赖：新增受控生产配置、RSA/TLS/OSS origins、callback base 映射与 BuildKit secret；公共默认更严格。冻结 SQL 不变，无依赖升级或 lockfile 变化。旧目录/bucket/config 不得直接覆盖迁移，必须预览、备份、核归属。
+- 回滚：对应代码、受控配置与已验证旧镜像一起回退；应用回滚保留数据，不自动逆向 SQL。TLS/权限/策略有原状态恢复路径，实际共享环境恢复需单独授权。本轮未执行生产或共享环境回滚，不声称已完成真实演练。

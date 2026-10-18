@@ -48,6 +48,7 @@
 
 - 登录后欢迎消息可作为原始 SSE 流的检查信号；当前管理端仅处理 `{ type: "message" }` 的刷新事件，欢迎文本不会自动变成通知面板记录。
 - 若连接建立正常但消息不达，需同时排查 Redis topic 和当前 token session。
+- Push correlation ID 和 message ID 随 DTO 传播到订阅节点，发送失败保留通道/接收人数/关联字段和异常类别，不记录正文/用户列表/原异常 message。SSE 未维护全局客户端 ACK/在线证明，Redis 发布完成只表示 `published`，连接状态为 `unknown`。
 
 ## 10. 已知边界
 

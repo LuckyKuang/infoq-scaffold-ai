@@ -5,8 +5,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=deploy-paths.sh
 . "${SCRIPT_DIR}/deploy-paths.sh"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
+. "${SCRIPT_DIR}/runtime-env.sh"
 COMPOSE_FILE="${REPO_ROOT}/deploy/docker/docker-compose.yml"
-NGINX_CONF_SOURCE="${REPO_ROOT}/deploy/docker/nginx/conf/nginx.conf"
 DEFAULT_DEPLOY_ROOT="/infoq"
 DEFAULT_ENV_FILE="/etc/infoq-scaffold-ai/deploy.env"
 DEPLOY_ROOT=""
@@ -26,7 +26,7 @@ usage() {
   deploy    prepare + build + 启动目标前端与 nginx-web
   start     准备目录并重新生成 nginx.conf，再启动目标前端与 nginx-web
   stop      停止目标前端与 nginx-web
-  restart   重启目标前端与 nginx-web
+  restart   重新渲染受控 TLS，nginx -t 通过后重建目标前端与网关
   status    查看目标前端与 nginx-web 服务状态
   logs      查看日志，默认 all，可选 vue|react|nginx|all
 EOF
@@ -101,11 +101,11 @@ load_deploy_env() {
       echo "[frontend] 指定的环境文件不存在: ${env_file}" >&2
       exit 1
     fi
-    set -a
-    # shellcheck disable=SC1090
-    . "${env_file}"
-    set +a
+    load_runtime_env_data "${env_file}"
     INFOQ_ENV_FILE="${env_file}"
+  fi
+  if [[ -z "${env_file}" && -n "${INFOQ_PRODUCTION_CONFIG_FILE:-}" ]]; then
+    load_runtime_env_data "${INFOQ_PRODUCTION_CONFIG_FILE}"
   fi
 }
 
@@ -174,9 +174,6 @@ resolve_compose_command() {
 
 compose() {
   resolve_compose_command
-  # Compose interpolates every service before applying the requested service list.
-  # Frontend commands never start infoq-admin, so this placeholder only satisfies parsing.
-  local compose_security_token_secret="${SECURITY_TOKEN_SECRET:-frontend-compose-placeholder-token-secret-20260601}"
   local vue_context_path="${INFOQ_VUE_CONTEXT_PATH:-/vue/}"
   local react_context_path="${INFOQ_REACT_CONTEXT_PATH:-/react/}"
 
@@ -191,17 +188,17 @@ compose() {
 
   INFOQ_DEPLOY_ROOT="${DEPLOY_ROOT}" \
     COMPOSE_PROJECT_NAME="${INFOQ_COMPOSE_PROJECT_NAME:-${COMPOSE_PROJECT_NAME:-infoq-scaffold-ai}}" \
-    DEPLOY_ID="${DEPLOY_ID:-frontend-compose-placeholder-deploy-id}" \
-    MYSQL_ROOT_PASSWORD="${MYSQL_ROOT_PASSWORD:-frontend-compose-placeholder-mysql-root}" \
-    INFOQ_DB_USERNAME="${INFOQ_DB_USERNAME:-frontend_placeholder_app}" \
-    INFOQ_DB_PASSWORD="${INFOQ_DB_PASSWORD:-frontend-compose-placeholder-db-password}" \
-    REDIS_PASSWORD="${REDIS_PASSWORD:-frontend-compose-placeholder-redis-password}" \
-    MINIO_ROOT_USER="${MINIO_ROOT_USER:-frontend_placeholder_minio}" \
-    MINIO_ROOT_PASSWORD="${MINIO_ROOT_PASSWORD:-frontend-compose-placeholder-minio-password}" \
+    DEPLOY_ID="${DEPLOY_ID:-}" \
+    MYSQL_ROOT_PASSWORD="${MYSQL_ROOT_PASSWORD:-}" \
+    INFOQ_DB_USERNAME="${INFOQ_DB_USERNAME:-}" \
+    INFOQ_DB_PASSWORD="${INFOQ_DB_PASSWORD:-}" \
+    REDIS_PASSWORD="${REDIS_PASSWORD:-}" \
+    MINIO_ROOT_USER="${MINIO_ROOT_USER:-}" \
+    MINIO_ROOT_PASSWORD="${MINIO_ROOT_PASSWORD:-}" \
     INFOQ_PUBLIC_BASE_URL="${INFOQ_PUBLIC_BASE_URL:-http://localhost}" \
     INFOQ_VUE_CONTEXT_PATH="${vue_context_path}" \
     INFOQ_REACT_CONTEXT_PATH="${react_context_path}" \
-    SECURITY_TOKEN_SECRET="${compose_security_token_secret}" \
+    SECURITY_TOKEN_SECRET="${SECURITY_TOKEN_SECRET:-}" \
     "${COMPOSE_CMD[@]}" -f "${COMPOSE_FILE}" "$@"
 }
 
@@ -215,179 +212,9 @@ resolve_deploy_root() {
   fi
 }
 
-render_single_frontend_nginx_conf() {
-  local frontend_service
-  local frontend_port
-
-  case "${FRONTEND_TARGET}" in
-    vue)
-      frontend_service="infoq-frontend-vue"
-      frontend_port="9091"
-      ;;
-    react)
-      frontend_service="infoq-frontend-react"
-      frontend_port="9092"
-      ;;
-    *)
-      echo "[frontend] 单前端 nginx 配置不支持目标: ${FRONTEND_TARGET}" >&2
-      exit 1
-      ;;
-  esac
-
-  cat > "${DEPLOY_ROOT}/nginx/conf/nginx.conf" <<EOF
-worker_processes  1;
-
-error_log  /var/log/nginx/error.log warn;
-pid        /var/run/nginx.pid;
-
-events {
-    worker_connections  1024;
-}
-
-http {
-    include       mime.types;
-    default_type  application/octet-stream;
-    sendfile        on;
-    keepalive_timeout  65;
-    keepalive_requests 100000;
-    client_max_body_size 100m;
-    client_header_buffer_size 32k;
-    client_body_buffer_size   512k;
-    gzip_static on;
-    limit_conn_zone \$binary_remote_addr zone=perip:10m;
-    limit_conn_zone \$server_name zone=perserver:10m;
-    server_tokens off;
-
-    log_format  main  '\$remote_addr - \$remote_user [\$time_local] "\$request" '
-                          '\$status \$body_bytes_sent "\$http_referer" '
-                          '"\$http_user_agent" "\$http_x_forwarded_for"';
-
-    access_log  /var/log/nginx/access.log  main;
-
-    upstream backend_server {
-        server infoq-admin:9090 max_fails=3 fail_timeout=10s;
-    }
-
-    upstream frontend_server {
-        server ${frontend_service}:${frontend_port};
-    }
-
-    upstream minio_api_server {
-        server minio:9000;
-    }
-
-    upstream minio_console_server {
-        server minio:9001;
-    }
-
-    server {
-        listen       80;
-        server_name  localhost;
-
-        location = /vue {
-            return 302 /;
-        }
-
-        location ^~ /vue/ {
-            return 302 /;
-        }
-
-        location = /react {
-            return 302 /;
-        }
-
-        location ^~ /react/ {
-            return 302 /;
-        }
-
-        location = /console-oss {
-            return 302 /console-oss/;
-        }
-
-        location = /oss {
-            return 302 /oss/;
-        }
-
-        location ^~ /prod-api/ {
-            proxy_set_header Host \$http_host;
-            proxy_set_header X-Real-IP \$remote_addr;
-            proxy_set_header REMOTE-HOST \$remote_addr;
-            proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-            proxy_read_timeout 86400s;
-            proxy_http_version 1.1;
-            proxy_set_header Upgrade \$http_upgrade;
-            proxy_set_header Connection "upgrade";
-            proxy_buffering off;
-            proxy_cache off;
-            rewrite ^/prod-api/(.*)$ /\$1 break;
-            proxy_pass http://backend_server;
-        }
-
-        location ^~ /console-oss/ {
-            proxy_set_header Host \$http_host;
-            proxy_set_header X-Real-IP \$remote_addr;
-            proxy_set_header REMOTE-HOST \$remote_addr;
-            proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto \$scheme;
-            proxy_set_header X-Forwarded-Host \$host;
-            proxy_set_header X-Forwarded-Prefix /console-oss;
-            proxy_read_timeout 86400s;
-            proxy_http_version 1.1;
-            proxy_set_header Upgrade \$http_upgrade;
-            proxy_set_header Connection "upgrade";
-            proxy_buffering off;
-            proxy_pass http://minio_console_server/;
-        }
-
-        location ^~ /oss/ {
-            proxy_set_header Host \$http_host;
-            proxy_set_header X-Real-IP \$remote_addr;
-            proxy_set_header REMOTE-HOST \$remote_addr;
-            proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto \$scheme;
-            client_max_body_size 200m;
-            proxy_pass http://minio_api_server/;
-        }
-
-        location ^~ /dev-api/ {
-            proxy_set_header Host \$http_host;
-            proxy_set_header X-Real-IP \$remote_addr;
-            proxy_set_header REMOTE-HOST \$remote_addr;
-            proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-            proxy_read_timeout 86400s;
-            proxy_http_version 1.1;
-            proxy_set_header Upgrade \$http_upgrade;
-            proxy_set_header Connection "upgrade";
-            proxy_buffering off;
-            proxy_cache off;
-            rewrite ^/dev-api/(.*)$ /\$1 break;
-            proxy_pass http://backend_server;
-        }
-
-        location / {
-            proxy_set_header Host \$http_host;
-            proxy_set_header X-Real-IP \$remote_addr;
-            proxy_set_header REMOTE-HOST \$remote_addr;
-            proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto \$scheme;
-            proxy_pass http://frontend_server;
-        }
-
-        error_page   500 502 503 504  /50x.html;
-        location = /50x.html {
-            root   html;
-        }
-    }
-}
-EOF
-}
-
 render_nginx_conf() {
-  if [[ "${FRONTEND_TARGET}" == "all" ]]; then
-    cp -f "${NGINX_CONF_SOURCE}" "${DEPLOY_ROOT}/nginx/conf/nginx.conf"
-  else
-    render_single_frontend_nginx_conf
-  fi
+  INFOQ_DEPLOY_ROOT="${DEPLOY_ROOT}" INFOQ_FRONTEND_TARGET="${FRONTEND_TARGET}" \
+    node "${SCRIPT_DIR}/render-gateway.mjs" render --execute
 }
 
 prepare_dirs() {
@@ -421,14 +248,33 @@ prepare_dirs() {
 }
 
 build_frontends() {
-  local service
+  local service config_digest current_digest
 
   validate_docker_credential_helpers
   resolve_compose_command
+  config_digest="$(node "${REPO_ROOT}/tools/production_config.mjs" frontend-cache-key)"
+  export INFOQ_FRONTEND_CONFIG_DIGEST="${config_digest}"
   for service in "${TARGET_FRONTEND_SERVICES[@]}"; do
     echo "[frontend] 构建前端镜像: ${service}"
     compose build "${service}"
+    current_digest="$(node "${REPO_ROOT}/tools/production_config.mjs" frontend-cache-key)"
+    if [[ "${current_digest}" != "${config_digest}" ]]; then
+      echo "[frontend] 受控浏览器配置在构建期间发生变化；停止部署，请使用同一份稳定配置重新构建" >&2
+      exit 1
+    fi
   done
+}
+
+verify_volume_users() {
+  local dir service
+  local services="nginx-web"
+  local args=()
+  for service in "${TARGET_FRONTEND_SERVICES[@]}"; do services="${services},${service}"; done
+  args=(--services "${services}" --execute)
+  for dir in "${INFOQ_NEW_DEPLOY_DIRS[@]:-}"; do
+    if [[ -d "${dir}" && -z "$(find "${dir}" -mindepth 1 -maxdepth 1 -print -quit)" ]]; then args+=(--new-dir "${dir}"); fi
+  done
+  INFOQ_DEPLOY_ROOT="${DEPLOY_ROOT}" node "${SCRIPT_DIR}/prepare-volume-users.mjs" "${args[@]}"
 }
 
 deploy_frontends() {
@@ -438,15 +284,18 @@ deploy_frontends() {
   resolve_compose_command
   prepare_dirs
   build_frontends
+  compose pull nginx-web
+  verify_volume_users
   compose up -d --no-deps "${TARGET_FRONTEND_SERVICES[@]}"
-  # Frontend containers are recreated during deploy; restart nginx afterwards so upstream DNS is refreshed.
+  compose run --rm --no-deps nginx-web nginx -t
+  # Recreate only after nginx accepts the generated configuration.
   compose up -d --no-deps --force-recreate nginx-web
   echo "[frontend] 部署完成"
   if [[ "${FRONTEND_TARGET}" == "all" ]]; then
-    echo "[frontend] 网关入口: ${public_base_url}/vue/、${public_base_url}/react/、${public_base_url}/console-oss/ 和 ${public_base_url}/oss/"
+    echo "[frontend] 网关入口: ${public_base_url}/vue/、${public_base_url}/react/、${public_base_url}/console-oss/ 和 ${INFOQ_OSS_PUBLIC_ORIGIN}/"
     echo "[frontend] 直连端口: Vue=9091 React=9092"
   else
-    echo "[frontend] 网关入口: ${public_base_url}/、${public_base_url}/console-oss/ 和 ${public_base_url}/oss/"
+    echo "[frontend] 网关入口: ${public_base_url}/、${public_base_url}/console-oss/ 和 ${INFOQ_OSS_PUBLIC_ORIGIN}/"
     echo "[frontend] 已安装前端: ${TARGET_FRONTEND_LABEL}"
   fi
 }
@@ -454,7 +303,10 @@ deploy_frontends() {
 start_frontends() {
   resolve_compose_command
   prepare_dirs
-  compose up -d --no-deps "${TARGET_FRONTEND_SERVICES[@]}" nginx-web
+  verify_volume_users
+  compose up -d --no-deps "${TARGET_FRONTEND_SERVICES[@]}"
+  compose run --rm --no-deps nginx-web nginx -t
+  compose up -d --no-deps --force-recreate nginx-web
 }
 
 stop_frontends() {
@@ -463,8 +315,12 @@ stop_frontends() {
 }
 
 restart_frontends() {
+  prepare_dirs
   resolve_compose_command
-  compose restart "${TARGET_FRONTEND_SERVICES[@]}" nginx-web
+  verify_volume_users
+  compose up -d --no-deps --force-recreate "${TARGET_FRONTEND_SERVICES[@]}"
+  compose run --rm --no-deps nginx-web nginx -t
+  compose up -d --no-deps --force-recreate nginx-web
 }
 
 status_frontends() {
@@ -502,6 +358,15 @@ else
   FRONTEND_TARGET="$(normalize_frontend_target "${2:-${INFOQ_FRONTEND_TARGET:-all}}")"
 fi
 set_target_resources
+
+case "${COMMAND}" in
+  prepare|build|deploy|start|restart)
+    require_command node
+    node "${REPO_ROOT}/tools/production_config.mjs" check --scope deploy
+    resolve_deploy_root
+    INFOQ_DEPLOY_ROOT="${DEPLOY_ROOT}" INFOQ_FRONTEND_TARGET="${FRONTEND_TARGET}" node "${SCRIPT_DIR}/render-gateway.mjs" check
+    ;;
+esac
 
 case "${COMMAND}" in
   prepare)

@@ -36,6 +36,8 @@ INFOQ_DB_USERNAME=""
 INFOQ_DB_PASSWORD=""
 REDIS_PASSWORD=""
 SECURITY_TOKEN_SECRET=""
+INFOQ_API_REQUEST_PRIVATE_KEY=""
+INFOQ_API_RESPONSE_PUBLIC_KEY=""
 DEPLOY_ID=""
 TZ_VALUE=""
 MYSQL_ADDRESS=""
@@ -74,6 +76,9 @@ Commands:
 
 Environment:
   INFOQ_ENV_FILE             Path to the deployment env file (default: deploy/.env)
+  INFOQ_DEPLOY_MODE          Must be development in the env file; production uses Linux Docker
+
+init generates two independent 2048-bit RSA pairs and local credentials. It never prints secrets.
 USAGE
 }
 
@@ -325,38 +330,25 @@ container_ipv4_address() {
 }
 
 read_env_value() {
-    local key=$1
-    local fallback=${2-}
-    awk -v wanted="${key}" -v fallback="${fallback}" '
-        BEGIN { found = 0 }
-        /^[[:space:]]*#/ || /^[[:space:]]*$/ { next }
-        {
-            separator = index($0, "=")
-            if (separator == 0) { next }
-            key = substr($0, 1, separator - 1)
-            if (key == wanted) {
-                value = substr($0, separator + 1)
-                sub(/\r$/, "", value)
-                found = 1
-            }
-        }
-        END {
-            if (found) printf "%s", value
-            else printf "%s", fallback
-        }
-    ' "${ENV_FILE}"
+    node --input-type=module - "${REPO_ROOT}/tools/production_config.mjs" "${ENV_FILE}" "$1" "${2-}" <<'NODE'
+import {pathToFileURL} from 'node:url';
+const {readProductionConfig} = await import(pathToFileURL(process.argv[2]));
+const values = readProductionConfig(process.argv[3]);
+process.stdout.write(values[process.argv[4]] ?? process.argv[5]);
+NODE
 }
 
 replace_env_value() {
     local key=$1
     local value=$2
-    python3 -c '
+    INFOQ_VALUE_TO_WRITE="${value}" python3 -c '
+import os
 import pathlib
 import sys
 
 path = pathlib.Path(sys.argv[1])
 key = sys.argv[2]
-value = sys.argv[3]
+value = os.environ["INFOQ_VALUE_TO_WRITE"]
 lines = path.read_text(encoding="utf-8").splitlines()
 replaced = False
 output = []
@@ -371,7 +363,7 @@ if not replaced:
         output.append("")
     output.append(f"{key}={value}")
 path.write_text("\n".join(output) + "\n", encoding="utf-8")
-' "${ENV_FILE}" "${key}" "${value}"
+' "${ENV_FILE}" "${key}"
 }
 
 generate_secret() {
@@ -404,13 +396,40 @@ validate_env_file_security() {
 
 cmd_init() {
     local example_file="${SCRIPT_DIR}/.env.example"
+    local created=false
     [[ -f "${example_file}" ]] || die "Missing ${example_file}."
     require_command openssl
+    require_command node
     if [[ ! -f "${ENV_FILE}" ]]; then
         cp "${example_file}" "${ENV_FILE}"
+        created=true
         info "Created ${ENV_FILE} from .env.example."
     fi
     chmod 600 "${ENV_FILE}"
+    if [[ "${created}" != true && -n "$(read_env_value INFOQ_DEPLOY_MODE)" && "$(read_env_value INFOQ_DEPLOY_MODE)" != "development" ]]; then
+        die "Apple local stack requires explicit INFOQ_DEPLOY_MODE=development; use Linux Docker for production."
+    fi
+    replace_env_value INFOQ_DEPLOY_MODE development
+    node --input-type=module - "${REPO_ROOT}/tools/production_config.mjs" "${ENV_FILE}" <<'NODE'
+import fs from 'node:fs';
+import {pathToFileURL} from 'node:url';
+import {generateKeyPairSync} from 'node:crypto';
+const {readProductionConfig} = await import(pathToFileURL(process.argv[2]));
+const file = process.argv[3], env = readProductionConfig(file);
+const names = ['VITE_APP_RSA_PUBLIC_KEY', 'INFOQ_API_REQUEST_PRIVATE_KEY', 'VITE_APP_RSA_PRIVATE_KEY', 'INFOQ_API_RESPONSE_PUBLIC_KEY'];
+if (names.some((name) => env[name]) && !names.every((name) => env[name])) throw new Error('RSA 配置不完整；拒绝自动轮换已有密钥，请提供四项配对配置');
+if (!names.every((name) => env[name])) {
+  let text = fs.readFileSync(file, 'utf8');
+  for (const [publicName, privateName] of [[names[0], names[1]], [names[3], names[2]]]) {
+    const pair = generateKeyPairSync('rsa', {modulusLength: 2048, publicKeyEncoding: {format: 'der', type: 'spki'}, privateKeyEncoding: {format: 'der', type: 'pkcs8'}});
+    for (const [name, value] of [[publicName, pair.publicKey], [privateName, pair.privateKey]]) {
+      text = text.replace(new RegExp(`^${name}=.*(?:\\r?\\n|$)`, 'mu'), '');
+      text += `\n${name}=${value.toString('base64')}\n`;
+    }
+  }
+  fs.writeFileSync(file, text, {encoding: 'utf8', mode: 0o600});
+}
+NODE
     if [[ "$(read_env_value MYSQL_ROOT_PASSWORD)" == change-me-* || -z "$(read_env_value MYSQL_ROOT_PASSWORD)" ]]; then
         replace_env_value MYSQL_ROOT_PASSWORD "$(generate_secret)"
     fi
@@ -438,11 +457,14 @@ cmd_init() {
     if [[ -z "$(read_env_value DEPLOY_ID)" || "$(read_env_value DEPLOY_ID)" == "3.0.0-local" ]]; then
         replace_env_value DEPLOY_ID "3.0.0-apple-$(date +%Y%m%d%H%M%S)"
     fi
+    node "${REPO_ROOT}/tools/production_config.mjs" check --scope apple --env-file "${ENV_FILE}"
     info "Apple container env is ready: ${ENV_FILE}"
 }
 
 prepare_environment() {
     validate_env_file_security
+    require_command node
+    node "${REPO_ROOT}/tools/production_config.mjs" check --scope apple --env-file "${ENV_FILE}"
     MYSQL_IMAGE="$(read_env_value APPLE_CONTAINER_MYSQL_IMAGE mysql:8.0.42)"
     REDIS_IMAGE="$(read_env_value APPLE_CONTAINER_REDIS_IMAGE redis:7.2.8)"
     ADMIN_IMAGE="$(read_env_value APPLE_CONTAINER_ADMIN_IMAGE localhost/infoq-admin:3.0.0-apple)"
@@ -455,6 +477,8 @@ prepare_environment() {
     INFOQ_DB_PASSWORD="$(read_env_value INFOQ_DB_PASSWORD)"
     REDIS_PASSWORD="$(read_env_value REDIS_PASSWORD)"
     SECURITY_TOKEN_SECRET="$(read_env_value SECURITY_TOKEN_SECRET)"
+    INFOQ_API_REQUEST_PRIVATE_KEY="$(read_env_value INFOQ_API_REQUEST_PRIVATE_KEY)"
+    INFOQ_API_RESPONSE_PUBLIC_KEY="$(read_env_value INFOQ_API_RESPONSE_PUBLIC_KEY)"
     DEPLOY_ID="$(read_env_value DEPLOY_ID 3.0.0-apple)"
     TZ_VALUE="$(read_env_value TZ Asia/Shanghai)"
     ACCESS_HOST="${BIND_HOST}"
@@ -532,6 +556,8 @@ SERVER_PORT=9090
 SPRING_PROFILES_ACTIVE=prod
 SPRING_CONFIG_ADDITIONAL_LOCATION=file:/infoq/server/config/
 SECURITY_TOKEN_SECRET=${SECURITY_TOKEN_SECRET}
+INFOQ_API_REQUEST_PRIVATE_KEY=${INFOQ_API_REQUEST_PRIVATE_KEY}
+INFOQ_API_RESPONSE_PUBLIC_KEY=${INFOQ_API_RESPONSE_PUBLIC_KEY}
 INFOQ_DB_USERNAME=${INFOQ_DB_USERNAME}
 INFOQ_DB_PASSWORD=${INFOQ_DB_PASSWORD}
 REDIS_PASSWORD=${REDIS_PASSWORD}
@@ -725,8 +751,8 @@ cmd_build() {
     if [[ "${1-}" == "--from-existing-jar" ]]; then
         from_existing=true
     fi
-    ensure_system
     prepare_environment
+    ensure_system
     mkdir -p "${BUILD_DIR}"
     if [[ "${from_existing}" == true ]]; then
         [[ -f "${jar_file}" ]] || die "Missing ${jar_file}. Package the backend first."
@@ -748,8 +774,8 @@ cmd_build() {
 }
 
 cmd_pull() {
-    ensure_system
     prepare_environment
+    ensure_system
     ensure_image_available "${MYSQL_IMAGE}"
     ensure_image_available "${REDIS_IMAGE}"
     ensure_image_available "bellsoft/liberica-openjdk-rocky:21.0.12-cds"
@@ -764,10 +790,10 @@ cmd_up() {
     if [[ "${1-}" == "--recreate" ]]; then
         recreate=true
     fi
+    prepare_environment
     acquire_lock
     TEMP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/infoq-apple.XXXXXX")"
     ensure_system
-    prepare_environment
     warn_foreign_stacks
     preflight_stack_ownership
     [[ -f "${SQL_INIT_FILE}" ]] || die "Missing SQL baseline ${SQL_INIT_FILE}."
@@ -822,9 +848,9 @@ cmd_up() {
 }
 
 cmd_down() {
+    prepare_environment
     acquire_lock
     ensure_system
-    prepare_environment
     preflight_stack_ownership
     stop_container_if_running "${ADMIN_CONTAINER}"
     stop_container_if_running "${REDIS_CONTAINER}"
@@ -851,8 +877,8 @@ print_container_status() {
 }
 
 cmd_status() {
-    ensure_system
     prepare_environment
+    ensure_system
     warn_foreign_stacks
     print_container_status "${MYSQL_CONTAINER}"
     print_container_status "${REDIS_CONTAINER}"
@@ -877,8 +903,8 @@ cmd_logs() {
         admin) container_name="${ADMIN_CONTAINER}" ;;
         *) usage; exit 2 ;;
     esac
-    ensure_system
     prepare_environment
+    ensure_system
     assert_infoq_apple_name "${container_name}"
     if [[ "${follow}" == "-f" ]]; then
         container logs --follow "${container_name}"

@@ -55,6 +55,11 @@ jobs:
     runs-on: ubuntu-latest
     needs: verify
     timeout-minutes: 30
+    # Repository maintainers must protect this environment and supply controlled
+    # four-direction RSA configuration; fixture keys are never Release inputs.
+    environment: production-build
+    env:
+      INFOQ_PRODUCTION_CONFIG_FILE: ${{ github.workspace }}/tmp/release-config/production.env
     strategy:
       fail-fast: false
       matrix:
@@ -84,9 +89,27 @@ jobs:
         working-directory: ${{ matrix.workspace }}
         run: pnpm install --frozen-lockfile
 
+      - name: Materialize controlled production configuration
+        env:
+          INFOQ_RELEASE_CONFIG: ${{ secrets.FRONTEND_PRODUCTION_CONFIG }}
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import path from 'node:path';
+          const content = process.env.INFOQ_RELEASE_CONFIG;
+          if (!content?.trim()) throw new Error('production-build requires FRONTEND_PRODUCTION_CONFIG; sample or fixture keys cannot produce Release assets');
+          const file = process.env.INFOQ_PRODUCTION_CONFIG_FILE;
+          fs.mkdirSync(path.dirname(file), {recursive: true, mode: 0o700});
+          fs.writeFileSync(file, content, {encoding: 'utf8', mode: 0o600, flag: 'wx'});
+          NODE
+          node tools/production_config.mjs check --scope frontend
+
       - name: Build production bundle
         working-directory: ${{ matrix.workspace }}
         run: pnpm run build:prod
+
+      - name: Verify deployable bundle and key provenance
+        run: node tools/production_config.mjs check-artifact --dir "${{ matrix.workspace }}/dist"
 
       - name: Package dist
         run: tar -czf "${{ matrix.name }}-dist.tar.gz" -C "${{ matrix.workspace }}/dist" .
@@ -98,6 +121,10 @@ jobs:
           path: ${{ matrix.name }}-dist.tar.gz
           if-no-files-found: error
           retention-days: 7
+
+      - name: Remove controlled configuration
+        if: always()
+        run: node --input-type=module -e 'import fs from "node:fs"; fs.rmSync(process.env.INFOQ_PRODUCTION_CONFIG_FILE, {force:true});'
 
   publish:
     name: Publish GitHub Release

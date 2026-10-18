@@ -12,6 +12,10 @@ import org.junit.jupiter.api.Test;
 import org.redisson.api.RBucket;
 import org.redisson.api.RKeys;
 import org.redisson.api.RSet;
+import org.redisson.api.RBatch;
+import org.redisson.api.RSetAsync;
+import org.redisson.api.RBucketAsync;
+import org.redisson.misc.CompletableFutureWrapper;
 import org.redisson.api.RedissonClient;
 import org.redisson.api.options.KeysScanOptions;
 import org.springframework.context.support.GenericApplicationContext;
@@ -33,6 +37,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @Tag("dev")
 class WebSocketClusterUtilsTest {
@@ -72,6 +77,26 @@ class WebSocketClusterUtilsTest {
         });
         when(redissonClient.getBucket(anyString())).thenAnswer(invocation ->
             BUCKETS.computeIfAbsent(invocation.getArgument(0), ignored -> mock(RBucket.class)));
+        when(redissonClient.createBatch()).thenAnswer(invocation -> {
+            RBatch batch = mock(RBatch.class);
+            when(batch.getSet(anyString())).thenAnswer(call -> {
+                RSet<String> backing = STRING_SETS.computeIfAbsent(call.getArgument(0), ignored -> mock(RSet.class));
+                RSetAsync<String> set = mock(RSetAsync.class);
+                when(set.readAllAsync()).thenAnswer(ignored -> new CompletableFutureWrapper<>(backing.readAll()));
+                when(set.removeAllAsync(any())).thenAnswer(remove -> {
+                    backing.removeAll(remove.getArgument(0));
+                    return new CompletableFutureWrapper<>(true);
+                });
+                return set;
+            });
+            when(batch.getBucket(anyString())).thenAnswer(call -> {
+                RBucket<Object> backing = BUCKETS.computeIfAbsent(call.getArgument(0), ignored -> mock(RBucket.class));
+                RBucketAsync<Object> bucket = mock(RBucketAsync.class);
+                when(bucket.isExistsAsync()).thenAnswer(ignored -> new CompletableFutureWrapper<>(backing.isExists()));
+                return bucket;
+            });
+            return batch;
+        });
     }
 
     @AfterEach
@@ -219,7 +244,8 @@ class WebSocketClusterUtilsTest {
 
         assertEquals(List.of(1L), routed.get("node-a"));
         assertEquals(List.of(2L), routed.get("node-b"));
-        verify(user1Nodes).remove("node-dead");
+        verify(user1Nodes).removeAll(Set.of("node-dead"));
+        verify(redissonClient, times(3)).createBatch();
     }
 
     @Test

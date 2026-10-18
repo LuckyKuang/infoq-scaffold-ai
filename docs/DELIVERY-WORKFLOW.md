@@ -13,6 +13,7 @@
 5. 生产或共享环境数据变更、SQL 迁移、批量修复、权限/菜单/任务基础数据调整，必须联动 `docs/DATA-OPS.md`；不确定分级时按 OpenSpec Lite 或 L3。
 6. L1 小修复可不建 OpenSpec，但实现前必须写清 Acceptance Contract。
 7. 本机部署、Apple container 启停、WSL2/Linux Docker 启停与容器 smoke，使用 `deploy-cli` 并读取 `deploy/DEPLOYMENT_LIFECYCLE.md`。
+8. Linux Docker 生产修复须分别记录仓库回归与目标环境结果；预检使用 `tools/production_config.mjs`，隔离备份恢复、回滚、告警与容量使用 `tools/verify/`。缺 daemon、受控凭据、告警接收证据或容量/RTO/RPO 目标时保持明确阻塞，继续完成可独立验证的代码与 SOP。
 
 ## 默认命令
 

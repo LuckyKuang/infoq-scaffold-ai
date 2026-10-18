@@ -34,13 +34,13 @@ export INFOQ_DEPLOY_ROOT=/infoq
 # 若当前账号不可写，由授权管理员执行目录创建。
 mkdir -p tmp/deploy-verify/wsl2-run
 sudo mkdir -p /tmp/infoq-deploy "${INFOQ_DEPLOY_ROOT}/server/temp"
-sudo env INFOQ_SOURCE_DIR="$(pwd)" INFOQ_FRONTEND_TARGET=all INFOQ_PUBLIC_BASE_URL=http://127.0.0.1 INFOQ_DEPLOY_ROOT="${INFOQ_DEPLOY_ROOT}" INFOQ_PRINT_SECRETS=0 bash deploy/install.sh > tmp/deploy-verify/wsl2-run/install.log 2>&1
+sudo env INFOQ_SOURCE_DIR="$(pwd)" INFOQ_FRONTEND_TARGET=all INFOQ_DEPLOY_MODE=development INFOQ_PUBLIC_BASE_URL=http://127.0.0.1 INFOQ_OSS_PUBLIC_ORIGIN=http://oss.localhost INFOQ_DEPLOY_ROOT="${INFOQ_DEPLOY_ROOT}" INFOQ_PRINT_SECRETS=0 bash deploy/install.sh > tmp/deploy-verify/wsl2-run/install.log 2>&1
 INFOQ_INSTALL_EXIT=$?
 printf '%s\n' "${INFOQ_INSTALL_EXIT}" > tmp/deploy-verify/wsl2-run/install.exit
 tail -n 120 tmp/deploy-verify/wsl2-run/install.log
 ```
 
-`install.exit` 必须为 `0`；外层若使用 `set -e`，由调用方保留失败退出码。安装日志和只显示的凭据文件路径不是健康证明。安装器生成随机凭据但不生成 RSA，不自动完成 TLS/权限/bucket/ownership 治理；默认值与覆盖时序见生命周期。
+`install.exit` 必须为 `0`；外层若使用 `set -e`，由调用方保留失败退出码。安装日志和只显示的凭据文件路径不是健康证明。显式 development 生成独立凭据和两组 RSA，仅用于隔离开发。生产必须使用同源受控配置、TLS 与独立 OSS 域名，旧数据权限/策略需先显式迁移，见 [PRODUCTION.md](PRODUCTION.md)。
 
 ## Smoke 与 Windows 访问
 
@@ -51,7 +51,7 @@ tail -n 120 tmp/deploy-verify/wsl2-run/install.log
 ```powershell
 $infoqTarget = 'all'
 $infoqPaths = if ($infoqTarget -eq 'all') { @('/vue/', '/react/') } elseif ($infoqTarget -eq 'vue' -or $infoqTarget -eq 'react') { @('/') } else { throw 'Invalid frontend target' }
-$infoqPaths += @('/prod-api/monitor/health/readiness', '/console-oss/', '/oss/minio/health/live')
+$infoqPaths += @('/prod-api/monitor/health/readiness', '/console-oss/')
 foreach ($infoqPath in $infoqPaths) {
     $infoqStatus = & curl.exe --noproxy '*' --silent --show-error --max-time 15 -o NUL -w '%{http_code}' "http://localhost$infoqPath"
     if ($LASTEXITCODE -ne 0 -or $infoqStatus -ne '200') { throw "HTTP check failed: $infoqPath ($infoqStatus)" }
@@ -75,3 +75,5 @@ foreach ($infoqPath in $infoqPaths) {
 | Debian 未提供宿主 JDK 21 | Compose 不依赖宿主 JDK；手动/Apple Maven 构建才需宿主工具链 |
 
 恢复旧镜像/配置前确认数据库兼容，保留日志与数据；readiness、登录、代理和关键 API 再通过后恢复流量。停止或卸载只作用本次获授权栈，按 `VERIFICATION.md` 的逐项确认执行；不得主动删除 `/infoq` 或其他项目资源。收口列出发行版、root、镜像/构建、各层 smoke、权限/TLS/凭据与未验证项。
+
+私有 S3 健康使用独立 `INFOQ_OSS_PUBLIC_ORIGIN` 主机的 `/minio/health/live`，不再使用主站 `/oss/`；需要 Windows/WSL 都能解析该主机。WSL/Linux 兼容验证和生产 Linux 实机证据分别记录。

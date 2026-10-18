@@ -8,15 +8,15 @@
 2. 阅读 [运行时矩阵](runtime-matrix.md)、[部署指南](README.md)、[Docker 流程](DOCKER.md) 和 [生命周期](DEPLOYMENT_LIFECYCLE.md)。先只读检查运行时版本、当前 context、容器/挂载归属、端口和配置字段，不打印秘密。`colima start`、`docker context use`、安装和启动均会修改状态，不属于只读探测。
 3. 确认 Docker daemon、Compose、Buildx 与镜像/依赖下载能力。Compose 在 Maven 3.9.12 / JDK 21 builder 内打包，宿主不要求 Java/Maven；前端 builder 固定 Node 24.18.0，pnpm 10.34.1。Docker 权限等同主机高权限，不随意放宽 socket 权限。
 4. 显式选 `INFOQ_DEPLOY_ROOT`；WSL2/Linux 通常 `/infoq`，Colima 通常 `$HOME/infoq`，WSL 数据禁止 DrvFS。预创建 `/tmp/infoq-deploy` 和 `${INFOQ_DEPLOY_ROOT}/server/temp`；权限不足由授权管理员处理，不能跳过。
-5. 核对 `INFOQ_FRONTEND_TARGET=all|vue|react`、公共 URL、端口与秘密来源。环境文件/凭据文件必须 `600`，由有权限的属主/root 执行；shell helper 会执行该文件，必须是可信受控文件。不要用打印文件或 `set -x` 诊断。目标目录或通用容器名与其他项目冲突即停止。
-6. 生产必须先关闭 [当前生产准备阻塞](DEPLOYMENT_LIFECYCLE.md#9-当前生产准备阻塞)：旧目录权限迁移与镜像用户读写、所有网卡端口暴露、TLS、MinIO 匿名 bucket 与浮动 mc、部署/停止归属、凭据及告警。默认 `443` 只有映射，没有 TLS listener。前端 Docker builder 不接受宿主 RSA env，必须按 [RSA 构建前提](README.md#14-配置检查项) 准备并核验受控构建产物。
+5. 核对 `INFOQ_FRONTEND_TARGET=all|vue|react`、公共 URL、端口与秘密来源。环境文件/凭据文件必须 `600`，由有权限的属主/root 执行；生命周期 helper 将其作为数据解析并与构建同源，禁止注入 PATH/NODE_OPTIONS 等运行时控制字段。不要用打印文件或 `set -x` 诊断。目标目录或通用容器名与其他项目冲突即停止。
+6. 先按 [PRODUCTION.md](PRODUCTION.md) 验证生产同源配置、两组独立 RSA、主站和独立 S3 域名、匹配且有效的 TLS 及旧 bucket/目录迁移。辅助端口默认 loopback。配置预检通过仍需本节实际运行；不把映射 443 或 fixture 当受信 HTTPS 证据。
 
 ## 部署与运行时
 
 从已审阅的 release checkout 根目录执行，详细平台命令见 [README.md](README.md) 与 [DOCKER.md](DOCKER.md)：
 
 ```bash
-sudo env INFOQ_SOURCE_DIR="$(pwd)" INFOQ_FRONTEND_TARGET=all INFOQ_PUBLIC_BASE_URL=http://SERVER_IP INFOQ_DEPLOY_ROOT=/infoq INFOQ_PRINT_SECRETS=0 bash deploy/install.sh
+sudo env INFOQ_SOURCE_DIR="$(pwd)" INFOQ_ENV_FILE=/etc/infoq-scaffold-ai/deploy.env INFOQ_PRODUCTION_CONFIG_FILE=/etc/infoq-scaffold-ai/deploy.env INFOQ_PRINT_SECRETS=0 bash deploy/install.sh
 ```
 
 WSL2 Windows 入口见 [专项步骤](wsl2-docker-compose.md)。macOS Colima 需先获得启动/切换 context 的授权，并在 root 安装进程显式传递用户的 `DOCKER_HOST` / `DOCKER_CONFIG`，不能直接套 Linux 示例。安装器无安全的 `--help` 或 dry-run，源码与已有 env 覆盖时序见生命周期。
@@ -25,7 +25,7 @@ Node `deploy-cli` 在 macOS 固定使用 Apple 后端栈，Colima 必须走 Dock
 
 ## 部署后检查
 
-在部署账号可读环境文件且可操作 Docker 的 shell 中执行。按实际已部署地址调整 `INFOQ_VERIFY_GATEWAY`；HTTPS 必须校验真实证书，不用 `-k`。先枚举本项目容器与挂载，确认没有操作其他项目。以下自动检查使用本地固定后端端口 `9090`，默认网关 `http://127.0.0.1`；不适用于远程 daemon。
+在部署账号可读环境文件且可操作 Docker 的 shell 中执行。按实际已部署地址调整 `INFOQ_VERIFY_GATEWAY`；HTTPS 必须校验真实证书，不用 `-k`。先枚举本项目容器与挂载，确认没有操作其他项目。以下自动检查使用本地固定后端端口 `9090`，网关 `INFOQ_PUBLIC_BASE_URL`（HTTPS）；不适用于远程 daemon。
 
 ```bash
 mkdir -p tmp/deploy-verify/current
@@ -33,10 +33,11 @@ mkdir -p tmp/deploy-verify/current
   set -euo pipefail
   set +x
   export INFOQ_ENV_FILE=/etc/infoq-scaffold-ai/deploy.env
-  set -a
-  . "${INFOQ_ENV_FILE}"
-  set +a
-  INFOQ_VERIFY_GATEWAY="${INFOQ_VERIFY_GATEWAY:-http://127.0.0.1}"
+  SCRIPT_DIR="$(pwd)/deploy/bin"
+  . "${SCRIPT_DIR}/runtime-env.sh"
+  load_runtime_env_data "${INFOQ_ENV_FILE}"
+  node tools/production_config.mjs check --scope deploy
+  INFOQ_VERIFY_GATEWAY="${INFOQ_VERIFY_GATEWAY:-${INFOQ_PUBLIC_BASE_URL}}"
   INFOQ_VERIFY_GATEWAY="${INFOQ_VERIFY_GATEWAY%/}"
   case "${INFOQ_FRONTEND_TARGET}" in all|vue|react) ;; *) exit 2 ;; esac
 
@@ -52,8 +53,8 @@ mkdir -p tmp/deploy-verify/current
   http200 http://127.0.0.1:9090/monitor/health/liveness
   http200 "${INFOQ_VERIFY_GATEWAY}/prod-api/monitor/health/readiness"
   if [[ "${INFOQ_FRONTEND_TARGET}" == all ]]; then
-    http200 "${INFOQ_VERIFY_GATEWAY}/vue/"
-    http200 "${INFOQ_VERIFY_GATEWAY}/react/"
+    http200 "${INFOQ_VERIFY_GATEWAY}${INFOQ_VUE_CONTEXT_PATH:-/vue/}"
+    http200 "${INFOQ_VERIFY_GATEWAY}${INFOQ_REACT_CONTEXT_PATH:-/react/}"
   else
     http200 "${INFOQ_VERIFY_GATEWAY}/"
   fi
@@ -63,7 +64,7 @@ mkdir -p tmp/deploy-verify/current
     react) http200 http://127.0.0.1:9092/ ;;
   esac
   http200 "${INFOQ_VERIFY_GATEWAY}/console-oss/"
-  http200 "${INFOQ_VERIFY_GATEWAY}/oss/minio/health/live"
+  http200 "${INFOQ_OSS_PUBLIC_ORIGIN}/minio/health/live"
   http200 http://127.0.0.1:9000/minio/health/live
 
   # 使用容器已有环境认证，秘密不进入命令行 SQL 或输出。
@@ -98,4 +99,8 @@ SQL 示例只验证结构，不验证安装器凭据与数据库记录的相等�
 
 卸载先 `bash deploy/uninstall.sh --dry-run`；它仍会读取可信 env 并询问每项选择。实际卸载需明确授权与固定确认短语，独立确认应用、MySQL、Redis、MinIO、配置与空根目录；任何删除前脚本批量核验所选容器的 Compose 标签/部署挂载与默认网络标签，按核验 ID 删除；查询失败或归属未知即停止，孤立目录必须有匹配 project 的 `.infoq-deploy-owner`；无标记的旧数据需另行证明归属，保留项不停止不删除。可选中间件由 `deploy-middleware.sh <component> <topology> stop` 单独管理，不在基础卸载范围内。
 
-收口报告包含运行时/root/目标、容器健康、readiness/liveness、网关与直连、结构与登录/OSS、失败与恢复证据、停止/保留状态，以及未验证的容量、告警、TLS、跨平台、备份恢复。没有执行的步骤明确写未验证。脚本修改先通过 `node skills/deploy-cli/scripts/test_deploy_cli.mjs`，再执行语法、UTF-8 与 diff 检查；不以真实部署替代隔离回归。
+收口报告包含运行时/root/目标、容器健康、readiness/liveness、网关与直连、结构与登录/OSS、失败与恢复证据、停止/保留状态，以及未验证的容量、告警、TLS、跨平台、备份恢复。没有执行的步骤明确写未验证。脚本修改先通过 `node deploy/bin/test-production-runtime.mjs`、`node skills/deploy-cli/scripts/test_deploy_safety.mjs` 与 `node skills/deploy-cli/scripts/test_deploy_cli.mjs`，再执行语法、UTF-8 与 diff 检查；不以真实部署替代隔离回归。
+
+## Linux 生产补证
+
+除上面 smoke 外，必须使用受控 CA 检验 HTTPS（不用 `-k`），核实外网无法直连辅助端口；完成双端根/子路径与 OAuth、精确匿名小程序探测、真实文件上传和约 120 秒签名 URL、匿名和过期拒绝。旧公开 bucket 先预览/备份/显式迁移，目录按真实镜像用户做权限迁移及重启写入验证，命令见 [PRODUCTION.md](PRODUCTION.md)。恢复、回滚、告警与容量工具见 [生产运维 SOP](../docs/PRODUCTION-OPS.md)。若 Docker/CA/凭据/告警目的地或验收目标缺失，分别记 blocked；不能用 Apple 替代 Linux，也不能将生成的 workflow 当作已执行证据。

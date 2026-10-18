@@ -61,5 +61,6 @@ Page / Store
 ## 9. 身份与个人消息接口
 
 - `system/user` 的个人资料接口包含当前用户 OAuth 身份列表、绑定授权地址和解绑请求；绑定授权结果必须由后端回调的短期 ticket 消费，解绑请求可按后端返回的规则附带当前密码确认。
+- 绑定 `redirect` 必须来自 `utils/auth-redirect.ts` 生成的安全站内浏览器路径，例如 `/react/user/profile`，不得包含 origin；该参数保留部署前缀供服务端直接回跳，Router 内部导航再移除一次。
 - `system/message` 是个人收件箱契约，提供列表、未读数、单条已读、全部已读和软删除。调用者不传也不能指定用户 ID，数据范围由当前 token 决定。
 - 这些 API 不缓存实时 payload。状态层和页面只从 `/system/message/*` 的成功响应读取标题、正文和阅读状态。

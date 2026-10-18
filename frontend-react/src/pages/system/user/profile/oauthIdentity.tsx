@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { getOAuthProviders } from '@/api/login';
 import { getProfileOauthBindAuthorizeUrl, listProfileOauthIdentities, unbindProfileOauthIdentity } from '@/api/system/user';
 import type { ProfileOauthIdentityVO } from '@/api/system/user/types';
+import { toDeploymentRedirect } from '@/utils/auth-redirect';
 
 export default function OauthIdentityPanel() {
   const [identities, setIdentities] = useState<ProfileOauthIdentityVO[]>([]);
@@ -28,7 +29,7 @@ export default function OauthIdentityPanel() {
     const { provider } = await bindForm.validateFields(['provider']);
     setSubmitting(true);
     try {
-      const response = await getProfileOauthBindAuthorizeUrl(provider, `${window.location.origin}/user/profile`);
+      const response = await getProfileOauthBindAuthorizeUrl(provider, toDeploymentRedirect('/user/profile'));
       window.location.assign(response.data);
     } finally {
       setSubmitting(false);

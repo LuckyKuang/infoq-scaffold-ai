@@ -57,3 +57,9 @@
 
 - 该模块只有一个 Java 源文件，不承载业务 Controller、Service、Mapper。
 - 启动后真正的业务逻辑请继续下钻 [`../infoq-modules/infoq-system/README.md`](../infoq-modules/infoq-system/README.md)。
+
+## 生产安全配置
+
+prod 通过必需环境变量 `INFOQ_API_REQUEST_PRIVATE_KEY` 与 `INFOQ_API_RESPONSE_PUBLIC_KEY` 注入请求解密私钥和响应加密公钥；分别匹配前端请求公钥与响应私钥，不能当成同一组。启动期检查 RSA 格式与至少 2048 位，四方向配对/受控来源由生产预检完成。英文认证四键由真实 MessageSource 回归，详见 [后端生产边界回归](../doc/production-verification.md)。
+
+Compose 后端构建 context 为 `backend/`；该目录的 `.dockerignore` 排除本机 `application-local*`、`.env*`、证书/私钥和 credentials 文件，保留受管的 `application.yml`、`application-dev.yml` 与 `application-prod.yml`。本机构建不得依赖把受控配置复制进镜像层；实际镜像层复核仍需 Linux Docker 验收。

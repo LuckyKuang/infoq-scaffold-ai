@@ -256,7 +256,7 @@ cp -R frontend-react/dist/* /infoq/nginx/html/react/
 - `.env.production` 默认 context 为 `/`、API 为 `/prod-api`
 - 本文双管理端构建命令显式覆盖为 Vue `/vue/`、React `/react/`；改变 context 后必须重建
 
-两端默认 `VITE_APP_ENCRYPT=true`；构建前配置受控 `.env.production.local` 或构建环境变量，并与后端 `api-decrypt` 两组 RSA 配对。密钥方向、前端私钥可见性及 HTTPS 要求见 [README.md 第 1.4 节](README.md#14-配置检查项)。只复制静态文件不会更新产物中的变量。发布使用空的新版本目录，完整复制 `dist/.` 后受控切换，避免旧 hash 文件或覆盖一半的包；保留前一版本目录供回滚。
+两端默认 `VITE_APP_ENCRYPT=true`；构建前通过受控 `INFOQ_PRODUCTION_CONFIG_FILE` 提供两组至少 2048 位 RSA 并执行中央交叉预检；见 [PRODUCTION.md](PRODUCTION.md)。密钥方向、前端私钥可见性及 HTTPS 要求见 [README.md 第 1.4 节](README.md#14-配置检查项)。只复制静态文件不会更新产物中的变量。发布使用空的新版本目录，完整复制 `dist/.` 后受控切换，避免旧 hash 文件或覆盖一半的包；保留前一版本目录供回滚。
 
 配置文件参考：
 
@@ -265,7 +265,7 @@ cp -R frontend-react/dist/* /infoq/nginx/html/react/
 
 ## 5. Nginx 网关部署
 
-当前仓库 Compose 版本的网关配置基线见 [deploy/docker/nginx/conf/nginx.conf](../deploy/docker/nginx/conf/nginx.conf)。
+当前仓库 Compose 版本的网关配置基线见 [deploy/bin/render-gateway.mjs](bin/render-gateway.mjs)。
 
 手动部署时，核心差异是：
 
@@ -307,7 +307,7 @@ systemctl reload nginx
 
 如果实际文件名不同，先修改配置再重载 Nginx。
 
-示例不包含 MinIO `/oss/`、`/console-oss/` 代理；启用 OSS 时另行评审并配置对象存储地址、TLS 与访问授权，不能假定 Compose 网关能力已随文件复制。HTTPS 示例启用带 `includeSubDomains` 的 HSTS，上线前必须确认所有子域均支持 HTTPS；证书应覆盖真实域名，先备份当前 Nginx 配置并执行 `nginx -t` 再 reload。
+示例不包含 MinIO 独立 S3 域名或 `/console-oss/` 代理；启用 OSS 时另行评审并配置对象存储地址、TLS 与访问授权，不能假定 Compose 网关能力已随文件复制。HTTPS 示例启用带 `includeSubDomains` 的 HSTS，上线前必须确认所有子域均支持 HTTPS；证书应覆盖真实域名，先备份当前 Nginx 配置并执行 `nginx -t` 再 reload。
 
 ## 6. 标准发布步骤
 

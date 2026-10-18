@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {spawn} from 'node:child_process';
 import {fileURLToPath, pathToFileURL} from 'node:url';
+import {readProductionConfig, validateContextPath} from '../../../tools/production_config.mjs';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 export const repoRoot = path.resolve(scriptDir, '..', '..', '..');
@@ -42,7 +43,7 @@ export function resolveRuntime(platform = process.platform) {
   throw new Error(`Unsupported platform: ${platform}. Use macOS Apple container, WSL2 Docker, or Linux Docker.`);
 }
 
-export function parseEnvFile(text, {literal = false} = {}) {
+export function parseAppleEnv(text) {
   const result = {};
   const lines = text.split(/\r?\n/u);
   for (const [index, rawLine] of lines.entries()) {
@@ -53,42 +54,12 @@ export function parseEnvFile(text, {literal = false} = {}) {
       throw new Error(`Invalid env line ${index + 1}: expected KEY=value`);
     }
     const key = line.slice(0, separator).trim();
-    let value = line.slice(separator + 1).trim();
     if (!/^[A-Za-z_][A-Za-z0-9_]*$/u.test(key)) {
       throw new Error(`Invalid env key: ${key}`);
     }
-    if (literal) {
-      if (rawLine.slice(0, rawLine.indexOf('=')) !== key) throw new Error(`Invalid literal env assignment on line ${index + 1}`);
-      value = rawLine.slice(rawLine.indexOf('=') + 1).replace(/\r$/u, '');
-    }
-    if (!literal) {
-      // Decode the installer's shell assignments without executing shell expressions.
-      let decoded = '';
-      let quote = null;
-      for (let cursor = 0; cursor < value.length; cursor += 1) {
-        const char = value[cursor];
-        if (quote === "'") {
-          if (char === "'") quote = null;
-          else decoded += char;
-        } else if (char === '"' || char === "'") {
-          if (quote === char) quote = null;
-          else if (quote === null) quote = char;
-          else decoded += char;
-        } else if (char === '\\') {
-          const next = value[++cursor];
-          if (next === undefined) throw new Error(`Invalid env quoting on line ${index + 1}`);
-          decoded += quote === '"' && !['$', '`', '"', '\\'].includes(next) ? `\\${next}` : next;
-        } else {
-          if (char === '$' || char === '`' || (quote === null && /[\s;&|<>()]/u.test(char))) {
-            throw new Error(`Unsupported shell expression on env line ${index + 1}; use literal installer assignments`);
-          }
-          decoded += char;
-        }
-      }
-      if (quote !== null) throw new Error(`Invalid env quoting on line ${index + 1}`);
-      value = decoded;
-    }
-    result[key] = value;
+    if (rawLine.slice(0, rawLine.indexOf('=')) !== key) throw new Error(`Invalid literal env assignment on line ${index + 1}`);
+    if (Object.hasOwn(result, key)) throw new Error(`Duplicate env key: ${key}`);
+    result[key] = rawLine.slice(rawLine.indexOf('=') + 1).replace(/\r$/u, '');
   }
   return result;
 }
@@ -101,8 +72,10 @@ export function readDeployEnv(runtime = resolveRuntime(), environment = process.
     if (!allowMissing) throw new Error(`Deployment env file does not exist: ${envFile}`);
     return {...environment};
   }
-  // Match the shell helpers: sourced file values override inherited variables.
-  return {...environment, ...parseEnvFile(fs.readFileSync(envFile, 'utf8'), {literal: runtime === 'apple'})};
+  if (runtime === 'apple') return {...environment, ...parseAppleEnv(fs.readFileSync(envFile, 'utf8'))};
+  const config = readProductionConfig(envFile);
+  const controlledFile = config.INFOQ_PRODUCTION_CONFIG_FILE || environment.INFOQ_PRODUCTION_CONFIG_FILE;
+  return {...environment, ...config, ...(controlledFile && controlledFile !== envFile ? readProductionConfig(controlledFile) : {})};
 }
 
 export function parseArgs(argv) {
@@ -168,7 +141,7 @@ export function normalizeBindHost(value) {
   return value;
 }
 
-export function buildSmokeChecks({runtime, baseUrl, frontendTarget = 'all'}) {
+export function buildSmokeChecks({runtime, baseUrl, frontendTarget = 'all', vueContextPath = '/vue/', reactContextPath = '/react/'}) {
   const base = baseUrl.replace(/\/+$/u, '');
   if (runtime === 'apple') {
     return [
@@ -180,6 +153,13 @@ export function buildSmokeChecks({runtime, baseUrl, frontendTarget = 'all'}) {
   if (!['all', 'vue', 'react'].includes(frontendTarget)) {
     throw new Error(`Invalid INFOQ_FRONTEND_TARGET: ${frontendTarget}`);
   }
+  if (frontendTarget === 'all') {
+    validateContextPath(vueContextPath);
+    validateContextPath(reactContextPath);
+    if (vueContextPath === reactContextPath || vueContextPath.startsWith(reactContextPath) || reactContextPath.startsWith(vueContextPath)) {
+      throw new Error('Frontend context paths must be distinct and must not overlap');
+    }
+  }
   // This CLI checks a local Compose stack; the public gateway may terminate TLS elsewhere.
   const backend = `http://127.0.0.1:${DEFAULT_DOCKER_BACKEND_PORT}`;
   const checks = [
@@ -188,10 +168,10 @@ export function buildSmokeChecks({runtime, baseUrl, frontendTarget = 'all'}) {
     {name: 'gateway-readiness', url: `${base}/prod-api/monitor/health/readiness`},
   ];
   if (frontendTarget === 'all' || frontendTarget === 'vue') {
-    checks.push({name: 'vue-console', url: `${base}${frontendTarget === 'all' ? '/vue/' : '/'}`});
+    checks.push({name: 'vue-console', url: `${base}${frontendTarget === 'all' ? vueContextPath : '/'}`});
   }
   if (frontendTarget === 'all' || frontendTarget === 'react') {
-    checks.push({name: 'react-console', url: `${base}${frontendTarget === 'all' ? '/react/' : '/'}`});
+    checks.push({name: 'react-console', url: `${base}${frontendTarget === 'all' ? reactContextPath : '/'}`});
   }
   return checks;
 }
@@ -321,6 +301,8 @@ export async function smoke(runtime, options = {}) {
     runtime,
     baseUrl,
     frontendTarget: env.INFOQ_FRONTEND_TARGET ?? 'all',
+    vueContextPath: env.INFOQ_VUE_CONTEXT_PATH ?? '/vue/',
+    reactContextPath: env.INFOQ_REACT_CONTEXT_PATH ?? '/react/',
   });
   const results = [];
   for (const check of checks) {

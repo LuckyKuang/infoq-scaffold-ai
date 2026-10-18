@@ -1,8 +1,8 @@
 > 来源说明：本文件是 `tools/verify` 命令组的能力与边界说明（后端单测、HTTP smoke、集群验证）。
 
-# InfoQ 后端验证
+# InfoQ 后端与生产保障验证
 
-本命令组只负责一件事：后端测试和运行态验证闭环。它是后端领域的可复用脚本集（非 skill 目录），优先复用仓库脚本和 Maven runner，不临时拼接不可复跑命令，也不主导数据库侧数据修复。
+本命令组维护后端测试、运行态与隔离生产保障验证的可复用脚本（非 skill 目录），优先复用仓库脚本和 Maven runner，不临时拼接不可复跑命令，也不主导共享数据库的数据修复。隔离备份/恢复与回滚由独立 Node 入口承载，具体门禁见生产运维 SOP。
 
 ## 模式选择
 
@@ -11,6 +11,7 @@
 3. WebSocket 集群、双节点路由或异常退出验证，使用 `run_cluster_smoke.mjs`。
 4. SQL、数据库、Redis、数据修复、迁移、测试数据维护或 API/UI/DB 一致性验证，改用 `docs/DATA-OPS.md`。
 5. 登录/鉴权验证改用 `test-cli` 的 `captcha_login.mjs`（Redis 种子答案）；本命令组不再维护独立登录脚本。
+6. 隔离 owned Docker project 的备份/恢复、回滚、readiness、告警/容量及完整 Linux 验收，读取 [生产运维 SOP](../../docs/PRODUCTION-OPS.md)，使用 `production_ops.mjs` / `linux_acceptance.mjs`。共享/生产数据恢复仍先走数据门禁。
 
 ## 执行顺序
 
@@ -100,3 +101,23 @@ node tools/verify/run_cluster_smoke.mjs
 
 - 单测模式：`references/unit/`
 - Smoke 端点：`references/smoke/endpoints.md`
+- 生产隔离运维：`node tools/verify/production_ops.mjs --help`；备份完整性/独立恢复、固定镜像回滚、readiness/业务、告警和有界容量见 [生产运维 SOP](../../docs/PRODUCTION-OPS.md)。默认 preview；仅 `--execute` 写入，拒绝共享目标。
+- Linux 全栈验收：`node tools/verify/linux_acceptance.mjs --run-id acceptance-001` 默认预览，显式 `--execute` 才构建/启动隔离 Docker project；无 Docker 时明确 blocked，fixture 不替代 TLS/权限/恢复实机证据。
+
+## 生产修复后端定向回归 SOP
+
+触发条件：修改 OAuth 路径校验、小程序匿名权限、字段翻译、提交后 Push、生产 RSA、私有 OSS 或对应国际化消息。
+
+1. 先跑严格 filter chain、真实 Jackson contextual、多字段/null/mapper、Spring 事务事件等最小业务复现，不能只测 helper/mock 成功。
+2. 通过 Maven runner 串行执行定向测试，核 Surefire 每类实际非零数量及后端目标单测总耗时小于 60 秒：
+
+```bash
+node tools/backend_mvn.mjs -- -pl infoq-admin -am -DskipTests=false -Dsurefire.failIfNoSpecifiedTests=false -Dtest=MiniappSecurityFilterChainTest,OAuthRedirectValidatorTest,OAuthCallbackMappingTest,OAuthFlowServiceTest,TranslationSerializationTest,TranslationHandlerTest,DefaultPushServiceTest,SysMessagePushListenerTest,MessagePushTransactionTest,WebSocketClusterUtilsTest,WebSocketUtilsTest,SseEmitterManagerTest,ProductionApiKeyValidatorTest,OssClientTest,SysOssServiceImplTest,EnglishAuthenticationMessagesTest test
+```
+
+3. 鉴权/Redis/Push 改动检查当前真实 Redisson OSS API：`RBatch` 批量操作单测、SSE/WebSocket 单测及禁止 PRO-only 符号扫描；不要引用仓库不存在的“专用扫描脚本”。保留本轮命令、退出码与实际报告到 `tmp/production-readiness/`。
+4. 单测后再做编译/UTF-8/diff review。真实数据库事务、Redis 跨节点、HTTPS 代理签名/过期及访问权限仍需隔离 Linux 验收；无环境明确 blocked。
+
+反模式：mock Jackson 序列化为成功；回滚事务仍触发 Push；吞翻译异常回原值；把 Redis publish 当送达；将 SDK 本地签名测试当 nginx/权限实机测试；零用例/不存在类当通过；降低断言或增加超时掩盖失败。
+
+完整生产修复定向选择器、逐类验收及实际平台边界见 [后端生产验证](../../backend/doc/production-verification.md)。

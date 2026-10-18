@@ -96,6 +96,24 @@ When `VITE_APP_ENCRYPT=true`, provide both `VITE_APP_RSA_PUBLIC_KEY` and
 example keys are for isolated development; production needs controlled keys and
 HTTPS. Keys in browser bundles are visible to browser users.
 
+Production builds require a private, absolute `INFOQ_PRODUCTION_CONFIG_FILE`
+path (owner-only permissions on Unix) or an explicitly managed environment.
+The file contains `VITE_APP_ENCRYPT=true` and four RSA fields: the frontend
+`VITE_APP_RSA_PUBLIC_KEY` matches backend `INFOQ_API_REQUEST_PRIVATE_KEY`;
+frontend `VITE_APP_RSA_PRIVATE_KEY` matches backend
+`INFOQ_API_RESPONSE_PUBLIC_KEY`. Use two independent pairs of at least 2048 bits.
+Backend private keys participate in validation only and must never enter the
+browser bundle or image layers. Do not put real keys in tracked `.env` files.
+
+```bash
+node tools/production_config.mjs check --scope frontend --env-file /absolute/private/production.env
+```
+
+Set `INFOQ_PRODUCTION_CONFIG_FILE` in the environment of the actual
+`pnpm run build:prod` process. Docker uses the `production_config` BuildKit secret.
+See [release configuration](docs/RELEASING.md#51-生产构建配置边界) and the
+[deployment guide](deploy/README.md) for full production inputs and TLS.
+
 Admin E2E scripts manage their own local stack (start, verify, then close owned ports):
 
 ```bash

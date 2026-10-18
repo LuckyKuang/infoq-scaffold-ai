@@ -6,3 +6,17 @@
 **/*.log
 **/.flattened-pom.xml
 **/.DS_Store
+**/.env
+**/.env.*
+**/application-local*.yml
+**/application-local*.yaml
+**/application-*.local.yml
+**/application-*.local.yaml
+**/*.pem
+**/*.key
+**/*.p12
+**/*.pfx
+**/*.jks
+**/credentials.txt
+**/deploy.env
+**/production.env

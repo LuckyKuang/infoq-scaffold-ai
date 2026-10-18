@@ -16,6 +16,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.net.URI;
+
 
 @Slf4j
 @Service
@@ -35,6 +37,8 @@ public class SysOauthLoginServiceImpl implements SysOauthLoginService {
 
     @Override
     public OAuthAuthorizationResult createBindAuthorization(Long userId, String providerCode, String redirect, String browserBinding) {
+        redirect = URI.create(OAuthRedirectValidator.requireSafeRelativeRedirect(redirect).replace(" ", "%20")).toASCIIString();
+        oAuthFlowService.getProperties().resolveFrontendCallbackPath(redirect);
         providerService.requireBindProvider(providerCode);
         OAuthLoginTicketPayload payload = new OAuthLoginTicketPayload();
         payload.setUserId(userId);
@@ -67,17 +71,20 @@ public class SysOauthLoginServiceImpl implements SysOauthLoginService {
 
     @Override
     public String buildErrorRedirect(String message) {
+        if (!oAuthFlowService.getProperties().getFrontendCallbackPaths().isEmpty()) {
+            throw new ServiceException(MessageUtils.message("auth.oauth.callback.failed"));
+        }
         String callbackPath = OAuthRedirectValidator.requireSafeRelativeRedirect(oAuthFlowService.getProperties().getFrontendCallbackPath());
         return UriComponentsBuilder.fromPath(callbackPath)
             .queryParam("error", "oauth_failed")
-            .queryParam("message", StringUtils.blankToDefault(message, MessageUtils.message("auth.oauth.callback.failed")))
+            .queryParam("message", MessageUtils.message("auth.oauth.callback.failed"))
             .build()
             .encode()
             .toUriString();
     }
 
     private String buildSuccessRedirect(String ticket, String redirect) {
-        String callbackPath = OAuthRedirectValidator.requireSafeRelativeRedirect(oAuthFlowService.getProperties().getFrontendCallbackPath());
+        String callbackPath = oAuthFlowService.getProperties().resolveFrontendCallbackPath(redirect);
         return UriComponentsBuilder.fromPath(callbackPath)
             .queryParam("loginTicket", ticket)
             .queryParam("redirect", OAuthRedirectValidator.requireSafeRelativeRedirect(redirect))
@@ -93,16 +100,16 @@ public class SysOauthLoginServiceImpl implements SysOauthLoginService {
     }
 
     private String handleBindCallback(String providerCode, OAuthCallbackResult callbackResult, String browserBinding) {
+        String redirect = URI.create(OAuthRedirectValidator.requireSafeRelativeRedirect(callbackResult.getRedirect()).replace(" ", "%20")).toASCIIString();
         OAuthLoginTicketPayload ticket = ticketService.consumeTicket(callbackResult.getClientId(), browserBinding);
         if (!StringUtils.equals(providerCode, ticket.getProviderCode())) {
             throw new ServiceException(MessageUtils.message("auth.oauth.ticket.invalid"));
         }
         identityService.bindIdentity(ticket.getUserId(), providerService.requireBindProvider(providerCode), callbackResult.getProfile());
-        return UriComponentsBuilder.fromPath(OAuthRedirectValidator.requireSafeRelativeRedirect(callbackResult.getRedirect()))
+        return UriComponentsBuilder.fromUriString(redirect)
             .queryParam("bind", "success")
             .queryParam("provider", providerCode)
-            .build()
-            .encode()
+            .build(true)
             .toUriString();
     }
 }

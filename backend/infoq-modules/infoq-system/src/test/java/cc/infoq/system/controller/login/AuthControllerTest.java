@@ -7,6 +7,7 @@ import cc.infoq.common.domain.model.RegisterBody;
 import cc.infoq.common.utils.SpringUtils;
 import cc.infoq.system.domain.vo.LoginVo;
 import cc.infoq.system.domain.vo.SysClientVo;
+import cc.infoq.system.config.WechatMiniAppProperties;
 import cc.infoq.system.service.*;
 import cc.infoq.system.support.plugin.OptionalMailHelper;
 import cc.infoq.system.support.plugin.OptionalSseHelper;
@@ -53,6 +54,8 @@ class AuthControllerTest {
     private SysInviteCodeService sysInviteCodeService;
     @Mock
     private ScheduledExecutorService scheduledExecutorService;
+    @Mock
+    private WechatMiniAppProperties wechatMiniAppProperties;
 
     @InjectMocks
     private AuthController controller;
@@ -71,6 +74,16 @@ class AuthControllerTest {
         if (context != null) {
             context.close();
         }
+    }
+
+    @Test
+    void miniappProbeOnlyReadsEnabledFlag() {
+        when(wechatMiniAppProperties.isEnabled()).thenReturn(false, true);
+        assertEquals(false, controller.wechatMiniAppEnabled().getData());
+        assertEquals(true, controller.wechatMiniAppEnabled().getData());
+        verifyNoInteractions(sysLoginService, sysClientService, scheduledExecutorService);
+        verify(wechatMiniAppProperties, times(2)).isEnabled();
+        verifyNoMoreInteractions(wechatMiniAppProperties);
     }
 
     @Test

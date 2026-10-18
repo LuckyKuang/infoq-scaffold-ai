@@ -15,6 +15,7 @@ INFOQ_ALLOW_NON_ROOT="${INFOQ_ALLOW_NON_ROOT:-0}"
 INFOQ_ENV_FILE="${INFOQ_ENV_FILE:-${INFOQ_CONFIG_DIR}/deploy.env}"
 INFOQ_CREDENTIALS_FILE="${INFOQ_CREDENTIALS_FILE:-${INFOQ_CONFIG_DIR}/credentials.txt}"
 INFOQ_FRONTEND_TARGET="${INFOQ_FRONTEND_TARGET:-}"
+INFOQ_DEPLOY_MODE="${INFOQ_DEPLOY_MODE:-production}"
 REQUESTED_FRONTEND_TARGET=""
 SOURCE_DIR=""
 
@@ -54,6 +55,7 @@ require_runtime() {
   require_command tar
   require_command openssl
   require_command docker
+  require_command node
 
   if ! docker compose version >/dev/null 2>&1 && ! command -v docker-compose >/dev/null 2>&1; then
     fail "缺少 Docker Compose CLI: 需要 docker compose 或 docker-compose"
@@ -95,6 +97,10 @@ detect_public_base_url() {
   if [[ -n "${INFOQ_PUBLIC_BASE_URL:-}" ]]; then
     INFOQ_PUBLIC_BASE_URL="${INFOQ_PUBLIC_BASE_URL%/}"
     return
+  fi
+
+  if [[ "${INFOQ_DEPLOY_MODE}" == "production" ]]; then
+    fail "生产安装必须在受控环境文件提供 INFOQ_PUBLIC_BASE_URL=https://...，禁止自动探测 HTTP 地址"
   fi
 
   local first_ip
@@ -180,8 +186,8 @@ secure_private_file() {
 print_frontend_urls() {
   case "${INFOQ_FRONTEND_TARGET}" in
     all)
-      printf '  Vue Admin:       %s/vue/\n' "${INFOQ_PUBLIC_BASE_URL}"
-      printf '  React Admin:     %s/react/\n' "${INFOQ_PUBLIC_BASE_URL}"
+      printf '  Vue Admin:       %s%s\n' "${INFOQ_PUBLIC_BASE_URL}" "${INFOQ_VUE_CONTEXT_PATH:-/vue/}"
+      printf '  React Admin:     %s%s\n' "${INFOQ_PUBLIC_BASE_URL}" "${INFOQ_REACT_CONTEXT_PATH:-/react/}"
       ;;
     react)
       printf '  React Admin:     %s/\n' "${INFOQ_PUBLIC_BASE_URL}"
@@ -204,7 +210,7 @@ write_credentials() {
       print_frontend_urls
       printf '  Backend Health:  %s/prod-api/monitor/health/readiness\n' "${INFOQ_PUBLIC_BASE_URL}"
       printf '  MinIO Console:   %s/console-oss/\n' "${INFOQ_PUBLIC_BASE_URL}"
-      printf '  MinIO OSS:       %s/oss/\n\n' "${INFOQ_PUBLIC_BASE_URL}"
+      printf '  MinIO OSS:       %s/\n\n' "${INFOQ_OSS_PUBLIC_ORIGIN}"
       printf 'Generated credentials:\n'
       printf '  Admin username:      %s\n' "${INFOQ_ADMIN_USERNAME}"
       printf '  Admin password:      %s\n\n' "${INFOQ_ADMIN_PASSWORD}"
@@ -234,11 +240,26 @@ write_env_file() {
       write_env_line REDIS_PASSWORD "${REDIS_PASSWORD}"
       write_env_line MINIO_ROOT_USER "${MINIO_ROOT_USER}"
       write_env_line MINIO_ROOT_PASSWORD "${MINIO_ROOT_PASSWORD}"
+      write_env_line INFOQ_MINIO_IMAGE_USER "${INFOQ_MINIO_IMAGE_USER:-}"
       write_env_line INFOQ_OSS_BUCKET "${INFOQ_OSS_BUCKET}"
       write_env_line SECURITY_TOKEN_SECRET "${SECURITY_TOKEN_SECRET}"
       write_env_line DEPLOY_ID "${DEPLOY_ID}"
       write_env_line INFOQ_ADMIN_USERNAME "${INFOQ_ADMIN_USERNAME}"
       write_env_line INFOQ_ADMIN_PASSWORD "${INFOQ_ADMIN_PASSWORD}"
+      write_env_line INFOQ_DEPLOY_MODE "${INFOQ_DEPLOY_MODE}"
+      write_env_line INFOQ_CONFIG_SOURCE "${INFOQ_CONFIG_SOURCE:-isolated-test}"
+      write_env_line INFOQ_PRODUCTION_CONFIG_FILE "${INFOQ_PRODUCTION_CONFIG_FILE:-${INFOQ_ENV_FILE}}"
+      write_env_line INFOQ_OSS_PUBLIC_ORIGIN "${INFOQ_OSS_PUBLIC_ORIGIN:-http://oss.localhost}"
+      write_env_line INFOQ_TLS_CERT_FILE "${INFOQ_TLS_CERT_FILE:-}"
+      write_env_line INFOQ_TLS_KEY_FILE "${INFOQ_TLS_KEY_FILE:-}"
+      write_env_line INFOQ_INTERNAL_BIND_HOST "${INFOQ_INTERNAL_BIND_HOST:-127.0.0.1}"
+      write_env_line INFOQ_REACT_CONTEXT_PATH "${INFOQ_REACT_CONTEXT_PATH:-/react/}"
+      write_env_line INFOQ_VUE_CONTEXT_PATH "${INFOQ_VUE_CONTEXT_PATH:-/vue/}"
+      write_env_line VITE_APP_ENCRYPT true
+      write_env_line VITE_APP_RSA_PUBLIC_KEY "${VITE_APP_RSA_PUBLIC_KEY}"
+      write_env_line VITE_APP_RSA_PRIVATE_KEY "${VITE_APP_RSA_PRIVATE_KEY}"
+      write_env_line INFOQ_API_REQUEST_PRIVATE_KEY "${INFOQ_API_REQUEST_PRIVATE_KEY}"
+      write_env_line INFOQ_API_RESPONSE_PUBLIC_KEY "${INFOQ_API_RESPONSE_PUBLIC_KEY}"
     } > "${INFOQ_ENV_FILE}"
   )
   secure_private_file "${INFOQ_ENV_FILE}"
@@ -262,16 +283,44 @@ generate_env_file() {
   DEPLOY_ID="${revision}-$(date +%Y%m%d%H%M%S)-$(random_lower_alnum 8)"
   INFOQ_ADMIN_USERNAME="admin_$(random_lower_alnum 12)"
   INFOQ_ADMIN_PASSWORD="$(generate_admin_password)"
+  INFOQ_CONFIG_SOURCE=isolated-test
+  generate_rsa_config
 
   write_env_file
   write_credentials
 }
 
 load_env_file() {
-  set -a
-  # shellcheck disable=SC1090
-  . "${INFOQ_ENV_FILE}"
-  set +a
+  local name value complete=false source_env_file="${INFOQ_ENV_FILE}"
+  # 配置作为数据读取，不执行环境文件中的 shell 表达式。
+  node "${SOURCE_DIR}/tools/production_config.mjs" check --scope deploy --env-file "${INFOQ_ENV_FILE}" >/dev/null
+  while IFS= read -r -d '' name && IFS= read -r -d '' value; do
+    if [[ "${name}" == "INFOQ_ENV_LOAD_COMPLETE" ]]; then complete=true; else export "${name}=${value}"; fi
+  done < <(node --input-type=module - "${SOURCE_DIR}/tools/production_config.mjs" "${INFOQ_ENV_FILE}" <<'NODE'
+import {pathToFileURL} from 'node:url';
+const {readProductionConfig, runtimeConfigEntries} = await import(pathToFileURL(process.argv[2]));
+for (const [key, value] of runtimeConfigEntries(readProductionConfig(process.argv[3]))) process.stdout.write(`${key}\0${value}\0`);
+process.stdout.write('INFOQ_ENV_LOAD_COMPLETE\0true\0');
+NODE
+  )
+  [[ "${complete}" == true ]] || fail "受控环境文件加载失败"
+  [[ "${INFOQ_ENV_FILE}" == "${source_env_file}" ]] || fail "受控配置不得改变 INFOQ_ENV_FILE 指向"
+  validate_install_paths
+}
+
+generate_rsa_config() {
+  local name value
+  while IFS= read -r -d '' name && IFS= read -r -d '' value; do
+    printf -v "${name}" '%s' "${value}"
+  done < <(node --input-type=module <<'NODE'
+import {generateKeyPairSync} from 'node:crypto';
+for (const [publicName, privateName] of [['VITE_APP_RSA_PUBLIC_KEY', 'INFOQ_API_REQUEST_PRIVATE_KEY'], ['INFOQ_API_RESPONSE_PUBLIC_KEY', 'VITE_APP_RSA_PRIVATE_KEY']]) {
+  const pair = generateKeyPairSync('rsa', {modulusLength: 2048, publicKeyEncoding: {format: 'der', type: 'spki'}, privateKeyEncoding: {format: 'der', type: 'pkcs8'}});
+  process.stdout.write(`${publicName}\0${pair.publicKey.toString('base64')}\0${privateName}\0${pair.privateKey.toString('base64')}\0`);
+}
+NODE
+  )
+  [[ -n "${INFOQ_API_REQUEST_PRIVATE_KEY:-}" && -n "${VITE_APP_RSA_PRIVATE_KEY:-}" ]] || fail "RSA 生成失败"
 }
 
 require_env_values() {
@@ -321,7 +370,7 @@ resolve_local_source() {
 
 download_source() {
   local archive_url
-  local tmp_dir="${INFOQ_INSTALL_DIR}/source.tmp"
+  local tmp_dir
 
   if [[ -n "${SOURCE_DIR}" ]]; then
     log "使用本地源码目录: ${SOURCE_DIR}"
@@ -335,10 +384,22 @@ download_source() {
   fi
 
   log "下载源码: ${archive_url}"
-  rm -rf "${tmp_dir}"
-  mkdir -p "${tmp_dir}"
+  tmp_dir="$(mktemp -d "${TMPDIR:-/tmp}/infoq-bootstrap.XXXXXX")"
+  # curl|bash 时工具尚未取得：只在临时 staging 下载，完整预检后才写安装目录。
   curl -fsSL "${archive_url}" | tar -xz --strip-components=1 -C "${tmp_dir}"
-  rm -rf "${INFOQ_INSTALL_DIR}/source"
+  SOURCE_DIR="${tmp_dir}"
+  if [[ "${INFOQ_DEPLOY_MODE}" == "production" ]]; then
+    load_env_file
+    [[ -n "${INFOQ_FRONTEND_TARGET:-}" ]] || fail "生产配置必须指定 INFOQ_FRONTEND_TARGET"
+    require_env_values INFOQ_VERSION INFOQ_OSS_BUCKET DEPLOY_ID
+  fi
+  mkdir -p "${INFOQ_INSTALL_DIR}"
+  if [[ -e "${INFOQ_INSTALL_DIR}/source" ]]; then
+    [[ -f "${INFOQ_INSTALL_DIR}/source/.infoq-installer-owned" && ! -L "${INFOQ_INSTALL_DIR}/source/.infoq-installer-owned" ]] || fail "已有源码目录无安装器归属标记，拒绝替换；请先备份并使用明确的空 INFOQ_INSTALL_DIR"
+    [[ "$(cat "${INFOQ_INSTALL_DIR}/source/.infoq-installer-owned")" == "infoq-scaffold-ai" ]] || fail "已有源码目录归属标记不匹配"
+    rm -rf "${INFOQ_INSTALL_DIR}/source"
+  fi
+  printf '%s\n' infoq-scaffold-ai > "${tmp_dir}/.infoq-installer-owned"
   mv "${tmp_dir}" "${INFOQ_INSTALL_DIR}/source"
   SOURCE_DIR="${INFOQ_INSTALL_DIR}/source"
 }
@@ -346,7 +407,17 @@ download_source() {
 reset_admin_credentials() {
   INFOQ_ADMIN_USERNAME="admin_$(random_lower_alnum 12)"
   INFOQ_ADMIN_PASSWORD="$(generate_admin_password)"
-  write_env_file
+  INFOQ_NEW_ADMIN_USERNAME="${INFOQ_ADMIN_USERNAME}" INFOQ_NEW_ADMIN_PASSWORD="${INFOQ_ADMIN_PASSWORD}" node --input-type=module - "${INFOQ_ENV_FILE}" <<'NODE'
+import fs from 'node:fs';
+const file = process.argv[2];
+let content = fs.readFileSync(file, 'utf8');
+for (const [name, value] of [['INFOQ_ADMIN_USERNAME', process.env.INFOQ_NEW_ADMIN_USERNAME], ['INFOQ_ADMIN_PASSWORD', process.env.INFOQ_NEW_ADMIN_PASSWORD]]) {
+  const expression = new RegExp(`^\\s*(?:export\\s+)?${name}\\s*=.*$`, 'mu');
+  if (!expression.test(content)) throw new Error(`受控配置缺少 ${name}`);
+  content = content.replace(expression, `${name}=${JSON.stringify(value)}`);
+}
+fs.writeFileSync(file, content, {encoding: 'utf8', mode: 0o600});
+NODE
   write_credentials
 }
 
@@ -381,6 +452,7 @@ prepare_credentials() {
   fi
 
   log "首次安装，生成随机部署凭据"
+  [[ "${INFOQ_DEPLOY_MODE}" == "development" ]] || fail "生产安装必须先提供受控 INFOQ_ENV_FILE；不会静默生成生产配置"
   generate_env_file
   load_env_file
 }
@@ -392,13 +464,9 @@ print_summary() {
   print_frontend_urls
   printf '  Backend Health:  %s/prod-api/monitor/health/readiness\n' "${INFOQ_PUBLIC_BASE_URL}"
   printf '  MinIO Console:   %s/console-oss/\n' "${INFOQ_PUBLIC_BASE_URL}"
-  printf '  MinIO OSS:       %s/oss/\n\n' "${INFOQ_PUBLIC_BASE_URL}"
+  printf '  MinIO OSS:       %s/\n\n' "${INFOQ_OSS_PUBLIC_ORIGIN}"
 
-  if [[ "${INFOQ_PRINT_SECRETS}" == "0" ]]; then
-    printf 'Credentials saved to %s\n' "${INFOQ_CREDENTIALS_FILE}"
-  else
-    sed -n '/Generated credentials:/,$p' "${INFOQ_CREDENTIALS_FILE}"
-  fi
+  printf 'Credentials saved to %s (mode 0600; never printed to logs)\n' "${INFOQ_CREDENTIALS_FILE}"
 
   printf '\nConfig files:\n'
   printf '  Environment file:    %s\n' "${INFOQ_ENV_FILE}"
@@ -409,14 +477,55 @@ print_summary() {
   printf '============================================================\n'
 }
 
+validate_install_paths() {
+  node --input-type=module - "${INFOQ_INSTALL_DIR}" "${INFOQ_CONFIG_DIR}" "${INFOQ_ENV_FILE}" "${INFOQ_CREDENTIALS_FILE}" <<'NODE'
+import fs from 'node:fs';
+import path from 'node:path';
+if (process.argv[4] === process.argv[5]) throw new Error('环境文件与凭据留存文件不得为同一路径');
+for (const target of process.argv.slice(2)) {
+  if (!path.isAbsolute(target) || path.resolve(target) !== target || target === path.parse(target).root) throw new Error('安装路径必须为规范绝对非根路径');
+  for (let current = target; current !== path.dirname(current); current = path.dirname(current)) {
+    try { const stat = fs.lstatSync(current); if (stat.isSymbolicLink() || (stat.isFile() && stat.nlink !== 1)) throw new Error('安装路径不允许符号链接或硬链接文件'); } catch (error) { if (error.code !== 'ENOENT') throw error; }
+  }
+}
+NODE
+}
+
 main() {
+  local requested_frontend="${INFOQ_FRONTEND_TARGET}"
   require_root
+  [[ "${INFOQ_DEPLOY_MODE}" == "production" || "${INFOQ_DEPLOY_MODE}" == "development" ]] || fail "INFOQ_DEPLOY_MODE 必须为 production 或 development"
+  [[ "${INFOQ_PRINT_SECRETS}" == "0" ]] || fail "禁止将部署凭据输出到日志；请直接读取受控凭据文件"
+  require_command node
+  validate_install_paths
+  if [[ "${INFOQ_DEPLOY_MODE}" == "production" ]]; then
+    [[ -f "${INFOQ_ENV_FILE}" && ! -L "${INFOQ_ENV_FILE}" ]] || fail "生产安装必须先提供受控 INFOQ_ENV_FILE，禁止缺失或符号链接"
+    node --input-type=module - "${INFOQ_ENV_FILE}" <<'NODE'
+import fs from 'node:fs';
+import path from 'node:path';
+const file = process.argv[2], stat = fs.statSync(file);
+if (!path.isAbsolute(file) || stat.size > 1048576 || (stat.mode & 0o077) !== 0) throw new Error('受控环境文件必须为绝对路径且权限0600');
+// Remote bootstrap has not downloaded the shared validator yet. Check required
+// inputs without interpreting shell; full validation follows the source staging.
+const content = fs.readFileSync(file, 'utf8');
+for (const name of ['INFOQ_PUBLIC_BASE_URL', 'INFOQ_OSS_PUBLIC_ORIGIN', 'INFOQ_TLS_CERT_FILE', 'INFOQ_TLS_KEY_FILE', 'INFOQ_PRODUCTION_CONFIG_FILE', 'MYSQL_ROOT_PASSWORD', 'INFOQ_DB_USERNAME', 'INFOQ_DB_PASSWORD', 'REDIS_PASSWORD', 'MINIO_ROOT_USER', 'MINIO_ROOT_PASSWORD', 'SECURITY_TOKEN_SECRET', 'INFOQ_ADMIN_USERNAME', 'INFOQ_ADMIN_PASSWORD', 'VITE_APP_ENCRYPT', 'VITE_APP_RSA_PUBLIC_KEY', 'VITE_APP_RSA_PRIVATE_KEY', 'INFOQ_API_REQUEST_PRIVATE_KEY', 'INFOQ_API_RESPONSE_PUBLIC_KEY']) {
+  const match = new RegExp(`^\\s*(?:export\\s+)?${name}\\s*=\\s*(.*?)\\s*$`, 'mu').exec(content);
+  if (!match || ['', "''", '""'].includes(match[1]) || /^#/.test(match[1])) throw new Error(`生产引导缺少必需配置项: ${name}`);
+}
+NODE
+  fi
+  resolve_local_source
+  download_source
+  if [[ -f "${INFOQ_ENV_FILE}" ]]; then load_env_file; fi
+  if [[ "${INFOQ_DEPLOY_MODE}" == "production" ]]; then
+    require_env_values INFOQ_VERSION INFOQ_FRONTEND_TARGET INFOQ_OSS_BUCKET DEPLOY_ID
+    if [[ -n "${requested_frontend}" && "$(normalize_frontend_target "${requested_frontend}")" != "${INFOQ_FRONTEND_TARGET}" ]]; then fail "生产配置与本次前端目标不一致"; fi
+  fi
+  if [[ -n "${requested_frontend}" ]]; then INFOQ_FRONTEND_TARGET="${requested_frontend}"; fi
   select_frontend_target
   require_runtime
   detect_public_base_url
   prepare_directories
-  resolve_local_source
-  download_source
   prepare_credentials
 
   log "启动后端与依赖服务"

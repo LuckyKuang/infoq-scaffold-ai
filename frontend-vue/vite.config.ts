@@ -1,3 +1,4 @@
+import { frontendBuildConfig, productionBuildMetadataPlugin } from '../tools/production_config.mjs';
 import { defineConfig, loadEnv } from 'vite';
 import createPlugins from './vite/plugins';
 import autoprefixer from 'autoprefixer'; // css自动添加兼容性前缀
@@ -125,15 +126,16 @@ function matchesElementPlusComponent(id: string, packages: string[]) {
  */
 export default defineConfig(({ mode, command }) => {
   const env = loadEnv(mode, process.cwd());
+  const productionBuild = frontendBuildConfig({ command, mode, env });
   const proxyTarget = env.VITE_APP_PROXY_TARGET || 'http://localhost:8080';
   return {
     // 部署生产环境和开发环境下的URL。
     // 默认情况下，vite 会假设你的应用是被部署在一个域名的根路径上
     // 例如 https://www.baidu.com/。如果应用被部署在一个子路径上，你就需要用这个选项指定这个子路径。例如，如果你的应用被部署在 https://www.baidu.com/admin/，则设置 baseUrl 为 /admin/。
-    base: env.VITE_APP_CONTEXT_PATH || '/',
+    base: productionBuild.contextPath,
     resolve: sharedResolve,
     // https://cn.vitejs.dev/config/#resolve-extensions
-    plugins: createPlugins(env, command === 'build'),
+    plugins: [...createPlugins(env, command === 'build'), productionBuildMetadataPlugin(productionBuild.metadata)],
     server: {
       host: '0.0.0.0',
       port: Number(env.VITE_APP_PORT || 80),

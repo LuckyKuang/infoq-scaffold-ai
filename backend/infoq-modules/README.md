@@ -41,3 +41,7 @@
 
 - 业务接口、服务实现、监听器与运行时接线：读 [`infoq-system/README.md`](./infoq-system/README.md)
 
+
+## 安全与通知边界
+
+`infoq-system` 保留文件接口权限与批量消息持久化；OAuth 绑定先校验站内回跳再创建一次性票据，错误不公开 Provider 详情；Push 仅提交后尝试并按通道分类。回归及真实环境限制见 [后端生产边界回归](../doc/production-verification.md)。

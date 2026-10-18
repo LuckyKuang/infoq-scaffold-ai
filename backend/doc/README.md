@@ -38,3 +38,7 @@
 - 纯内部重构、注释、格式化、测试补充或不改变语义的命名微调，不要求层层同步。
 - 多层文档冲突时，以源码和离代码最近的叶子模块文档为准。
 
+
+## 生产边界回归
+
+[production-verification.md](./production-verification.md) 记录安全/OAuth、翻译、提交后 Push、OSS 签名、英文消息和生产 RSA 的复用测试步骤及真实环境边界。

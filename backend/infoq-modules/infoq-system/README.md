@@ -67,3 +67,11 @@
 
 - 当前只有一个业务模块，因此这里既承载系统管理也承载监控接口。
 - 插件真实是否启用，仍要以运行配置和插件文档为准，不能仅凭这里的依赖声明做结论。
+
+## 生产接口边界
+
+- 匿名能力探测仅 `GET /auth/wechat-miniapp/enabled`，响应只含布尔值，关闭不调用微信。
+- OAuth redirect 不含 origin，可含当前部署前缀一次；绑定先校验再创建票据。多端 callback 由 `oauth.frontend-callback-paths` 受控映射选择，无法安全识别错误来源端时明确失败，不跳错端。
+- Push 在 AFTER_COMMIT + Async 中按通道记录 correlation ID、message ID、接收人数、分类及异常类型；关闭、离线及异常不反转持久化消息，日志不含正文/用户列表。
+- 私有 OSS 上传返回约 120 秒签名 URL，数据库仍存无签名元数据；资源接口既有权限保持，签名失败不回写对象键。
+- 定向测试与运行态边界见 [后端生产边界回归](../../doc/production-verification.md)。

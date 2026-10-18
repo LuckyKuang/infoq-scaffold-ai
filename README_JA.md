@@ -139,11 +139,16 @@ jar と管理コンソールの成果物をビルドし、Apple container パス
 ```bash
 # Linux / WSL2：確認済みの対象 release tag のソースからデプロイ
 sudo env INFOQ_SOURCE_DIR="$(pwd)" INFOQ_FRONTEND_TARGET=all \
-  INFOQ_PUBLIC_BASE_URL=http://SERVER_IP bash deploy/install.sh
+  INFOQ_ENV_FILE=/absolute/private/production.env bash deploy/install.sh
 ```
 
 `INFOQ_FRONTEND_TARGET` は必須です：`all`、`vue`、`react` のいずれかを指定します。
-`all` ターゲットの Nginx ルート：`/vue/`、`/react/`、`/console-oss/`、`/oss/`。
+本番の基準は Linux Docker です。独立した認証情報、独立した二組の RSA 鍵、
+アプリと専用 OSS ホスト名に対応する TLS 証明書を用意してください。管理された
+設定は[環境テンプレート](deploy/.env.example)と[デプロイガイド](deploy/README.md)
+に従って準備します。`all` の既定ルートは `/vue/`、`/react/`、`/console-oss/` です。
+非公開 S3 URL は専用 OSS origin を使用し、署名されたパスを変更しません。
+開発用 HTTP はモードを明示する必要があります。
 
 リモートインストールはデプロイガイドに従い、tag を固定してダウンロード後に確認
 してください。macOS Colima は shell スクリプトを使用し、Node CLI は macOS で Apple

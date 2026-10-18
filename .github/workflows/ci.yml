@@ -72,6 +72,39 @@ jobs:
       - name: Build backend
         run: node tools/backend_mvn.mjs -- -B -ntp -DskipTests=false clean package -P dev
 
+  node-cli-platforms:
+    name: Node CLI (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    needs: repository-gates
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .node-version
+      - name: Run cross-platform operational contracts
+        run: node tools/verify/test_production_ops.mjs
+      - name: Run Linux acceptance plan contracts
+        run: node tools/verify/test_linux_acceptance.mjs
+      - name: Windows PowerShell 5.1 baseline
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          if ($PSVersionTable.PSVersion.Major -ne 5) { throw 'PowerShell 5.1 required' }
+          node tools/verify/production_ops.mjs --help
+          if ($LASTEXITCODE -ne 0) { throw 'Node CLI help failed' }
+          node tools/verify/linux_acceptance.mjs --run-id windows-preview
+          if ($LASTEXITCODE -ne 0) { throw 'Node CLI preview failed' }
+      - name: Validate production input contracts on supported POSIX hosts
+        if: runner.os != 'Windows'
+        run: node tools/test_production_config.mjs
+
   admin-frontend:
     name: Admin Frontend (${{ matrix.name }})
     runs-on: ubuntu-latest
@@ -114,7 +147,18 @@ jobs:
         working-directory: ${{ matrix.workspace }}
         run: pnpm install --frozen-lockfile
 
+      - name: Generate controlled isolated build inputs
+        run: node tools/production_fixture.mjs --output-dir tmp/production-readiness/ci-${{ matrix.name }}
+
+      - name: Verify actual frontend encryption library interoperability
+        run: node tools/test_production_crypto.mjs --client ${{ matrix.name }}
+
       - name: Run checks
         working-directory: ${{ matrix.workspace }}
+        env:
+          INFOQ_PRODUCTION_CONFIG_FILE: ${{ github.workspace }}/tmp/production-readiness/ci-${{ matrix.name }}/production.env
         run: |
           ${{ matrix.checks }}
+
+      - name: Verify actual isolated artifact keys and provenance
+        run: node tools/production_config.mjs check-artifact --dir ${{ matrix.workspace }}/dist --env-file "${{ github.workspace }}/tmp/production-readiness/ci-${{ matrix.name }}/production.env" --allow-isolated

@@ -4,6 +4,7 @@ import cc.infoq.common.oauth.config.properties.OAuthProperties;
 import cc.infoq.common.oauth.domain.OAuthCallbackRequest;
 import cc.infoq.common.oauth.domain.OAuthCallbackResult;
 import cc.infoq.common.oauth.domain.OAuthIdentityProfile;
+import cc.infoq.common.oauth.domain.OAuthLoginTicketPayload;
 import cc.infoq.common.oauth.service.OAuthFlowService;
 import cc.infoq.common.oauth.service.OAuthLoginTicketService;
 import cc.infoq.system.domain.vo.SysOauthProviderVo;
@@ -18,16 +19,28 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.lang.reflect.Method;
+import java.util.Map;
+import cc.infoq.common.exception.ServiceException;
+import cc.infoq.common.utils.SpringUtils;
+import org.springframework.context.support.GenericApplicationContext;
+import org.springframework.context.support.StaticMessageSource;
+import org.junit.jupiter.api.BeforeAll;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @Tag("dev")
 class SysOauthLoginServiceImplTest {
+    @BeforeAll static void context() {
+        GenericApplicationContext context = new GenericApplicationContext();
+        context.registerBean("messageSource", StaticMessageSource.class, StaticMessageSource::new);
+        context.refresh(); new SpringUtils().setApplicationContext(context);
+    }
 
     @Mock
     private OAuthFlowService oAuthFlowService;
@@ -37,6 +50,50 @@ class SysOauthLoginServiceImplTest {
     private SysOauthProviderService providerService;
     @Mock
     private SysOauthIdentityService identityService;
+
+    @Test
+    void bindCallbackPreservesQueryHashAndDeploymentPrefix() {
+        OAuthCallbackResult callback = callbackResult(profile());
+        callback.setClientId("bind.ticket-1");
+        callback.setRedirect("/react/user/profile?q=a%26b&term=hello world&zh=中文#身份");
+        when(oAuthFlowService.handleCallback(any(), any(), any())).thenReturn(callback);
+        OAuthLoginTicketPayload ticket = new OAuthLoginTicketPayload();
+        ticket.setProviderCode("github"); ticket.setUserId(100L);
+        when(ticketService.consumeTicket("bind.ticket-1", "binding")).thenReturn(ticket);
+        when(providerService.requireBindProvider("github")).thenReturn(provider());
+        String target = buildService().handleCallback("github", callbackRequest(), "binding");
+        assertEquals("/react/user/profile?q=a%26b&term=hello%20world&zh=%E4%B8%AD%E6%96%87&bind=success&provider=github#%E8%BA%AB%E4%BB%BD", target);
+        verify(identityService).bindIdentity(eq(100L), any(), eq(callback.getProfile()));
+    }
+
+    @Test
+    void invalidBindRedirectCreatesNoTicketAndUnknownErrorCannotGuessAnotherFrontend() {
+        assertThrows(ServiceException.class, () -> buildService().createBindAuthorization(100L, "github", "/%2fevil", ""));
+        verifyNoInteractions(ticketService, identityService, providerService, oAuthFlowService);
+        OAuthProperties properties = oauthProperties();
+        properties.setFrontendCallbackPaths(Map.of("/react/", "/react/oauth/callback", "/vue/", "/vue/oauth/callback"));
+        when(oAuthFlowService.getProperties()).thenReturn(properties);
+        ServiceException failure = assertThrows(ServiceException.class, () -> buildService().buildErrorRedirect("provider-secret"));
+        assertFalse(failure.getMessage().contains("provider-secret"));
+        verifyNoInteractions(ticketService);
+    }
+
+    @Test
+    void successfulCallbackUsesTheControlledMatchingFrontend() {
+        OAuthIdentityProfile profile = profile(); OAuthCallbackResult callback = callbackResult(profile);
+        callback.setRedirect("/vue/user/profile?q=a%26b");
+        OAuthProperties properties = oauthProperties();
+        properties.setFrontendCallbackPaths(Map.of("/react/", "/react/oauth/callback", "/vue/", "/vue/oauth/callback"));
+        when(oAuthFlowService.getProperties()).thenReturn(properties);
+        when(oAuthFlowService.handleCallback(any(), any(), any())).thenReturn(callback);
+        when(providerService.requireLoginProvider("github")).thenReturn(provider());
+        when(identityService.resolveLoginUser(any(), any(), anyBoolean(), anyBoolean())).thenReturn(100L);
+        when(ticketService.createTicket(any())).thenReturn("ticket-1");
+        String result = buildService().handleCallback("github", callbackRequest(), "binding");
+        assertTrue(result.startsWith("/vue/oauth/callback?"));
+        assertTrue(result.contains("loginTicket=ticket-1"));
+        assertFalse(result.startsWith("/react/"));
+    }
 
     @Test
     @DisplayName("transaction boundary: callback should not wrap external profile fetch")

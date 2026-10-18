@@ -43,6 +43,35 @@ import static org.mockito.Mockito.*;
 class OssClientTest {
 
     @Test
+    void privatePresignerUsesExternalHttpsOriginAndUploadRetainsInternalHttpEndpoint() {
+        OssProperties properties = baseProperties();
+        properties.setEndpoint("http://minio:9000");
+        properties.setDomain("https://oss.example.com");
+        properties.setIsHttps("Y");
+        OssClient client = new OssClient("minio", properties);
+        try {
+            assertEquals("http://minio:9000", client.getEndpoint());
+            assertEquals("https://oss.example.com", client.getDomain());
+            assertEquals("https://oss.example.com/bucket", client.getUrl());
+            String signed = client.createPresignedGetUrl("folder/a b.txt", Duration.ofSeconds(120));
+            assertTrue(signed.startsWith("https://oss.example.com/bucket/folder/a%20b.txt?"));
+            assertTrue(signed.contains("X-Amz-Expires=120"));
+            assertTrue(signed.contains("X-Amz-SignedHeaders=host"));
+            assertFalse(signed.contains("minio:9000"));
+        } finally { closeClient(client); }
+    }
+
+    @Test
+    void refusesPublicOriginPathRewriteCredentialsAndAmbiguousUrlComponents() {
+        for (String address : List.of("https://oss.example.com/oss", "https://oss.example.com/", "https://user:password@oss.example.com",
+            "https://oss.example.com?x=1", "https://oss.example.com#fragment", "ftp://oss.example.com", "https://oss.example.com:0")) {
+            OssProperties properties = baseProperties(); properties.setDomain(address);
+            OssException failure = assertThrows(OssException.class, () -> new OssClient("minio", properties));
+            assertFalse(failure.getMessage().contains("password"));
+        }
+    }
+
+    @Test
     @DisplayName("helpers: should resolve domain/url/protocol/region and policy branches")
     void helperMethodsShouldResolveBranches() {
         OssProperties properties = baseProperties();

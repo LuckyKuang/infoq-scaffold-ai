@@ -62,7 +62,7 @@
 
 `VITE_APP_ENCRYPT=true` 时，dev/build 进程必须取得与目标后端对应的 `VITE_APP_RSA_PUBLIC_KEY` / `VITE_APP_RSA_PRIVATE_KEY`。浏览器中的私钥不能保护服务端秘密，生产仍须 HTTPS 与受控凭据。构建前执行 `node tools/validate_utf8.mjs`。
 
-当前 `BrowserRouter` 未设置 `basename`，`/react/` 子路径部署存在路由风险；OAuth 绑定页当前提交绝对 redirect，与后端相对路径校验冲突。两项均需独立修复和运行验证，不能把构建成功或路由 smoke 当作生产验收。具体证据边界见 [测试政策](../docs/TESTING.md) 第 6.5–6.6 节。
+`BrowserRouter.basename` 与 Vite `BASE_URL` 一致，支持根及 `/react/` 等受控子路径。密码/OAuth 登录、回调和身份绑定共享安全回跳边界；API 使用无 origin、带前缀一次的站内路径，应用内导航由 Router base 生成浏览器地址。非法编码、协议相对路径、反斜杠、控制字符、点段和重复参数在登录/授权/ticket 兑换前明确拒绝，正常 query/hash 不二次解码。真实 Provider、目标 Linux nginx 与生产登录仍需分别验收，构建或 HTTP 替身不能替代这些证据。具体边界见 [测试政策](../docs/TESTING.md) 第 6.5–6.6 节。
 
 ## P1-P3 身份与消息边界
 

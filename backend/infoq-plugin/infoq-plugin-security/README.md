@@ -53,4 +53,4 @@
 ## 10. 已知边界
 
 - 不负责业务权限数据本身，那部分仍在 `infoq-system`。
-- 当前 `/auth/wechat-miniapp/enabled` 不在默认公开列表，匿名登录前探测会被严格认证拦截；这是待独立修复的业务装配缺口，见 [认证规范](../../../docs/specs/auth/spec.md) 的实现符合性说明。
+- 严格认证默认仅公开精确 `GET /auth/wechat-miniapp/enabled`，返回能力布尔值；POST、该前缀其他路径和管理数据仍要求认证。该 GET 例外独立于通用字符串公开列表，不扩展整个小程序前缀。

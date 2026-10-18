@@ -4,7 +4,7 @@
 |Stack:React 19.2.7|TypeScript 6.0.3|Vite 8.0.16|Ant Design 6.4.3|React Router 7.16.0|Zustand|Vitest 4.1.8|Testing Library
 |Workspace Layout:src/pages|src/components|src/api|src/store|src/router|src/utils|src/hooks|tests
 |Environment Baseline:Node 24.18.0|Docker builder 固定 node:24.18.0|pnpm >=10.34.1 <11|packageManager pnpm@10.34.1
-|Build Secrets:当 `VITE_APP_ENCRYPT=true` 时，React admin dev/build 环境必须提供 `VITE_APP_RSA_PUBLIC_KEY` 与 `VITE_APP_RSA_PRIVATE_KEY`。
+|Build Secrets:当 `VITE_APP_ENCRYPT=true` 时，React admin dev/build 环境必须提供 `VITE_APP_RSA_PUBLIC_KEY` 与 `VITE_APP_RSA_PRIVATE_KEY`。|production build 使用 INFOQ_PRODUCTION_CONFIG_FILE 指定受控配置并由 tools/production_config.mjs 交叉校验两组独立2048位以上 RSA；后端请求私钥只参与校验，禁止进入前端产物或构建层。|临时 fixture 构建不等于生产配置验收；浏览器协议私钥是公开内容，公网仍须 HTTPS。
 |Runtime Baseline:React admin 联调默认以后端 `http://127.0.0.1:8080` 为共享真值。|若开发者本地为避开冲突临时把 backend 改到 `8081` 或其他端口，必须显式设置 `VITE_APP_PROXY_TARGET` 或使用 test-cli 本地栈入口的 `--backend-port <port>` 对齐。|不得把一次性本地端口固化进共享默认配置。
 |Package And Formatting:默认使用 pnpm。|遵循本地 eslint 与 prettier 配置，前端使用 2-space formatting。|source、env、test files 保持 UTF-8。
 |Working Directory:本文件中的命令默认从仓库根目录执行；若已在对应工作区内，请按命令中的显式路径自行调整。

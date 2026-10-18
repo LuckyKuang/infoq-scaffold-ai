@@ -74,7 +74,29 @@ pnpm --dir frontend-vue run lint:eslint
 pnpm --dir frontend-vue run build:prod
 ```
 
-构建前执行 `node tools/validate_utf8.mjs`。当 `VITE_APP_ENCRYPT=true` 时，为 dev/build 进程提供与目标后端协议对应的 `VITE_APP_RSA_PUBLIC_KEY` 与 `VITE_APP_RSA_PRIVATE_KEY`，不要缺配置就关闭加密。Node 使用 `24.18.0`，pnpm 使用根 `packageManager` 固定版本。
+构建前执行 `node tools/validate_utf8.mjs`。dev 环境在 `VITE_APP_ENCRYPT=true` 时提供与目标后端协议对应的前端 RSA 配置。production build 强制受控来源和加密：将 `INFOQ_PRODUCTION_CONFIG_FILE` 指向绝对路径的私有 dotenv，包含两组至少 2048 位 RSA 的四向配置（前端请求公钥对应后端请求私钥，前端响应私钥对应后端响应公钥）；或显式使用受管环境来源。`node tools/production_config.mjs check --scope frontend --env-file <绝对配置路径>` 只读校验，不打印值。禁止缺配置就关闭加密或把仓库示例 key 用于 production build。Node 使用 `24.18.0`，pnpm 使用根 `packageManager` 固定版本。
+
+通过 `VITE_APP_CONTEXT_PATH=/react/` 或 `/vue/` 构建所需部署前缀；Router 使用 Vite `BASE_URL` 与资源前缀一致。具体受控来源与构建入口见 [`DEV_GUIDE.md`](../../../../DEV_GUIDE.md)。合成配置必须标明 `INFOQ_CONFIG_SOURCE=isolated-test`，产物 `production-build.json` 的 `deployable=false`；`check-artifact --allow-isolated` 只供隔离测试，不能据此发布。
+
+## 认证回跳回归 SOP
+
+触发条件：修改 Router base、登录守卫、密码登录、OAuth 授权/回调或个人中心身份绑定。
+
+1. 读取 `src/utils/auth-redirect.ts`、真实页面和 backend 的 `OAuthRedirectValidator`；明确 API 使用带部署前缀一次的站内浏览器路径，Router 导航使用应用内路径。query/hash 保留原编码，URLSearchParams/Router 已解析的值不无条件再次 decode。
+2. 先验证合法 `/user/profile?name=a%26b#identity` 主流程及缺省 `/index`；然后分别在根路径和应用子路径验证未登录回跳、已登录刷新、API 返回的动态菜单、授权、callback 和绑定。拒绝绝对/协议相对/反斜杠/控制字符/点段、错码、多层编码、重复/数组参数和显式空目标。
+3. 运行两端安全回跳、页面 callback/login/profile、Router/guard 定向测试。断言非法输入未调用登录、授权地址或 ticket 兑换，不能只断言工具函数抛错。Vue query mock 应使用 Router 已解码值，不能预先 encode 后靠页面二次 decode 通过。
+4. 完成 lint 和受控 production build；浏览器运行态使用真实构建产物和显式枚举 API 的 owned HTTP fixture 可验证 DOM、资源前缀及导航，但须标明没有验证真实认证/Provider/DB/Redis。fixture 未配置的 API、console error、pageerror、导航失败均应失败，记录 `tmp/` 状态、截图和端口关闭证据。
+
+```bash
+pnpm --dir frontend-react exec vitest --run tests/utils/auth-redirect.test.ts tests/router/app-router.test.tsx tests/router/auth-permission.test.tsx tests/pages/login.test.tsx tests/pages/oauth-callback.test.tsx tests/pages/system/user/profile/oauth-identity.test.tsx
+pnpm --dir frontend-vue exec vitest --config vitest.config.ts --run tests/utils/auth-redirect.test.ts tests/router/index.test.ts tests/permission.guard.test.ts tests/views/login.test.ts tests/views/oauth-callback.test.ts tests/views/system/user/profile/index.test.ts
+# artifact-root 下放置真实生产构建的 react-root-dist/react-sub-dist/vue-root-dist/vue-sub-dist
+node skills/test-cli/scripts/test_admin_routing.mjs --artifact-root tmp/routing-builds --output-dir tmp/test-cli/e2e/routing
+```
+
+`test_admin_routing.mjs` 支持 `--client react|vue|both`，逐端验证根路径和固定 `/react/`、`/vue/` 子路径，校验产物 metadata 与 base 一致。测试 HTTP 层精确配置 API 与 Provider 替身，显式拦截外部网络；验证码作为 fixture 输入保留，不关闭应用加密。状态记录 runner PID、实际 loopback 端口、截图、请求类型、失败和 owned 端口关闭；SIGINT/SIGTERM/SIGHUP 记 interrupted 并清理。浏览器或资源清理失败不可算 passed。目标 nginx/HTTPS、真实验证码/票据和 Provider 验收另行执行。
+
+反模式：将无效输入静默送首页、允许绝对 URL 修复绑定、把前缀在 API 和 Router 两处重复添加、改写 `%26` 改变 query 语义、削弱导航断言或将 HTTP fixture 当成真实 Provider 验收。
 
 ## 护栏
 

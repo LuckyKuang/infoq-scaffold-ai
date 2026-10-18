@@ -87,3 +87,5 @@
 - 对可选链路，受管的 `application-dev.yml`、`application-prod.yml` 显式设置 `mail.enabled=false`；本机 local 覆盖可能不同。`application.yml` 中 `sse.enabled=true`、`websocket.enabled=false`。这些开发默认值不是生产安全推荐值，生产前置条件见 [部署验证说明](../deploy/VERIFICATION.md)。
 - 个人消息盒子使用 MySQL 作为正文和接收人状态真值。实时事件只用于提示客户端刷新，Push 关闭、用户离线或实时通道失败均不得影响消息已提交的读取、已读和软删除操作。
 - 如果你要改动登录、权限、Redis、Quartz、日志或 Mapper XML，建议先把上面两份文档看完再动手。
+
+认证/通知/翻译/签名及生产 RSA 的回归入口见 [后端生产边界回归](./doc/production-verification.md)。精确小程序 GET 探测保持匿名可读；双端 OAuth 用受控 base→callback 映射；字段翻译失败明确失败；Push 按通道记录发布/失败，均不替代 Linux Docker 运行态验收。

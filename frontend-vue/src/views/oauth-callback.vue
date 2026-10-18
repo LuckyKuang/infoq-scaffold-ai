@@ -21,6 +21,7 @@
 import { Loading } from '@element-plus/icons-vue';
 import { useUserStore } from '@/store/modules/user';
 import { useI18n } from 'vue-i18n';
+import { requireAppRedirect } from '@/utils/auth-redirect';
 
 const { proxy } = getCurrentInstance() as ComponentInternalInstance;
 const route = useRoute();
@@ -28,19 +29,6 @@ const router = useRouter();
 const userStore = useUserStore();
 const { t } = useI18n();
 const errorMessage = ref('');
-
-const normalizeRedirect = (redirect: unknown) => {
-  const value = typeof redirect === 'string' ? redirect : '/index';
-  try {
-    const decoded = decodeURIComponent(value);
-    if (decoded.startsWith('/') && !decoded.startsWith('//') && !decoded.includes('\\')) {
-      return decoded;
-    }
-  } catch {
-    // fall through to default
-  }
-  return '/index';
-};
 
 onMounted(async () => {
   const error = route.query.error;
@@ -53,9 +41,16 @@ onMounted(async () => {
     errorMessage.value = t('oauthCallback.missingTicket');
     return;
   }
+  let redirect: string;
+  try {
+    redirect = requireAppRedirect('redirect' in route.query ? (route.query.redirect ?? '') : undefined);
+  } catch {
+    errorMessage.value = t('login.invalidRedirect');
+    return;
+  }
   try {
     await userStore.loginByOAuthTicket(loginTicket);
-    await router.replace(normalizeRedirect(route.query.redirect));
+    await router.replace(redirect);
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : t('oauthCallback.failed');
   }

@@ -13,10 +13,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.never;
+import static org.mockito.ArgumentMatchers.any;
 
 @Tag("dev")
 class TranslationHandlerTest {
@@ -58,8 +60,8 @@ class TranslationHandlerTest {
     }
 
     @Test
-    @DisplayName("serialize: should fallback to raw value when translation throws")
-    void serializeShouldFallbackWhenTranslationThrows() throws Exception {
+    @DisplayName("serialize: should fail without raw value when translation throws")
+    void serializeShouldFailWhenTranslationThrows() throws Exception {
         TranslationHandler handler = createConfiguredHandler();
         JsonGenerator gen = mock(JsonGenerator.class);
         SerializationContext context = mock(SerializationContext.class);
@@ -70,19 +72,25 @@ class TranslationHandlerTest {
         };
         TranslationHandler.TRANSLATION_MAPPER.put("demo.type", trans);
 
-        handler.serialize("ignored", gen, context);
-        verify(context).writeValue(gen, "mapped-value");
+        IllegalStateException failure = assertThrows(IllegalStateException.class, () -> handler.serialize("ignored", gen, context));
+        assertTrue(failure.getMessage().contains("stage=translation"));
+        assertFalse(failure.getMessage().contains("mapped-value"));
+        assertFalse(failure.getMessage().contains("boom"));
+        assertNull(failure.getCause());
+        verify(context, never()).writeValue(any(), any());
     }
 
     @Test
-    @DisplayName("serialize: should keep raw value when translation type is missing")
-    void serializeShouldKeepRawValueWhenTypeMissing() throws Exception {
+    @DisplayName("serialize: should fail when translation type is missing")
+    void serializeShouldFailWhenTypeMissing() throws Exception {
         TranslationHandler handler = createConfiguredHandler();
         JsonGenerator gen = mock(JsonGenerator.class);
         SerializationContext context = mock(SerializationContext.class);
 
-        handler.serialize("raw", gen, context);
-        verify(context).writeValue(gen, "raw");
+        when(gen.currentValue()).thenReturn(new DemoBean("mapped-value"));
+        IllegalStateException failure = assertThrows(IllegalStateException.class, () -> handler.serialize("raw", gen, context));
+        assertTrue(failure.getMessage().contains("stage=lookup"));
+        verify(context, never()).writeValue(any(), any());
     }
 
     @Test
@@ -117,8 +125,8 @@ class TranslationHandlerTest {
         when(property.getAnnotation(Translation.class)).thenReturn(translation);
         when(property.getType()).thenReturn(javaType);
         ValueSerializer<?> serializer = handler.createContextual(provider, property);
-        assertSame(handler, serializer);
-        return handler;
+        assertNotSame(handler, serializer);
+        return (TranslationHandler) serializer;
     }
 
     private static class DemoBean {

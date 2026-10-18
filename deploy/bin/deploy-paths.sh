@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # Sourced by deployment helpers; never changes ownership or permissions of existing data.
+INFOQ_NEW_DEPLOY_DIRS=()
 
 deploy_assert_safe_path() {
   local path="$1"
@@ -35,6 +36,7 @@ prepare_deploy_dir() {
   else
     (umask 022; mkdir -p "${path}") || return 1
     chmod 0755 "${path}" || return 1
+    INFOQ_NEW_DEPLOY_DIRS+=("${path}")
   fi
 }
 

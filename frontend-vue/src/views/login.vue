@@ -5,6 +5,7 @@
         <h3 class="title">{{ title }}</h3>
         <lang-select />
       </div>
+      <el-alert v-if="redirectError" :title="t('login.invalidRedirect')" type="error" :closable="false" show-icon />
       <el-form-item prop="username">
         <el-input v-model="loginForm.username" type="text" size="large" auto-complete="off" :placeholder="proxy.$t('login.username')">
           <template #prefix><svg-icon icon-class="user" class="el-input__icon input-icon" /></template>
@@ -80,7 +81,7 @@ import { useUserStore } from '@/store/modules/user';
 import { LoginData, OAuthProviderOption } from '@/api/types';
 import { to } from 'await-to-js';
 import { useI18n } from 'vue-i18n';
-import type { RouteLocationNormalizedLoaded } from 'vue-router';
+import { requireAppRedirect, toDeploymentRedirect } from '@/utils/auth-redirect';
 
 const { proxy } = getCurrentInstance() as ComponentInternalInstance;
 
@@ -113,21 +114,21 @@ const register = ref(false);
 const forgotPasswordEnabled = ref(false);
 const oauthProviders = ref<OAuthProviderOption[]>([]);
 const oauthLoadingProvider = ref('');
-const redirect = ref('/');
+const redirectError = ref(false);
 const loginRef = ref<ElFormInstance>();
-
-watch(
-  () => router.currentRoute.value,
-  (newRoute: RouteLocationNormalizedLoaded) => {
-    const redirectQuery = newRoute.query?.redirect;
-    redirect.value = typeof redirectQuery === 'string' ? decodeURIComponent(redirectQuery) : '/';
-  },
-  { immediate: true }
-);
 
 const handleLogin = () => {
   loginRef.value?.validate(async (valid: boolean) => {
     if (valid) {
+      let redirect: string;
+      try {
+        const query = router.currentRoute.value.query;
+        redirect = requireAppRedirect('redirect' in query ? (query.redirect ?? '') : undefined);
+      } catch {
+        redirectError.value = true;
+        return;
+      }
+      redirectError.value = false;
       loading.value = true;
       // 勾选了需要记住密码设置在 localStorage 中设置记住用户名和密码
       if (loginForm.value.rememberMe) {
@@ -143,8 +144,7 @@ const handleLogin = () => {
       // 调用action的登录方法
       const [err] = await to(userStore.login(loginForm.value));
       if (!err) {
-        const redirectUrl = redirect.value || '/';
-        await router.push(redirectUrl);
+        await router.push(redirect);
         loading.value = false;
       } else {
         loading.value = false;
@@ -158,9 +158,18 @@ const handleLogin = () => {
 };
 
 const handleOAuthAuthorize = (provider: OAuthProviderOption) => {
+  let redirect: string;
+  try {
+    const query = router.currentRoute.value.query;
+    redirect = toDeploymentRedirect('redirect' in query ? (query.redirect ?? '') : undefined);
+  } catch {
+    redirectError.value = true;
+    return;
+  }
+  redirectError.value = false;
   const params = new URLSearchParams({
     clientId: import.meta.env.VITE_APP_CLIENT_ID,
-    redirect: redirect.value || '/index'
+    redirect
   });
   oauthLoadingProvider.value = provider.providerCode;
   window.location.assign(`${import.meta.env.VITE_APP_BASE_API}/auth/oauth/${provider.providerCode}/authorize?${params.toString()}`);

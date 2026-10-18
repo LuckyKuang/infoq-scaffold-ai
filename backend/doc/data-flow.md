@@ -419,4 +419,4 @@ POST /system/notice
 -> SSE / WebSocket 仅发送 { type: "message", messageId }
 ```
 
-Push 默认关闭。开启 `infoq.push.enabled` 后，必须至少选择并同时开启一个底层 SSE/WebSocket 通道；错误配置会在启动期显式失败。`SysMessagePushListener` 推送异常日志包含 correlation ID、消息 ID、接收人数和失败类别，当前缺少失败通道，尚不满足通知规格中的通道可观测性要求；日志不记录正文，也不会回滚已提交的消息。`infoq.message.cleanup.soft-delete-retention-days` 默认 30，配置校验下限为 1 天，并非强制至少保留 30 天；默认暂停的 `system.message.cleanup` 任务还要求 `infoq.message.cleanup.enabled=true` 才会删除过期软删除记录及无接收人的过期消息壳。
+Push 默认关闭。开启 `infoq.push.enabled` 后，必须至少选择并同时开启一个底层 SSE/WebSocket 通道；错误配置会在启动期显式失败。`SysMessagePushListener` 关闭时记录 `disabled`，已启用服务逐通道返回/记录发布、离线、不可用或失败结果，包含 correlation ID、消息 ID、接收人数、通道、连接状态和异常类别；接收端发送失败沿用关联字段，日志不记录正文/用户列表/原异常 message，也不会回滚已提交消息。Redis 发布完成仅表示 `published`，没有客户端 ACK，不能证明送达。`infoq.message.cleanup.soft-delete-retention-days` 默认 30，配置校验下限为 1 天，并非强制至少保留 30 天；默认暂停的 `system.message.cleanup` 任务还要求 `infoq.message.cleanup.enabled=true` 才会删除过期软删除记录及无接收人的过期消息壳。

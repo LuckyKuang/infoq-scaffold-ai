@@ -146,15 +146,20 @@ node skills/test-cli/scripts/run_admin_e2e.mjs --client react --route-limit 3
 
 ### 6.4 lint 与生产构建
 
-构建前执行编码门禁，并确认 `VITE_APP_ENCRYPT=true` 时构建进程可读取与后端对应的 `VITE_APP_RSA_PUBLIC_KEY`、`VITE_APP_RSA_PRIVATE_KEY`。不要在缺失密钥时通过关闭加密制造构建成功。
+构建前执行编码门禁。production build 默认严格：通过 `INFOQ_PRODUCTION_CONFIG_FILE` 指定绝对路径的受控文件（Unix owner-only），包含 `VITE_APP_ENCRYPT=true` 与四项 RSA；请求公钥对应 `INFOQ_API_REQUEST_PRIVATE_KEY`，响应私钥对应 `INFOQ_API_RESPONSE_PUBLIC_KEY`，两组独立且至少2048位。不要在缺失密钥时关闭加密。真实密钥不写进受管 env、命令行或日志；格式通过也不能证明目标环境已完成凭据替换。
 
 ```bash
 node tools/validate_utf8.mjs
+node tools/production_config.mjs check --scope frontend
 pnpm --dir frontend-vue run lint:eslint
 pnpm --dir frontend-vue run build:prod
 pnpm --dir frontend-react run lint
 pnpm --dir frontend-react run build:prod
+node tools/production_config.mjs check-artifact --dir frontend-vue/dist
+node tools/production_config.mjs check-artifact --dir frontend-react/dist
 ```
+
+以上命令在已设置 `INFOQ_PRODUCTION_CONFIG_FILE` 的同一受控环境执行。纯本地/CI 构建验证可先用 `node tools/production_fixture.mjs --output-dir tmp/production-readiness/<唯一目录>` 生成临时独立密钥和证书，再把输出的配置路径设入该变量。此类产物记录 `isolated-test`、`deployable=false`，检查时须显式 `--allow-isolated`，不能用于 Release；实际加密构建仍完整执行。Docker 使用 `production_config` BuildKit secret，不能把后端私钥传普通 build ARG。
 
 ### 6.5 当前自动化边界与交付证据
 
@@ -164,7 +169,7 @@ pnpm --dir frontend-react run build:prod
 - E2E 自管栈记录 backend/frontend 的 `state.json` 并清理 owned 进程；`--no-start-stack` 复用的服务由其所有者管理。通用 Playwright 状态在 `tmp/test-cli/browser/states/`，CRUD 浏览器状态在当前 run 的 `browser-state.json`，DevTools 子进程状态/日志在 `tmp/test-cli/browser/chrome-devtools-mcp/`。Playwright 通过 pipe 通信，状态的 `pid` 是 runner PID、`port=null`，不是 Chromium OS PID；以 awaited `browser.close()` 和 `browserClosed` 留存关闭证据。DevTools 记录真实子进程 PID 并核验 owned 进程树退出。
 - 自管栈的 HTTP 就绪探针接受 2xx–4xx；它不能证明验证码、数据库与 Redis 真正可用，也不能确认已复用服务的 profile/身份。`VITE_APP_PROXY_TARGET` 若已设置会优先于 `--backend-port` 推导值；执行前必须把 API 登录地址、浏览器代理和目标实例核对为同一环境。`--keep-stack-after` 仅在验证及报告落盘均成功后保留栈；落盘失败或期间收到中断会撤销保留决定并关闭 owned 进程，清理错误与原始错误同时保留。
 - React coverage 在 `vite.config.ts` 配置了 lines/functions/branches/statements 阈值；Vue `vitest.config.ts` 当前只生成 coverage 报告，未设置阈值。不能把 Vue coverage 命令成功描述为达到某个自动阈值。
-- OAuth Provider、邮件收件链路、OSS、部署子路径和生产监控/灾备必须分别具备真实环境证据；单测、静态矩阵及路由 smoke 无法替代。当前两端 OAuth 绑定页面提交绝对 redirect，而后端只接受安全相对路径，是已确认的业务实现阻塞，不能宣称绑定流程已验收。
+- 两端绑定提交不含 origin、带当前部署前缀一次的安全站内路径；普通登录、OAuth 授权与 callback 在副作用前拒绝非法 redirect，只有未提供输入时默认 `/index`。Router 导航移除一次前缀再由 base 添加；后端 callback landing 由受控部署 base 映射选定，不能从用户输入选择外部 origin。根/子路径的真实产物 DOM 与 HTTP/Provider 替身回归可检路由行为，但真实 Provider、邮件、数据库/Redis 登录、OSS 代理和生产监控/灾备仍必须分别具备目标环境证据。
 
 ### 6.6 CRUD 与登录执行限制
 
@@ -179,3 +184,5 @@ pnpm --dir frontend-react run build:prod
 - `--print-token` 会输出真实会话；截图、测试数据与报告还可能包含个人数据、验证码答案和生成的 fixture 凭据。证据限本地受控 `tmp/`，不得公开上传。登录及 E2E 的 `--run-id` 强制使用字母或数字开头、仅含字母/数字/点/下划线/连字符的简单 slug，最长 120 字符；登录 `--run-dir` 校验必须在仓库 `tmp/` 内。停止进程不等于撤销测试登录会话，需另行退出/撤销。
 
 恢复步骤与禁止事项遵循第 2–4 节及 [数据运维](./DATA-OPS.md)。工具隔离回归 SOP 见 [CRUD 模式](../skills/test-cli/references/crud/crud-patterns.md)；本轮采用假 HTTP/Redis/浏览器与临时进程验证工具行为，未执行真实 Redis/数据库写入、浏览器 CRUD 或生产验收。后端 smoke 的请求超时、监听及脱敏门禁另见 [后端验证 SOP](../tools/verify/README.md)。
+
+生产修复的 Linux Docker 实机验收由 `node tools/verify/linux_acceptance.mjs --run-id <唯一标识>` 先预览，显式 `--execute` 才建立隔离全栈；其前提、实际覆盖和清理见[生产保障 SOP](PRODUCTION-OPS.md)。此入口需要空闲端口和本机 Docker，不替换为已有 Apple/共享栈。新增跨平台 CI 与 Linux workflow 在真正执行前保持未验证。

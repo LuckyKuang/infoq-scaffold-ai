@@ -8,7 +8,7 @@ import {
   DOCKER_COMMANDS,
   normalizeBindHost,
   parseArgs,
-  parseEnvFile,
+  parseAppleEnv,
   parsePort,
   readDeployEnv,
   repoRoot,
@@ -30,32 +30,13 @@ function test(name, fn) {
   }
 }
 
-test('parseEnvFile ignores comments and strips matching quotes', () => {
-  const env = parseEnvFile([
-    '# comment',
-    'APPLE_CONTAINER_HOST_PORT=19090',
-    'INFOQ_PUBLIC_BASE_URL="http://127.0.0.1"',
-    "INFOQ_DB_USERNAME='infoq_app'",
-    '',
-  ].join('\n'));
-  assert.deepEqual(env, {
-    APPLE_CONTAINER_HOST_PORT: '19090',
-    INFOQ_PUBLIC_BASE_URL: 'http://127.0.0.1',
-    INFOQ_DB_USERNAME: 'infoq_app',
-  });
-});
-
-test('parseEnvFile rejects malformed lines', () => {
-  assert.throws(() => parseEnvFile('NOT_AN_ASSIGNMENT'), /Invalid env line/u);
-  assert.throws(() => parseEnvFile('1BAD=value'), /Invalid env key/u);
-});
-
-test('env parser matches installer quoting and Apple literal values without executing expressions', () => {
-  assert.equal(parseEnvFile("PASSWORD='quote'\\'' slash\\ dollar$ space value'\n").PASSWORD, "quote' slash\\ dollar$ space value");
-  assert.equal(parseEnvFile('PASSWORD="literal\\$value"\n').PASSWORD, 'literal$value');
-  assert.equal(parseEnvFile("PASSWORD='literal'  \n", {literal: true}).PASSWORD, "'literal'  ");
-  assert.throws(() => parseEnvFile('PASSWORD=$(touch tmp/should-never-exist)'), /Unsupported shell expression/u);
-  assert.throws(() => parseEnvFile('PASSWORD="unclosed'), /Invalid env quoting/u);
+test('Apple env preserves literal protocol keys without executing expressions', () => {
+  const env = parseAppleEnv('APP_PORT=19090\nPASSWORD="literal $() value"  \n');
+  assert.equal(env.APP_PORT, '19090');
+  assert.equal(env.PASSWORD, '"literal $() value"  ');
+  assert.throws(() => parseAppleEnv('NOT_AN_ASSIGNMENT'), /Invalid env line/u);
+  assert.throws(() => parseAppleEnv('1BAD=value'), /Invalid env key/u);
+  assert.throws(() => parseAppleEnv('PASSWORD=one\nPASSWORD=two'), /Duplicate/u);
 });
 
 test('parseArgs treats --help as help', () => {
@@ -143,11 +124,21 @@ test('buildSmokeChecks selects Docker frontend targets', () => {
   assert.throws(() => buildSmokeChecks({runtime: 'docker', baseUrl: 'http://127.0.0.1', frontendTarget: 'typo'}), /INFOQ_FRONTEND_TARGET/u);
 });
 
+test('Docker probes follow custom safe prefixes and reject ambiguous mounts', () => {
+  const checks = buildSmokeChecks({runtime: 'docker', baseUrl: 'https://app.example', vueContextPath: '/admin/vue/', reactContextPath: '/admin/react/'});
+  assert.equal(checks.find(check => check.name === 'vue-console').url, 'https://app.example/admin/vue/');
+  assert.equal(checks.find(check => check.name === 'react-console').url, 'https://app.example/admin/react/');
+  for (const reactContextPath of ['/admin/vue/', '/admin/vue/child/', '//evil/']) {
+    assert.throws(() => buildSmokeChecks({runtime: 'docker', baseUrl: 'https://app.example', vueContextPath: '/admin/vue/', reactContextPath}));
+  }
+});
+
 const fixturesRoot = path.join(repoRoot, 'tmp', 'deploy-cli-tests');
 fs.mkdirSync(fixturesRoot, {recursive: true});
 const fixture = fs.mkdtempSync(path.join(fixturesRoot, 'env-'));
 const envFile = path.join(fixture, 'deploy.env');
 fs.writeFileSync(envFile, "INFOQ_PUBLIC_BASE_URL='https://gateway.example:8443'\nINFOQ_FRONTEND_TARGET='react'\n", 'utf8');
+fs.chmodSync(envFile, 0o600);
 try {
   test('runtime env uses the explicitly selected file with the same precedence as shell helpers', () => {
     const env = readDeployEnv('docker', {INFOQ_ENV_FILE: envFile, INFOQ_FRONTEND_TARGET: 'vue'});
@@ -157,6 +148,23 @@ try {
     // Apple shell helpers use literal KEY=value, including quote characters.
     assert.equal(readDeployEnv('apple', {INFOQ_ENV_FILE: envFile}).INFOQ_FRONTEND_TARGET, "'react'");
     assert.doesNotThrow(() => readDeployEnv('docker', {INFOQ_ENV_FILE: path.join(fixture, 'new-install')}, true));
+  });
+
+  test('Docker env overlays the private build source without evaluating shell text', () => {
+    const configFile = path.join(fixture, 'controlled.env');
+    const selectedFile = path.join(fixture, 'selected.env');
+    fs.writeFileSync(configFile, 'INFOQ_FRONTEND_TARGET="all"\nINFOQ_REACT_CONTEXT_PATH="/admin/react/"\nREDIS_PASSWORD="literal$(never-execute)"\n', {encoding: 'utf8', mode: 0o600});
+    fs.writeFileSync(selectedFile, `INFOQ_PRODUCTION_CONFIG_FILE=${JSON.stringify(configFile)}\nINFOQ_FRONTEND_TARGET=vue\n`, {encoding: 'utf8', mode: 0o600});
+    const env = readDeployEnv('docker', {INFOQ_ENV_FILE: selectedFile});
+    assert.equal(env.INFOQ_FRONTEND_TARGET, 'all');
+    assert.equal(env.INFOQ_REACT_CONTEXT_PATH, '/admin/react/');
+    assert.equal(env.REDIS_PASSWORD, 'literal$(never-execute)');
+    fs.writeFileSync(configFile, 'INFOQ_FRONTEND_TARGET=all\nINFOQ_FRONTEND_TARGET=react\n', 'utf8');
+    assert.throws(() => readDeployEnv('docker', {INFOQ_ENV_FILE: selectedFile}), /重复/u);
+    if (process.platform !== 'win32') {
+      fs.chmodSync(selectedFile, 0o644);
+      assert.throws(() => readDeployEnv('docker', {INFOQ_ENV_FILE: selectedFile}), /权限/u);
+    }
   });
 
   const originalFetch = globalThis.fetch;
@@ -197,7 +205,7 @@ test('installer output protects secrets by default', () => {
   const credentialsDir = fs.mkdtempSync(path.join(fixturesRoot, 'credentials-'));
   const credentialsFile = path.join(credentialsDir, 'credentials.txt');
   fs.writeFileSync(credentialsFile, 'Generated credentials:\n  private-fixture-password\n', 'utf8');
-  const env = {...process.env, INFOQ_FRONTEND_TARGET: 'all', INFOQ_PUBLIC_BASE_URL: 'http://127.0.0.1', INFOQ_CREDENTIALS_FILE: credentialsFile};
+  const env = {...process.env, INFOQ_DEPLOY_MODE: 'development', INFOQ_FRONTEND_TARGET: 'all', INFOQ_PUBLIC_BASE_URL: 'http://127.0.0.1', INFOQ_OSS_PUBLIC_ORIGIN: 'http://oss.localhost', INFOQ_CREDENTIALS_FILE: credentialsFile};
   delete env.INFOQ_PRINT_SECRETS;
   try {
     // Exercise only the reporting function; never run the installer lifecycle.
@@ -207,9 +215,15 @@ test('installer output protects secrets by default', () => {
     assert.equal(result.status, 0, result.stderr);
     assert.ok(!result.stdout.includes('private-fixture-password'));
     assert.ok(result.stdout.includes(`Credentials saved to ${credentialsFile}`));
+    assert.ok(result.stdout.includes('MinIO OSS:       http://oss.localhost/'));
     const explicit = spawnSync('bash', ['-c', script], {env: {...env, INFOQ_PRINT_SECRETS: '1'}, encoding: 'utf8'});
     assert.equal(explicit.status, 0, explicit.stderr);
-    assert.ok(explicit.stdout.includes('private-fixture-password'));
+    assert.ok(!explicit.stdout.includes('private-fixture-password'));
+    const guarded = source.replace(/\nmain "\$@"\s*$/u, '\nrequire_root() { :; }\nmain\n');
+    const rejected = spawnSync('bash', ['-c', guarded], {env: {...env, INFOQ_PRINT_SECRETS: '1'}, encoding: 'utf8'});
+    assert.notEqual(rejected.status, 0);
+    assert.match(rejected.stderr, /禁止将部署凭据输出/u);
+    assert.ok(!rejected.stdout.includes('private-fixture-password'));
   } finally {
     fs.rmSync(credentialsDir, {recursive: true});
   }

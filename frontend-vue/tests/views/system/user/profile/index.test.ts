@@ -34,7 +34,22 @@ const passthroughStub = (name: string) =>
     }
   });
 
+const profileControlStubs = {
+  'el-empty': true,
+  'el-table-column': true,
+  'el-tag': true,
+  'el-table': true,
+  'el-input': true,
+  'el-option': true,
+  'el-select': true,
+  'el-form-item': true,
+  'el-form': true,
+  'el-dialog': true,
+  'el-button': true
+};
+
 describe('views/system/user/profile/index', () => {
+  afterEach(() => vi.unstubAllEnvs());
   beforeEach(() => {
     vi.clearAllMocks();
     profileMocks.getUserProfile.mockResolvedValue({
@@ -61,6 +76,7 @@ describe('views/system/user/profile/index', () => {
     const wrapper = mount(ProfileView, {
       global: {
         stubs: {
+          ...profileControlStubs,
           'el-row': passthroughStub('ElRow'),
           'el-col': passthroughStub('ElCol'),
           'el-card': passthroughStub('ElCard'),
@@ -87,5 +103,46 @@ describe('views/system/user/profile/index', () => {
     expect(wrapper.text()).toContain('研发中心 / 技术负责人');
     expect(wrapper.text()).toContain('超级管理员');
     expect(wrapper.text()).toContain('2026-03-07 10:00:00');
+  });
+
+  it.each(['/', '/vue/'])('requests binding with a site-relative target under %s', async (base) => {
+    vi.stubEnv('BASE_URL', base);
+    profileMocks.getOAuthProviders.mockResolvedValue({ data: [{ providerCode: 'github', providerName: 'GitHub' }] });
+    profileMocks.getProfileOauthBindAuthorizeUrl.mockReturnValue(new Promise(() => {}));
+    const wrapper = mount(ProfileView, {
+      global: {
+        stubs: {
+          ...profileControlStubs,
+          'el-row': passthroughStub('ElRow'),
+          'el-col': passthroughStub('ElCol'),
+          'el-card': passthroughStub('ElCard'),
+          'el-tabs': passthroughStub('ElTabs'),
+          'el-tab-pane': passthroughStub('ElTabPane'),
+          'el-form': passthroughStub('ElForm'),
+          'el-form-item': passthroughStub('ElFormItem'),
+          'el-dialog': { template: '<div><slot /><slot name="footer" /></div>' },
+          'el-select': {
+            props: ['modelValue'],
+            emits: ['update:modelValue'],
+            template: '<select :value="modelValue" @change="$emit(\'update:modelValue\', $event.target.value)"><slot /></select>'
+          },
+          'el-option': { props: ['value', 'label'], template: '<option :value="value">{{ label }}</option>' },
+          'el-button': { emits: ['click'], template: '<button @click="$emit(\'click\')"><slot /></button>' },
+          'svg-icon': true,
+          userAvatar: true,
+          userInfo: true,
+          resetPwd: true,
+          onlineDevice: true
+        }
+      }
+    });
+    await flushPromises();
+    await wrapper.get('select').setValue('github');
+    await wrapper
+      .findAll('button')
+      .find((button) => button.text() === '继续授权')!
+      .trigger('click');
+    await flushPromises();
+    expect(profileMocks.getProfileOauthBindAuthorizeUrl).toHaveBeenCalledExactlyOnceWith('github', `${base}user/profile`);
   });
 });

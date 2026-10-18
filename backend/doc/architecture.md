@@ -230,7 +230,7 @@ HTTP Request
 
 [SpringSecurityAutoConfiguration](../infoq-plugin/infoq-plugin-security/src/main/java/cc/infoq/common/security/config/SpringSecurityAutoConfiguration.java) 注册统一安全过滤链：
 
-- `security.excludes` 与默认 public matcher 共同决定公开路径。
+- `security.excludes` 与默认 public matcher 共同决定公开路径；另独立精确公开 `GET /auth/wechat-miniapp/enabled`，POST 和未知小程序路径仍受严格认证。
 - 受保护路径默认要求 `Authorization: Bearer <token>`。
 - token filter 校验 JWT、Redis session、revocation marker、active timeout 和请求头或 query 里的 `clientId`。
 
@@ -341,3 +341,5 @@ SSE 连接断开有独立处理：
   自动配置类存在，但 `application.yml` 当前 `websocket.enabled=false`。
 
 这些链路在文档里应始终被视为“当前实现可选项”，而不是无条件在线能力。
+
+生产 OAuth callback 映射、翻译显式失败、Push 通道分类、内部 OSS endpoint/外部签名 origin 和生产 RSA 注入，参见 [生产边界回归](./production-verification.md) 与对应插件叶子文档。

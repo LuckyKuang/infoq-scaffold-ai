@@ -4,19 +4,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import AuthPageShell from '@/components/AuthPageShell';
 import { useUserStore } from '@/store/modules/user';
 import { useTranslation } from 'react-i18next';
-
-const normalizeRedirect = (redirect: string | null) => {
-  const value = redirect || '/index';
-  try {
-    const decoded = decodeURIComponent(value);
-    if (decoded.startsWith('/') && !decoded.startsWith('//') && !decoded.includes('\\')) {
-      return decoded;
-    }
-  } catch {
-    // fall through to default
-  }
-  return '/index';
-};
+import { requireAppRedirect } from '@/utils/auth-redirect';
 
 export default function OAuthCallbackPage() {
   const [searchParams] = useSearchParams();
@@ -41,9 +29,17 @@ export default function OAuthCallbackPage() {
       setErrorMessage(t('oauthCallback.missingTicket'));
       return;
     }
+    let redirect: string;
+    try {
+      const redirects = searchParams.getAll('redirect');
+      redirect = requireAppRedirect(redirects.length > 1 ? redirects : redirects[0]);
+    } catch {
+      setErrorMessage(t('login.invalidRedirect'));
+      return;
+    }
     loginByOAuthTicket(loginTicket)
       .then(() => {
-        navigate(normalizeRedirect(searchParams.get('redirect')), { replace: true });
+        navigate(redirect, { replace: true });
       })
       .catch((error: unknown) => {
         setErrorMessage(error instanceof Error ? error.message : t('oauthCallback.failed'));
@@ -61,7 +57,7 @@ export default function OAuthCallbackPage() {
         />
       ) : (
         <div style={{ display: 'flex', justifyContent: 'center', padding: '32px 0' }}>
-          <Spin tip={t('oauthCallback.processing')} />
+          <Spin description={t('oauthCallback.processing')} />
         </div>
       )}
     </AuthPageShell>

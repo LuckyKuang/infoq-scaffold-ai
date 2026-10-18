@@ -60,4 +60,5 @@ View / Store
 ## 9. 身份与个人消息接口
 
 - `system/user` 个人资料接口提供 OAuth 身份列表、绑定授权地址和解绑请求。绑定由后端短期 ticket 保护，解绑请求的当前密码字段只在服务端要求时提交。
+- 绑定 `redirect` 由 `utils/auth-redirect.ts` 生成，不含 origin，并保留 `/vue/` 等当前部署前缀一次供服务端直接回跳；普通 Router 导航使用移除一次前缀的应用内路径。
 - `system/message` 是当前登录用户的收件箱契约，提供分页、未读数、单条/全部已读与软删除。它不接收用户 ID，页面和 Pinia 只消费服务端消息数据。

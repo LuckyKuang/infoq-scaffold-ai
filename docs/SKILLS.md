@@ -203,6 +203,8 @@ node skills/deploy-cli/scripts/deploy_cli.mjs down --execute
 - macOS 需要完整栈时使用 Colima + Docker；Apple container 仅启动 MySQL、Redis 和后端，默认端口 `19090`，只操作 `infoq-apple*` 资源。Apple 细节见 `skills/deploy-cli/references/apple-containers.md`。
 - Windows 必须在 WSL2 Debian/Ubuntu 内执行；Linux 使用本地 Docker。Docker 细节见 `skills/deploy-cli/references/docker.md` 与 `deploy/VERIFICATION.md`。
 - Apple 环境文件是 `deploy/.env`；Docker 环境文件是 `INFOQ_ENV_FILE`（默认 `/etc/infoq-scaffold-ai/deploy.env`）。
+- 生产基线为 Linux Docker，安装前须提供受控配置；`tools/production_config.mjs` 默认严格核独立凭据、两组2048位以上 RSA、双域 TLS 和路径。`INFOQ_PRODUCTION_CONFIG_FILE` 用于构建与运行时同源注入，前端使用 `production_config` BuildKit secret；Apple 本地栈须显式 `INFOQ_DEPLOY_MODE=development`。
+- 生产 gateway 提供 HTTPS，基础设施与应用直连端口默认 loopback；S3 私有 URL 使用独立 OSS origin 并保留 Host/原签名路径。`all` 的 smoke 路径使用受控 `INFOQ_VUE_CONTEXT_PATH` / `INFOQ_REACT_CONTEXT_PATH`，默认 `/vue/` / `/react/`。
 - 默认或显式环境文件不存在时立即失败，不隐式退回示例配置。目录权限、归属标记、Redis 凭据和卸载前置核验见 [部署生命周期](../deploy/DEPLOYMENT_LIFECYCLE.md)；已有目录不会自动迁移权限或认领，须先核对备份、实际挂载和容器用户。
 - Node 入口在 macOS 固定选择 Apple，在 Linux/WSL2 选择 Docker，没有 `--runtime`。macOS Colima 使用底层部署脚本，不调用该入口管理 Docker 栈。
 - `smoke` 做 HTTP 探测并写本地证据；Apple `status` 还会启动未运行的 daemon，严格只读时用 `container system status` / `container list`。`up` / `down` 是运行态变更；Docker 写操作必须显式 `--execute`；`down --execute` 同时停止依赖、后端与前端。
@@ -409,12 +411,17 @@ node tools/run-env.mjs INFOQ_LOG_PATH=tmp/plugin-check/logs -- java -jar backend
 
 以上会启动真实 Java 进程并访问所选 profile 的依赖，只可对已授权隔离环境运行，结束后关闭自己启动的进程。PATH 中的 `java` 需为 21；此示例显式关闭解密，直接访问它的内部 smoke 检查器须选择 `LOGIN_MODE=plain`，失败不得自动切换协议。使用 `run_smoke.mjs` 自管实例时另按其帮助选择登录模式，不复用该手工进程。
 
-前端编译（先按 `DEV_GUIDE.md` 准备匹配后端的受控 RSA 构建配置）：
+前端编译（先按 `DEV_GUIDE.md` 设置 `INFOQ_PRODUCTION_CONFIG_FILE`，使用匹配后端的两组独立受控 RSA）：
 
 ```bash
+node tools/production_config.mjs check --scope frontend
 pnpm --dir frontend-vue run build:prod
 pnpm --dir frontend-react run build:prod
+node tools/production_config.mjs check-artifact --dir frontend-vue/dist
+node tools/production_config.mjs check-artifact --dir frontend-react/dist
 ```
+
+隔离 CI fixture 仍执行严格加密构建，但 metadata 标记 `deployable=false`，产物检查须显式 `--allow-isolated`，不能用于 Release。前端协议私钥在浏览器可见，后端请求私钥不得进入构建层或前端产物。
 
 ### 9.8 维护约定
 

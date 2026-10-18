@@ -2,7 +2,11 @@
 
 ## 默认支持范围
 
-本流程只默认使用三类免费商用基线运行时：
+**生产基线为原生 Linux Docker Engine + Compose v2**；WSL2/Colima 为开发与兼容验证目标，不能替代原生生产主机验收。各目标均需实际执行才可记 passed。
+
+macOS 独立 profile、VM 原生工作区、DNS 诊断与完整流程见 [COLIMA.md](COLIMA.md)。2026-10-18 在 Colima 的 Ubuntu 24.04.4 / ARM64 / Docker 29.5.2 内已通过真实构建、双端根/子路径 DOM/刷新、TLS/私有 S3/登录及隔离恢复/回滚，且清理已核验；该结果不覆盖原生生产宿主、其他平台或外部生产条件。
+
+本流程支持以下运行时：
 
 | 场景 | 默认运行时 | 许可/边界 | 部署根目录建议 |
 | --- | --- | --- | --- |
@@ -116,7 +120,7 @@ docker run --rm -v /infoq:/infoq alpine:3.20 sh -lc 'test -d /infoq/server/temp 
 cd /path/to/infoq-scaffold-ai
 export INFOQ_DEPLOY_ROOT=/infoq # WSL2/Linux；macOS Colima 改为 "${HOME}/infoq"
 mkdir -p /tmp/infoq-deploy "${INFOQ_DEPLOY_ROOT}/server/temp"
-sudo env INFOQ_SOURCE_DIR="$(pwd)" INFOQ_FRONTEND_TARGET=all INFOQ_PUBLIC_BASE_URL=http://127.0.0.1 INFOQ_DEPLOY_ROOT="${INFOQ_DEPLOY_ROOT}" bash deploy/install.sh
+sudo env INFOQ_SOURCE_DIR="$(pwd)" INFOQ_FRONTEND_TARGET=all INFOQ_DEPLOY_MODE=development INFOQ_PUBLIC_BASE_URL=http://127.0.0.1 INFOQ_OSS_PUBLIC_ORIGIN=http://oss.localhost INFOQ_DEPLOY_ROOT="${INFOQ_DEPLOY_ROOT}" bash deploy/install.sh
 ```
 
 安装脚本会生成或复用 `/etc/infoq-scaffold-ai/deploy.env` 和 `/etc/infoq-scaffold-ai/credentials.txt`。后续严格 smoke 按 [VERIFICATION.md](VERIFICATION.md#部署后检查) 执行，Windows 访问按 [WSL2 专项](wsl2-docker-compose.md)。环境文件保持 `600`，不打印秘密或带秘密的 SQL。安装不意味着已完成权限、TLS、网络、bucket 和 RSA 治理，生产须先关闭 [当前阻塞](DEPLOYMENT_LIFECYCLE.md#9-当前生产准备阻塞)。
@@ -125,7 +129,7 @@ macOS Colima 使用 `sudo` 执行安装脚本时，应把用户态 Colima socket
 
 ```bash
 export DOCKER_HOST="unix://${HOME}/.colima/default/docker.sock"
-sudo env DOCKER_CONFIG="${DOCKER_CONFIG:-$HOME/.docker}" DOCKER_HOST="${DOCKER_HOST}" INFOQ_SOURCE_DIR="$(pwd)" INFOQ_FRONTEND_TARGET=all INFOQ_PUBLIC_BASE_URL=http://127.0.0.1 INFOQ_DEPLOY_ROOT="${INFOQ_DEPLOY_ROOT}" bash deploy/install.sh
+sudo env DOCKER_CONFIG="${DOCKER_CONFIG:-$HOME/.docker}" DOCKER_HOST="${DOCKER_HOST}" INFOQ_SOURCE_DIR="$(pwd)" INFOQ_FRONTEND_TARGET=all INFOQ_DEPLOY_MODE=development INFOQ_PUBLIC_BASE_URL=http://127.0.0.1 INFOQ_OSS_PUBLIC_ORIGIN=http://oss.localhost INFOQ_DEPLOY_ROOT="${INFOQ_DEPLOY_ROOT}" bash deploy/install.sh
 ```
 
 

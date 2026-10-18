@@ -67,6 +67,8 @@ main.ts
 
 固定路由不等于公开路由。`permission.ts` 只对白名单中的登录、自助认证与 OAuth 回调入口免登录放行；首页、个人中心、消息中心及错误/重定向路由仍受全局守卫约束。
 
+history base 与资源前缀均读取 Vite `BASE_URL`。`utils/auth-redirect.ts` 校验认证回跳的安全解码变体但返回原编码，并在 API 浏览器路径与应用内导航之间添加/移除当前前缀一次。不得用 origin 拼接绑定回跳，也不得再次解码 Router query 改变原参数语义。
+
 ### 3.2 动态菜单路由
 
 真正的后台页面路由来自 `usePermissionStore().generateRoutes()`：

@@ -69,6 +69,8 @@ main.tsx
 
 其中 `/index`、`/user/profile`、`/message-center` 位于 `AuthGuard` 保护的布局内。固定路由不等于公开路由；登录前白名单以 `public-routes.ts` 为准。
 
+路由 base 取自 Vite `BASE_URL`，与 `VITE_APP_CONTEXT_PATH` 的资源前缀共用构建真值。`utils/auth-redirect.ts` 是认证回跳边界：检查解码后的危险变体但保留原编码，区分应用内路径与带部署前缀的站内浏览器路径。页面不得手工添加 origin 或再次解码 Router 已解析的 query。
+
 ### 3.2 动态菜单路由
 
 登录后真正的后台页面入口来自 `usePermissionStore().generateRoutes()`：

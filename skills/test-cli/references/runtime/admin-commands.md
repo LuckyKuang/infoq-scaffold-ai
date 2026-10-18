@@ -80,7 +80,7 @@ pnpm --dir skills/test-cli/scripts run playwright-cli admin-route-probe --fronte
 
 当验收目标是 Docker 部署产物时，按 `skills/deploy-cli/SKILL.md`、`deploy/README.md` 与 `deploy/VERIFICATION.md` 完成部署前置条件和运行时选择，再验证已部署站点。不要只设置示例 token secret 就运行部署；数据库、Redis、后端、RSA 构建参数和网关必须对应同一环境。部署生命周期由 deploy-cli 负责。
 
-Admin Docker 入口：
+Admin Docker 入口（生产使用已配置证书和域名的 HTTPS 网关；下列 HTTP loopback 只用于显式 development 隔离环境）：
 
 - Vue：网关路径 `http://127.0.0.1/vue/`，直连端口 `http://127.0.0.1:9091/`
 - React：网关路径 `http://127.0.0.1/react/`，直连端口 `http://127.0.0.1:9092/`
@@ -92,6 +92,6 @@ pnpm --dir skills/test-cli/scripts run playwright-cli admin-route-probe --backen
 pnpm --dir skills/test-cli/scripts run playwright-cli admin-route-probe --backend-url "http://127.0.0.1:9090" --frontend-origin "http://127.0.0.1/react" --route "/index"
 ```
 
-React 当前 `AppRouter.tsx` 的 `BrowserRouter` 未配置 `basename`；仅设置 Vite `base` 不能证明 `/react/` 下路由可用。双端子路径刷新、登录回跳、资源 URL 及 API 反代必须单独实测，不能用站点 HTTP 200 或直连 `/` 的结果替代。
+双端 Router base 与 Vite `BASE_URL` 一致，React `BrowserRouter.basename` 与 Vue history 均保留部署前缀。认证回跳经 `utils/auth-redirect.ts` 校验；API 交换带前缀一次且不含 origin 的站内路径，Router navigate 使用应用内路径，不二次解码 query/hash。双端子路径刷新、登录回跳、资源 URL 及 API 反代仍须单独实测，不能用站点 HTTP 200 或直连 `/` 的结果替代。真实构建产物的隔离 HTTP/Provider 替身回归见 `references/modes/frontend.md` 的认证回跳 SOP，不能替代真实认证和生产网关验收。
 
-请求加密公钥通过 `RSA_PUBLIC_KEY`（或登录/E2E runner 的 `--rsa-public-key`）与后端对齐；浏览器构建另需 `VITE_APP_RSA_PUBLIC_KEY` / `VITE_APP_RSA_PRIVATE_KEY`。先确认测试账号候选集合、代理和 API/Redis/JDBC 实例一致性，完整已确认限制见 `docs/TESTING.md` 第 6.6 节。手动 dev 绑定 `0.0.0.0`，应限制测试机网络访问；以上默认地址不代表生产开放端口建议。
+请求加密公钥通过 `RSA_PUBLIC_KEY`（或登录/E2E runner 的 `--rsa-public-key`）与后端对齐；production build 必须通过 `INFOQ_PRODUCTION_CONFIG_FILE` 私有绝对路径或显式受管环境提供两组至少 2048 位 RSA 四向配对配置，不能使用仓库示例或关闭加密。隔离产物标记 `deployable=false`，生产校验/实际命令见 `DEV_GUIDE.md` 与 frontend SOP。先确认测试账号候选集合、代理和 API/Redis/JDBC 实例一致性，完整已确认限制见 `docs/TESTING.md` 第 6.6 节。手动 dev 绑定 `0.0.0.0`，应限制测试机网络访问；以上默认地址不代表生产开放端口建议。

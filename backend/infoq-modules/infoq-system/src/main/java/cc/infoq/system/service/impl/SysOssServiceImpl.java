@@ -290,9 +290,9 @@ public class SysOssServiceImpl implements SysOssService, OssService {
         try {
             return this.matchingUrl(oss);
         } catch (Exception e) {
-            log.error("获取OSS访问地址失败, ossId={}, service={}, fileName={}",
-                oss.getOssId(), oss.getService(), oss.getFileName(), e);
-            throw new ServiceException("获取OSS访问地址失败: {}", oss.getOriginalName());
+            log.error("获取OSS访问地址失败, ossId={}, service={}, type={}",
+                oss.getOssId(), oss.getService(), e.getClass().getSimpleName());
+            throw new ServiceException("获取OSS访问地址失败，ossId: {}", oss.getOssId());
         }
     }
 }

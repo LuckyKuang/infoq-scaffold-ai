@@ -54,7 +54,10 @@ current repository; it does not retell third-party framework tutorials.
 | --- | --- |
 | [部署指南](../deploy/README.md) | 部署方式、前置条件、端口与目录准备、发布前检查 |
 | [Docker Compose](../deploy/DOCKER.md) | WSL2 / macOS Colima / Linux 全栈 Compose 与脚本化部署 |
+| [Colima 完整流程](../deploy/COLIMA.md) | macOS 独立 Linux VM、原生工作区、真实整栈与首次安装验收 |
 | [部署生命周期](../deploy/DEPLOYMENT_LIFECYCLE.md) | 安装、升级、回滚、停止与数据保留边界 |
+| [生产配置与安全迁移](../deploy/PRODUCTION.md) | 受控 RSA/TLS、私有存储、bucket 策略及目录权限迁移 |
+| [生产保障与隔离恢复](./PRODUCTION-OPS.md) | Linux Docker 隔离验收、备份恢复、应用回滚、告警与有界容量 |
 | [部署验证 SOP](../deploy/VERIFICATION.md) | 免费商用容器运行时、smoke 清单与阻断收口 |
 | [运行时矩阵](../deploy/runtime-matrix.md) | 运行时选择流程与必须停止询问的情况 |
 | [WSL2 全流程](../deploy/wsl2-docker-compose.md) | WSL2 Debian 内 Docker CE 的完整步骤 |
@@ -100,6 +103,7 @@ docs/
 ├── OPENSPEC-WORKFLOW.md # OpenSpec 流程
 ├── UI-WORKFLOW.md       # UI 四阶段设计辅助层
 ├── DATA-OPS.md          # 数据运维与 SQL 迁移
+├── PRODUCTION-OPS.md    # 隔离恢复、回滚、告警、容量与 Linux 验收
 ├── MCP-SERVERS.md       # MCP 配置说明
 ├── TESTING.md           # 管理端 E2E 测试
 ├── FAQ.md               # 常见问题

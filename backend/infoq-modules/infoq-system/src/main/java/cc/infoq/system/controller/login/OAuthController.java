@@ -77,10 +77,10 @@ public class OAuthController {
         try {
             return new RedirectView(oauthLoginService.handleCallback(provider, callbackRequest, OAuthBrowserBinding.resolve(request)), false);
         } catch (ServiceException e) {
-            log.info("OAuth callback failed, provider:{}, message:{}", provider, e.getMessage());
-            return new RedirectView(oauthLoginService.buildErrorRedirect(e.getMessage()), false);
+            log.info("OAuth callback failed, provider:{}, type:{}", provider, e.getClass().getSimpleName());
+            return new RedirectView(oauthLoginService.buildErrorRedirect(MessageUtils.message("auth.oauth.callback.failed")), false);
         } catch (RuntimeException e) {
-            log.warn("OAuth callback failed unexpectedly, provider:{}", provider, e);
+            log.warn("OAuth callback failed unexpectedly, provider:{}, type:{}", provider, e.getClass().getSimpleName());
             return new RedirectView(oauthLoginService.buildErrorRedirect(MessageUtils.message("auth.oauth.callback.failed")), false);
         }
     }

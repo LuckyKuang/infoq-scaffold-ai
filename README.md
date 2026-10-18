@@ -133,10 +133,16 @@ Images are built from source on the target host. The repository does not publish
 ```bash
 # Linux / WSL2: from a reviewed checkout of the intended release tag
 sudo env INFOQ_SOURCE_DIR="$(pwd)" INFOQ_FRONTEND_TARGET=all \
-  INFOQ_PUBLIC_BASE_URL=http://SERVER_IP bash deploy/install.sh
+  INFOQ_ENV_FILE=/absolute/private/production.env bash deploy/install.sh
 ```
 
-`INFOQ_FRONTEND_TARGET` is required: `all`, `vue`, or `react`. Nginx routes for the `all` target: `/vue/`, `/react/`, `/console-oss/`, `/oss/`.
+`INFOQ_FRONTEND_TARGET` is required: `all`, `vue`, or `react`. Production uses
+Linux Docker, controlled credentials, two independent RSA pairs and a TLS
+certificate covering the application and a separate OSS hostname. Prepare the
+private configuration using [the template](deploy/.env.example) and
+[deployment instructions](deploy/README.md). The default `all` routes are
+`/vue/`, `/react/`, `/console-oss/`; private S3 URLs use the dedicated OSS origin
+without rewriting their signed path. Development HTTP requires an explicit mode.
 
 Use the deployment guide for a pinned remote installer that is downloaded and
 reviewed before execution. macOS Colima uses the shell deployment scripts;

@@ -35,6 +35,9 @@ main.ts
 - `/login`、`/oauth/callback`、`/register`、`/forgot-password`、`/401`、`/index` 等固定路由必须稳定存在；是否免登录由 `src/permission.ts` 白名单决定。
 - 本目录只维护固定路由，不在这里手写完整后台菜单树。
 - 动态路由映射依赖 `src/views` 的实际文件路径。
+- `createWebHistory` 使用 Vite 的 `import.meta.env.BASE_URL`，与已验证的 `VITE_APP_CONTEXT_PATH` 构建 base 一致；菜单和应用内导航不手工拼接部署前缀。
+- 全局守卫保留完整回跳；密码登录、OAuth 授权及 ticket 兑换在副作用前通过 `utils/auth-redirect.ts` 校验目标。只有未提供 `redirect` 时使用 `/index`；空值、数组和非法目标显示错误。
+- API 交换不含 origin、带当前部署前缀一次的安全站内路径，例如 `/vue/user/profile`。Router 导航前移除一次前缀，由 history base 生成最终地址；query/hash 保留安全编码，不无条件二次解码。
 
 ## 7. 已知边界
 

@@ -13,6 +13,7 @@ deployment guides. Compose files and runtime config still live under
 | --- | --- | --- |
 | Linux install script | Server install, generated secrets | this file |
 | Docker Compose | Local or self-hosted full stack | [DOCKER.md](DOCKER.md) |
+| Colima + Docker | macOS full stack and isolated acceptance | [COLIMA.md](COLIMA.md) |
 | Apple container | macOS local backend stack | [APPLE_CONTAINER.md](APPLE_CONTAINER.md) |
 | Manual JVM + Nginx | Non-container hosts | [MANUAL.md](MANUAL.md) |
 
@@ -22,14 +23,14 @@ deployment guides. Compose files and runtime config still live under
 | --- | --- | --- | --- |
 | Linux | 完整栈 | Docker Engine + Compose | `deploy/install.sh` |
 | Windows | 完整栈 | WSL2 Debian/Ubuntu + Docker CE | 在 WSL2 内执行 `deploy/install.sh` |
-| macOS | 完整栈 / 接近生产 | Colima + Docker | `deploy/install.sh` |
+| macOS | 完整栈 / 兼容验证 | Colima + Docker | [COLIMA.md](COLIMA.md) |
 | macOS | 仅后端开发 | Apple container | `deploy-cli init/up` |
 | macOS | 前后端联调 | Apple container + Vue/React dev server | `deploy-cli` + 两个 `pnpm run dev` |
 | 任意 | 非容器部署 | JVM + Nginx | [MANUAL.md](MANUAL.md) |
 
 “完整栈”指 MySQL、Redis、MinIO、后端、Vue/React 管理端和 Nginx 网关。Apple container 只启动 MySQL、Redis 和后端；前后端联调时前端以 dev server 连接 `http://127.0.0.1:19090`，该模式不包含 MinIO 与 Nginx，详见 [APPLE_CONTAINER.md](APPLE_CONTAINER.md#full-stack-local-development)。
 
-生产执行前必须先关闭 [当前生产准备阻塞](DEPLOYMENT_LIFECYCLE.md#9-当前生产准备阻塞)，包括权限、公开 bucket、TLS/端口和凭据；本机安装成功不等于已通过生产验收。
+生产首先按 [Linux 生产配置与迁移](PRODUCTION.md) 准备受控输入，完成 [目标环境验收](DEPLOYMENT_LIFECYCLE.md#9-当前生产准备阻塞)。脚本预检和本机安装成功不等于生产验收。
 
 Install, upgrade, rollback, stop, and data-retention boundaries are documented in
 [DEPLOYMENT_LIFECYCLE.md](DEPLOYMENT_LIFECYCLE.md). The cross-platform runtime entry is
@@ -88,14 +89,14 @@ Install, upgrade, rollback, stop, and data-retention boundaries are documented i
 
 | 服务 | 默认端口 |
 | --- | --- |
-| nginx 网关 | 80；443 已映射但默认未启用 TLS listener |
-| 后端 `infoq-admin` | 9090 |
-| Vue 前端直连 | 9091 |
-| React 前端直连 | 9092 |
-| MySQL | 3306 |
-| Redis | 6379 |
-| MinIO API | 9000 |
-| MinIO Console | 9001 |
+| nginx 网关 | 公网 80 重定向 HTTPS；443 TLS |
+| 后端 `infoq-admin` | 127.0.0.1:9090 |
+| Vue 前端直连 | 127.0.0.1:9091 |
+| React 前端直连 | 127.0.0.1:9092 |
+| MySQL | 127.0.0.1:3306 |
+| Redis | 127.0.0.1:6379 |
+| MinIO API | 127.0.0.1:9000 |
+| MinIO Console | 127.0.0.1:9001 |
 | MQTT TLS（可选） | single / cluster 均默认节点一 `127.0.0.1:8883` |
 | Elasticsearch HTTPS（可选） | single / cluster 均默认节点一 `127.0.0.1:9200` |
 
@@ -105,7 +106,7 @@ Install, upgrade, rollback, stop, and data-retention boundaries are documented i
 - `INFOQ_FRONTEND_TARGET=react`：只需要 `9092`
 - `INFOQ_FRONTEND_TARGET=all`：需要 `9091`、`9092`
 
-默认对外用户入口优先走 Nginx：MinIO Console `http://SERVER_IP/console-oss/`、MinIO OSS `http://SERVER_IP/oss/`。
+生产对外入口走 HTTPS Nginx：MinIO Console 为主站 `/console-oss/`，S3 使用独立 `INFOQ_OSS_PUBLIC_ORIGIN` 根路径，不能使用 `/oss/` 前缀替换签名路径。
 
 部署前至少确认：
 
@@ -114,9 +115,9 @@ Install, upgrade, rollback, stop, and data-retention boundaries are documented i
 - 如需公网 HTTPS，证书和域名已准备完成
 - 如启用可选 MQTT / Elasticsearch，已通过 `deploy-middleware.sh` 选择 `single` 或 `cluster`，并按 [DOCKER.md](DOCKER.md) 的可选中间件章节准备 `deploy.env` 变量；不得使用 `*-it` 测试材料
 - 选择 Elasticsearch cluster 时，宿主机 `vm.max_map_count` 至少为 `262144`
-- 首次安装会生成 `/etc/infoq-scaffold-ai/deploy.env` 和 `/etc/infoq-scaffold-ai/credentials.txt`，两个文件必须保留且权限为 `600`
+- 生产安装须先提供受控 `/etc/infoq-scaffold-ai/deploy.env`；隔离 development 首次安装才生成随机配置。配置及 `credentials.txt` 都必须保留且权限为 `600`
 
-当前 Compose 把数据库、Redis、MinIO、后端和前端直连端口发布到所有宿主网卡；生产应通过经过评审的端口绑定/网络策略限制为本机或可信内网，仅开放必要网关入口。映射 `443` 不会自动配置 HTTPS，设置 `INFOQ_PUBLIC_BASE_URL=https://...` 也不会生成 TLS 配置。
+Compose 辅助端口默认仅 loopback；公网入口为网关。生产受控渲染校验证书链内签名、有效期、两域名与私钥匹配，先预检再写入；prepare/start/redeploy 保留 HTTPS。具体 env 和旧状态迁移见 [PRODUCTION.md](PRODUCTION.md)。
 
 ### 1.3 目录与权限准备
 
@@ -148,7 +149,7 @@ ${INFOQ_DEPLOY_ROOT}/react/logs      # INFOQ_FRONTEND_TARGET=react 或 all
 
 部署账号需要对这些目录具备读写权限，尤其是后端日志目录、临时文件目录、IPv6 地址库目录、Nginx 静态资源目录和日志目录。
 
-后端与前端 helper 创建缺失目录时使用 `0755`，保留已有目录 owner/权限；遇到 other-writable 目录、非规范绝对路径或符号链接时明确停止，不递归修改业务数据。旧版 `777` 目录须由管理员先核实实际镜像 UID/GID、收紧权限并验证挂载写入，再重试。不要对整个部署根目录递归 chmod/chown。后端外置配置为 `0600`，当前后端镜像以 root 读取；改用非 root 镜像时须先评审读取权限。Redis `redis.conf` 不包含密码，权限 `0644`、只读挂载；密码通过 Compose argv/env 注入，仍须限制 Docker socket 与 env 文件访问。
+后端与前端 helper 初始创建目录为 `0755`；pull/build 后、启动前核验不可变镜像实际 UID/GID，并仅对本轮新建 owned 空目录设置最小 owner/`0750`，实际写入读回后才启动。已有目录 owner/权限保留，详见 [PRODUCTION.md](PRODUCTION.md)；遇到 other-writable 目录、非规范绝对路径或符号链接时明确停止，不递归修改业务数据。旧版 `777` 目录须由管理员先核实实际镜像 UID/GID、收紧权限并验证挂载写入，再重试。不要对整个部署根目录递归 chmod/chown。后端外置配置为 `0600`，当前后端镜像以 root 读取；改用非 root 镜像时须先评审读取权限。Redis `redis.conf` 不包含密码，权限 `0644`、只读挂载；密码通过 Compose argv/env 注入，仍须限制 Docker socket 与 env 文件访问。
 
 旧 Redis 配置仍含 `requirepass` 时，helper 会先核验已重建容器的归属、只读挂载及当前认证命令，不匹配或查询失败则保留旧配置并退出；升级步骤见 [DOCKER.md](DOCKER.md#71-首次部署后端)。不得先删认证配置再重启旧容器。
 
@@ -168,9 +169,9 @@ ${INFOQ_DEPLOY_ROOT}/react/logs      # INFOQ_FRONTEND_TARGET=react 或 all
 
 前端重点检查：`VITE_APP_CONTEXT_PATH`、`VITE_APP_BASE_API`、`VITE_APP_ENCRYPT`、RSA 公私钥、`VITE_APP_CLIENT_ID`。配置入口为 `frontend-vue/.env.production` 与 `frontend-react/.env.production`。
 
-安装器生成数据库/Redis/MinIO/token/管理员凭据，不生成 RSA。保持加密时，前端 `VITE_APP_RSA_PUBLIC_KEY` 对应后端 `api-decrypt.privateKey`，前端 `VITE_APP_RSA_PRIVATE_KEY` 对应后端 `api-decrypt.publicKey`，这是两组密钥。两端必须同步更换仓库示例值并重建；前端私钥会进入浏览器产物，不能承担服务端秘密保护，公网仍需 HTTPS。Compose/Dockerfile 没有传递 RSA build args，单纯 export 宿主机 `VITE_APP_RSA_*` 不会传入 builder；当前可在受控构建工作区使用各端未提交的 `.env.production.local`，同时评审其进入构建上下文/缓存的暴露面。后端通过 `${INFOQ_DEPLOY_ROOT}/server/config/application-prod.yml` 覆盖 `api-decrypt`。
+生产必须从 `INFOQ_PRODUCTION_CONFIG_FILE` 提供与运行环境同源的独立凭据和两组至少 2048 位 RSA。BuildKit secret 注入前端构建，中央预检交叉核验；前端公钥对应后端请求私钥，前端私钥对应后端响应公钥。BuildKit secret 内容变化不会自动使缓存失效，因此前端部署入口每次自动计算浏览器构建输入的 `INFOQ_FRONTEND_CONFIG_DIGEST` 并在构建后复核，密钥轮换会重新生成浏览器包；无需手工维护摘要，直接 Docker 排障命令见 [DOCKER.md](DOCKER.md#11-直接使用-docker-compose-cli)。后端通过最后载入的 managed-security.yml 环境占位符使用受控值。浏览器协议私钥属于公开产物，公网必须 HTTPS。详见 [PRODUCTION.md](PRODUCTION.md)。
 
-网关确认：`INFOQ_FRONTEND_TARGET=all` 时 `/vue/`、`/react/` 分别指向 Vue、React 静态资源；单目标时 `/` 指向被选中的前端；`/prod-api/` 反代到后端 `9090`；HTTPS 证书路径和域名配置正确。基线配置见 [`deploy/docker/nginx/conf/nginx.conf`](../deploy/docker/nginx/conf/nginx.conf)，运维示例见 `examples/nginx/` 与 `examples/systemd/`。
+网关确认：`INFOQ_FRONTEND_TARGET=all` 时 `/vue/`、`/react/` 分别指向 Vue、React 静态资源；单目标时 `/` 指向被选中的前端；`/prod-api/` 反代到后端 `9090`；HTTPS 证书路径和域名配置正确。受控渲染真值见 [`deploy/bin/render-gateway.mjs`](bin/render-gateway.mjs)，运维示例见 `examples/nginx/` 与 `examples/systemd/`。
 
 ### 1.5 数据初始化准备
 
@@ -183,6 +184,14 @@ ${INFOQ_DEPLOY_ROOT}/react/logs      # INFOQ_FRONTEND_TARGET=react 或 all
 
 Compose / 脚本化部署不需要提前在宿主机准备 jar；`infoq-admin` 镜像会在 Docker builder 阶段执行 Maven prod 打包。手动部署时，构建后 jar 产物路径为 `backend/infoq-admin/target/infoq-admin.jar`。Vue 与 React 生产构建后产出各自工作区的 `dist/` 目录。
 
+生产安装从已审阅 checkout 执行（所有生产输入在同一个 0600 受控文件，不向 shell 命令行传秘密）：
+
+```bash
+sudo env INFOQ_SOURCE_DIR="$(pwd)" INFOQ_ENV_FILE=/etc/infoq-scaffold-ai/deploy.env INFOQ_PRODUCTION_CONFIG_FILE=/etc/infoq-scaffold-ai/deploy.env bash deploy/install.sh
+```
+
+以下带 `INFOQ_DEPLOY_MODE=development` 的 HTTP 示例只用于明确隔离开发；不能用于生产结论。
+
 ## 2. Linux Installer
 
 远程安装应固定已审核 tag，并在执行前审阅下载脚本（从仓库根目录运行，替换 `v3.0.0` 为实际目标 tag）：
@@ -191,14 +200,14 @@ Compose / 脚本化部署不需要提前在宿主机准备 jar；`infoq-admin` �
 mkdir -p tmp/install
 curl -fSL https://raw.githubusercontent.com/LuckyKuang/infoq-scaffold-ai/v3.0.0/deploy/install.sh -o tmp/install/install.sh
 # 审阅脚本并确认目标后执行
-sudo env INFOQ_VERSION=v3.0.0 INFOQ_FRONTEND_TARGET=all INFOQ_PUBLIC_BASE_URL=http://SERVER_IP INFOQ_PRINT_SECRETS=0 bash tmp/install/install.sh
+sudo env INFOQ_VERSION=v3.0.0 INFOQ_FRONTEND_TARGET=all INFOQ_DEPLOY_MODE=development INFOQ_PUBLIC_BASE_URL=http://SERVER_IP INFOQ_OSS_PUBLIC_ORIGIN=http://oss.localhost INFOQ_PRINT_SECRETS=0 bash tmp/install/install.sh
 ```
 
 From a local checkout:
 
 ```bash
 sudo env INFOQ_SOURCE_DIR="$(pwd)" INFOQ_FRONTEND_TARGET=all \
-  INFOQ_PUBLIC_BASE_URL=http://SERVER_IP INFOQ_DEPLOY_ROOT=/infoq bash deploy/install.sh
+  INFOQ_DEPLOY_MODE=development INFOQ_PUBLIC_BASE_URL=http://SERVER_IP INFOQ_OSS_PUBLIC_ORIGIN=http://oss.localhost INFOQ_DEPLOY_ROOT=/infoq bash deploy/install.sh
 ```
 
 `INFOQ_FRONTEND_TARGET` is required (`all`, `vue`, or `react`). The installer
@@ -280,8 +289,8 @@ The `all` target exposes:
 - `/vue/` Vue admin
 - `/react/` React admin
 - `/prod-api/` backend API
-- `/console-oss/` MinIO console
-- `/oss/` OSS file access
+- `/console-oss/` MinIO console；S3 使用 `INFOQ_OSS_PUBLIC_ORIGIN` 根路径
+- `INFOQ_OSS_PUBLIC_ORIGIN` 独立主机根路径的私有 S3 签名访问
 
 A single-target deploy mounts that admin at `/`.
 
@@ -292,7 +301,7 @@ Use [`deploy/VERIFICATION.md`](./VERIFICATION.md) for a full Compose smoke. A mi
 ```bash
 INFOQ_ENV_FILE=/etc/infoq-scaffold-ai/deploy.env bash deploy/bin/infoq.sh status
 curl -fsS http://127.0.0.1:9090/monitor/health/readiness
-curl -fsS http://127.0.0.1/prod-api/monitor/health/readiness
+curl -fsS https://app.example.com/prod-api/monitor/health/readiness
 ```
 
 Local `java -jar` with the `local` profile still uses `http://127.0.0.1:8080`.

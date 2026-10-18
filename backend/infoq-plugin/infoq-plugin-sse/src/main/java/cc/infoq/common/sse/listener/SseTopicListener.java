@@ -27,7 +27,8 @@ public class SseTopicListener implements ApplicationRunner, Ordered {
     @Override
     public void run(ApplicationArguments args) throws Exception {
         sseEmitterManager.subscribeMessage((message) -> {
-            log.info("SSE主题订阅收到消息session keys={} message={}", message.getUserIds(), message.getMessage());
+            log.debug("SSE topic received, correlationId:{}, messageId:{}, recipients:{}",
+                message.getCorrelationId(), message.getMessageId(), message.getUserIds() == null ? 0 : message.getUserIds().size());
             if (sseEmitterManager.isLocalSource(message.getSourceNodeId())) {
                 log.debug("跳过当前节点SSE订阅回环消息sourceNodeId={}", message.getSourceNodeId());
                 return;

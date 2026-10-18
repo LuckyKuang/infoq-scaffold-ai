@@ -129,10 +129,14 @@ node skills/deploy-cli/scripts/deploy_cli.mjs status
 ```bash
 # Linux / WSL2：从已审阅的目标 release tag 源码部署
 sudo env INFOQ_SOURCE_DIR="$(pwd)" INFOQ_FRONTEND_TARGET=all \
-  INFOQ_PUBLIC_BASE_URL=http://SERVER_IP bash deploy/install.sh
+  INFOQ_ENV_FILE=/absolute/private/production.env bash deploy/install.sh
 ```
 
-`INFOQ_FRONTEND_TARGET` 必填：`all`、`vue` 或 `react`。`all` 目标的 Nginx 路由：`/vue/`、`/react/`、`/console-oss/`、`/oss/`。
+`INFOQ_FRONTEND_TARGET` 必填：`all`、`vue` 或 `react`。生产基线为 Linux Docker，
+须准备独立凭据、两组独立 RSA，以及覆盖应用域名和独立 OSS 域名的 TLS 证书。
+受控配置按[环境模板](deploy/.env.example)与[部署指南](deploy/README.md)准备。
+`all` 默认路由为 `/vue/`、`/react/`、`/console-oss/`；私有 S3 URL 使用独立 OSS
+origin，保留签名原路径。开发 HTTP 须显式选择模式。
 
 远程安装请按部署指南固定 tag，下载并审阅后再执行。macOS Colima 使用底层 shell
 脚本；Node CLI 在 macOS 固定选择 Apple，Apple `status` 可能启动 daemon。生产前须
