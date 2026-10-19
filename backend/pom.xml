@@ -51,7 +51,7 @@
         <maven-compiler-plugin.version>3.13.0</maven-compiler-plugin.version>
         <maven-surefire-plugin.version>3.6.0</maven-surefire-plugin.version>
         <jacoco-maven-plugin.version>0.8.14</jacoco-maven-plugin.version>
-        <flatten-maven-plugin.version>1.7.3</flatten-maven-plugin.version>
+        <flatten-maven-plugin.version>1.8.0</flatten-maven-plugin.version>
         <backend.unit.test.timeout.seconds>60</backend.unit.test.timeout.seconds>
         <surefireArgLine/>
         <!-- 默认执行测试，必要时通过命令行显式覆盖 -->
