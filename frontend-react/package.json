@@ -28,7 +28,7 @@
     "dayjs": "^1.11.21",
     "echarts": "^6.1.0",
     "file-saver": "^2.0.5",
-    "i18next": "^26.3.0",
+    "i18next": "^26.4.6",
     "jsencrypt": "^3.5.4",
     "nprogress": "^0.2.0",
     "react": "^19.2.7",
