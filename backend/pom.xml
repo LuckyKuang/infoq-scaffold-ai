@@ -24,7 +24,7 @@
         <fastexcel.version>1.3.0</fastexcel.version>
         <mybatis-plus.version>3.5.17</mybatis-plus.version>
         <p6spy.version>3.9.1</p6spy.version>
-        <hutool.version>5.8.47</hutool.version>
+        <hutool.version>5.8.48</hutool.version>
         <redisson.version>4.7.0</redisson.version>
         <lock4j.version>2.2.7</lock4j.version>
         <dynamic-ds.version>4.5.0</dynamic-ds.version>
