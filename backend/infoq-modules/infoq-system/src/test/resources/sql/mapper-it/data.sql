@@ -24,6 +24,8 @@ VALUES (103, 0, '0', 'DeletedDept', 3, 501, '1');
 INSERT INTO sys_role_dept (role_id, dept_id) VALUES (10, 100);
 INSERT INTO sys_role_dept (role_id, dept_id) VALUES (10, 101);
 INSERT INTO sys_role_dept (role_id, dept_id) VALUES (10, 103);
+INSERT INTO sys_role_dept (role_id, dept_id) VALUES (11, 101);
+INSERT INTO sys_role_dept (role_id, dept_id) VALUES (11, 102);
 
 INSERT INTO sys_menu (menu_id, parent_id, order_num, perms, status)
 VALUES (1, 0, 1, NULL, '0');
@@ -41,6 +43,8 @@ INSERT INTO sys_role_menu (role_id, menu_id) VALUES (10, 2);
 INSERT INTO sys_role_menu (role_id, menu_id) VALUES (10, 3);
 INSERT INTO sys_role_menu (role_id, menu_id) VALUES (10, 4);
 INSERT INTO sys_role_menu (role_id, menu_id) VALUES (10, 5);
+INSERT INTO sys_role_menu (role_id, menu_id) VALUES (11, 2);
+INSERT INTO sys_role_menu (role_id, menu_id) VALUES (11, 4);
 
 INSERT INTO sys_user (user_id, dept_id, user_name, nick_name, email, avatar, phonenumber, sex, status, del_flag, login_ip, login_date, create_by, create_time, remark)
 VALUES (501, 101, 'alice', 'Alice', 'alice@example.com', 0, '13800000001', '0', '0', '0', '127.0.0.1', TIMESTAMP '2026-03-01 11:00:00', 1, TIMESTAMP '2026-03-01 09:00:00', 'seed');
@@ -61,3 +65,10 @@ INSERT INTO sys_post (post_id, dept_id, post_code, post_name, post_category, pos
 VALUES (301, 102, 'ops', 'Ops', 'tech', 2, '0', 'seed', TIMESTAMP '2026-03-01 12:10:00');
 
 INSERT INTO sys_user_post (user_id, post_id) VALUES (501, 300);
+
+INSERT INTO sys_oauth_identity (identity_id, user_id, provider_code, provider_key, provider_subject, del_flag)
+VALUES (700, 501, 'github', 'default', 'sub-501', '0');
+INSERT INTO sys_oauth_identity (identity_id, user_id, provider_code, provider_key, provider_subject, del_flag)
+VALUES (701, 502, 'github', 'default', 'sub-502', '1');
+INSERT INTO sys_oauth_identity (identity_id, user_id, provider_code, provider_key, provider_subject, del_flag)
+VALUES (702, 503, 'github', 'default', 'sub-503', '0');

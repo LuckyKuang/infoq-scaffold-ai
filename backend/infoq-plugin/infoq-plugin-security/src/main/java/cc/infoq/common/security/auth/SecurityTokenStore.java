@@ -82,7 +82,10 @@ public class SecurityTokenStore {
     }
 
     private boolean revokeLoadedSession(String accessToken, String tokenDigest, SecurityTokenSession session) {
-        markRevoked(tokenDigest, sessionTtl(session));
+        // 会话已不存在时令牌本就无法认证，写入无 TTL 的撤销标记只会在 Redis 永久残留
+        if (session != null) {
+            markRevoked(tokenDigest, sessionTtl(session));
+        }
         RedisUtils.deleteObject(sessionKey(tokenDigest));
         if (StringUtils.isNotBlank(accessToken)) {
             RedisUtils.deleteObject(CacheConstants.ONLINE_TOKEN_KEY + accessToken);
@@ -275,14 +278,14 @@ public class SecurityTokenStore {
             RBatch batch = RedisUtils.getClient().createBatch();
             for (String digest : group) {
                 SecurityTokenSession session = sessions.get(sessionKey(digest));
-                Duration ttl = sessionTtl(session);
-                if (ttl == null) {
-                    batch.getBucket(revokedKey(digest)).setAsync(Boolean.TRUE);
-                } else {
-                    batch.getBucket(revokedKey(digest)).setAsync(Boolean.TRUE, ttl);
-                }
                 batch.getBucket(sessionKey(digest)).deleteAsync();
                 if (session != null) {
+                    Duration ttl = sessionTtl(session);
+                    if (ttl == null) {
+                        batch.getBucket(revokedKey(digest)).setAsync(Boolean.TRUE);
+                    } else {
+                        batch.getBucket(revokedKey(digest)).setAsync(Boolean.TRUE, ttl);
+                    }
                     if (StringUtils.isNotBlank(session.getAccessToken())) {
                         batch.getBucket(CacheConstants.ONLINE_TOKEN_KEY + session.getAccessToken()).deleteAsync();
                     }

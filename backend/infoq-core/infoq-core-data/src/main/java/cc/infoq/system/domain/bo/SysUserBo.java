@@ -3,6 +3,7 @@ package cc.infoq.system.domain.bo;
 import cc.infoq.common.constant.RegexConstants;
 import cc.infoq.common.constant.SystemConstants;
 import cc.infoq.common.mybatis.core.domain.BaseEntity;
+import cc.infoq.common.validate.AddGroup;
 import cc.infoq.common.validate.ResetPwdGroup;
 import cc.infoq.common.validate.StatusGroup;
 import cc.infoq.common.xss.Xss;
@@ -81,7 +82,7 @@ public class SysUserBo extends BaseEntity {
     /**
      * 密码
      */
-    @NotBlank(message = "密码不能为空", groups = { ResetPwdGroup.class })
+    @NotBlank(message = "密码不能为空", groups = { AddGroup.class, ResetPwdGroup.class })
     @Size(min = 8, max = 30, message = "{user.password.length.valid}", groups = { ResetPwdGroup.class })
     @Pattern(regexp = RegexConstants.PASSWORD, message = "{user.password.format.valid}", groups = { ResetPwdGroup.class })
     private String password;

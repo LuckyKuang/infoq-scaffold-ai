@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Avatar, Breadcrumb, Button, Dropdown, Layout, Menu, theme } from 'antd';
 import { CaretDownOutlined, MenuFoldOutlined, MenuUnfoldOutlined, UserOutlined } from '@ant-design/icons';
-import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import type { AppRoute } from '@/types/router';
 import type { RouteComponentMapItem } from '@/router/route-transform';
@@ -125,8 +125,6 @@ export default function MainLayout() {
   const device = useAppStore((state) => state.device);
   const toggleSideBar = useAppStore((state) => state.toggleSideBar);
   const closeSideBar = useAppStore((state) => state.closeSideBar);
-  const openSideBar = useAppStore((state) => state.openSideBar);
-  const toggleDevice = useAppStore((state) => state.toggleDevice);
 
   const allRoutes = usePermissionStore((state) => state.routes);
   const sideBarRoutes = usePermissionStore((state) => state.sidebarRouters);
@@ -169,14 +167,16 @@ export default function MainLayout() {
     [sideBarRoutes, currentRoute, location.pathname]
   );
 
+  // 仅在挂载与窗口 resize 时同步设备类型；不能依赖 sidebarOpened，否则桌面端手动收起侧边栏会被立即还原
   useEffect(() => {
     const checkDevice = () => {
       const mobile = window.innerWidth < 992;
+      const { device: previousDevice, toggleDevice, closeSideBar, openSideBar } = useAppStore.getState();
       toggleDevice(mobile ? 'mobile' : 'desktop');
       if (mobile) {
         closeSideBar();
-      }
-      if (!mobile && !sidebarOpened) {
+      } else if (previousDevice === 'mobile') {
+        // 仅从移动端回到桌面端时恢复展开，保留桌面端用户自己的折叠选择
         openSideBar();
       }
     };
@@ -186,7 +186,7 @@ export default function MainLayout() {
     return () => {
       window.removeEventListener('resize', checkDevice);
     };
-  }, [closeSideBar, openSideBar, sidebarOpened, toggleDevice]);
+  }, []);
 
   useEffect(() => {
     const routeTitle = currentRoute?.meta?.title;
@@ -234,7 +234,7 @@ export default function MainLayout() {
     location.search
   ]);
 
-  const hideSidebar = sidebarHide || (topNav && device === 'desktop');
+  const hideSidebar = sidebarHide;
   const siderWidth = device === 'mobile' ? 0 : 200;
   const effectiveSideTheme = dark ? 'theme-dark' : sideTheme;
   const menuTheme = effectiveSideTheme === 'theme-light' ? 'light' : 'dark';
@@ -381,9 +381,7 @@ export default function MainLayout() {
         {tagsView && <TagsViewBar activePath={location.pathname} />}
 
         <Content className="layout-content">
-          <KeepAliveView activePath={location.pathname} noCache={currentRoute?.meta?.noCache}>
-            <Outlet />
-          </KeepAliveView>
+          <KeepAliveView activePath={location.pathname} noCache={currentRoute?.meta?.noCache} />
         </Content>
       </Layout>
 

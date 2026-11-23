@@ -142,10 +142,11 @@ API 模块本身主要承担：
 `utils/request.ts` 的响应拦截器在收到 `401` 时会：
 
 ```text
-立即 userStore.invalidateSession()
+先记录当前 fullPath（由 router-utils 跟踪）
+-> 立即 userStore.invalidateSession()
 -> 清内存、权限、路由、标签、消息和owned实时连接
 -> modal.confirm(...)
--> navigateTo('/login')
+-> navigateTo('/login?redirect=<fullPath>')（已在 /login 时沿用当前 URL）
 ```
 
 401立即停止使用旧Bearer，弹窗用于提示重登。专用恢复资源不经过此拦截器；绑定失败的新Bearer清理请求也不触发再次logout的循环。

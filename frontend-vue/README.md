@@ -13,7 +13,7 @@
 - `src/store/modules/permission.ts` 通过 `import.meta.glob('./../../views/**/*.vue')` 把后端菜单组件名解析为真实页面组件。
 - `src/api/login.ts` 的登录、OAuth ticket 和注册请求默认携带 `clientId`，并通过 `utils/request.ts` 统一加密、401 和重复提交处理。
 - `/forgot-password` 是固定公开入口；登录、自助注册与密码重置页面通过 `GET /auth/code` 的能力位控制可用流程，邮件验证码和密码重置接口统一由 `src/api/login.ts` 提供。
-- `src/store/modules/user.ts` 负责 password/OAuth ticket 绑定后登录、仅内存 token、刷新恢复与资料；退出先清本地权限、动态路由、SSE/WebSocket，再 DELETE 专用浏览器会话，失败明确提示服务端注销未确认。
+- `src/store/modules/user.ts` 负责 password/OAuth ticket 绑定后登录、仅内存 token、刷新恢复与资料；退出先清本地权限、动态路由、SSE/WebSocket，再 DELETE 专用浏览器会话，失败明确提示服务端注销未确认。回归步骤见 [会话测试 SOP](./doc/browser-session-testing.md)。
 
 ## 模块导航
 

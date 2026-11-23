@@ -59,6 +59,8 @@ class SysUserServiceImplTest {
     private SysUserPostMapper sysUserPostMapper;
     @Mock
     private SecurityTokenService securityTokenService;
+    @Mock
+    private SysOauthIdentityMapper sysOauthIdentityMapper;
 
     @BeforeEach
     void setUp() {
@@ -472,11 +474,12 @@ class SysUserServiceImplTest {
             userVo(1L, "alice", "爱丽丝"),
             userVo(2L, "bob", "鲍勃")
         );
-        when(sysUserMapper.selectVoList(any())).thenReturn(expected);
+        when(sysUserMapper.selectUserList(any())).thenReturn(expected);
 
         List<SysUserVo> actual = service.selectUserListByDept(100L);
 
         assertEquals(2, actual.size());
+        verify(sysUserMapper, never()).selectVoList(any());
         assertEquals("alice", actual.get(0).getUserName());
     }
 
@@ -504,6 +507,7 @@ class SysUserServiceImplTest {
         assertEquals(1, rows);
         verify(sysUserRoleMapper).delete(any());
         verify(sysUserPostMapper).delete(any());
+        verify(sysOauthIdentityMapper).deleteByUserIdsPhysically(List.of(20L));
         verify(sysUserMapper).deleteById(20L);
     }
 
@@ -650,6 +654,7 @@ class SysUserServiceImplTest {
         assertEquals(2, rows);
         verify(sysUserRoleMapper).delete(any());
         verify(sysUserPostMapper).delete(any());
+        verify(sysOauthIdentityMapper).deleteByUserIdsPhysically(List.of(2L, 3L));
         verify(sysUserMapper).deleteByIds(eq(List.of(2L, 3L)));
         verify(securityTokenService).revokeByUserIds(List.of(2L, 3L));
     }
@@ -781,6 +786,28 @@ class SysUserServiceImplTest {
         }
     }
 
+    @Test
+    @DisplayName("updateUser: should never write password from edit payload")
+    void updateUserShouldNeverWritePassword() {
+        SysUserServiceImpl service = newService();
+        SysUserBo bo = new SysUserBo();
+        bo.setUserId(60L);
+        bo.setUserName("u-pwd");
+        bo.setPassword("Plain@1234");
+        SysUser converted = new SysUser();
+        converted.setUserId(60L);
+        converted.setPassword("Plain@1234");
+        when(sysUserMapper.updateById(any(SysUser.class))).thenReturn(1);
+
+        try (MockedStatic<MapstructUtils> mapstructUtils = mockStatic(MapstructUtils.class)) {
+            mapstructUtils.when(() -> MapstructUtils.convert(bo, SysUser.class)).thenReturn(converted);
+
+            service.updateUser(bo);
+        }
+
+        verify(sysUserMapper).updateById(argThat((SysUser user) -> user.getPassword() == null));
+    }
+
     private static void invokePrivateInsertUserPost(SysUserServiceImpl service, SysUserBo bo, boolean clear) {
         try {
             Method method = SysUserServiceImpl.class.getDeclaredMethod("insertUserPost", SysUserBo.class, boolean.class);
@@ -805,7 +832,8 @@ class SysUserServiceImplTest {
             sysPostMapper,
             sysUserRoleMapper,
             sysUserPostMapper,
-            securityTokenService
+            securityTokenService,
+            sysOauthIdentityMapper
         );
     }
 

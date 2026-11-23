@@ -48,9 +48,7 @@
         where sm.menu_id in (
             select srm.menu_id
             from sys_role_menu srm
-                     left join sys_role sr on sr.role_id = srm.role_id
             where srm.role_id = #{roleId}
-              and sr.status = '0'
         )
         <if test="menuCheckStrictly">
             and sm.menu_id not in (
@@ -59,9 +57,7 @@
             where menu_id in (
                 select srm.menu_id
                 from sys_role_menu srm
-                         left join sys_role sr on sr.role_id = srm.role_id
                 where srm.role_id = #{roleId}
-                  and sr.status = '0'
             )
         )
         </if>

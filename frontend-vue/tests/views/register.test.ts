@@ -125,6 +125,23 @@ describe('views/register', () => {
     expect(registerMocks.routerPush).toHaveBeenCalledWith('/login');
   });
 
+  it('renders the success alert from a text VNode so a hostile username is never parsed as HTML', async () => {
+    const hostile = '<img src=x onerror=alert(1)>';
+    registerMocks.t.mockImplementation((key: string, params?: { username?: string }) => (params?.username ? `${key}:${params.username}` : key));
+    const wrapper = mountView();
+    await flushPromises();
+    (wrapper.vm as unknown as { registerForm: { username: string } }).registerForm.username = hostile;
+    await findSubmitButton(wrapper).trigger('click');
+    await flushPromises();
+
+    const [message, , options] = messageBoxMock.alert.mock.calls[0] as [{ type: string; children: unknown }, string, Record<string, unknown>];
+    expect(typeof message).toBe('object');
+    expect(message.type).toBe('span');
+    expect(message.children).toBe(`register.registerSuccess:${hostile}`);
+    expect(options.dangerouslyUseHTMLString).toBeUndefined();
+    registerMocks.t.mockImplementation((key: string) => key);
+  });
+
   it('refreshes captcha after register failure', async () => {
     registerMocks.register.mockRejectedValueOnce(new Error('register-failed'));
 

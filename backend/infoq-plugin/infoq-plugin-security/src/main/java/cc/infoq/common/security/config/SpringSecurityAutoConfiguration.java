@@ -7,6 +7,7 @@ import cc.infoq.common.security.config.properties.SseProperties;
 import cc.infoq.common.security.filter.SecurityTokenAuthenticationFilter;
 import cc.infoq.common.security.handler.SecurityAccessDeniedHandler;
 import cc.infoq.common.security.handler.SecurityAuthenticationEntryPoint;
+import cc.infoq.common.security.handler.SecurityExceptionAdvice;
 import tools.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
@@ -75,6 +76,12 @@ public class SpringSecurityAutoConfiguration {
     @ConditionalOnMissingBean
     public SecurityAccessDeniedHandler securityAccessDeniedHandler(ObjectMapper objectMapper) {
         return new SecurityAccessDeniedHandler(objectMapper);
+    }
+
+    @Bean
+    public SecurityExceptionAdvice securityExceptionAdvice(SecurityAuthenticationEntryPoint authenticationEntryPoint,
+                                                           SecurityAccessDeniedHandler accessDeniedHandler) {
+        return new SecurityExceptionAdvice(authenticationEntryPoint, accessDeniedHandler);
     }
 
     @Bean

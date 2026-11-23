@@ -7,9 +7,9 @@
 [![CI](https://github.com/LuckyKuang/infoq-scaffold-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/LuckyKuang/infoq-scaffold-ai/actions/workflows/ci.yml)
 ![Version](https://img.shields.io/badge/Version-3.0.0--rc1-f66a39)
 ![JDK](https://img.shields.io/badge/JDK-21-1677FF)
-![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1.1-6DB33F)
-![Vue](https://img.shields.io/badge/Vue-3.5.42-42B883)
-![React](https://img.shields.io/badge/React-19.2.7-61DAFB)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.2.0-6DB33F)
+![Vue](https://img.shields.io/badge/Vue-3.5.46-42B883)
+![React](https://img.shields.io/badge/React-19.3.1-61DAFB)
 [![License](https://img.shields.io/badge/License-MIT-F7C948)](LICENSE)
 
 **AI コラボレーション向けフルスタック・エンジニアリング・スキャフォールド**
@@ -39,7 +39,7 @@ Spring Boot バックエンドと Vue / React の管理コンソールを提供�
 
 現在は 3 つのワークスペースを維持しています。
 
-- `backend`：Spring Boot 4.1 マルチモジュール・バックエンド
+- `backend`：Spring Boot 4.2 マルチモジュール・バックエンド
 - `frontend-vue`：Vue 3 + Element Plus 管理コンソール
 - `frontend-react`：React 19 + Ant Design 管理コンソール
 
@@ -51,7 +51,7 @@ Spring Boot バックエンドと Vue / React の管理コンソールを提供�
 <!-- readme-section:features -->
 ## 主な機能
 
-- JDK 21、MyBatis-Plus、Spring Security を基盤とする Spring Boot 4.1 バックエンド
+- JDK 21、MyBatis-Plus、Spring Security を基盤とする Spring Boot 4.2 バックエンド
 - 同一のバックエンド API 契約を共有する 2 つの管理コンソール
 - [`AGENTS.md`](AGENTS.md)、`skills`、OpenSpec による階層化されたデリバリーフロー
 - 凍結 SQL ベースラインと日付別の増分スクリプト

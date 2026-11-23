@@ -17,7 +17,7 @@ onMounted(() => {
   scrollWrapper.value?.addEventListener('scroll', emitScroll, true);
 });
 onBeforeUnmount(() => {
-  scrollWrapper.value?.removeEventListener('scroll', emitScroll);
+  scrollWrapper.value?.removeEventListener('scroll', emitScroll, true);
 });
 
 const handleScroll = (e: WheelEvent) => {

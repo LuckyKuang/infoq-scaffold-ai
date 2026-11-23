@@ -1,4 +1,4 @@
-import { flushPromises, mount } from '@vue/test-utils';
+import { flushPromises, mount, type VueWrapper } from '@vue/test-utils';
 import { defineComponent, h, reactive, type ComponentCustomProperties } from 'vue';
 import TagsView from '@/layout/components/TagsView/index.vue';
 
@@ -200,11 +200,15 @@ describe('layout/components/TagsView/index', () => {
   });
 
   afterEach(() => {
+    mountedWrappers.splice(0).forEach((wrapper) => wrapper.unmount());
     getRectSpy.mockRestore();
   });
 
-  const mountView = () =>
-    mount(TagsView, {
+  // jsdom 31 对未挂载到 document 的元素不计算样式，isVisible 需要真实挂载。
+  const mountedWrappers: VueWrapper[] = [];
+  const mountView = () => {
+    const wrapper = mount(TagsView, {
+      attachTo: document.body,
       global: {
         config: {
           globalProperties: {
@@ -230,6 +234,9 @@ describe('layout/components/TagsView/index', () => {
         }
       }
     });
+    mountedWrappers.push(wrapper);
+    return wrapper;
+  };
 
   it('handles refresh and close-current with route fallback navigation', async () => {
     tagsViewMocks.route.path = '/b';

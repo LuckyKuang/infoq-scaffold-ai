@@ -24,6 +24,7 @@ import CrudModal from '@/components/CrudModal';
 import modal from '@/utils/modal';
 import auth from '@/utils/permission';
 import { addDateRange } from '@/utils/scaffold';
+import { download } from '@/utils/request';
 
 const initialQuery: OssQuery = {
   pageNum: 1,
@@ -174,7 +175,11 @@ export default function OssPage() {
         <Space size={4}>
           {auth.hasPermiOr(['system:oss:download']) && (
             <Tooltip title="下载">
-              <Button type="link" icon={<DownloadOutlined />} href={record.url} target="_blank" />
+              <Button
+                type="link"
+                icon={<DownloadOutlined />}
+                onClick={() => download(`/resource/oss/download/${record.ossId}`, {}, record.originalName, 'get')}
+              />
             </Tooltip>
           )}
           {auth.hasPermiOr(['system:oss:remove']) && (

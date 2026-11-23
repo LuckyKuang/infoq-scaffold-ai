@@ -41,55 +41,54 @@ class SysUserOnlineControllerTest {
     }
 
     @Test
-    @DisplayName("forceLogout: should revoke target token through security token service")
-    void forceLogoutShouldRevokeTargetToken() {
-        when(tokenService.revoke("token")).thenReturn(true);
+    @DisplayName("forceLogout: should revoke target session by digest without treating path value as raw token")
+    void forceLogoutShouldRevokeTargetSessionByDigest() {
+        when(tokenStore.revoke(null, "digest-target")).thenReturn(true);
 
-        ApiResult<Void> result = controller.forceLogout("token");
+        ApiResult<Void> result = controller.forceLogout("digest-target");
 
         assertEquals(ApiResult.SUCCESS, result.getCode());
-        verify(tokenService).revoke("token");
+        verify(tokenStore).revoke(null, "digest-target");
+        verifyNoInteractions(tokenService);
     }
 
     @Test
-    @DisplayName("forceLogout: should treat already missing token as idempotent success")
-    void forceLogoutShouldTreatMissingTokenAsIdempotentSuccess() {
-        when(tokenService.revoke("token")).thenReturn(false);
+    @DisplayName("forceLogout: should treat already missing session as idempotent success")
+    void forceLogoutShouldTreatMissingSessionAsIdempotentSuccess() {
+        when(tokenStore.revoke(null, "digest-target")).thenReturn(false);
 
-        ApiResult<Void> result = controller.forceLogout("token");
+        ApiResult<Void> result = controller.forceLogout("digest-target");
 
         assertEquals(ApiResult.SUCCESS, result.getCode());
-        verify(tokenService).revoke("token");
+        verify(tokenStore).revoke(null, "digest-target");
     }
 
     @Test
-    @DisplayName("remove: should revoke token only when token belongs to current login")
-    void removeShouldRevokeTokenOnlyWhenTokenBelongsToCurrentLogin() {
+    @DisplayName("remove: should revoke session only when digest belongs to current login")
+    void removeShouldRevokeSessionOnlyWhenDigestBelongsToCurrentLogin() {
         SecurityTokenAuthentication authentication = authentication("sys_user:100");
         SecurityTokenSession targetSession = session("token-target", "sys_user:100", "admin", "127.0.0.1", false);
         when(currentUserService.getAuthentication()).thenReturn(authentication);
-        when(tokenService.digest("token-target")).thenReturn("digest-target");
         when(tokenStore.findByDigest("digest-target")).thenReturn(Optional.of(targetSession));
 
-        ApiResult<Void> result = controller.remove("token-target");
+        ApiResult<Void> result = controller.remove("digest-target");
 
         assertEquals(ApiResult.SUCCESS, result.getCode());
-        verify(tokenService).revoke("token-target");
+        verify(tokenStore).revoke(null, "digest-target");
     }
 
     @Test
-    @DisplayName("remove: should not revoke token when token belongs to another login")
-    void removeShouldNotRevokeTokenWhenTokenBelongsToAnotherLogin() {
+    @DisplayName("remove: should not revoke session when digest belongs to another login")
+    void removeShouldNotRevokeSessionWhenDigestBelongsToAnotherLogin() {
         SecurityTokenAuthentication authentication = authentication("sys_user:100");
         SecurityTokenSession targetSession = session("token-target", "sys_user:200", "other", "10.0.0.5", false);
         when(currentUserService.getAuthentication()).thenReturn(authentication);
-        when(tokenService.digest("token-target")).thenReturn("digest-target");
         when(tokenStore.findByDigest("digest-target")).thenReturn(Optional.of(targetSession));
 
-        ApiResult<Void> result = controller.remove("token-target");
+        ApiResult<Void> result = controller.remove("digest-target");
 
         assertEquals(ApiResult.SUCCESS, result.getCode());
-        verify(tokenService, never()).revoke("token-target");
+        verify(tokenStore, never()).revoke(any(), anyString());
     }
 
     @Test
@@ -110,6 +109,7 @@ class SysUserOnlineControllerTest {
 
             assertEquals(1, result.getRows().size());
             assertEquals("admin", result.getRows().get(0).getUserName());
+            assertEquals("d1", result.getRows().get(0).getTokenId());
             verify(tokenStore).findByDigests(argThat(digests -> digests.size() == 2 && digests.containsAll(List.of("d1", "d2"))));
             verify(tokenStore, never()).findByDigest(anyString());
         }
@@ -151,7 +151,8 @@ class SysUserOnlineControllerTest {
         TableDataInfo<SysUserOnline> result = controller.getInfo();
 
         assertEquals(1, result.getRows().size());
-        assertEquals("t1", result.getRows().get(0).getTokenId());
+        // 响应只能携带会话摘要，不能携带原始 access token
+        assertEquals("d1", result.getRows().get(0).getTokenId());
         assertEquals("admin", result.getRows().get(0).getUserName());
         verify(tokenStore).findByDigests(new LinkedHashSet<>(List.of("d1", "d2", "d3")));
         verify(tokenStore, never()).findByDigest(anyString());

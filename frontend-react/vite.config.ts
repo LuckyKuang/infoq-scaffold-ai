@@ -114,7 +114,7 @@ export default defineConfig(({ mode, command }) => {
     plugins: [react(), productionBuildMetadataPlugin(productionBuild.metadata)],
     resolve: {
       alias: {
-        '@': path.resolve(__dirname, './src')
+        '@': path.resolve(import.meta.dirname, './src')
       }
     },
     server: {

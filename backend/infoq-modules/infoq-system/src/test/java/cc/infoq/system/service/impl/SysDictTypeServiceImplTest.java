@@ -354,4 +354,25 @@ class SysDictTypeServiceImplTest {
         vo.setDictLabel(label);
         return vo;
     }
+
+    @Test
+    @DisplayName("selectDictDataByType: should not cache null result for unknown dict type")
+    void selectDictDataByTypeShouldNotCacheNull() throws Exception {
+        CacheUnlessAssertions.assertSkipsCaching(SysDictTypeServiceImpl.class, "selectDictDataByType", String.class, null, List.of(new SysDictDataVo()));
+    }
+
+    @Test
+    @DisplayName("getAllDictByDictType: should return empty map instead of NPE when dict type has no data")
+    void getAllDictByDictTypeShouldReturnEmptyMapWhenNoData() {
+        SysDictTypeServiceImpl spyService = spy(service);
+        doReturn(null).when(spyService).selectDictDataByType("missing");
+        doReturn(List.of()).when(spyService).selectDictDataByType("empty");
+
+        try (MockedStatic<SpringUtils> springUtils = mockStatic(SpringUtils.class)) {
+            springUtils.when(() -> SpringUtils.getAopProxy(spyService)).thenReturn(spyService);
+
+            assertTrue(spyService.getAllDictByDictType("missing").isEmpty());
+            assertTrue(spyService.getAllDictByDictType("empty").isEmpty());
+        }
+    }
 }

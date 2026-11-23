@@ -93,7 +93,7 @@ class UserSessionInvalidationTest {
         };
         browserService = new BrowserSessionService(new BrowserSessionProperties(), store, tokenStore, tokenService);
         users = transactional(new SysUserServiceImpl(userMapper, mock(SysDeptMapper.class), roleMapper,
-            mock(SysPostMapper.class), userRoles, userPosts, tokenService), SysUserService.class);
+            mock(SysPostMapper.class), userRoles, userPosts, tokenService, mock(SysOauthIdentityMapper.class)), SysUserService.class);
     }
 
     @AfterEach

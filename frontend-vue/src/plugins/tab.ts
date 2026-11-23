@@ -53,7 +53,7 @@ export default {
   ): Promise<{ visitedViews: RouteLocationNormalized[]; cachedViews: string[] } | void | NavigationFailure> {
     if (obj === undefined) {
       // prettier-ignore
-      const { visitedViews } = await useTagsViewStore().delView(router.currentRoute.value)
+      const { visitedViews } = await useTagsViewStore().delView(router.currentRoute.value);
       const latestView = visitedViews.slice(-1)[0];
       if (latestView) {
         return router.push(latestView.fullPath);

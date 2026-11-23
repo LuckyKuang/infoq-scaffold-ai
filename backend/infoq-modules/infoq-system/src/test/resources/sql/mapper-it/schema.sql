@@ -1,3 +1,4 @@
+DROP TABLE IF EXISTS sys_oauth_identity;
 DROP TABLE IF EXISTS sys_user_post;
 DROP TABLE IF EXISTS sys_user_role;
 DROP TABLE IF EXISTS sys_role_menu;
@@ -98,4 +99,13 @@ CREATE TABLE sys_post (
 CREATE TABLE sys_user_post (
     user_id BIGINT,
     post_id BIGINT
+);
+
+CREATE TABLE sys_oauth_identity (
+    identity_id BIGINT PRIMARY KEY,
+    user_id BIGINT,
+    provider_code VARCHAR(64),
+    provider_key VARCHAR(64),
+    provider_subject VARCHAR(128),
+    del_flag CHAR(1)
 );

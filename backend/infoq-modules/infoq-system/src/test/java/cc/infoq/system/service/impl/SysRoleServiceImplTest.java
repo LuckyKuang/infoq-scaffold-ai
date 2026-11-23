@@ -394,6 +394,23 @@ class SysRoleServiceImplTest {
     }
 
     @Test
+    @DisplayName("authUser operations: should reject super admin role without touching user-role bindings")
+    void authUserOperationsShouldRejectSuperAdminRole() {
+        SysRoleServiceImpl service = newService();
+        SysUserRole userRole = new SysUserRole();
+        userRole.setRoleId(SystemConstants.SUPER_ADMIN_ID);
+        userRole.setUserId(2L);
+        Long[] userIds = new Long[]{2L};
+
+        assertThrows(ServiceException.class, () -> service.insertAuthUsers(SystemConstants.SUPER_ADMIN_ID, userIds));
+        assertThrows(ServiceException.class, () -> service.deleteAuthUsers(SystemConstants.SUPER_ADMIN_ID, userIds));
+        ServiceException ex = assertThrows(ServiceException.class, () -> service.deleteAuthUser(userRole));
+        assertTrue(ex.getMessage().contains("不允许操作超级管理员角色"));
+
+        verifyNoInteractions(sysUserRoleMapper);
+    }
+
+    @Test
     @DisplayName("cleanOnlineUserByRole: should return immediately when role has no users")
     void cleanOnlineUserByRoleShouldReturnWhenNoUserBinding() {
         SysRoleServiceImpl service = newService();

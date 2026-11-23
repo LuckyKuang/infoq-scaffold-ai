@@ -466,6 +466,7 @@ public class SysRoleServiceImpl implements SysRoleService, RoleService {
      */
     @Override
     public int deleteAuthUser(SysUserRole userRole) {
+        requireNotSuperAdminRole(userRole.getRoleId());
         if (LoginUserContext.getUserId().equals(userRole.getUserId())) {
             throw new ServiceException("不允许修改当前用户角色!");
         }
@@ -487,6 +488,7 @@ public class SysRoleServiceImpl implements SysRoleService, RoleService {
      */
     @Override
     public int deleteAuthUsers(Long roleId, Long[] userIds) {
+        requireNotSuperAdminRole(roleId);
         List<Long> ids = List.of(userIds);
         if (ids.contains(LoginUserContext.getUserId())) {
             throw new ServiceException("不允许修改当前用户角色!");
@@ -509,6 +511,7 @@ public class SysRoleServiceImpl implements SysRoleService, RoleService {
      */
     @Override
     public int insertAuthUsers(Long roleId, Long[] userIds) {
+        requireNotSuperAdminRole(roleId);
         // 新增用户与角色管理
         int rows = 1;
         List<Long> ids = List.of(userIds);
@@ -528,6 +531,15 @@ public class SysRoleServiceImpl implements SysRoleService, RoleService {
             cleanOnlineUser(ids);
         }
         return rows;
+    }
+
+    /**
+     * 授权/取消授权入口直接操作用户角色关联，必须拦截超级管理员角色，与 checkRoleAllowed 的语义保持一致
+     */
+    private void requireNotSuperAdminRole(Long roleId) {
+        if (SystemConstants.SUPER_ADMIN_ID.equals(roleId)) {
+            throw new ServiceException("不允许操作超级管理员角色");
+        }
     }
 
     /**

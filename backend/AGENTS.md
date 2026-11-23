@@ -1,9 +1,9 @@
 # AGENTS.md
 |IMPORTANT: Prefer retrieval-led reasoning over pre-training-led reasoning for any project tasks. Read repository files before relying on framework pretraining data.
 |Scope:本文件适用于 `backend` 及其子目录，用于把根规则收窄到 backend 语境。
-|Stack:Spring Boot 4.1.x|JDK 21|Maven multi-module|MyBatis-Plus|Spring Security
+|Stack:Spring Boot 4.2.x|JDK 21|Maven multi-module|MyBatis-Plus|Spring Security
 |Workspace Layout:infoq-admin|infoq-modules/infoq-system|infoq-plugin:*|infoq-core:{infoq-core-bom,infoq-core-common,infoq-core-data}
-|Backend Docs:backend:{README.md,doc/README.md,doc/architecture.md,doc/data-flow.md}
+|Backend Docs:backend:{README.md,doc/README.md,doc/architecture.md,doc/data-flow.md,doc/browser-session.md,doc/production-verification.md}
 |Backend Module Docs:backend:{infoq-admin/README.md,infoq-core/README.md,infoq-modules/README.md,infoq-plugin/README.md}
 |Doc Read Order:先读 `backend/README.md` 获取模块导航、配置分层与核心入口。|再读 `backend/doc/README.md` 获取 backend 文档导航与主题下钻路径。|再读 `backend/doc/architecture.md` 获取模块依赖、自动配置、安全与监控切入点。|最后读 `backend/doc/data-flow.md` 获取登录、菜单路由、用户 CRUD、日志与监控数据流。|涉及 backend 架构、配置、登录、权限、Redis、Quartz、监控判断前优先阅读这些文档。
 |Module Doc Drill-Down:涉及启动与 profile 先读 `backend/infoq-admin/README.md`。|涉及公共类型、实体、Mapper 与 XML 先读 `backend/infoq-core/README.md` 再下钻叶子模块。|涉及系统业务接口、runner、listener、monitor 先读 `backend/infoq-modules/README.md`。|涉及基础设施、自动装配、Redis、Spring Security、Web、安全、Quartz、SSE、WebSocket、OSS、Excel 等先读 `backend/infoq-plugin/README.md`。

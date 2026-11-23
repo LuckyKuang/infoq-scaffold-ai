@@ -250,9 +250,9 @@ const handleRegister = () => {
       const [err] = await to(register(registerForm.value));
       if (!err) {
         const username = registerForm.value.username;
-        await ElMessageBox.alert('<span style="color: red; ">' + t('register.registerSuccess', { username }) + '</font>', '系统提示', {
+        // 用户名由用户输入，以 VNode 文本渲染，避免拼接 HTML。
+        await ElMessageBox.alert(h('span', { style: 'color: red' }, t('register.registerSuccess', { username })), '系统提示', {
           app: undefined,
-          dangerouslyUseHTMLString: true,
           type: 'success'
         });
         await router.push('/login');

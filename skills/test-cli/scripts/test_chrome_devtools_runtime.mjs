@@ -67,7 +67,14 @@ await test('installed DevTools MCP supports the configured protocol, isolated di
       headless: true, timeout: 15_000, handleSIGINT: false, handleSIGTERM: false, handleSIGHUP: false,
       args: ['--remote-debugging-port=0']
     });
-    cdpPort = Number(fs.readFileSync(path.join(profile, 'DevToolsActivePort'), 'utf8').split('\n')[0]);
+    // Playwright returns once its pipe transport is ready; Chromium writes DevToolsActivePort asynchronously after that.
+    const activePortFile = path.join(profile, 'DevToolsActivePort');
+    const activePortDeadline = Date.now() + 10_000;
+    while (!fs.existsSync(activePortFile) || !fs.readFileSync(activePortFile, 'utf8').includes('\n')) {
+      if (Date.now() > activePortDeadline) throw new Error(`Chromium did not publish ${activePortFile} within 10 seconds`);
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    cdpPort = Number(fs.readFileSync(activePortFile, 'utf8').split('\n')[0]);
     assert.ok(Number.isInteger(cdpPort) && cdpPort > 0, 'Chromium must publish its isolated CDP port');
     const session = await context.browser().newBrowserCDPSession();
     const {processInfo} = await session.send('SystemInfo.getProcessInfo');
@@ -118,25 +125,30 @@ await test('installed DevTools MCP supports the configured protocol, isolated di
     const config = fs.readFileSync(path.join(repoRoot, '.codex/config.toml'), 'utf8');
     const approved = [...config.matchAll(/\[mcp_servers\.chrome-devtools\.tools\.([^\]]+)\]\s*approval_mode\s*=\s*"approve"/gu)].map(match => match[1]).sort();
     assert.deepEqual(approved, ['click', 'evaluate_script', 'take_screenshot', 'take_snapshot']);
-    const required = {click: ['uid'], evaluate_script: ['function'], take_screenshot: [], take_snapshot: []};
+    // Page-scoped tools route by the pageId reported from list_pages (upstream default pageIdRouting=true).
+    const required = {click: ['pageId', 'uid'], evaluate_script: ['pageId'], take_screenshot: ['pageId'], take_snapshot: ['pageId']};
     for (const name of approved) {
       const schema = listed.tools.find(tool => tool.name === name)?.inputSchema;
       assert.equal(schema?.type, 'object', `${name} input schema missing`);
       assert.deepEqual(schema.required || [], required[name], `${name} required parameters changed`);
+      assert.equal(schema.properties.pageId.type, 'number', `${name} pageId must be numeric`);
     }
     assert.equal(listed.tools.find(tool => tool.name === 'click').inputSchema.properties.uid.type, 'string');
     assert.equal(listed.tools.find(tool => tool.name === 'evaluate_script').inputSchema.properties.function.type, 'string');
     assert.equal(listed.tools.find(tool => tool.name === 'take_snapshot').inputSchema.properties.verbose.type, 'boolean');
     assert.equal(listed.tools.find(tool => tool.name === 'take_screenshot').inputSchema.properties.filePath.type, 'string');
     const pages = await call('list_pages');
-    assert.ok(JSON.stringify(pages).includes(`http://127.0.0.1:${fixturePort}/`));
-    const snapshot = await call('take_snapshot');
+    const fixtureUrl = `http://127.0.0.1:${fixturePort}/`;
+    const pageLine = pages.content.map(item => item.text || '').join('\n').split('\n').find(line => line.includes(fixtureUrl));
+    const pageId = Number(pageLine?.match(/^(\d+):/u)?.[1]);
+    assert.ok(Number.isInteger(pageId) && pageId > 0, `list_pages must report a pageId for ${fixtureUrl}: ${JSON.stringify(pages)}`);
+    const snapshot = await call('take_snapshot', {pageId});
     assert.ok(JSON.stringify(snapshot).includes('Isolated diagnostic fixture'));
     // Only this fixed expression is read-only; evaluate_script itself permits mutation.
-    const evaluated = await call('evaluate_script', {function: '() => ({title: document.title, heading: document.querySelector("h1").textContent})'});
+    const evaluated = await call('evaluate_script', {pageId, function: '() => ({title: document.title, heading: document.querySelector("h1").textContent})'});
     assert.ok(JSON.stringify(evaluated).includes('InfoQ DevTools fixture'));
     assert.ok(JSON.stringify(evaluated).includes('Isolated diagnostic fixture'));
-    await call('list_console_messages');
+    await call('list_console_messages', {pageId});
   } catch (error) {
     failure = error;
   } finally {

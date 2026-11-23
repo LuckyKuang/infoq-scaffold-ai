@@ -349,13 +349,15 @@ class SysOssServiceImplTest {
 
         OssClient ossClient = mock(OssClient.class);
         doNothing().when(ossClient).delete("https://example.com/old-file");
-        try (MockedStatic<OssFactory> ossFactory = mockStatic(OssFactory.class)) {
+        try (MockedStatic<OssFactory> ossFactory = mockStatic(OssFactory.class);
+             MockedStatic<cc.infoq.common.redis.utils.CacheUtils> cacheUtils = mockStatic(cc.infoq.common.redis.utils.CacheUtils.class)) {
             ossFactory.when(() -> OssFactory.instance("local")).thenReturn(ossClient);
 
             Boolean result = service.deleteWithValidByIds(List.of(1L), true);
 
             assertTrue(result);
             verify(ossClient).delete("https://example.com/old-file");
+            cacheUtils.verify(() -> cc.infoq.common.redis.utils.CacheUtils.evict(cc.infoq.common.constant.CacheNames.SYS_OSS, 1L));
         }
     }
 
@@ -371,7 +373,8 @@ class SysOssServiceImplTest {
 
         OssClient ossClient = mock(OssClient.class);
         doNothing().when(ossClient).delete(any());
-        try (MockedStatic<OssFactory> ossFactory = mockStatic(OssFactory.class)) {
+        try (MockedStatic<OssFactory> ossFactory = mockStatic(OssFactory.class);
+             MockedStatic<cc.infoq.common.redis.utils.CacheUtils> cacheUtils = mockStatic(cc.infoq.common.redis.utils.CacheUtils.class)) {
             ossFactory.when(() -> OssFactory.instance("local")).thenReturn(ossClient);
 
             Boolean result = service.deleteWithValidByIds(List.of(1L), false);

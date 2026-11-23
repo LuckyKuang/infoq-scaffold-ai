@@ -18,7 +18,7 @@
 | 模块 | 当前职责 |
 | --- | --- |
 | `user` | token、用户信息、角色权限、password/OAuth ticket 登录登出、SSE/WebSocket 生命周期、刷新后实时通道恢复、退出失败时的本地会话清理 |
-| `permission` | 动态菜单拉取、路由转换、侧边栏/顶栏/组件映射缓存 |
+| `permission` | 动态菜单拉取、路由转换、侧边栏/顶栏/组件映射缓存；TopNav 模式按所选顶级菜单切换侧边栏，关闭 TopNav 时 `resetSidebarRouters` 恢复完整侧边栏 |
 | `app` | 语言、组件尺寸等应用级偏好 |
 | `settings` | 主题、暗色模式等界面设置 |
 | `tagsView` | 已访问标签页与缓存视图 |
@@ -82,7 +82,7 @@
 
 ## 9. 持久化消息状态
 
-`modules/notice.ts` 是服务端消息收件箱的前端投影：它调用 `api/system/message` 刷新分页、未读数和读/删操作。`NoticeBell` 和 `/message-center` 共用该状态；SSE/WebSocket 仅在收到结构化 `type=message` 事件时触发刷新，不写入或缓存事件正文。消息持久化、权限隔离与离线读取始终由后端负责。
+`modules/notice.ts` 是服务端消息收件箱的前端投影：它调用 `api/system/message` 刷新分页、未读数和读/删操作。`NoticeBell` 和 `/message-center` 共用该状态，无参 `refresh()` 沿用最近一次显式分页大小（`clearNotices` 重置为 10）；SSE/WebSocket 仅在收到结构化 `type=message` 事件时触发刷新，不写入或缓存事件正文。消息持久化、权限隔离与离线读取始终由后端负责。
 
 ## 10. 浏览器会话恢复与并发边界
 

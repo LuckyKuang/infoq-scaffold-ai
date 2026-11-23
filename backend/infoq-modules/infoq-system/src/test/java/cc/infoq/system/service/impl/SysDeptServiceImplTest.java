@@ -284,7 +284,8 @@ class SysDeptServiceImplTest {
     @Test
     @DisplayName("insertDept: should throw when parent dept is disabled")
     void insertDeptShouldThrowWhenParentDeptDisabled() {
-        SysDeptServiceImpl service = newService();
+        SysDeptServiceImpl service = spy(newService());
+        doNothing().when(service).checkDeptDataScope(10L);
         SysDeptBo bo = new SysDeptBo();
         bo.setParentId(10L);
         SysDept parent = new SysDept();
@@ -295,6 +296,71 @@ class SysDeptServiceImplTest {
         ServiceException ex = assertThrows(ServiceException.class, () -> service.insertDept(bo));
 
         assertTrue(ex.getMessage().contains("部门停用，不允许新增"));
+    }
+
+    @Test
+    @DisplayName("insertDept: should check data scope of parent dept before reading it")
+    void insertDeptShouldCheckParentDataScope() {
+        SysDeptServiceImpl service = spy(newService());
+        doThrow(new ServiceException("没有权限访问部门数据！")).when(service).checkDeptDataScope(10L);
+        SysDeptBo bo = new SysDeptBo();
+        bo.setParentId(10L);
+
+        ServiceException ex = assertThrows(ServiceException.class, () -> service.insertDept(bo));
+
+        assertTrue(ex.getMessage().contains("没有权限访问部门数据"));
+        verify(sysDeptMapper, never()).selectById(any());
+        verify(sysDeptMapper, never()).insert(any(SysDept.class));
+    }
+
+    @Test
+    @DisplayName("insertDept: should throw explicit message when parent dept is missing")
+    void insertDeptShouldThrowWhenParentMissing() {
+        SysDeptServiceImpl service = spy(newService());
+        doNothing().when(service).checkDeptDataScope(any());
+        SysDeptBo missingParent = new SysDeptBo();
+        missingParent.setParentId(99L);
+        SysDeptBo nullParent = new SysDeptBo();
+        when(sysDeptMapper.selectById(99L)).thenReturn(null);
+
+        assertTrue(assertThrows(ServiceException.class, () -> service.insertDept(missingParent)).getMessage().contains("上级部门不存在"));
+        assertTrue(assertThrows(ServiceException.class, () -> service.insertDept(nullParent)).getMessage().contains("上级部门不存在"));
+        verify(sysDeptMapper, never()).insert(any(SysDept.class));
+    }
+
+    @Test
+    @DisplayName("updateDept: should reject moving a dept under itself or its descendant and missing parent")
+    void updateDeptShouldRejectCycleAndMissingParent() {
+        SysDeptServiceImpl service = spy(newService());
+        doNothing().when(service).checkDeptDataScope(any());
+        SysDept oldDept = new SysDept();
+        oldDept.setDeptId(10L);
+        oldDept.setParentId(1L);
+        oldDept.setAncestors("0,1");
+        when(sysDeptMapper.selectById(10L)).thenReturn(oldDept);
+        SysDept descendant = new SysDept();
+        descendant.setDeptId(12L);
+        descendant.setAncestors("0,1,10,11");
+        when(sysDeptMapper.selectById(12L)).thenReturn(descendant);
+        when(sysDeptMapper.selectById(77L)).thenReturn(null);
+
+        try (MockedStatic<MapstructUtils> mapstructUtils = mockStatic(MapstructUtils.class)) {
+            for (Long newParentId : List.of(12L, 77L)) {
+                SysDeptBo bo = new SysDeptBo();
+                bo.setDeptId(10L);
+                bo.setParentId(newParentId);
+                SysDept converted = new SysDept();
+                converted.setDeptId(10L);
+                converted.setParentId(newParentId);
+                mapstructUtils.when(() -> MapstructUtils.convert(bo, SysDept.class)).thenReturn(converted);
+
+                ServiceException ex = assertThrows(ServiceException.class, () -> service.updateDept(bo));
+
+                assertTrue(ex.getMessage().contains(newParentId == 12L ? "子部门" : "上级部门不存在"));
+            }
+        }
+        verify(sysDeptMapper, never()).updateById(any(SysDept.class));
+        verify(sysDeptMapper, never()).updateBatchById(any());
     }
 
     @Test

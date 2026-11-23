@@ -15,6 +15,7 @@ import cc.infoq.common.redis.annotation.RepeatSubmit;
 import cc.infoq.common.security.auth.LoginUserContext;
 import cc.infoq.common.utils.StreamUtils;
 import cc.infoq.common.utils.StringUtils;
+import cc.infoq.common.validate.AddGroup;
 import cc.infoq.common.validate.ResetPwdGroup;
 import cc.infoq.common.validate.StatusGroup;
 import cc.infoq.common.web.core.BaseController;
@@ -37,6 +38,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
+import jakarta.validation.groups.Default;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -157,7 +159,7 @@ public class SysUserController extends BaseController {
     @Log(title = "用户管理", businessType = BusinessType.INSERT)
     @RepeatSubmit()
     @PostMapping
-    public ApiResult<Void> add(@Validated @RequestBody SysUserBo user) {
+    public ApiResult<Void> add(@Validated({Default.class, AddGroup.class}) @RequestBody SysUserBo user) {
         sysDeptService.checkDeptDataScope(user.getDeptId());
         if (!sysUserService.checkUserNameUnique(user)) {
             return ApiResult.fail("新增用户'" + user.getUserName() + "'失败，登录账号已存在");

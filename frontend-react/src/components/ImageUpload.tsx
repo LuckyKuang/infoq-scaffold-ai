@@ -187,7 +187,7 @@ export default function ImageUpload({
     <div>
       <Upload {...uploadProps}>{fileList.length >= limit ? null : <PlusOutlined />}</Upload>
       {preview && (
-        <Image src={preview} style={{ display: 'none' }} preview={{ visible: true, src: preview, onVisibleChange: (v) => !v && setPreview('') }} />
+        <Image src={preview} style={{ display: 'none' }} preview={{ open: true, src: preview, onOpenChange: (open) => !open && setPreview('') }} />
       )}
       {showTip && (
         <div style={{ color: 'rgba(0, 0, 0, 0.45)', marginTop: 6 }}>

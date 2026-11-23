@@ -19,7 +19,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * 在线用户监控
@@ -55,43 +54,28 @@ public class SysUserOnlineController extends BaseController {
             digestByToken.put(token, tokenService.digest(token));
         }
         Map<String, SecurityTokenSession> sessionsByDigest = tokenStore.findByDigests(digestByToken.values());
-        List<UserOnlineDTO> userOnlineDTOList = digestByToken.values().stream()
-            .map(sessionsByDigest::get)
-            .filter(this::isActive)
-            .map(this::resolveOnlineUser)
-            .filter(Objects::nonNull)
-            .collect(Collectors.toList());
-        if (StringUtils.isNotEmpty(ipaddr) && StringUtils.isNotEmpty(userName)) {
-            userOnlineDTOList = StreamUtils.filter(userOnlineDTOList, userOnline ->
-                StringUtils.equals(ipaddr, userOnline.getIpaddr()) &&
-                    StringUtils.equals(userName, userOnline.getUserName())
-            );
-        } else if (StringUtils.isNotEmpty(ipaddr)) {
-            userOnlineDTOList = StreamUtils.filter(userOnlineDTOList, userOnline ->
-                StringUtils.equals(ipaddr, userOnline.getIpaddr())
-            );
-        } else if (StringUtils.isNotEmpty(userName)) {
-            userOnlineDTOList = StreamUtils.filter(userOnlineDTOList, userOnline ->
-                StringUtils.equals(userName, userOnline.getUserName())
-            );
+        List<SysUserOnline> userOnlineList = toOnlineList(digestByToken.values(), sessionsByDigest);
+        if (StringUtils.isNotEmpty(ipaddr)) {
+            userOnlineList = StreamUtils.filter(userOnlineList, userOnline -> StringUtils.equals(ipaddr, userOnline.getIpaddr()));
         }
-        Collections.reverse(userOnlineDTOList);
-        userOnlineDTOList.removeAll(Collections.singleton(null));
-        List<SysUserOnline> userOnlineList = BeanUtil.copyToList(userOnlineDTOList, SysUserOnline.class);
+        if (StringUtils.isNotEmpty(userName)) {
+            userOnlineList = StreamUtils.filter(userOnlineList, userOnline -> StringUtils.equals(userName, userOnline.getUserName()));
+        }
+        Collections.reverse(userOnlineList);
         return TableDataInfo.build(userOnlineList);
     }
 
     /**
      * 强退用户
      *
-     * @param tokenId token值
+     * @param tokenId 会话摘要（列表返回的 tokenId，不是原始 access token）
      */
     @PreAuthorize("@securityAuthorizationService.hasPermission('monitor:online:forceLogout')")
     @Log(title = "在线用户", businessType = BusinessType.FORCE)
     @RepeatSubmit()
     @DeleteMapping("/{tokenId}")
     public ApiResult<Void> forceLogout(@PathVariable String tokenId) {
-        tokenService.revoke(tokenId);
+        tokenStore.revoke(null, tokenId);
         return ApiResult.ok();
     }
 
@@ -103,39 +87,51 @@ public class SysUserOnlineController extends BaseController {
         SecurityTokenAuthentication authentication = currentUserService.getAuthentication();
         Set<String> tokenDigests = tokenStore.findTokenDigestsByLoginId(authentication.session().getLoginId());
         Map<String, SecurityTokenSession> sessionsByDigest = tokenStore.findByDigests(tokenDigests);
-        List<UserOnlineDTO> userOnlineDTOList = tokenDigests.stream()
-            .map(sessionsByDigest::get)
-            .filter(this::isActive)
-            .map(this::resolveOnlineUser)
-            .filter(Objects::nonNull)
-            .collect(Collectors.toList());
-        //复制和处理 SysUserOnline 对象列表
-        Collections.reverse(userOnlineDTOList);
-        userOnlineDTOList.removeAll(Collections.singleton(null));
-        List<SysUserOnline> userOnlineList = BeanUtil.copyToList(userOnlineDTOList, SysUserOnline.class);
+        List<SysUserOnline> userOnlineList = toOnlineList(tokenDigests, sessionsByDigest);
+        Collections.reverse(userOnlineList);
         return TableDataInfo.build(userOnlineList);
     }
 
     /**
      * 强退当前在线设备
      *
-     * @param tokenId token值
+     * @param tokenId 会话摘要（列表返回的 tokenId，不是原始 access token）
      */
     @Log(title = "在线设备", businessType = BusinessType.FORCE)
     @RepeatSubmit()
     @DeleteMapping("/myself/{tokenId}")
     public ApiResult<Void> remove(@PathVariable("tokenId") String tokenId) {
         SecurityTokenAuthentication authentication = currentUserService.getAuthentication();
-        String tokenDigest = tokenService.digest(tokenId);
-        tokenStore.findByDigest(tokenDigest)
+        tokenStore.findByDigest(tokenId)
             .filter(session -> StringUtils.equals(authentication.session().getLoginId(), session.getLoginId()))
-            .ifPresent(session -> tokenService.revoke(tokenId));
+            .ifPresent(session -> tokenStore.revoke(null, tokenId));
         return ApiResult.ok();
     }
 
     private boolean isActive(SecurityTokenSession session) {
         long now = System.currentTimeMillis();
         return session != null && !session.isExpired(now) && !session.isActiveExpired(now);
+    }
+
+    /**
+     * 组装在线会话；tokenId 只暴露会话摘要，避免原始 access token 经监控接口泄露导致会话被接管
+     */
+    private List<SysUserOnline> toOnlineList(Collection<String> digests, Map<String, SecurityTokenSession> sessionsByDigest) {
+        List<SysUserOnline> result = new ArrayList<>();
+        for (String digest : digests) {
+            SecurityTokenSession session = sessionsByDigest.get(digest);
+            if (!isActive(session)) {
+                continue;
+            }
+            UserOnlineDTO onlineUser = resolveOnlineUser(session);
+            if (onlineUser == null) {
+                continue;
+            }
+            SysUserOnline online = BeanUtil.copyProperties(onlineUser, SysUserOnline.class);
+            online.setTokenId(digest);
+            result.add(online);
+        }
+        return result;
     }
 
     private UserOnlineDTO resolveOnlineUser(SecurityTokenSession session) {

@@ -209,4 +209,10 @@ class SysClientServiceImplTest {
             assertEquals("password,client_credentials", captor.getValue().getGrantType());
         }
     }
+
+    @Test
+    @DisplayName("queryByClientId: should not cache missing clients for arbitrary pre-login clientId input")
+    void queryByClientIdShouldNotCacheNull() throws Exception {
+        CacheUnlessAssertions.assertSkipsCaching(SysClientServiceImpl.class, "queryByClientId", String.class, null, new SysClientVo());
+    }
 }

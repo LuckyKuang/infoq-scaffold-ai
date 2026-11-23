@@ -12,6 +12,7 @@
 - [`pages`](./pages/README.md)：登录、首页、系统管理、监控与错误页。
 - `layouts`：主布局、标签页栏、设置抽屉、keep-alive 壳。
 - `components`：通用桥接组件、错误边界、内链等。
+- `hooks`：共享 hooks（当前为 `useDictOptions`；字典增删改与刷新缓存后调用其导出的 `clearDictCache`，请求失败不缓存）。
 - `utils`：请求、鉴权、缓存、加密、SSE、WebSocket 与权限辅助。
 
 ## 3. 子模块职责摘要

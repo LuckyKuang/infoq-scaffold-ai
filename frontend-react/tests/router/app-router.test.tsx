@@ -6,6 +6,7 @@ vi.mock('@/pages/forgot-password', () => ({
 }));
 
 const { default: AppRouter } = await import('@/router/AppRouter');
+const { getCurrentFullPath } = await import('@/utils/router-utils');
 
 describe('router/AppRouter', () => {
   afterEach(() => {
@@ -33,5 +34,17 @@ describe('router/AppRouter', () => {
     render(<AppRouter />);
     expect(await screen.findByText('Forgot Password Route')).toBeInTheDocument();
     expect(window.location.pathname).toBe(pathname);
+  });
+
+  it.each(['/', '/admin/team/'])('exposes the basename-free current path with search and hash under %s', async (base) => {
+    vi.stubEnv('BASE_URL', base);
+    window.history.replaceState({}, '', `${base}forgot-password?from=a&x=1#top`);
+
+    render(<AppRouter />);
+
+    expect(await screen.findByText('Forgot Password Route')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(getCurrentFullPath()).toBe('/forgot-password?from=a&x=1#top');
+    });
   });
 });

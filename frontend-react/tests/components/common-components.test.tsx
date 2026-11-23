@@ -24,8 +24,8 @@ describe('components/common', () => {
   it('calls page change callback', () => {
     const onPageChange = vi.fn();
     render(<Pagination total={100} page={1} limit={10} onPageChange={onPageChange} />);
-    fireEvent.click(screen.getByTitle('2'));
-    expect(onPageChange).toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Page 2' }));
+    expect(onPageChange).toHaveBeenCalledWith({ page: 2, limit: 10 });
   });
 
   it('toggles search from RightToolbar', () => {

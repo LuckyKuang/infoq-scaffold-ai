@@ -20,10 +20,10 @@
 - 认证：`AuthStrategy`、`PasswordAuthStrategy`、`EmailAuthStrategy`、`WechatMiniAppAuthStrategy`、`SysLoginServiceImpl`
 - 身份关系：`SysOauthIdentityController`、`SysOauthIdentityServiceImpl`、`SysOauthLoginServiceImpl`；绑定只接受后端签发的一次性 ticket，解绑由当前登录用户和最后凭证规则共同校验
 - 消息盒子：`SysMessageController`、`SysMessageServiceImpl`、`SysMessagePushListener`、`SysMessageCleanupTaskHandler`；`SysNoticeServiceImpl` 在公告事务内批量创建接收人记录，Push 仅在提交后异步尝试
-- 用户与权限：`SysUserServiceImpl`、`SysRoleServiceImpl`、`SysMenuServiceImpl`、`SysPermissionServiceImpl`
+- 用户与权限：`SysUserServiceImpl`、`SysRoleServiceImpl`、`SysMenuServiceImpl`、`SysPermissionServiceImpl`；删除用户时同事务物理删除其 `sys_oauth_identity` 绑定，角色授权/取消授权接口拒绝操作超级管理员角色
 - 参数配置：`SysConfigServiceImpl` 负责 `configKey -> configValue` 读取、类型化配置面板、恢复默认、排序和账号敏感配置保护
 - 监控：`ServerMonitorServiceImpl`、`DataSourceMonitorServiceImpl`
-- 调度：`SchedulerApplicationRunner`、`QuartzBootstrapCoordinator`、`SysJobServiceImpl`
+- 调度：`SchedulerApplicationRunner`、`QuartzBootstrapCoordinator`、`SysJobServiceImpl`；`execute` 不包外层事务，任务失败时开始/失败日志不会随异常回滚
 - 插件桥接：`OptionalMailHelper`、`OptionalSseHelper`
 
 ## 4. 上游依赖

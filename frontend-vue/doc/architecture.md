@@ -105,7 +105,7 @@ const modules = import.meta.glob('./../../views/**/*.vue')
 
 - 补 `Authorization` 与 `clientid`
 - GET 参数串行化
-- 500ms 内重复提交拦截
+- 500ms 内重复提交拦截（最近一次请求仅存模块内存，不落 sessionStorage；`FormData` 不参与）
 - 401 与原请求 Bearer 相关后立即清理和路由跳转
 - 下载流处理
 

@@ -7,6 +7,7 @@ import { getType, optionselect as getDictTypeOptions } from '@/api/system/dict/t
 import type { DictTypeVO } from '@/api/system/dict/type/types';
 import { addData, delData, getData, listData, updateData } from '@/api/system/dict/data';
 import type { DictDataForm, DictDataQuery, DictDataVO } from '@/api/system/dict/data/types';
+import { clearDictCache } from '@/hooks/useDictOptions';
 import Pagination from '@/components/Pagination';
 import RightToolbar from '@/components/RightToolbar';
 import DictTag from '@/components/DictTag';
@@ -211,6 +212,7 @@ export default function DictDataPage() {
       return;
     }
     await delData(target);
+    clearDictCache(query.dictType);
     modal.msgSuccess('删除成功');
     setSelectedIds([]);
     loadList(query);
@@ -225,6 +227,7 @@ export default function DictDataPage() {
       } else {
         await addData(values);
       }
+      clearDictCache(query.dictType);
       modal.msgSuccess('操作成功');
       setDialogOpen(false);
       loadList(query);

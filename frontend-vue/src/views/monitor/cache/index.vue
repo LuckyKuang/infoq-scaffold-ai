@@ -133,12 +133,26 @@ const commandstats = ref();
 const usedmemory = ref();
 const { proxy } = getCurrentInstance() as ComponentInternalInstance;
 
+const charts: ReturnType<typeof init>[] = [];
+let unmounted = false;
+
+const resizeCharts = () => {
+  charts.forEach((chart) => chart.resize());
+};
+
 const getList = async () => {
   proxy?.$modal.loading('正在加载缓存监控数据，请稍候！');
-  const res = await getCache();
-  proxy?.$modal.closeLoading();
+  let res: Awaited<ReturnType<typeof getCache>>;
+  try {
+    res = await getCache();
+  } finally {
+    proxy?.$modal.closeLoading();
+  }
+  // 请求期间页面已卸载时不再初始化图表，否则会泄漏无人释放的实例。
+  if (unmounted) return;
   cache.value = res.data;
   const commandstatsIntance = init(commandstats.value, 'macarons');
+  charts.push(commandstatsIntance);
   commandstatsIntance.setOption({
     tooltip: {
       trigger: 'item',
@@ -158,6 +172,7 @@ const getList = async () => {
     ]
   });
   const usedmemoryInstance = init(usedmemory.value, 'macarons');
+  charts.push(usedmemoryInstance);
   usedmemoryInstance.setOption({
     tooltip: {
       formatter: '{b} <br/>{a} : ' + cache.value.info.used_memory_human
@@ -180,13 +195,18 @@ const getList = async () => {
       }
     ]
   });
-  window.addEventListener('resize', () => {
-    commandstatsIntance.resize();
-    usedmemoryInstance.resize();
-  });
 };
 
 onMounted(() => {
-  getList();
+  window.addEventListener('resize', resizeCharts);
+  // 返回 Promise 让 Vue 钩子错误处理接管失败，避免未处理的 rejection。
+  return getList();
+});
+
+onBeforeUnmount(() => {
+  unmounted = true;
+  window.removeEventListener('resize', resizeCharts);
+  charts.forEach((chart) => chart.dispose());
+  charts.length = 0;
 });
 </script>

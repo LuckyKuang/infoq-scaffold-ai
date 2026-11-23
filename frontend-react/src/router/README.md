@@ -6,7 +6,7 @@
 
 ## 2. 子模块清单
 
-- `AppRouter.tsx`：固定路由树与外层 `BrowserRouter` 壳。
+- `AppRouter.tsx`：固定路由树与外层 `BrowserRouter` 壳；`RouterEffects` 把当前 fullPath 同步给 `utils/router-utils`，供 401 重登弹窗保留 redirect。
 - `AuthGuard.tsx`：登录态检查、用户信息初始化、动态路由装配引导、实时通道恢复与初始化失败清理。
 - `public-routes.ts`：登录前公开路由白名单匹配。
 - `BackendRouteView.tsx`：后端组件名到真实页面组件的解析与 tags view 同步。

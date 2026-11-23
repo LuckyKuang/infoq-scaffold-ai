@@ -3,7 +3,7 @@ schema: spec-driven
 # InfoQ-Scaffold-AI 项目上下文（创建 change 时展示给 AI）
 context: |
   技术栈与工作区：
-  - backend：Spring Boot 4.1.1 多模块后端（JDK 21、MyBatis-Plus、
+  - backend：Spring Boot 4.2.0 多模块后端（JDK 21、MyBatis-Plus、
     Spring Security、Redisson、官方默认 Tomcat 容器）
   - frontend-react：React 19 + Ant Design 管理端
   - frontend-vue：Vue 3 + Element Plus 管理端

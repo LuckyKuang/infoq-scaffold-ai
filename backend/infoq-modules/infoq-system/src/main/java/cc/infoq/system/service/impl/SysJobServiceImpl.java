@@ -179,7 +179,7 @@ public class SysJobServiceImpl implements SysJobService, ManagedQuartzJobExecuto
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
+    // 不能加外层事务：失败时会连同开始/失败日志一并回滚；任务处理器自行声明所需事务
     public void execute(ManagedQuartzTaskPayload payload) {
         SysJob entity = requiredEntity(payload.getJobId());
         long startNanos = System.nanoTime();

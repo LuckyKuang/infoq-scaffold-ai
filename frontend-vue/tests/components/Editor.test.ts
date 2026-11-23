@@ -201,6 +201,21 @@ describe('components/Editor', () => {
     expect(editorMocks.modalMsgError).toHaveBeenCalledWith('上传文件失败');
   });
 
+  it('closes the loading opened before upload when the upload fails', () => {
+    const wrapper = mountEditor();
+    const uploadProps = wrapper.findComponent(ElUploadStub).props() as {
+      beforeUpload: (file: File) => boolean;
+      onError: (err: unknown) => void;
+    };
+    expect(uploadProps.beforeUpload(new File(['png'], 'valid.png', { type: 'image/png' }))).toBe(true);
+    expect(editorMocks.modalCloseLoading).not.toHaveBeenCalled();
+
+    uploadProps.onError(new Error('upload failed'));
+
+    expect(editorMocks.modalCloseLoading).toHaveBeenCalledTimes(1);
+    expect(editorMocks.modalMsgError).toHaveBeenCalledWith('上传文件失败');
+  });
+
   it('hides url uploader when type is not url', () => {
     const wrapper = mountEditor({
       type: 'base64'

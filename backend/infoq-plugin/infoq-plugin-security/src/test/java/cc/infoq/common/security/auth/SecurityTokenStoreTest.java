@@ -129,8 +129,23 @@ class SecurityTokenStoreTest {
         verify(batch).getBucket(store.sessionKey("digest-missing"));
         verify(batchBucket, times(3)).deleteAsync();
         verify(batchBucket).setAsync(eq(Boolean.TRUE), any(Duration.class));
+        verify(batch, never()).getBucket(store.revokedKey("digest-missing"));
+        verify(batchBucket, never()).setAsync(Boolean.TRUE);
         verify(batchSet, times(2)).removeAsync("digest-1");
         verify(batch).execute();
+    }
+
+    @Test
+    @DisplayName("revoke: should not leave a permanent revoked marker when the session already expired")
+    void revokeShouldNotWritePermanentMarkerForMissingSession() {
+        SecurityTokenStore store = new SecurityTokenStore();
+        when(bucket.get()).thenReturn(null);
+
+        assertFalse(store.revoke(null, "digest-gone"));
+
+        verify(redissonClient, never()).getBucket(store.revokedKey("digest-gone"));
+        verify(bucket, never()).set(Boolean.TRUE);
+        verify(redissonClient, atLeastOnce()).getBucket(store.sessionKey("digest-gone"));
     }
 
     @Test

@@ -1,6 +1,7 @@
 package cc.infoq.system.service.impl;
 
 import cc.infoq.common.constant.CacheNames;
+import cc.infoq.common.constant.SystemConstants;
 import cc.infoq.common.exception.ServiceException;
 import cc.infoq.common.json.utils.JsonUtils;
 import cc.infoq.common.mybatis.core.page.PageQuery;
@@ -159,6 +160,10 @@ public class SysOssConfigServiceImpl implements SysOssConfigService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public int updateOssConfigStatus(SysOssConfigBo bo) {
+        // 该接口语义是“切换默认配置”；停用默认配置会留下没有启用项而 Redis 仍指向它的不一致状态
+        if (!SystemConstants.NORMAL.equals(bo.getStatus())) {
+            throw new ServiceException("不能直接停用默认OSS配置，请启用其他配置以切换默认");
+        }
         SysOssConfig sysOssConfig = MapstructUtils.convert(bo, SysOssConfig.class);
         int row = sysOssConfigMapper.update(null, new LambdaUpdateWrapper<SysOssConfig>()
             .set(SysOssConfig::getStatus, "1"));

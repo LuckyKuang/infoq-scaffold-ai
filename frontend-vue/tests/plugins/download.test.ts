@@ -134,6 +134,47 @@ describe('plugins/download', () => {
     expect(close).toHaveBeenCalled();
   });
 
+  it.each(['oss', 'zip'] as const)(
+    'surfaces the backend error before closing the loading for %s and handles unparsable error bodies',
+    async (kind) => {
+      const events: string[] = [];
+      const close = vi.fn(() => events.push('close'));
+      loadingServiceMock.mockReturnValue({ close });
+      messageMock.error.mockImplementation(() => events.push('message'));
+      downloadMocks.blobValidate.mockReturnValue(false);
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const run = () => (kind === 'oss' ? downloadPlugin.oss(1) : downloadPlugin.zip('/x', 'x.zip'));
+
+      downloadMocks.axios.mockResolvedValueOnce({ data: { text: () => Promise.resolve('{"code":"500","msg":"导出失败"}') }, headers: {} });
+      await run();
+      expect(events).toEqual(['message', 'close']);
+      expect(messageMock.error).toHaveBeenCalledWith('导出失败');
+
+      // 非 JSON 错误体：printErrMsg 的失败必须被捕获并给出通用错误，而不是未处理 rejection。
+      events.length = 0;
+      downloadMocks.axios.mockResolvedValueOnce({ data: { text: () => Promise.resolve('<html>') }, headers: {} });
+      await run();
+      expect(messageMock.error).toHaveBeenLastCalledWith('下载文件出现错误，请联系管理员！');
+      expect(events).toEqual(['message', 'close']);
+      consoleErrorSpy.mockRestore();
+    }
+  );
+
+  it('refuses to save an oss file named "undefined" when the download-filename header is missing', async () => {
+    const close = vi.fn();
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    loadingServiceMock.mockReturnValueOnce({ close });
+    downloadMocks.blobValidate.mockReturnValue(true);
+    downloadMocks.axios.mockResolvedValueOnce({ data: new Blob(['x']), headers: {} });
+
+    await downloadPlugin.oss(7);
+
+    expect(downloadMocks.saveAs).not.toHaveBeenCalled();
+    expect(messageMock.error).toHaveBeenCalledWith('下载失败：服务端未返回文件名');
+    expect(close).toHaveBeenCalledTimes(1);
+    consoleErrorSpy.mockRestore();
+  });
+
   it('shows error message when download throws', async () => {
     const close = vi.fn();
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});

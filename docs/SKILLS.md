@@ -98,6 +98,9 @@ node tools/openspec_check.mjs <change-id>
 | `tools/lib/skill_runtime.mjs` | repo root 解析、`tmp/` 路径、命令执行、进程管理、HTTP/文件辅助等通用运行时能力 | 多数 repo-level skills 与脚本 |
 | `tools/lib/admin_dev_stack.mjs` | 本地 admin backend + frontend 栈的启动、停止、状态文件、日志与端口收口管理 | `test-cli` 的 `run_admin_e2e.mjs` / `run_admin_crud_e2e.mjs` |
 | `tools/lib/backend_login.mjs` | 共享登录请求加密：AES-256-ECB/PKCS7 载荷与 RSA 头密钥；不发起登录或解析 token | `test-cli` 的验证码种子登录与 `tools/verify/smoke_checks.mjs` |
+| `tools/lib/browser_session.mjs` | 经 CSRF 引导与显式 Bearer 绑定，为浏览器上下文建立同源 HttpOnly 恢复会话；access token 不进入浏览器存储或日志 | `test-cli` 的 `playwright_core.mjs` / `run_admin_crud_e2e.mjs` 与 `tools/verify/linux_acceptance.mjs` |
+| `tools/lib/browser_evidence.mjs` | 浏览器诊断证据脱敏：把已知 token 及其编码形式替换为 `[redacted-token]` | `test-cli` 的 `playwright_core.mjs` / `run_admin_crud_e2e.mjs` |
+| `tools/lib/release_version.mjs` | 发布版本契约：仅解析 `x.y.z` / `x.y.z-rcN`，提供 tag 解析与数值比较 | `release-cli` 脚本、`tools/check_release_version.mjs` |
 
 维护约束：
 
@@ -249,7 +252,7 @@ node skills/push-cli/scripts/test_push_cli.mjs
 - `submit-pr` = 本地校验矩阵 -> 提交 -> 推送 -> 创建或复用 PR -> 自动 `watch`；失败时输出失败 check 与失败日志摘要，修复后重跑即复用同一 PR。
 - `merge` 需要全绿 + 显式 `--execute --yes`；禁止 `--admin` 绕过保护。
 - Git remote 必须具有指向同一仓库的唯一 fetch/push URL，gh 使用显式相同仓库，拒绝内嵌凭据或多目标。`--json` 仅用于 `status`；`check` 不接受 `--dry-run`，它会实际执行所选本地矩阵。
-- 校验矩阵：`docs`（UTF-8、README 同步、版本一致性、文档链接、AGENTS 校验、active change 的 OpenSpec 校验）、`ci`（精确对齐 `.github/workflows/ci.yml`：仓库门禁 + 双管理端 lint/test/build + 后端 `clean package -P dev`，不含 agents/openspec）、`full`（docs + ci）。
+- 校验矩阵：`docs`（UTF-8、README 同步、版本一致性、文档链接、AGENTS 校验、active change 的 OpenSpec 校验）、`ci`（对齐 `.github/workflows/ci.yml` 的本地可跑部分：仓库门禁 + 发布工具与固定 Maven 安装器回归 + 双管理端 lint/test/build + 后端 `clean package` 的 `-P dev` 与 `-P prod` 两轮，不含 agents/openspec，也不含 Node CLI 三平台矩阵）、`full`（docs + ci）。
 - 证据写入 `tmp/push-cli/<run-id>/`。
 
 ### 8.8 版本与 Release（release-cli）
