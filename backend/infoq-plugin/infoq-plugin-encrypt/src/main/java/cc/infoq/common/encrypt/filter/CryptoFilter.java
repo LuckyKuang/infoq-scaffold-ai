@@ -56,8 +56,15 @@ public class CryptoFilter implements Filter {
             // 是否存在加密标头
             String headerValue = servletRequest.getHeader(properties.getHeaderFlag());
             if (StringUtils.isNotBlank(headerValue)) {
-                // 请求解密
-                requestWrapper = new DecryptRequestBodyWrapper(servletRequest, properties.getPrivateKey(), properties.getHeaderFlag());
+                // 请求解密；客户端密文或密钥头损坏属于参数错误，不能作为未处理异常抛出过滤器
+                try {
+                    requestWrapper = new DecryptRequestBodyWrapper(servletRequest, properties.getPrivateKey(), properties.getHeaderFlag());
+                } catch (RuntimeException e) {
+                    log.warn("请求解密失败, uri={}, type={}", servletRequest.getRequestURI(), e.getClass().getSimpleName());
+                    exceptionResolver.resolveException(servletRequest, servletResponse, null,
+                        new ServiceException("请求解密失败，请检查加密参数", HttpStatus.BAD_REQUEST));
+                    return;
+                }
             } else {
                 // 是否有注解，有就报错，没有放行
                 if (ObjectUtil.isNotNull(apiEncrypt)) {

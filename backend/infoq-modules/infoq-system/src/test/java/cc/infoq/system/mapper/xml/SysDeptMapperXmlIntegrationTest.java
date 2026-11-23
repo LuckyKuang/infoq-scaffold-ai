@@ -23,4 +23,11 @@ class SysDeptMapperXmlIntegrationTest {
         assertThat(normal).containsExactly(100L, 101L);
         assertThat(strict).containsExactly(101L);
     }
+
+    @Test
+    void selectDeptListByRoleIdShouldIncludeDisabledRoleForEditTree() {
+        // role 11 为停用角色：编辑角色时必须回显其已有自定义数据权限部门，否则保存会清空授权
+        assertThat(sysDeptMapper.selectDeptListByRoleId(11L, false)).containsExactly(101L, 102L);
+        assertThat(sysDeptMapper.selectDeptListByRoleId(11L, true)).containsExactly(101L, 102L);
+    }
 }

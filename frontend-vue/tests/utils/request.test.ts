@@ -107,6 +107,9 @@ const fileSaverMock = FileSaver as unknown as {
 };
 
 describe('utils/request', () => {
+  // 请求拦截器成功时同步返回 config、重复提交时返回 rejected Promise，统一成 Promise 便于断言。
+  const submit = (config: RequestConfig) => Promise.resolve(requestHandler(config));
+
   beforeEach(() => {
     vi.clearAllMocks();
     vi.unstubAllEnvs();
@@ -149,7 +152,7 @@ describe('utils/request', () => {
     } as RequestConfig;
 
     await requestHandler(config);
-    await expect(requestHandler(config)).rejects.toThrow('数据正在处理，请勿重复提交');
+    await expect(submit(config)).rejects.toThrow('数据正在处理，请勿重复提交');
   });
 
   it.each(['/auth/login', '/auth/oauth/ticket'])('does not cache credentials from %s when repeatSubmit is false', async (url) => {
@@ -158,26 +161,63 @@ describe('utils/request', () => {
     expect(window.sessionStorage.getItem('sessionObj')).toBeNull();
   });
 
-  it('updates repeat-submit cache when same request is sent after interval', async () => {
+  it('keeps the duplicate-submit record in memory and never persists the request body to sessionStorage', async () => {
+    const sessionSetItem = vi.spyOn(window.sessionStorage, 'setItem');
+    const localSetItem = vi.spyOn(window.localStorage, 'setItem');
+    await requestHandler({ method: 'post', url: '/system/user/resetPwd', headers: {}, data: { password: 'Secret#123' } } as RequestConfig);
+
+    expect(sessionSetItem).not.toHaveBeenCalled();
+    expect(localSetItem).not.toHaveBeenCalled();
+    expect(window.sessionStorage.getItem('sessionObj')).toBeNull();
+  });
+
+  it('removes a legacy sessionObj left by an older build when the module loads', async () => {
+    window.sessionStorage.setItem('sessionObj', JSON.stringify({ url: '/x', data: '{"password":"old"}', time: 1 }));
+    vi.resetModules();
+    await import('@/utils/request');
+    expect(window.sessionStorage.getItem('sessionObj')).toBeNull();
+  });
+
+  it('allows the same request after the interval and keeps blocking inside it', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-03-08T00:00:00.000Z'));
-
     const config = {
-      method: 'post',
-      url: '/system/user',
+      method: 'put',
+      url: '/system/role',
       headers: {},
-      data: { userName: 'alice' }
+      data: { roleName: 'ops' }
     } as RequestConfig;
 
     await requestHandler(config);
-    const firstSessionObj = JSON.parse(window.sessionStorage.getItem('sessionObj') as string);
+    vi.advanceTimersByTime(499);
+    await expect(submit(config)).rejects.toThrow('数据正在处理，请勿重复提交');
 
-    vi.advanceTimersByTime(600);
-    await requestHandler(config);
-    const secondSessionObj = JSON.parse(window.sessionStorage.getItem('sessionObj') as string);
-
-    expect(secondSessionObj.time).toBeGreaterThan(firstSessionObj.time);
+    // 被拦截的重复请求不会刷新记录：距首次提交满 500ms 即放行。
+    vi.advanceTimersByTime(1);
+    await expect(submit(config)).resolves.toBeTruthy();
+    vi.advanceTimersByTime(499);
+    await expect(submit(config)).rejects.toThrow('数据正在处理，请勿重复提交');
     vi.useRealTimers();
+  });
+
+  it('treats a different url or body as a new submission', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-04-08T00:00:00.000Z'));
+    await requestHandler({ method: 'post', url: '/system/dept', headers: {}, data: { a: 1 } } as RequestConfig);
+    await expect(submit({ method: 'post', url: '/system/dept', headers: {}, data: { a: 2 } } as RequestConfig)).resolves.toBeTruthy();
+    await expect(submit({ method: 'post', url: '/system/post', headers: {}, data: { a: 2 } } as RequestConfig)).resolves.toBeTruthy();
+    vi.useRealTimers();
+  });
+
+  it('does not treat consecutive FormData uploads as duplicate submissions', async () => {
+    const first = new FormData();
+    first.append('file', new File(['a'], 'a.png'));
+    const second = new FormData();
+    second.append('file', new File(['b'], 'b.png'));
+
+    await expect(submit({ method: 'post', url: '/resource/oss/upload', headers: {}, data: first } as RequestConfig)).resolves.toBeTruthy();
+    await expect(submit({ method: 'post', url: '/resource/oss/upload', headers: {}, data: second } as RequestConfig)).resolves.toBeTruthy();
+    await expect(submit({ method: 'post', url: '/resource/oss/upload', headers: {}, data: second } as RequestConfig)).resolves.toBeTruthy();
   });
 
   it('skips token injection and strips content-type for form data', async () => {
@@ -295,7 +335,7 @@ describe('utils/request', () => {
     await Promise.resolve();
     expect(requestMocks.invalidateSession).toHaveBeenCalledTimes(1);
     expect(requestMocks.logout).not.toHaveBeenCalled();
-    expect(requestMocks.router.replace).toHaveBeenCalledWith({ path: '/login', query: { redirect: encodeURIComponent('/system/user?tab=1') } });
+    expect(requestMocks.router.replace).toHaveBeenCalledWith({ path: '/login', query: { redirect: '/system/user?tab=1' } });
     expect(isRelogin.show).toBe(false);
   });
 

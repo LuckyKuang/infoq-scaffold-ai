@@ -1,6 +1,7 @@
 package cc.infoq.system.service.impl;
 
 import cc.infoq.common.constant.CacheNames;
+import cc.infoq.common.redis.utils.CacheUtils;
 import cc.infoq.common.domain.dto.OssDTO;
 import cc.infoq.common.exception.ServiceException;
 import cc.infoq.common.json.utils.JsonUtils;
@@ -268,7 +269,10 @@ public class SysOssServiceImpl implements SysOssService, OssService {
             OssClient storage = OssFactory.instance(sysOss.getService());
             storage.delete(sysOss.getUrl());
         }
-        return sysOssMapper.deleteByIds(ids) > 0;
+        boolean deleted = sysOssMapper.deleteByIds(ids) > 0;
+        // getById 按 ossId 缓存；不清理会让已删除文件在缓存 TTL 内仍可被查询/下载
+        ids.forEach(id -> CacheUtils.evict(CacheNames.SYS_OSS, id));
+        return deleted;
     }
 
     /**

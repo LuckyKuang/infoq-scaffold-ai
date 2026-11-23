@@ -11,6 +11,8 @@
 - [`store`](./store/README.md)：用户、权限、标签页、设置、字典与通知状态。
 - [`views`](./views/README.md)：登录、首页、系统管理、监控与错误页。
 - `layout`：主布局、侧栏、导航栏、设置、标签页等壳层。
+- `components`：Breadcrumb、DictTag、Editor、FileUpload、Pagination 等通用组件。
+- `directive`：`main.ts` 经 `directive(app)` 注册的自定义指令（`common`、`permission`）。
 - `plugins`：auth、cache、download、modal、svgicon、tab 等全局插件。
 - `utils`：请求、鉴权、缓存、加密、SSE、WebSocket、字典、主题辅助。
 
@@ -51,7 +53,7 @@ main.ts
 
 ## 7. 已知边界
 
-- `layout`、`plugins`、`utils` 当前没有单独 README；需要深入时直接看源码文件。
+- `layout`、`components`、`directive`、`plugins`、`utils` 当前没有单独 README；需要深入时直接看源码文件。
 - 这里只做 `src/` 聚合，不代替下级目录的详细说明。
 
 ## 8. 下钻阅读路径

@@ -101,7 +101,8 @@ public class SysDictTypeServiceImpl implements SysDictTypeService, DictService {
      * @param dictType 字典类型
      * @return 字典数据集合信息
      */
-    @Cacheable(cacheNames = CacheNames.SYS_DICT, key = "#dictType")
+    // 缓存已开启 null 值存储，不排除 null 会让任意未知字典类型都在 Redis 中留下一条缓存记录
+    @Cacheable(cacheNames = CacheNames.SYS_DICT, key = "#dictType", unless = "#result == null")
     @Override
     public List<SysDictDataVo> selectDictDataByType(String dictType) {
         List<SysDictDataVo> dictDatas = sysDictDataMapper.selectDictDataByType(dictType);
@@ -280,6 +281,10 @@ public class SysDictTypeServiceImpl implements SysDictTypeService, DictService {
         List<SysDictDataVo> list = SpringUtils.getAopProxy(this).selectDictDataByType(dictType);
         // 保证顺序
         LinkedHashMap<String, String> map = new LinkedHashMap<>();
+        // selectDictDataByType 对不存在/无数据的字典类型返回 null
+        if (CollUtil.isEmpty(list)) {
+            return map;
+        }
         for (SysDictDataVo vo : list) {
             map.put(vo.getDictValue(), vo.getDictLabel());
         }

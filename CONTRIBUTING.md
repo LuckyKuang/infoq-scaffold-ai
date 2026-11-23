@@ -22,8 +22,8 @@ that launcher, or install the pinned pnpm directly with
 `npm install --global pnpm@10.34.1`. If a Corepack shim is already available, activate it with
 `corepack prepare pnpm@10.34.1 --activate`, then verify `pnpm -v` before
 installing. Run `corepack pnpm` when the shell shim has not yet been refreshed.
-pnpm 10 blocks dependency build scripts by default; the workspaces allowlist
-only `@parcel/watcher` and `esbuild`. Backend dependency changes belong in
+pnpm 10 blocks dependency build scripts by default; `frontend-vue` allowlists
+only `@parcel/watcher`, and `frontend-react` only `@parcel/watcher` and `esbuild`. Backend dependency changes belong in
 Maven POMs; do not invent extra lockfiles.
 
 ## Development Checks

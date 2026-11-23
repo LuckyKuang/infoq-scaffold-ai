@@ -66,7 +66,7 @@ export default function InvitePage() {
   const dict = useDictOptions('sys_invite_code_status');
 
   const loadList = useCallback(
-    async (nextQuery: InviteCodeQuery = query, nextRange: [Dayjs, Dayjs] | null = dateRange) => {
+    async (nextQuery: InviteCodeQuery, nextRange: [Dayjs, Dayjs] | null) => {
       setLoading(true);
       try {
         const response = await listInvite(addDateRange({ ...nextQuery }, formatRange(nextRange)));
@@ -76,7 +76,7 @@ export default function InvitePage() {
         setLoading(false);
       }
     },
-    [dateRange, query]
+    []
   );
 
   useEffect(() => {

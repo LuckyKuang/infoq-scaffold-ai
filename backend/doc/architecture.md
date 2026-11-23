@@ -77,6 +77,9 @@ flowchart TB
     ssePlugin --> securityPlugin
     websocketPlugin --> securityPlugin
 
+    mybatisPlugin --> securityPlugin
+    logPlugin --> securityPlugin
+
     data --> mybatisPlugin
     data --> logPlugin
     data --> sensitivePlugin
@@ -132,7 +135,7 @@ flowchart TB
 [SysAdminApplication](../infoq-admin/src/main/java/cc/infoq/admin/SysAdminApplication.java) 是唯一启动入口：
 
 - 使用 `@SpringBootApplication(scanBasePackages = "cc.infoq")` 收拢所有模块，并排除 `UserDetailsServiceAutoConfiguration`。
-- 应用成功启动后会输出 `backend started successfully`。
+- 应用成功启动后会输出 `infoq-scaffold-backend started successfully`。
 
 ### 3.2 配置分层
 
@@ -167,7 +170,7 @@ flowchart TB
   - `spring.quartz.overwrite-existing-jobs=true`，`jobStore.isClustered=false`。
   - `infoq.quartz.bootstrap` 开发环境差异（`reconcile-enabled=true`、`production-guard-enabled=false`、`marker-enabled=false`）。
   - `mail.enabled=false` 与 SMTP 示例值。
-- [application-prod.yml](../infoq-admin/src/main/resources/application-prod.yml) 补充/覆写生产环境 datasource、Redis、Redisson、`spring.quartz`、`infoq.quartz.bootstrap`、mail。
+- [application-prod.yml](../infoq-admin/src/main/resources/application-prod.yml) 补充/覆写生产环境 graceful shutdown、`api-decrypt` 密钥与 `security.browser-session` 环境注入、七个会话/Push logger 的 INFO 级别、datasource、Redis、Redisson、`spring.quartz`、`infoq.quartz.bootstrap`、mail。
 - `application-local.yml` 的具体覆盖项取决于本机文件，不属于所有 checkout 都具备的配置；运行 local 前须确认文件存在且已随构建打包，或通过外部配置加载。
 
 因此本文档其余章节里出现的"`api-decrypt.enabled=true`"、"`sse.enabled=true`"、"Quartz 表前缀 `QRTZ_`"等具体值，来自通用 `application.yml`；datasource、Redis、Redisson、mail 等连接信息来自当前激活 profile。
@@ -222,9 +225,9 @@ HTTP Request
 
 `infoq-system` 当前按目录把 API 分成三组：
 
-- `controller/login`: 登录、注册、验证码、首页。
-- `controller/system`: 用户、角色、菜单、部门、岗位、配置、通知、字典、OSS、个人资料、客户端等后台管理接口。
-- `controller/monitor`: 在线用户、登录日志、操作日志、缓存、数据源、服务器、任务等运行态接口。
+- `controller/login`: 登录、注册、验证码、OAuth 登录、浏览器恢复会话、首页。
+- `controller/system`: 用户、角色、菜单、部门、岗位、配置、通知、个人消息、邀请码、字典、OSS、个人资料、OAuth 身份关系、客户端等后台管理接口。
+- `controller/monitor`: 在线用户、登录日志、操作日志、缓存、数据源、服务器、任务、健康检查等运行态接口。
 
 ## 5. 安全、权限与数据权限
 
@@ -291,7 +294,7 @@ MyBatis 层由 `MybatisPlusConfig` 注入 `PlusDataPermissionInterceptor` 和 `D
 
 - `GlobalExceptionHandler` 统一处理 `ServiceException`、校验异常、JSON 解析异常、请求体不可读异常、SpEL 异常等。
 - 用户/角色会话撤销的 Redis 失败在 security 边界转换为 common `SecurityDependencyException`，web 显式返回 HTTP/业务码 503；日志只保留 operation、type、requestId，不携原消息或 cause，数据库事务回滚但不复活已撤销 JWT。
-- Spring Security 的 `SecurityAuthenticationEntryPoint` 与 `SecurityAccessDeniedHandler` 统一把未登录和无权限转换成 `401/403` 语义的 `ApiResult`。
+- Spring Security 的 `SecurityAuthenticationEntryPoint` 与 `SecurityAccessDeniedHandler` 统一把未登录和无权限转换成 `401/403` 语义的 `ApiResult`；方法级鉴权在 MVC 内抛出的同类异常由 `SecurityExceptionAdvice`（最高优先级）委托这两个 handler 处理，HTTP 状态同样为 401/403。
 - `application.yml` 显式开启 `fail_on_unknown_properties`，避免前端传错字段时被静默忽略。
 
 SSE 连接断开有独立处理：
@@ -339,7 +342,7 @@ SSE 连接断开有独立处理：
 - SSE：
   `sse.enabled=true`，登录成功后会由 `AuthController` 延迟 5 秒向当前用户推送欢迎消息；真正发送动作通过 `OptionalSseHelper` 反射调用插件能力。
 - 邮件验证码：
-  `CaptchaController` 暴露了 `/resource/email/code`，但真正可用还取决于 `mail.enabled` 和邮件插件是否就绪。
+  `CaptchaController` 暴露了场景化的 `POST /auth/email/code` 与兼容旧客户端的 `GET /resource/email/code`，但真正可用还取决于 `mail.enabled` 和邮件插件是否就绪。
 - WebSocket：
   自动配置类存在，但 `application.yml` 当前 `websocket.enabled=false`。
 

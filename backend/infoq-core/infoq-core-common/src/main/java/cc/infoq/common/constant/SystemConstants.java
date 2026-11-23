@@ -133,8 +133,9 @@ public interface SystemConstants {
     String REGISTER_DEFAULT_POST_CODE = "user";
 
     /**
-     * 排除敏感属性字段
+     * 排除敏感属性字段（操作日志与请求日志不得落盘的口令与凭据）
      */
-    String[] EXCLUDE_PROPERTIES = { "password", "oldPassword", "newPassword", "confirmPassword" };
+    String[] EXCLUDE_PROPERTIES = { "password", "oldPassword", "newPassword", "confirmPassword",
+        "accessKey", "secretKey", "clientSecret" };
 
 }

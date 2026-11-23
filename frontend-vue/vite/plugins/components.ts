@@ -16,6 +16,6 @@ export default (path: PathResolver) => {
         enabledCollections: ['ep']
       })
     ],
-    dts: path.resolve(path.resolve(__dirname, '../../src'), 'types', 'components.d.ts')
+    dts: path.resolve(path.resolve(import.meta.dirname, '../../src'), 'types', 'components.d.ts')
   });
 };

@@ -32,7 +32,7 @@ export default function OnlinePage() {
   const dict = useDictOptions('sys_device_type');
 
   const loadList = useCallback(
-    async (nextQuery: OnlineQuery = query) => {
+    async (nextQuery: OnlineQuery) => {
       setLoading(true);
       try {
         const response = await list(nextQuery);
@@ -52,7 +52,7 @@ export default function OnlinePage() {
         setLoading(false);
       }
     },
-    [query]
+    []
   );
 
   useEffect(() => {
@@ -148,14 +148,14 @@ export default function OnlinePage() {
                   }
                   await forceLogout(record.tokenId);
                   modal.msgSuccess('删除成功');
-                  loadList();
+                  loadList(query);
                 }}
               />
             </Tooltip>
           ) : null
       }
     ],
-    [dict.sys_device_type, loadList, query.pageNum, query.pageSize]
+    [dict.sys_device_type, loadList, query]
   );
 
   return (

@@ -8,4 +8,13 @@
         <id property="identityId" column="identity_id"/>
     </resultMap>
 
+    <!-- 物理删除：唯一索引 (provider_code, provider_key, provider_subject) 不含 del_flag，逻辑删除会让同一第三方账号永远无法重新绑定 -->
+    <delete id="deleteByUserIdsPhysically">
+        delete from sys_oauth_identity
+        where user_id in
+        <foreach collection="userIds" item="userId" open="(" separator="," close=")">
+            #{userId}
+        </foreach>
+    </delete>
+
 </mapper>

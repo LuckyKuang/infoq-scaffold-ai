@@ -1,13 +1,15 @@
 const websocketMocks = vi.hoisted(() => {
   return {
     useWebSocket: vi.fn(),
+    useIntervalFn: vi.fn(),
     getToken: vi.fn(),
     refresh: vi.fn()
   };
 });
 
 vi.mock('@vueuse/core', () => ({
-  useWebSocket: websocketMocks.useWebSocket
+  useWebSocket: websocketMocks.useWebSocket,
+  useIntervalFn: websocketMocks.useIntervalFn
 }));
 
 vi.mock('@/utils/auth', () => ({
@@ -49,7 +51,7 @@ describe('utils/websocket', () => {
       string,
       {
         autoReconnect: { onFailed: () => void; retries: number; delay: number };
-        heartbeat: { interval: number; pongTimeout: number };
+        heartbeat: { scheduler: (cb: () => void) => unknown; pongTimeout: number };
         onMessage: (_ws: unknown, event: { data: string }) => void;
       }
     ];
@@ -57,9 +59,13 @@ describe('utils/websocket', () => {
     expect(options).toEqual(
       expect.objectContaining({
         autoReconnect: expect.objectContaining({ retries: 3, delay: 1000 }),
-        heartbeat: expect.objectContaining({ interval: 10000, pongTimeout: 2000 })
+        heartbeat: expect.objectContaining({ pongTimeout: 2000 })
       })
     );
+
+    const heartbeatCallback = vi.fn();
+    options.heartbeat.scheduler(heartbeatCallback);
+    expect(websocketMocks.useIntervalFn).toHaveBeenCalledWith(heartbeatCallback, 10000, { immediate: false });
 
     options.onMessage({}, { data: '业务通知' });
     expect(websocketMocks.refresh).not.toHaveBeenCalled();

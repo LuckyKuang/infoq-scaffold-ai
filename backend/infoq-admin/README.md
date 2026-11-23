@@ -13,7 +13,7 @@
 
 ## 3. 核心类 / 文件
 
-- `SysAdminApplication`：`@SpringBootApplication(scanBasePackages = "cc.infoq")`，把 `cc.infoq` 下所有模块统一纳入 Spring 容器，并排除 `UserDetailsServiceAutoConfiguration`，避免 token 鉴权下生成默认内存用户。
+- `SysAdminApplication`：`@SpringBootApplication(scanBasePackages = "cc.infoq")`，把 `cc.infoq` 下所有模块统一纳入 Spring 容器，并排除 `UserDetailsServiceAutoConfiguration`，避免 token 鉴权下生成默认内存用户。`main` 另支持唯一参数 `--infoq-bcrypt-hash-stdin`：从 stdin 读取明文密码，向 stdout 输出 BCrypt 哈希后退出，不启动 Spring 容器；部署脚本用它生成管理员密码哈希。
 - `application*.yml`：定义 profile 分层、数据源、Redis、Quartz、mail、SSE、WebSocket、Springdoc 等运行开关。
 - `logback-plus.xml`：文件日志默认写到进程工作目录的 `../logs/`；从 `backend/` 启动时对应仓库根 `logs/`。从仓库根直接启动 jar 时应显式设置 `INFOQ_LOG_PATH`，容器也通过该变量覆盖。
 - `banner.txt`、`i18n/*.properties`、`ip2region_v4.xdb`：启动展示、多语言消息与 IPv4 归属地内置资源。
@@ -55,7 +55,7 @@
 
 ## 10. 已知边界
 
-- 该模块只有一个 Java 源文件，不承载业务 Controller、Service、Mapper。
+- 该模块 `src/main` 只有一个 Java 源文件，不承载业务 Controller、Service、Mapper。
 - 启动后真正的业务逻辑请继续下钻 [`../infoq-modules/infoq-system/README.md`](../infoq-modules/infoq-system/README.md)。
 
 ## 生产安全配置

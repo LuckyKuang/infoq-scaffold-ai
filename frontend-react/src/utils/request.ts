@@ -8,7 +8,7 @@ import { getLanguage } from '@/lang';
 import { getToken } from '@/utils/auth';
 import { decryptBase64, decryptWithAes, encryptBase64, encryptWithAes, generateAesKey } from '@/utils/crypto';
 import { decrypt, encrypt } from '@/utils/jsencrypt';
-import { navigateTo } from '@/utils/router-utils';
+import { getCurrentFullPath, navigateTo } from '@/utils/router-utils';
 import { useUserStore } from '@/store/modules/user';
 import modal from '@/utils/modal';
 
@@ -84,6 +84,10 @@ const service = axios.create({
 
 const request = service as RequestInstance;
 
+let lastSubmit: { url?: string; data: unknown; time: number } | null = null;
+// 旧版本曾把最近一次请求体写入 sessionStorage，启动时清除残留
+cache.session.remove('sessionObj');
+
 service.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     config.headers['Content-Language'] = getLanguage();
@@ -106,20 +110,23 @@ service.interceptors.request.use(
       config.url = url;
     }
 
-    if (!isRepeatSubmit && (config.method === 'post' || config.method === 'put')) {
+    // 请求体可能含密码等敏感字段，最近一次提交只保存在模块内存；FormData 无法按内容判重，直接跳过
+    if (!isRepeatSubmit && (config.method === 'post' || config.method === 'put') && !(config.data instanceof FormData)) {
       const requestObj = {
         url: config.url,
         data: typeof config.data === 'object' ? JSON.stringify(config.data) : config.data,
         time: Date.now()
       };
-      const sessionObj = cache.session.getJSON<{ url: string; data: string; time: number }>('sessionObj');
-      if (sessionObj) {
-        const interval = 500;
-        if (sessionObj.data === requestObj.data && requestObj.time - sessionObj.time < interval && sessionObj.url === requestObj.url) {
-          return Promise.reject(new Error('数据正在处理，请勿重复提交'));
-        }
+      const interval = 500;
+      if (
+        lastSubmit &&
+        lastSubmit.data === requestObj.data &&
+        requestObj.time - lastSubmit.time < interval &&
+        lastSubmit.url === requestObj.url
+      ) {
+        return Promise.reject(new Error('数据正在处理，请勿重复提交'));
       }
-      cache.session.setJSON('sessionObj', requestObj);
+      lastSubmit = requestObj;
     }
 
     if (import.meta.env.VITE_APP_ENCRYPT === 'true' && isEncrypt && (config.method === 'post' || config.method === 'put')) {
@@ -173,6 +180,8 @@ service.interceptors.response.use(
       if (!currentToken || res.config.headers?.Authorization !== `Bearer ${currentToken}`) {
         return Promise.reject(new Error('无效的会话，或者会话已过期，请重新登录。'));
       }
+      // 先于 invalidateSession 捕获当前位置：失效后 AuthGuard 会立即跳转，之后再读就拿不到原页面了
+      const currentPath = getCurrentFullPath();
       useUserStore.getState().invalidateSession();
       if (!isRelogin.show) {
         isRelogin.show = true;
@@ -182,7 +191,10 @@ service.interceptors.response.use(
             return;
           }
           isRelogin.show = false;
-          if (!getToken()) navigateTo('/login');
+          if (!getToken()) {
+            // 已在登录页时沿用其自带的 redirect；否则 redirect 携带原始 fullPath，由 encodeURIComponent 编码一次
+            navigateTo(currentPath.split(/[?#]/, 1)[0] === '/login' ? currentPath : `/login?redirect=${encodeURIComponent(currentPath)}`);
+          }
         });
       }
       return Promise.reject(new Error('无效的会话，或者会话已过期，请重新登录。'));
@@ -223,17 +235,20 @@ service.interceptors.response.use(
   }
 );
 
-export function download(url: string, params: Record<string, unknown>, fileName: string) {
-  return request
-    .post<Blob>(url, params, {
-      transformRequest: [
-        (body: Record<string, unknown>) => {
-          return tansParams(body);
-        }
-      ],
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      responseType: 'blob'
-    })
+export function download(url: string, params: Record<string, unknown>, fileName: string, method: 'get' | 'post' = 'post') {
+  const blobRequest =
+    method === 'get'
+      ? request.get<Blob>(url, { params, responseType: 'blob' })
+      : request.post<Blob>(url, params, {
+          transformRequest: [
+            (body: Record<string, unknown>) => {
+              return tansParams(body);
+            }
+          ],
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          responseType: 'blob'
+        });
+  return blobRequest
     .then(async (blob) => {
       const isBlob = blobValidate(blob);
       if (isBlob) {

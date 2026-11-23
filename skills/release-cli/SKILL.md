@@ -43,6 +43,8 @@ node skills/release-cli/scripts/test_release_policy.mjs
 node tools/test_check_release_version.mjs
 ```
 
+可选参数：`--remote <name>`（默认 `origin`，适用于 `plan`/`tag`/`publish`/`verify`）、`--tag v<version>`（只能等于 `v<version>`，适用于 `tag`/`publish`/`verify`）、`--repo-root <path>`；`plan --json` 输出机器可读结果。
+
 RC 示例：将上述 `--version` 值替换为 `3.0.0-rc1`。部署者在目标环境用受控配置构建，不发布隔离 fixture 的 jar/dist。正式版需后续部署验收与明确发布指令；公开 RC 有缺陷用下一 RC 修复，保留历史。
 
 ## SQL 策略
@@ -67,4 +69,5 @@ RC 示例：将上述 `--version` 值替换为 `3.0.0-rc1`。部署者在目标�
 - 受管文件与断言：`references/targets.md`
 - 发布流程细则：`references/release-flow.md`
 - 版本同步内核：`scripts/bump_version.mjs`、`scripts/test_bump_version.mjs`
+- Release workflow 调用的入口：`scripts/release_policy.mjs`（`classify`/`gate`）、`scripts/verify_release_assets.mjs <asset-directory> --version <version>`，回归测试为 `scripts/test_release_policy.mjs`、`scripts/test_release_assets.mjs`
 - 推送与 PR：`skills/push-cli/SKILL.md`

@@ -5,7 +5,7 @@ import service, { download, isRelogin } from '@/utils/request';
 import modal from '@/utils/modal';
 import { getToken, removeToken, setToken } from '@/utils/auth';
 import { useUserStore } from '@/store/modules/user';
-import { setNavigator } from '@/utils/router-utils';
+import { setCurrentFullPath, setNavigator } from '@/utils/router-utils';
 
 const createResponse = (config: InternalAxiosRequestConfig, data: unknown, headers: Record<string, string> = {}): AxiosResponse => ({
   data,
@@ -43,6 +43,39 @@ describe('utils/request', () => {
     expect(res.code).toBe(200);
     expect(res.data.ok).toBe(true);
     expect(capturedConfig?.headers.clientid).toBe('test-client');
+  });
+
+  it('blocks an identical post within 500ms without persisting the body to sessionStorage', async () => {
+    const sent: string[] = [];
+    (service.defaults as { adapter: unknown }).adapter = async (config: InternalAxiosRequestConfig) => {
+      sent.push(String(config.data));
+      return createResponse(config, { code: 200, data: null });
+    };
+    const body = { userName: 'dup-user', password: 'Secret#123' };
+
+    await service.post('/repeat/guard-json', body);
+    await expect(service.post('/repeat/guard-json', body)).rejects.toThrow('数据正在处理，请勿重复提交');
+
+    expect(sent).toHaveLength(1);
+    expect(JSON.stringify({ ...sessionStorage })).not.toContain('Secret#123');
+    expect(sessionStorage.getItem('sessionObj')).toBeNull();
+  });
+
+  it('never treats two FormData uploads to the same url as duplicates', async () => {
+    let calls = 0;
+    (service.defaults as { adapter: unknown }).adapter = async (config: InternalAxiosRequestConfig) => {
+      calls += 1;
+      return createResponse(config, { code: 200, data: null });
+    };
+    const first = new FormData();
+    first.append('file', new Blob(['a']), 'a.png');
+    const second = new FormData();
+    second.append('file', new Blob(['b']), 'b.png');
+
+    await service.post('/repeat/guard-upload', first);
+    await service.post('/repeat/guard-upload', second);
+
+    expect(calls).toBe(2);
   });
 
   it('rejects malformed api and pagination responses', async () => {
@@ -179,6 +212,39 @@ describe('utils/request', () => {
     setNavigator(() => {});
   });
 
+  it('keeps the original page as a single-encoded redirect when relogin is confirmed', async () => {
+    vi.spyOn(modal, 'confirm').mockResolvedValue(true);
+    const navigate = vi.fn();
+    setNavigator(navigate);
+    setCurrentFullPath('/system/user?name=a b&page=2#top');
+    setToken('expired-token');
+    service.defaults.adapter = async (config) => createResponse(config, { code: 401 });
+
+    await expect(service.get('/expired-session')).rejects.toThrow('无效的会话');
+    await vi.waitFor(() => expect(navigate).toHaveBeenCalledTimes(1));
+
+    const target = navigate.mock.calls[0][0] as string;
+    expect(target).toBe(`/login?redirect=${encodeURIComponent('/system/user?name=a b&page=2#top')}`);
+    // 登录页读取 redirect 时只解码一次，得到原始 fullPath
+    expect(new URLSearchParams(target.split('?')[1]).get('redirect')).toBe('/system/user?name=a b&page=2#top');
+    setNavigator(() => {});
+    setCurrentFullPath('/');
+  });
+
+  it('reuses the login url that already carries a redirect when relogin is confirmed on the login page', async () => {
+    vi.spyOn(modal, 'confirm').mockResolvedValue(true);
+    const navigate = vi.fn();
+    setNavigator(navigate);
+    setCurrentFullPath('/login?redirect=%2Fsystem%2Frole');
+    setToken('expired-token');
+    service.defaults.adapter = async (config) => createResponse(config, { code: 401 });
+
+    await expect(service.get('/expired-session')).rejects.toThrow('无效的会话');
+    await vi.waitFor(() => expect(navigate).toHaveBeenCalledWith('/login?redirect=%2Fsystem%2Frole'));
+    setNavigator(() => {});
+    setCurrentFullPath('/');
+  });
+
   it('encrypts payload when header requires encryption', async () => {
     let capturedConfig: InternalAxiosRequestConfig | null = null;
 
@@ -225,6 +291,25 @@ describe('utils/request', () => {
 
     await download('/download', { id: 1 }, 'hello.txt');
     expect(saveAsSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('downloads via authenticated GET blob request when method is get', async () => {
+    const saveAsSpy = vi.spyOn(FileSaver, 'saveAs').mockImplementation(() => undefined);
+    setToken('download-token');
+    let capturedConfig: InternalAxiosRequestConfig | null = null;
+    (service.defaults as { adapter: unknown }).adapter = async (config: InternalAxiosRequestConfig) => {
+      capturedConfig = config;
+      return createResponse(config, new Blob(['hello'], { type: 'application/octet-stream' }));
+    };
+
+    await download('/resource/oss/download/7', {}, 'avatar.png', 'get');
+
+    const config = capturedConfig as unknown as InternalAxiosRequestConfig;
+    expect(config.method).toBe('get');
+    expect(config.url).toBe('/resource/oss/download/7');
+    expect(config.responseType).toBe('blob');
+    expect(config.headers.Authorization).toBe('Bearer download-token');
+    expect(saveAsSpy).toHaveBeenCalledWith(expect.any(Blob), 'avatar.png');
   });
 
   it('reports download error for json blob', async () => {

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { createMemoryHistory, createRouter } from 'vue-router';
 import { requireAppRedirect, requireSafeRedirect, toDeploymentRedirect } from '@/utils/auth-redirect';
 
 describe('safe authentication redirects', () => {
@@ -64,5 +65,30 @@ describe('safe authentication redirects', () => {
   it('rejects a repeated deployment prefix instead of retaining it in the app route', () => {
     expect(() => requireAppRedirect('/react/react/index', '/react/')).toThrow();
     expect(() => requireAppRedirect('/react/react?tab=1', '/react/')).toThrow();
+  });
+
+  it.each(['/system/user?tab=1', '/system/menu?q=a%26b&x=100%25#中文', '/index'])(
+    'accepts the redirect that vue-router produces from raw fullPath %s',
+    async (fullPath) => {
+      const router = createRouter({
+        history: createMemoryHistory(),
+        routes: [{ path: '/:pathMatch(.*)*', component: { render: () => null } }]
+      });
+      // 与 request.ts / Navbar.vue 一致：传入原始 fullPath，由 vue-router 负责一次编码。
+      const target = router.resolve({ path: '/login', query: { redirect: fullPath } });
+      await router.push(target.fullPath);
+      expect(router.currentRoute.value.query.redirect).toBe(fullPath);
+      expect(requireAppRedirect(router.currentRoute.value.query.redirect, '/')).toBe(fullPath);
+    }
+  );
+
+  it('rejects the double-encoded redirect that pre-encoding the fullPath would produce', async () => {
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [{ path: '/:pathMatch(.*)*', component: { render: () => null } }]
+    });
+    const target = router.resolve({ path: '/login', query: { redirect: encodeURIComponent('/system/user?tab=1') } });
+    await router.push(target.fullPath);
+    expect(() => requireSafeRedirect(router.currentRoute.value.query.redirect)).toThrow('Invalid internal redirect');
   });
 });

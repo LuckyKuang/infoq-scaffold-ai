@@ -11,7 +11,7 @@
 3. WebSocket 集群、双节点路由或异常退出验证，使用 `run_cluster_smoke.mjs`。
 4. SQL、数据库、Redis、数据修复、迁移、测试数据维护或 API/UI/DB 一致性验证，改用 `docs/DATA-OPS.md`。
 5. 登录/鉴权验证改用 `test-cli` 的 `captcha_login.mjs`（Redis 种子答案）；本命令组不再维护独立登录脚本。
-6. 隔离 owned Docker project 的备份/恢复、回滚、readiness、告警/容量及完整 Linux 验收，读取 [生产运维 SOP](../../docs/PRODUCTION-OPS.md)，使用 `production_ops.mjs` / `linux_acceptance.mjs`。共享/生产数据恢复仍先走数据门禁。
+6. 隔离 owned Docker project 的备份/恢复、回滚、readiness、告警/容量及完整 Linux 验收，读取 [生产运维 SOP](../../docs/PRODUCTION-OPS.md)，使用 `production_ops.mjs`（子命令 `inspect|backup|verify-backup|restore|rollback|checks|alert|capacity|cleanup`）/ `linux_acceptance.mjs`；原生 bind 首次安装验收使用 `first_install_acceptance.mjs`，验收完成后的证据与 owned 清理门禁由 `check_linux_acceptance.mjs` 读取 `tmp/production-readiness/linux-<ACCEPTANCE_RUN_ID>/acceptance.state.json` 校验。共享/生产数据恢复仍先走数据门禁。
 
 ## 执行顺序
 
@@ -105,6 +105,9 @@ node tools/verify/run_cluster_smoke.mjs
 - Smoke 端点：`references/smoke/endpoints.md`
 - 生产隔离运维：`node tools/verify/production_ops.mjs --help`；备份完整性/独立恢复、固定镜像回滚、readiness/业务、告警和有界容量见 [生产运维 SOP](../../docs/PRODUCTION-OPS.md)。默认 preview；仅 `--execute` 写入，拒绝共享目标。
 - Linux 全栈验收：`node tools/verify/linux_acceptance.mjs --run-id acceptance-001` 默认预览，显式 `--execute` 才构建/启动隔离 Docker project；无 Docker 时明确 blocked，fixture 不替代 TLS/权限/恢复实机证据。
+- Linux 原生 bind 首装验收：`node tools/verify/first_install_acceptance.mjs --run-id <slug> --minio-image-user <已审阅账户>` 默认预览，显式 `--execute` 才在专用 Linux VM 内以 root 调用 `install.sh`；步骤与回归见 [`deploy/PRODUCTION.md`](../../deploy/PRODUCTION.md)。
+- 验收证据门禁：`ACCEPTANCE_RUN_ID=<run-id> node tools/verify/check_linux_acceptance.mjs` 只读检查实际运行 `status=passed` 且 owned 清理 `verified`，供 `.github/workflows/linux-docker-acceptance.yml` 使用，不会启动任何资源。
+- 工具回归：`node tools/verify/test_production_ops.mjs`、`test_linux_acceptance.mjs`、`test_first_install_acceptance.mjs`（均为隔离 fixture，不启动真实 Docker）。
 
 ## 生产修复后端定向回归 SOP
 

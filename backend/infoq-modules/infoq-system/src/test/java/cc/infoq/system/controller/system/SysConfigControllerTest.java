@@ -4,6 +4,7 @@ import cc.infoq.common.domain.ApiResult;
 import cc.infoq.common.excel.utils.ExcelUtil;
 import cc.infoq.common.mybatis.core.page.PageQuery;
 import cc.infoq.common.mybatis.core.page.TableDataInfo;
+import cc.infoq.common.security.auth.SecurityAuthorizationService;
 import cc.infoq.system.domain.bo.SysConfigBo;
 import cc.infoq.system.domain.vo.SysConfigVo;
 import cc.infoq.system.service.SysConfigService;
@@ -12,6 +13,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.security.access.AccessDeniedException;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
@@ -20,7 +22,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -31,6 +36,9 @@ class SysConfigControllerTest {
 
     @Mock
     private SysConfigService sysConfigService;
+
+    @Mock
+    private SecurityAuthorizationService securityAuthorizationService;
 
     @InjectMocks
     private SysConfigController controller;
@@ -62,14 +70,48 @@ class SysConfigControllerTest {
     }
 
     @Test
-    @DisplayName("getConfigKey: should return config value by key")
+    @DisplayName("getConfigKey: should return config value by key when caller has system:config:query")
     void getConfigKeyShouldReturnConfigValue() {
+        when(securityAuthorizationService.hasPermission("system:config:query")).thenReturn(true);
         when(sysConfigService.selectConfigByKey("sys.demo")).thenReturn("demo-value");
 
         ApiResult<String> result = controller.getConfigKey("sys.demo");
 
         assertEquals(ApiResult.SUCCESS, result.getCode());
         assertEquals("demo-value", result.getData());
+    }
+
+    @Test
+    @DisplayName("getConfigKey: should deny arbitrary keys without system:config:query and never read the value")
+    void getConfigKeyShouldDenyArbitraryKeyWithoutQueryPermission() {
+        when(securityAuthorizationService.hasPermission("system:config:query")).thenReturn(false);
+
+        assertThrows(AccessDeniedException.class, () -> controller.getConfigKey("sys.account.registerUser"));
+
+        verifyNoInteractions(sysConfigService);
+    }
+
+    @Test
+    @DisplayName("getConfigKey: should let any logged-in user read the OSS preview switch")
+    void getConfigKeyShouldAllowOssPreviewSwitchWithoutPermission() {
+        when(sysConfigService.selectConfigByKey("sys.oss.previewListResource")).thenReturn("true");
+
+        ApiResult<String> result = controller.getConfigKey("sys.oss.previewListResource");
+
+        assertEquals("true", result.getData());
+        verifyNoInteractions(securityAuthorizationService);
+    }
+
+    @Test
+    @DisplayName("getConfigKey: init password requires user add or config query permission")
+    void getConfigKeyShouldGuardInitPassword() {
+        when(securityAuthorizationService.hasAnyPermission("system:config:query", "system:user:add")).thenReturn(false, true);
+        when(sysConfigService.selectConfigByKey("sys.user.initPassword")).thenReturn("init-secret");
+
+        assertThrows(AccessDeniedException.class, () -> controller.getConfigKey("sys.user.initPassword"));
+        verify(sysConfigService, never()).selectConfigByKey("sys.user.initPassword");
+
+        assertEquals("init-secret", controller.getConfigKey("sys.user.initPassword").getData());
     }
 
     @Test

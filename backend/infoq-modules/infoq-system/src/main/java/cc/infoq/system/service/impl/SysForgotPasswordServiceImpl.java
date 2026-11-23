@@ -4,6 +4,7 @@ import cc.infoq.common.domain.model.ForgotPasswordBody;
 import cc.infoq.common.enums.EmailCodeScene;
 import cc.infoq.common.exception.ServiceException;
 import cc.infoq.common.exception.user.CaptchaException;
+import cc.infoq.common.mybatis.helper.DataPermissionHelper;
 import cc.infoq.common.utils.MessageUtils;
 import cc.infoq.system.domain.entity.SysUser;
 import cc.infoq.system.domain.vo.SysUserVo;
@@ -41,7 +42,10 @@ public class SysForgotPasswordServiceImpl implements SysForgotPasswordService {
         if (!authEmailCodeService.validateCode(EmailCodeScene.FORGOT_PASSWORD, body.getEmail(), body.getEmailCode())) {
             throw new CaptchaException();
         }
-        sysUserService.resetUserPwd(user.getUserId(), BCrypt.hashpw(body.getNewPassword()));
+        // 匿名请求没有登录用户，用户表 update 的 @DataPermission 会因缺少当前用户而失败；邮箱验证码已完成身份校验
+        DataPermissionHelper.ignore(() -> {
+            sysUserService.resetUserPwd(user.getUserId(), BCrypt.hashpw(body.getNewPassword()));
+        });
         sysLoginService.invalidateUserSessions(user.getUserId(), user.getUserType());
     }
 }

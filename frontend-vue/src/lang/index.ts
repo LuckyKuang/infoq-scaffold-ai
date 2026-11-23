@@ -10,11 +10,8 @@ import en_US from '@/lang/en_US';
  * @returns zh-cn|en ...
  */
 export const getLanguage = (): LanguageEnum => {
-  const language = useStorage<LanguageEnum>('language', LanguageEnum.zh_CN);
-  if (language.value) {
-    return language.value;
-  }
-  return LanguageEnum.zh_CN;
+  // app store 的 useStorage 以原始字符串写入同一 key；这里每次请求直接读取，避免重复创建 useStorage 监听器。
+  return (localStorage.getItem('language') as LanguageEnum | null) || LanguageEnum.zh_CN;
 };
 
 const i18n = createI18n({

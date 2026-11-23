@@ -132,6 +132,7 @@ type PermissionState = {
   setDefaultRoutes: (routes: AppRoute[]) => void;
   setTopbarRoutes: (routes: AppRoute[]) => void;
   setSidebarRouters: (routes: AppRoute[]) => void;
+  resetSidebarRouters: () => void;
   generateRoutes: (isCurrent?: () => boolean) => Promise<AppRoute[]>;
   getRouteByPath: (path: string) => RouteComponentMapItem | undefined;
   getRouteByComponent: (component?: string) => RouteComponentMapItem | undefined;
@@ -148,6 +149,7 @@ export const usePermissionStore = create<PermissionState>((set, get) => ({
   setDefaultRoutes: (routes) => set({ defaultRoutes: routes }),
   setTopbarRoutes: (routes) => set({ topbarRouters: routes }),
   setSidebarRouters: (routes) => set({ sidebarRouters: routes }),
+  resetSidebarRouters: () => set((state) => ({ sidebarRouters: ensureStaticRoutes(normalizeSidebarRoutes(state.defaultRoutes)) })),
   generateRoutes: async (isCurrent = () => true) => {
     const res = await getRouters();
     if (!isCurrent()) return [];

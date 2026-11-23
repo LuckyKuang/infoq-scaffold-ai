@@ -333,7 +333,7 @@ bash deploy/bin/infoq.sh stop
 
 说明：
 
-- 首次空数据目录启动时，MySQL 容器会按顺序自动执行冻结初始化基线 `sql/infoq_scaffold_3.0.0.sql` 与当前增量 SQL `sql/infoq_scaffold_update_*.sql`
+- 首次空数据目录启动时，MySQL 容器会按顺序自动执行冻结初始化基线 `sql/infoq_scaffold_3.0.0.sql` 与已存在的增量 SQL `sql/infoq_scaffold_update_*.sql`（当前 `sql/` 仅含冻结基线 `infoq_scaffold_3.0.0.sql`，历史增量已并入基线）
 - 如果数据目录已存在，但 `infoq` 库表或增量结构未初始化，`deploy` / `start` 也会补导缺失 SQL 并做关键表/列校验
 - `deploy` 会生成或校验本次 `DEPLOY_ID`，然后准备宿主机目录、通过 Docker builder 构建后端镜像、启动依赖服务、同步随机凭据并拉起 `infoq-admin`
 - `deploy` 默认不会覆盖用户已修改的管理员账号或非默认 OSS 配置；需要重置时显式设置 `INFOQ_RESET_ADMIN=1` 或 `INFOQ_RESET_OSS=1`

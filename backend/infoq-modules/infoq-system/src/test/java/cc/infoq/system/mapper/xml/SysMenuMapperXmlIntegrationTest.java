@@ -30,4 +30,13 @@ class SysMenuMapperXmlIntegrationTest {
         assertThat(roleMenus).containsExactly(1L, 4L, 5L, 2L, 3L);
         assertThat(strictRoleMenus).containsExactly(4L, 5L, 2L, 3L);
     }
+
+    @Test
+    void selectMenuListByRoleIdShouldIncludeDisabledRoleForEditTree() {
+        // role 11 为停用角色：编辑角色时必须回显其已有菜单，否则保存会清空授权
+        assertThat(sysMenuMapper.selectMenuListByRoleId(11L, false)).containsExactly(4L, 2L);
+        assertThat(sysMenuMapper.selectMenuListByRoleId(11L, true)).containsExactly(4L, 2L);
+        // 登录权限查询仍然只认启用角色
+        assertThat(sysMenuMapper.selectMenuIdsByUserId(502L)).isEmpty();
+    }
 }

@@ -285,6 +285,36 @@ export const blobValidate = (data: unknown) => {
   return (data as { type?: string }).type !== 'application/json';
 };
 
+interface CheckableTreeNode {
+  key: string | number;
+  children?: CheckableTreeNode[];
+}
+
+/**
+ * 父子联动时，按与 Vue el-tree getCheckedKeys + getHalfCheckedKeys 相同的语义，
+ * 返回全选节点与半选节点的并集；checkedKeys 可以只包含叶子，父节点由树结构推导。
+ */
+export const getCheckedWithHalfKeys = (treeData: CheckableTreeNode[], checkedKeys: Array<string | number>): string[] => {
+  const checkedSet = new Set(checkedKeys.map(String));
+  const result: string[] = [];
+  const visit = (node: CheckableTreeNode, ancestorChecked: boolean): { full: boolean; touched: boolean } => {
+    const selfChecked = ancestorChecked || checkedSet.has(String(node.key));
+    let full = selfChecked;
+    let touched = selfChecked;
+    if (node.children?.length) {
+      const states = node.children.map((child) => visit(child, selfChecked));
+      full = states.every((state) => state.full);
+      touched = states.some((state) => state.touched);
+    }
+    if (touched) {
+      result.push(String(node.key));
+    }
+    return { full, touched };
+  };
+  treeData.forEach((node) => visit(node, false));
+  return result;
+};
+
 export default {
   handleTree
 };

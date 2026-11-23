@@ -37,7 +37,7 @@
 
 ## 7. 关键数据流
 
-1. `SpringSecurityAutoConfiguration` 注册 `SecurityFilterChain`、401/403 JSON handler 和 token filter。
+1. `SpringSecurityAutoConfiguration` 注册 `SecurityFilterChain`、401/403 JSON handler、token filter，以及最高优先级的 `SecurityExceptionAdvice`：`@PreAuthorize`、`CurrentUserService` 等在 MVC 内抛出的 `AccessDeniedException` / `AuthenticationException` 不会回到过滤器链，由该 advice 复用同一 handler 返回 HTTP 403/401，避免被 `GlobalExceptionHandler` 的 `RuntimeException` 兜底转成 HTTP 200 + 业务码 500。
 2. 公开路径由 `security.excludes` 与默认 public matcher 合并，`/auth/logout` 与 SSE close 保持受保护。
 3. 请求进入后解析 `Authorization: Bearer <token>`，校验 JWT、Redis session、revocation marker 和 `clientid`。
 4. 认证成功后把 `LoginUser` 与 token session 写入 Spring Security context，业务侧通过 `CurrentUserService` 读取。

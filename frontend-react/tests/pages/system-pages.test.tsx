@@ -530,4 +530,61 @@ describe('pages/system', () => {
     });
     expect(noticeApi.addNotice).not.toHaveBeenCalled();
   });
+
+  describe('list pages load once on mount', () => {
+    it('does not reload the user list when search fields change and keeps the typed filter on explicit search', async () => {
+      vi.mocked(userApi.listUser).mockClear();
+      renderWithRouter(<UserPage />, '/system/user');
+      await screen.findByText('管理员');
+      expect(userApi.listUser).toHaveBeenCalledTimes(1);
+
+      fireEvent.change(screen.getByPlaceholderText('请输入用户名称'), { target: { value: 'demo' } });
+      expect(userApi.listUser).toHaveBeenCalledTimes(1);
+
+      fireEvent.click(screen.getByRole('button', { name: /搜\s*索/ }));
+      await waitFor(() => expect(userApi.listUser).toHaveBeenCalledTimes(2));
+      expect(vi.mocked(userApi.listUser).mock.calls[1][0]).toMatchObject({ userName: 'demo', pageNum: 1 });
+    });
+
+    it('does not reload the role list when search fields change and keeps the typed filter on explicit search', async () => {
+      vi.mocked(roleApi.listRole).mockClear();
+      renderWithRouter(<RolePage />, '/system/role');
+      await screen.findByText('管理员');
+      expect(roleApi.listRole).toHaveBeenCalledTimes(1);
+
+      fireEvent.change(screen.getByPlaceholderText('请输入角色名称'), { target: { value: 'ops' } });
+      expect(roleApi.listRole).toHaveBeenCalledTimes(1);
+
+      fireEvent.click(screen.getByRole('button', { name: /搜\s*索/ }));
+      await waitFor(() => expect(roleApi.listRole).toHaveBeenCalledTimes(2));
+      expect(vi.mocked(roleApi.listRole).mock.calls[1][0]).toMatchObject({ roleName: 'ops', pageNum: 1 });
+    });
+
+    it('does not reload the menu list when search fields change', async () => {
+      vi.mocked(menuApi.listMenu).mockClear();
+      renderWithRouter(<MenuPage />, '/system/menu');
+      await screen.findByText('系统管理');
+      expect(menuApi.listMenu).toHaveBeenCalledTimes(1);
+
+      fireEvent.change(screen.getByPlaceholderText('请输入菜单名称'), { target: { value: 'sys' } });
+      expect(menuApi.listMenu).toHaveBeenCalledTimes(1);
+
+      fireEvent.click(screen.getByRole('button', { name: /搜\s*索/ }));
+      await waitFor(() => expect(menuApi.listMenu).toHaveBeenCalledTimes(2));
+      expect(vi.mocked(menuApi.listMenu).mock.calls[1][0]).toMatchObject({ menuName: 'sys' });
+    });
+
+    it('does not reload the department list when typing or toggling expand/collapse', async () => {
+      vi.mocked(deptApi.listDept).mockClear();
+      renderWithRouter(<DeptPage />, '/system/dept');
+      await screen.findByText('研发部');
+      // 挂载时列表与上级部门选项各请求一次
+      await waitFor(() => expect(deptApi.listDept).toHaveBeenCalledTimes(2));
+
+      fireEvent.change(screen.getByPlaceholderText('请输入部门名称'), { target: { value: 'rd' } });
+      fireEvent.click(screen.getByRole('button', { name: /展开\/折叠/ }));
+      fireEvent.click(screen.getByRole('button', { name: /展开\/折叠/ }));
+      expect(deptApi.listDept).toHaveBeenCalledTimes(2);
+    });
+  });
 });

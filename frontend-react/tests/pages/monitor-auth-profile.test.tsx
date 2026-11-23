@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { renderWithRouter } from '../helpers/renderWithRouter';
 import { useUserStore } from '@/store/modules/user';
 
@@ -391,5 +391,18 @@ describe('pages/monitor-auth-profile', () => {
       expect(userApi.getUserProfile).toHaveBeenCalled();
       expect(onlineApi.getOnline).toHaveBeenCalled();
     });
+  });
+
+  it('does not reload the online user list while typing and sends the typed filter on explicit search', async () => {
+    vi.mocked(onlineApi.list).mockClear();
+    renderWithRouter(<OnlinePage />, '/monitor/online');
+    await waitFor(() => expect(onlineApi.list).toHaveBeenCalledTimes(1));
+
+    fireEvent.change(await screen.findByPlaceholderText('请输入登录地址'), { target: { value: '10.0.0.1' } });
+    expect(onlineApi.list).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole('button', { name: /搜\s*索/ }));
+    await waitFor(() => expect(onlineApi.list).toHaveBeenCalledTimes(2));
+    expect(vi.mocked(onlineApi.list).mock.calls[1][0]).toMatchObject({ ipaddr: '10.0.0.1', pageNum: 1 });
   });
 });

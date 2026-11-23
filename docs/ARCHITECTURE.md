@@ -19,7 +19,7 @@ infoq-scaffold-ai
 
 | 工作区 | 职责 | 关键入口 |
 | --- | --- | --- |
-| `backend` | Spring Boot 4.1 多模块后端 | `infoq-admin/src/main/java/cc/infoq/admin/SysAdminApplication.java` |
+| `backend` | Spring Boot 4.2 多模块后端 | `infoq-admin/src/main/java/cc/infoq/admin/SysAdminApplication.java` |
 | `frontend-vue` | Vue 3 + Element Plus 管理端 | `src/main.ts`、`src/router/index.ts` |
 | `frontend-react` | React 19 + Ant Design 管理端 | `src/main.tsx`、`src/router/AppRouter.tsx` |
 
@@ -27,10 +27,10 @@ infoq-scaffold-ai
 
 | 层次 | 版本与组件 |
 | --- | --- |
-| 后端 | Spring Boot 4.1.1、JDK 21、MyBatis-Plus 3.5.17、Spring Security、Redisson、Jackson 3 |
+| 后端 | Spring Boot 4.2.0、JDK 21、MyBatis-Plus 3.5.18.1、Spring Security、Redisson、Jackson 3 |
 | Web 容器 | Spring Boot 官方默认 Tomcat |
-| Vue 管理端 | Vue 3.5.42、Vite 8.0.16、Element Plus 2.14.1、Pinia、Vitest 4.1.11 |
-| React 管理端 | React 19.2.7、Vite 8.0.16、Ant Design 6.4.3、Zustand、Vitest 4.1.11 |
+| Vue 管理端 | Vue 3.5.46、Vite 8.3.8、Element Plus 2.14.8、Pinia 4、Vitest 5.1.1 |
+| React 管理端 | React 19.3.1、Vite 8.3.8、Ant Design 6.7.2、Zustand、Vitest 5.1.1 |
 | 基础设施 | MySQL 8、Redis 7、MinIO、Nginx |
 
 前端本机开发、CI 和 Docker builder 统一使用 Node.js `24.18.0`。如需同时启动两套管理端，请先为其中一个 dev server 调整端口。
@@ -80,6 +80,7 @@ profile 约定：
 | 接口 | 作用 |
 | --- | --- |
 | `GET /auth/code` | 获取验证码 |
+| `GET /auth/wechat-miniapp/enabled` | 查询微信小程序登录是否启用 |
 | `POST /auth/login` | 登录 |
 | `POST /auth/logout` | 退出登录 |
 | `GET /auth/browser-session/csrf` | 同源浏览器 CSRF 引导 |
@@ -146,7 +147,7 @@ profile 约定：
 
 从 `infoq-system` 当前控制器可以看到主要边界如下：
 
-- 登录与基础入口：`AuthController`、`CaptchaController`、`OAuthController`、`IndexController`
+- 登录与基础入口：`AuthController`、`BrowserSessionController`、`CaptchaController`、`OAuthController`、`IndexController`
 - 系统管理：`SysUserController`、`SysRoleController`、`SysMenuController`、`SysDeptController`、`SysPostController`、`SysDictTypeController`、`SysDictDataController`、`SysConfigController`、`SysNoticeController`、`SysOssController`、`SysOssConfigController`、`SysClientController`、`SysProfileController`、`SysInviteCodeController`、`SysOauthIdentityController`、`SysMessageController`
 - 监控：`SysUserOnlineController`、`SysLoginInfoController`、`SysOperLogController`、`SysJobController`、`SysJobLogController`、`CacheController`、`ServerController`、`DataSourceController`、`HealthController`
 

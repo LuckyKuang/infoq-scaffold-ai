@@ -54,7 +54,8 @@ public class SysClientServiceImpl implements SysClientService {
     /**
      * 查询客户端管理
      */
-    @Cacheable(cacheNames = CacheNames.SYS_CLIENT, key = "#clientId")
+    // 缓存已开启 null 值存储，不排除 null 会让任意 clientId（登录前即可传入）在 Redis 中留下缓存记录
+    @Cacheable(cacheNames = CacheNames.SYS_CLIENT, key = "#clientId", unless = "#result == null")
     @Override
     public SysClientVo queryByClientId(String clientId) {
         return sysClientMapper.selectVoOne(new LambdaQueryWrapper<SysClient>().eq(SysClient::getClientId, clientId));

@@ -32,8 +32,8 @@ export const initWebSocket = (url: string) => {
     },
     heartbeat: {
       message: JSON.stringify({ type: 'ping' }),
-      // 发送心跳的间隔
-      interval: 10000,
+      // 发送心跳的间隔（VueUse 15 起由 scheduler 取代 interval 选项）
+      scheduler: (cb) => useIntervalFn(cb, 10000, { immediate: false }),
       // 接收到心跳response的超时时间
       pongTimeout: 2000
     },

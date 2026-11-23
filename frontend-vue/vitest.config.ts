@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import AutoImport from 'unplugin-auto-import/vite';
-import { sharedResolve, sharedScssPreprocessorOptions } from './vite/shared';
+import { sharedResolve, sharedScssPreprocessorOptions } from './vite/shared.ts';
 
 export default defineConfig(() => {
   return {

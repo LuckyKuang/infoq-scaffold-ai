@@ -7,6 +7,7 @@ import cc.infoq.common.log.enums.BusinessType;
 import cc.infoq.common.mybatis.core.page.PageQuery;
 import cc.infoq.common.mybatis.core.page.TableDataInfo;
 import cc.infoq.common.redis.annotation.RepeatSubmit;
+import cc.infoq.common.security.auth.SecurityAuthorizationService;
 import cc.infoq.common.validate.UpdateByKeyGroup;
 import cc.infoq.common.web.core.BaseController;
 import cc.infoq.system.domain.bo.SysConfigBo;
@@ -18,6 +19,7 @@ import cc.infoq.system.service.SysConfigService;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -36,7 +38,13 @@ import java.util.List;
 @RequestMapping("/system/config")
 public class SysConfigController extends BaseController {
 
+    /** 前端 OSS 页面需要的开关，任意登录用户可读 */
+    static final String OSS_PREVIEW_LIST_RESOURCE_KEY = "sys.oss.previewListResource";
+    /** 前端新增用户时回填的初始密码，仅用户新增/参数查询权限可读 */
+    static final String USER_INIT_PASSWORD_KEY = "sys.user.initPassword";
+
     private final SysConfigService sysConfigService;
+    private final SecurityAuthorizationService securityAuthorizationService;
 
     /**
      * 获取参数配置列表
@@ -85,6 +93,15 @@ public class SysConfigController extends BaseController {
      */
     @GetMapping(value = "/configKey/{configKey}")
     public ApiResult<String> getConfigKey(@PathVariable String configKey) {
+        // 参数表含初始密码等敏感项，只有前端明确依赖的键可放宽，其余一律要求 system:config:query
+        if (!OSS_PREVIEW_LIST_RESOURCE_KEY.equals(configKey)) {
+            boolean allowed = USER_INIT_PASSWORD_KEY.equals(configKey)
+                ? securityAuthorizationService.hasAnyPermission("system:config:query", "system:user:add")
+                : securityAuthorizationService.hasPermission("system:config:query");
+            if (!allowed) {
+                throw new AccessDeniedException("无权读取参数键: " + configKey);
+            }
+        }
         return ApiResult.ok("操作成功", sysConfigService.selectConfigByKey(configKey));
     }
 

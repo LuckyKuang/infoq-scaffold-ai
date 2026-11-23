@@ -13,6 +13,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -55,6 +56,26 @@ class WebSocketClusterLifecycleTest {
 
             verify(future).cancel(false);
             clusterUtils.verify(WebSocketClusterUtils::unregisterCurrentNode);
+        }
+    }
+
+    @Test
+    @DisplayName("scheduled heartbeat: a single Redis failure must not cancel later heartbeat rounds")
+    void scheduledHeartbeatShouldSurviveSingleFailure() {
+        try (MockedStatic<WebSocketClusterUtils> clusterUtils = org.mockito.Mockito.mockStatic(WebSocketClusterUtils.class)) {
+            clusterUtils.when(WebSocketClusterUtils::currentNodeId).thenReturn("node-1");
+            clusterUtils.when(WebSocketClusterUtils::refreshNodeHeartbeat)
+                .thenThrow(new IllegalStateException("redis timeout"))
+                .thenAnswer(invocation -> null);
+
+            WebSocketClusterLifecycle lifecycle = new WebSocketClusterLifecycle();
+
+            assertDoesNotThrow(lifecycle::maintainClusterStateSafely);
+            assertDoesNotThrow(lifecycle::maintainClusterStateSafely);
+
+            clusterUtils.verify(WebSocketClusterUtils::refreshNodeHeartbeat, org.mockito.Mockito.times(2));
+            clusterUtils.verify(WebSocketClusterUtils::syncCurrentNodeUsers);
+            clusterUtils.verify(WebSocketClusterUtils::cleanupStaleNodeRegistrations);
         }
     }
 }

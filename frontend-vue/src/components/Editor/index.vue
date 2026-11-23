@@ -191,6 +191,7 @@ const handleBeforeUpload = (file: EditorUploadFile) => {
 
 // 图片失败拦截
 const handleUploadError = (_err: unknown) => {
+  proxy?.$modal.closeLoading();
   proxy?.$modal.msgError('上传文件失败');
 };
 </script>

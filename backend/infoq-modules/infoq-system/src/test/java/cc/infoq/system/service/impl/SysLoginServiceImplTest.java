@@ -146,12 +146,12 @@ class SysLoginServiceImplTest {
         String errorKey = CacheConstants.PWD_ERR_CNT_KEY + "admin";
 
         try (MockedStatic<RedisUtils> redisUtils = mockStatic(RedisUtils.class)) {
-            redisUtils.when(() -> RedisUtils.getCacheObject(errorKey)).thenReturn(0);
+            redisUtils.when(() -> RedisUtils.getAtomicValue(errorKey)).thenReturn(0L);
 
             service.checkLogin(LoginType.PASSWORD, "admin", () -> false);
 
             redisUtils.verify(() -> RedisUtils.deleteObject(errorKey));
-            redisUtils.verify(() -> RedisUtils.setCacheObject(errorKey, 1, Duration.ofMinutes(10)), never());
+            redisUtils.verify(() -> RedisUtils.incrAtomicValue(errorKey), never());
         }
     }
 
@@ -165,7 +165,7 @@ class SysLoginServiceImplTest {
         doNothing().when(service).recordLoginInfo(eq("admin"), eq(Constants.LOGIN_FAIL), anyString());
 
         try (MockedStatic<RedisUtils> redisUtils = mockStatic(RedisUtils.class)) {
-            redisUtils.when(() -> RedisUtils.getCacheObject(errorKey)).thenReturn(3);
+            redisUtils.when(() -> RedisUtils.getAtomicValue(errorKey)).thenReturn(3L);
 
             assertThrows(UserException.class, () -> service.checkLogin(LoginType.PASSWORD, "admin", () -> false));
         }
@@ -181,10 +181,13 @@ class SysLoginServiceImplTest {
         doNothing().when(service).recordLoginInfo(eq("admin"), eq(Constants.LOGIN_FAIL), anyString());
 
         try (MockedStatic<RedisUtils> redisUtils = mockStatic(RedisUtils.class)) {
-            redisUtils.when(() -> RedisUtils.getCacheObject(errorKey)).thenReturn(1);
+            redisUtils.when(() -> RedisUtils.getAtomicValue(errorKey)).thenReturn(1L);
+            redisUtils.when(() -> RedisUtils.incrAtomicValue(errorKey)).thenReturn(2L);
 
             assertThrows(UserException.class, () -> service.checkLogin(LoginType.PASSWORD, "admin", () -> true));
-            redisUtils.verify(() -> RedisUtils.setCacheObject(errorKey, 2, Duration.ofMinutes(10)));
+            redisUtils.verify(() -> RedisUtils.incrAtomicValue(errorKey));
+            redisUtils.verify(() -> RedisUtils.expire(errorKey, Duration.ofMinutes(10)));
+            redisUtils.verify(() -> RedisUtils.setCacheObject(anyString(), any(), any(Duration.class)), never());
         }
     }
 
@@ -198,10 +201,12 @@ class SysLoginServiceImplTest {
         doNothing().when(service).recordLoginInfo(eq("admin"), eq(Constants.LOGIN_FAIL), anyString());
 
         try (MockedStatic<RedisUtils> redisUtils = mockStatic(RedisUtils.class)) {
-            redisUtils.when(() -> RedisUtils.getCacheObject(errorKey)).thenReturn(2);
+            redisUtils.when(() -> RedisUtils.getAtomicValue(errorKey)).thenReturn(2L);
+            redisUtils.when(() -> RedisUtils.incrAtomicValue(errorKey)).thenReturn(3L);
 
             assertThrows(UserException.class, () -> service.checkLogin(LoginType.PASSWORD, "admin", () -> true));
-            redisUtils.verify(() -> RedisUtils.setCacheObject(errorKey, 3, Duration.ofMinutes(10)));
+            redisUtils.verify(() -> RedisUtils.incrAtomicValue(errorKey));
+            redisUtils.verify(() -> RedisUtils.expire(errorKey, Duration.ofMinutes(10)));
             verify(service).recordLoginInfo(eq("admin"), eq(Constants.LOGIN_FAIL), anyString());
         }
     }

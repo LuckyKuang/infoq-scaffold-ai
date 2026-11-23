@@ -13,12 +13,15 @@ export default function CrudModal({ centered = true, styles, ...props }: ModalPr
   return (
     <Modal
       centered={centered}
-      styles={{
-        ...styles,
-        body: {
-          ...scrollableBodyStyle,
-          ...styles?.body
-        }
+      styles={(info) => {
+        const resolvedStyles = typeof styles === 'function' ? styles(info) : styles;
+        return {
+          ...resolvedStyles,
+          body: {
+            ...scrollableBodyStyle,
+            ...resolvedStyles?.body
+          }
+        };
       }}
       {...props}
     />
