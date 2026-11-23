@@ -5,7 +5,7 @@
 # InfoQ-Scaffold-AI
 
 [![CI](https://github.com/LuckyKuang/infoq-scaffold-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/LuckyKuang/infoq-scaffold-ai/actions/workflows/ci.yml)
-![Version](https://img.shields.io/badge/Version-3.0.0--rc1-f66a39)
+![Version](https://img.shields.io/badge/Version-3.0.0--rc2-f66a39)
 ![JDK](https://img.shields.io/badge/JDK-21-1677FF)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.2.0-6DB33F)
 ![Vue](https://img.shields.io/badge/Vue-3.5.46-42B883)
