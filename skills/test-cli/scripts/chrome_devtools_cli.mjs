@@ -7,7 +7,8 @@ import {isProcessAlive, markRunState, resolveRepoRoot, terminateProcessTree} fro
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolveRepoRoot(scriptDir);
-const entryPath = path.join(scriptDir, 'node_modules', 'chrome-devtools-mcp', 'build', 'src', 'bin', 'chrome-devtools-mcp.js');
+const packageDir = path.join(scriptDir, 'node_modules', 'chrome-devtools-mcp');
+const packageJsonPath = path.join(packageDir, 'package.json');
 const localStoragePath = path.join(repoRoot, 'tmp', 'test-cli', 'browser', 'chrome-devtools-mcp', 'localstorage');
 const forwardedArgs = process.argv[2] === '--' ? process.argv.slice(3) : process.argv.slice(2);
 
@@ -28,10 +29,18 @@ if (forwardedArgs.includes('-h') || forwardedArgs.includes('--help')) {
   process.exit(0);
 }
 
-if (!fs.existsSync(entryPath)) {
+if (!fs.existsSync(packageJsonPath)) {
   console.error(
     "chrome-devtools-mcp is not installed. Run 'pnpm --dir skills/test-cli/scripts install' first."
   );
+  process.exit(1);
+}
+
+// The package has moved its build output between releases; its bin declaration is the stable entry contract.
+const binEntry = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8')).bin?.['chrome-devtools-mcp'];
+const entryPath = binEntry && path.join(packageDir, binEntry);
+if (!entryPath || !fs.existsSync(entryPath)) {
+  console.error(`chrome-devtools-mcp bin entry is missing or unresolved: ${packageJsonPath} bin.chrome-devtools-mcp=${binEntry ?? '<undefined>'}`);
   process.exit(1);
 }
 
