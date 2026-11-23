@@ -98,7 +98,9 @@
       "@typescript-eslint/utils": "8.73.0",
       "@vue/compiler-core": "3.5.46",
       "@vue/compiler-dom": "3.5.46",
-      "vite-plugin-inspect": "11.4.1"
+      "vite-plugin-inspect": "11.4.1",
+      "js-beautify>editorconfig": "4.0.1",
+      "js-beautify>glob": "14.0.6"
     }
   },
   "engines": {
