@@ -22,7 +22,7 @@ const hash = value => createHash('sha256').update(value).digest('hex');
 const help = `Linux Docker 原生 bind 首次安装验收
 node tools/verify/first_install_acceptance.mjs --run-id <slug> --minio-image-user <已审阅账户> [--execute]
 默认仅打印计划，不写文件、不调用 Docker。execute 需要专用 Linux VM 内 root、本机 Unix Docker、
-Compose/BuildKit、Node 24.18.0、openssl/curl/tar/findmnt；复用 test-cli 的 Node 登录实现。
+Compose/BuildKit、Node 26.13.1、openssl/curl/tar/findmnt；复用 test-cli 的 Node 登录实现。
 必须先审阅目标 MinIO 不可变镜像及 entrypoint，再显式指定用户；不猜 root。
 真实调用 install.sh，使用全新 tmp/production-readiness/first-install-<run-id>/data 原生 bind；
 占用默认容器名与 80/443/3306/6379/9000/9001/9090/9091/9092，不与其它验收栈并行。
@@ -145,7 +145,7 @@ export async function firstInstallAcceptance(args) {
   console.log(JSON.stringify(plan));
   if (!args.execute) return plan;
   if (process.platform !== 'linux' || process.getuid?.() !== 0) throw new Error('真实首装仅在专用 Linux VM 内通过 sudo/root 执行；不能用 macOS 共享目录或普通 docker 组替代 chown 权限');
-  if (process.version !== 'v24.18.0') throw new Error('首次安装验收要求仓库 Node 24.18.0 基线');
+  if (process.version !== 'v26.13.1') throw new Error('首次安装验收要求仓库 Node 26.13.1 基线');
   assertSafePath(root);
   if (fs.existsSync(root)) throw new Error('本轮目录已存在；拒绝覆盖、复用旧数据或自动清空重试');
   let ancestor = path.dirname(root);

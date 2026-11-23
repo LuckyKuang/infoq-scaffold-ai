@@ -54,7 +54,7 @@ if(args[0]==='container'&&args[1]==='inspect'){const all=[s.container];if(s.shar
 if(args[0]==='compose'&&s.compose){console.log(JSON.stringify(s.compose));process.exit(0);}
 if(args[0]==='info'){console.log(s.daemonArchitecture||'aarch64');process.exit(0);}
 if(args[0]==='image'&&args[1]==='ls'){if(args[4]!=='${MC_IMAGE}')process.exit(90);console.log(s.toolMissing?'':s.tool.Id);process.exit(0);}
-if(args[0]==='build'){const recipe=fs.readFileSync(0,'utf8');if(args.join(' ')!=='build --tag ${MC_IMAGE} -'||!recipe.includes('FROM node:24.18.0')||!recipe.includes('FROM busybox:1.37.0')||!recipe.includes('${MC_HASHES.arm64}')||!recipe.includes('${MC_HASHES.amd64}'))process.exit(91);if(s.buildFail)process.exit(17);s.toolMissing=false;fs.writeFileSync(file,JSON.stringify(s));console.log('built fixed tool');process.exit(0);}
+if(args[0]==='build'){const recipe=fs.readFileSync(0,'utf8');if(args.join(' ')!=='build --tag ${MC_IMAGE} -'||!recipe.includes('FROM node:26.13.1')||!recipe.includes('FROM busybox:1.37.0')||!recipe.includes('${MC_HASHES.arm64}')||!recipe.includes('${MC_HASHES.amd64}'))process.exit(91);if(s.buildFail)process.exit(17);s.toolMissing=false;fs.writeFileSync(file,JSON.stringify(s));console.log('built fixed tool');process.exit(0);}
 if(args[0]==='image'&&args[1]==='inspect'){console.log(JSON.stringify(args[2]==='${MC_IMAGE}'?[s.tool]:[{Id:s.container.Image,Config:{User:s.imageUser===undefined?'fixture':s.imageUser}}]));process.exit(0);}
 if(args.includes('id')){console.log(args.includes('-u')?process.getuid():process.getgid());process.exit(0);}
 if(args.includes('--mount')){

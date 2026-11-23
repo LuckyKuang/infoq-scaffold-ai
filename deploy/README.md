@@ -76,8 +76,8 @@ Install, upgrade, rollback, stop, and data-retention boundaries are documented i
 | 后端运行镜像 | `bellsoft/liberica-openjdk-rocky:21.0.12-cds` |
 | 手动部署 JDK | 21 |
 | 手动部署 Maven | 3.9.x |
-| Node.js | 24.18.0 |
-| pnpm | 10.34.1（根 `package.json` 的 `packageManager`） |
+| Node.js | 26.13.1 |
+| pnpm | 12.23.0（根 `package.json` 的 `packageManager`） |
 | MySQL | 8.x |
 | Redis | 7.x |
 | Nginx | 1.30.x |
@@ -88,8 +88,8 @@ Install, upgrade, rollback, stop, and data-retention boundaries are documented i
 
 - Docker Compose / 脚本化部署不要求宿主机安装 JDK 或 Maven；后端 Maven 打包在 Docker builder 镜像 `maven:3.9.12-eclipse-temurin-21` 内完成，最终运行镜像仍是 `bellsoft/liberica-openjdk-rocky:21.0.12-cds`。后端 Dockerfile 使用 BuildKit `RUN --mount`，因此 Docker CLI 必须支持 `docker buildx`：[`backend/infoq-admin/Dockerfile`](../backend/infoq-admin/Dockerfile)
 - 手动部署或本机直接执行 Maven 构建时，仍需要宿主机 JDK 21 与 Maven 3.9.x。
-- 前端本机开发、CI 和 Docker 构建镜像统一固定基于 Node 24.18.0：[`frontend-vue/Dockerfile`](../frontend-vue/Dockerfile) [`frontend-react/Dockerfile`](../frontend-react/Dockerfile)。npm 版本不作为仓库构建基线单独固定，包管理器遵循各工作区 `packageManager` 与 lockfile。
-- Docker Compose 默认依赖 MySQL 8.0、Redis 7.2、MinIO `RELEASE.2026-06-18T00-00-00Z`、Nginx 1.30：[`deploy/docker/docker-compose.yml`](../deploy/docker/docker-compose.yml)
+- 前端本机开发、CI 和 Docker 构建镜像统一固定基于 Node 26.13.1：[`frontend-vue/Dockerfile`](../frontend-vue/Dockerfile) [`frontend-react/Dockerfile`](../frontend-react/Dockerfile)。npm 版本不作为仓库构建基线单独固定，包管理器遵循各工作区 `packageManager` 与 lockfile。
+- Docker Compose 默认依赖 MySQL 8.0、Redis 7.2、MinIO `RELEASE.2026-06-18T00-00-00Z`、Nginx 1.31：[`deploy/docker/docker-compose.yml`](../deploy/docker/docker-compose.yml)
 
 ### 1.2 端口与网络准备
 
@@ -339,8 +339,8 @@ Container logs:
 INFOQ_ENV_FILE=/etc/infoq-scaffold-ai/deploy.env bash deploy/bin/infoq.sh logs infoq-admin
 ```
 
-更多排障（镜像 tag 收口、Docker credential helper、WSL2 keepalive、Corepack
-激活失败等）见 [DOCKER.md](DOCKER.md) 的排障章节。
+更多排障（镜像 tag 收口、Docker credential helper、WSL2 keepalive、pnpm
+安装失败等）见 [DOCKER.md](DOCKER.md) 的排障章节。
 
 上述命令需由能读取 `600` 环境文件且能访问 Docker socket 的部署账号执行；root 创建的文件通常需要授权 root shell。`logs` 持续跟随，可用 `Ctrl-C` 退出，服务不受影响。查看其他服务时将 `infoq-admin` 替换为 `mysql`、`redis` 或 `minio`。
 

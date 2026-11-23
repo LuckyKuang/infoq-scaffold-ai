@@ -115,7 +115,7 @@ node skills/test-cli/scripts/captcha_login.mjs --backend-url http://127.0.0.1:80
 
 ### 6.1 前置
 
-从仓库根目录执行以下带工作区路径的命令。Node 必须为 `24.18.0`，pnpm 版本由根 `package.json` 的 `pnpm@10.34.1` 固定。纯单测、lint 与构建不需要启动 backend/dev server；浏览器 E2E 需要真实 MySQL/Redis、正确的测试账号与加密配置。
+从仓库根目录执行以下带工作区路径的命令。Node 必须为 `26.13.1`，pnpm 版本由根 `package.json` 的 `pnpm@12.23.0` 固定。纯单测、lint 与构建不需要启动 backend/dev server；浏览器 E2E 需要真实 MySQL/Redis、正确的测试账号与加密配置。
 
 首次运行界面测试，或 Playwright 升级后，先安装 Chromium：
 

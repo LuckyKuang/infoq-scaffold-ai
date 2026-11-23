@@ -3,7 +3,7 @@
   "private": true,
   "version": "3.0.0-rc1",
   "type": "module",
-  "packageManager": "pnpm@10.34.1",
+  "packageManager": "pnpm@12.23.0",
   "scripts": {
     "dev": "vite serve --mode development",
     "build": "vite build --mode production",
@@ -42,7 +42,7 @@
     "@eslint/js": "^10.0.1",
     "@testing-library/jest-dom": "^8.0.0",
     "@testing-library/react": "^16.3.3",
-    "@types/node": "^24.19.2",
+    "@types/node": "^26.6.6",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.3.0",
@@ -60,14 +60,8 @@
     "vite": "^8.3.8",
     "vitest": "^5.1.1"
   },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "@parcel/watcher",
-      "esbuild"
-    ]
-  },
   "engines": {
-    "node": "24.18.0",
-    "pnpm": ">=10.34.1 <11"
+    "node": "26.13.1",
+    "pnpm": ">=12.23.0 <13"
   }
 }

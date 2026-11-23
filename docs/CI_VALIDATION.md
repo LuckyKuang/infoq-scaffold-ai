@@ -42,7 +42,7 @@ CI 与 Release 的 backend job 在 JDK 21 setup 后运行 `node tools/setup_ci_m
 | `frontend-react` | `pnpm run test`、`pnpm run lint`、`pnpm run build:prod` |
 
 依赖安装统一 `pnpm install --frozen-lockfile`，Node 由 `.node-version` 固定为
-`24.18.0`，pnpm 由根 `package.json` 的 `packageManager` 固定为 `10.34.1`；
+`26.13.1`，pnpm 由根 `package.json` 的 `packageManager` 固定为 `12.23.0`；
 CI 通过 `pnpm/action-setup` 的 `package_json_file` 直接读取该字段。
 
 `admin-frontend` 先运行 `tools/production_fixture.mjs` 生成独立临时 RSA/随机凭据/自签证书，通过 `INFOQ_PRODUCTION_CONFIG_FILE` 接入严格构建；安装依赖后以 `test_production_crypto.mjs --client react|vue` 验证实际 JSEncrypt 与 Node 两组 RSA 的协议互通。完成构建后运行 `production_config.mjs check-artifact --allow-isolated` 检查产物实际包含的前端密钥、配对指纹和服务端秘密缺失。这些产物为 `deployable=false` 的隔离构建，不能发布为生产资产。正式 Release 独立使用受控 environment/secret，不能复用 CI fixture；RC 不构建公开前端产物，仅发布源码。

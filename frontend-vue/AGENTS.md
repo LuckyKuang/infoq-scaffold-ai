@@ -3,7 +3,7 @@
 |Scope:本文件适用于 `frontend-vue` 及其子目录，用于把根规则收窄到 Vue admin 语境。
 |Stack:Vue 3.5.46|TypeScript 6.0.3|Vite 8.3.8|Element Plus 2.14.8|Pinia 4|Vue Router 5.5.1|Vitest 5.1.1
 |Workspace Layout:src/views|src/components|src/api|src/store|src/router|src/utils|src/plugins|tests
-|Environment Baseline:Node 24.18.0|Docker builder 固定 node:24.18.0|pnpm >=10.34.1 <11|packageManager pnpm@10.34.1
+|Environment Baseline:Node 26.13.1|Docker builder 固定 node:26.13.1|pnpm >=12.23.0 <13|packageManager pnpm@12.23.0
 |Build Secrets:当 `VITE_APP_ENCRYPT=true` 时，Vue admin dev/build 环境必须提供 `VITE_APP_RSA_PUBLIC_KEY` 与 `VITE_APP_RSA_PRIVATE_KEY`。|production build 使用 INFOQ_PRODUCTION_CONFIG_FILE 指定受控配置并由 tools/production_config.mjs 交叉校验两组独立2048位以上 RSA；后端请求私钥只参与校验，禁止进入前端产物或构建层。|临时 fixture 构建不等于生产配置验收；浏览器协议私钥是公开内容，公网仍须 HTTPS。
 |Runtime Baseline:Vue admin 联调默认以后端 `http://127.0.0.1:8080` 为共享真值。|若开发者本地为避开冲突临时把 backend 改到 `8081` 或其他端口，必须显式设置 `VITE_APP_PROXY_TARGET` 或使用 test-cli 本地栈入口的 `--backend-port <port>` 对齐。|不得把一次性本地端口固化进共享默认配置。
 |Browser Session:access token 仅内存，启动删除旧 Admin-Token；只记用户名，不读写持久密码。|专用同源资源使用 vue scope，bind 成功后才提交认证状态；restore 仅 HTTP401 进入匿名，403/503/网络错误显式失败；失效与退出收口动态路由、实时连接和晚到响应。|部署 Origin/Cookie Path/Secure 必须与代理一致；验证与反模式见 doc/browser-session-testing.md。

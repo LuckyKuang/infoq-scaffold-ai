@@ -76,7 +76,7 @@ pnpm --dir frontend-vue run lint:eslint
 pnpm --dir frontend-vue run build:prod
 ```
 
-构建前执行 `node tools/validate_utf8.mjs`。dev 环境在 `VITE_APP_ENCRYPT=true` 时提供与目标后端协议对应的前端 RSA 配置。production build 强制受控来源和加密：将 `INFOQ_PRODUCTION_CONFIG_FILE` 指向绝对路径的私有 dotenv，包含两组至少 2048 位 RSA 的四向配置（前端请求公钥对应后端请求私钥，前端响应私钥对应后端响应公钥）；或显式使用受管环境来源。`node tools/production_config.mjs check --scope frontend --env-file <绝对配置路径>` 只读校验，不打印值。禁止缺配置就关闭加密或把仓库示例 key 用于 production build。Node 使用 `24.18.0`，pnpm 使用根 `packageManager` 固定版本。
+构建前执行 `node tools/validate_utf8.mjs`。dev 环境在 `VITE_APP_ENCRYPT=true` 时提供与目标后端协议对应的前端 RSA 配置。production build 强制受控来源和加密：将 `INFOQ_PRODUCTION_CONFIG_FILE` 指向绝对路径的私有 dotenv，包含两组至少 2048 位 RSA 的四向配置（前端请求公钥对应后端请求私钥，前端响应私钥对应后端响应公钥）；或显式使用受管环境来源。`node tools/production_config.mjs check --scope frontend --env-file <绝对配置路径>` 只读校验，不打印值。禁止缺配置就关闭加密或把仓库示例 key 用于 production build。Node 使用 `26.13.1`，pnpm 使用根 `packageManager` 固定版本。
 
 通过 `VITE_APP_CONTEXT_PATH=/react/` 或 `/vue/` 构建所需部署前缀；Router 使用 Vite `BASE_URL` 与资源前缀一致。具体受控来源与构建入口见 [`DEV_GUIDE.md`](../../../../DEV_GUIDE.md)。合成配置必须标明 `INFOQ_CONFIG_SOURCE=isolated-test`，产物 `production-build.json` 的 `deployable=false`；`check-artifact --allow-isolated` 只供隔离测试，不能据此发布。
 

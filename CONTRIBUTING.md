@@ -10,20 +10,21 @@ Use the versions declared by the repository:
 
 - JDK: `backend/pom.xml` (`java.version`, currently 21)
 - Maven: 3.9.x
-- Node.js: `.node-version` / `.nvmrc` (`24.18.0`)
-- pnpm `10.34.1`: root `package.json` `packageManager`, mirrored by each workspace
+- Node.js: `.node-version` / `.nvmrc` (`26.13.1`)
+- pnpm `12.23.0`: root `package.json` `packageManager`, mirrored by each workspace
 
 Use pnpm by default and synchronize the workspace `pnpm-lock.yaml` when dependencies
 change. If pnpm is unavailable, the root rules allow npm as a fallback; restore pnpm
 and validate the authoritative lockfile before delivering dependency changes. Do not
-substitute Yarn. The repository pins pnpm `10.34.1` at the
-root. Node 24 does not bundle Corepack; install Corepack separately if you choose
-that launcher, or install the pinned pnpm directly with
-`npm install --global pnpm@10.34.1`. If a Corepack shim is already available, activate it with
-`corepack prepare pnpm@10.34.1 --activate`, then verify `pnpm -v` before
-installing. Run `corepack pnpm` when the shell shim has not yet been refreshed.
-pnpm 10 blocks dependency build scripts by default; `frontend-vue` allowlists
-only `@parcel/watcher`, and `frontend-react` only `@parcel/watcher` and `esbuild`. Backend dependency changes belong in
+substitute Yarn. The repository pins pnpm `12.23.0` at the
+root. Node 26 does not bundle Corepack; install the pinned pnpm directly with
+`npm install --global --allow-scripts=pnpm pnpm@12.23.0` and verify `pnpm -v` before
+installing. pnpm 12 no longer reads the `package.json` `pnpm` field: each workspace keeps
+`overrides`, `allowBuilds` and dependency `permissions` in its own `pnpm-workspace.yaml`.
+Dependency build scripts are blocked unless allowed there; `frontend-vue` allows
+only `@parcel/watcher`, and `frontend-react` only `@parcel/watcher` and `esbuild`.
+pnpm 12 also refuses versions published within the last day (`minimumReleaseAge`);
+keep that default and remove any `minimumReleaseAgeExclude` entry once the version ages out. Backend dependency changes belong in
 Maven POMs; do not invent extra lockfiles.
 
 ## Development Checks

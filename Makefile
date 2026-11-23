@@ -21,10 +21,10 @@ build-backend:
 	node tools/backend_mvn.mjs -- -B -ntp clean package -P dev -DskipTests
 
 build-vue:
-	cd frontend-vue && corepack pnpm run build:prod
+	cd frontend-vue && pnpm run build:prod
 
 build-react:
-	cd frontend-react && corepack pnpm run build:prod
+	cd frontend-react && pnpm run build:prod
 
 test: test-docs test-backend test-vue test-react
 
@@ -37,14 +37,14 @@ test-backend:
 	node tools/backend_mvn.mjs -- -B -ntp -DskipTests=false test
 
 test-vue:
-	cd frontend-vue && corepack pnpm run lint:eslint
-	cd frontend-vue && corepack pnpm run test:unit
-	cd frontend-vue && corepack pnpm run build:prod
+	cd frontend-vue && pnpm run lint:eslint
+	cd frontend-vue && pnpm run test:unit
+	cd frontend-vue && pnpm run build:prod
 
 test-react:
-	cd frontend-react && corepack pnpm run lint
-	cd frontend-react && corepack pnpm run test
-	cd frontend-react && corepack pnpm run build:prod
+	cd frontend-react && pnpm run lint
+	cd frontend-react && pnpm run test
+	cd frontend-react && pnpm run build:prod
 
 validate-utf8:
 	node tools/validate_utf8.mjs

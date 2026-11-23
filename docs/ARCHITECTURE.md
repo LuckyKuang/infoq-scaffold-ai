@@ -33,7 +33,7 @@ infoq-scaffold-ai
 | React 管理端 | React 19.3.1、Vite 8.3.8、Ant Design 6.7.2、Zustand、Vitest 5.1.1 |
 | 基础设施 | MySQL 8、Redis 7、MinIO、Nginx |
 
-前端本机开发、CI 和 Docker builder 统一使用 Node.js `24.18.0`。如需同时启动两套管理端，请先为其中一个 dev server 调整端口。
+前端本机开发、CI 和 Docker builder 统一使用 Node.js `26.13.1`。如需同时启动两套管理端，请先为其中一个 dev server 调整端口。
 
 ## 3. 后端由哪些模块组成
 

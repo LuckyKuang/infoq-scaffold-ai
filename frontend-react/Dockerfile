@@ -1,14 +1,15 @@
 # syntax=docker/dockerfile:1.7
 # 从仓库根 context 构建；生产秘密仅通过 BuildKit secret 挂载。
-FROM node:24.18.0 AS builder
+FROM node:26.13.1 AS builder
 
 LABEL maintainer="Pontus"
 
 WORKDIR /infoq/react
 
-RUN corepack enable pnpm
+# Node 25+ 不再内置 Corepack；按根 packageManager 固定安装 pnpm，并允许其安装脚本落地原生二进制。
+RUN npm install --global --allow-scripts=pnpm pnpm@12.23.0
 
-COPY frontend-react/package.json frontend-react/pnpm-lock.yaml ./
+COPY frontend-react/package.json frontend-react/pnpm-lock.yaml frontend-react/pnpm-workspace.yaml ./
 
 RUN pnpm install --frozen-lockfile --network-concurrency=2
 
@@ -34,8 +35,8 @@ RUN --mount=type=secret,id=production_config,required=true \
     INFOQ_FRONTEND_CONFIG_DIGEST=${INFOQ_FRONTEND_CONFIG_DIGEST} \
     INFOQ_PRODUCTION_CONFIG_FILE=/run/secrets/production_config pnpm run build:prod
 
-# 运行阶段：使用 nginx 1.30.3 构建
-FROM nginx:1.30.3
+# 运行阶段：使用 nginx 1.31.9 构建
+FROM nginx:1.31.9
 
 ENV TZ=Asia/Shanghai \
     NGINX_PORT=80

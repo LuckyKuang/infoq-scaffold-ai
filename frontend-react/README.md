@@ -58,7 +58,7 @@
 
 ## 开发与生产验证前置
 
-从仓库根目录执行 `pnpm --dir frontend-react install`、`pnpm --dir frontend-react run dev`；Node 使用 `24.18.0`，pnpm 使用根 `packageManager` 固定版本。开发服务默认端口 `80`、代理后端 `8080`；端口覆盖与测试命令见 [本层规约](./AGENTS.md) 和 [测试政策](../docs/TESTING.md)。
+从仓库根目录执行 `pnpm --dir frontend-react install`、`pnpm --dir frontend-react run dev`；Node 使用 `26.13.1`，pnpm 使用根 `packageManager` 固定版本。开发服务默认端口 `80`、代理后端 `8080`；端口覆盖与测试命令见 [本层规约](./AGENTS.md) 和 [测试政策](../docs/TESTING.md)。
 
 `VITE_APP_ENCRYPT=true` 时，dev/build 进程必须取得与目标后端对应的 `VITE_APP_RSA_PUBLIC_KEY` / `VITE_APP_RSA_PRIVATE_KEY`。浏览器中的私钥不能保护服务端秘密，生产仍须 HTTPS 与受控凭据。构建前执行 `node tools/validate_utf8.mjs`。
 

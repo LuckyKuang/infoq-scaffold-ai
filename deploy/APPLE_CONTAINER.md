@@ -29,7 +29,7 @@ manage any resource that is not labeled
 - Apple `container` 1.1.0 or newer
 - Host JDK 21 and Maven 3.9.x for image builds, or an existing `infoq-admin.jar`
 - `openssl` for generating initial secrets
-- Node.js 24.18.0 and Python 3 for the repository wrapper and shell helpers
+- Node.js 26.13.1 and Python 3 for the repository wrapper and shell helpers
 - Local Network access for `container-runtime-linux` when macOS prompts during
   the first published-container startup
 
@@ -192,7 +192,7 @@ builder. Apple builds:
 3. Build `localhost/infoq-admin:3.0.0-apple` from `deploy/Dockerfile.apple`
 
 Runtime base image: `bellsoft/liberica-openjdk-rocky:21.0.12-cds`.
-MySQL: `mysql:8.0.42`. Redis: `redis:7.2.8`.
+MySQL: `mysql:8.0.46`. Redis: `redis:7.2.17`.
 
 ## Verify
 

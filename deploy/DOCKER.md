@@ -586,20 +586,20 @@ docker build --file frontend-react/Dockerfile \
 有时网络不稳定，短名镜像拉取失败，需要临时直拉完整 registry tag：
 
 ```bash
-docker pull registry-1.docker.io/library/nginx:1.30.3
-docker tag registry-1.docker.io/library/nginx:1.30.3 nginx:1.30.3
+docker pull registry-1.docker.io/library/nginx:1.31.9
+docker tag registry-1.docker.io/library/nginx:1.31.9 nginx:1.31.9
 ```
 
 如果两个 tag 的 `IMAGE ID` 一致，且没有容器引用完整 registry tag，可以只保留仓库 Dockerfile / Compose 使用的短名：
 
 ```bash
-docker image inspect nginx:1.30.3 --format '{{.Id}}'
-docker image inspect registry-1.docker.io/library/nginx:1.30.3 --format '{{.Id}}'
-docker ps -a --format '{{.Image}}' | grep -Fx registry-1.docker.io/library/nginx:1.30.3
-docker rmi registry-1.docker.io/library/nginx:1.30.3
+docker image inspect nginx:1.31.9 --format '{{.Id}}'
+docker image inspect registry-1.docker.io/library/nginx:1.31.9 --format '{{.Id}}'
+docker ps -a --format '{{.Image}}' | grep -Fx registry-1.docker.io/library/nginx:1.31.9
+docker rmi registry-1.docker.io/library/nginx:1.31.9
 ```
 
-同样适用于 `bellsoft/liberica-openjdk-rocky:21.0.12-cds`、`node:24.18.0`、`nginx:1.30.3`。原则：Dockerfile 和 Compose 引用短名时保留短名；完整 `registry-1.docker.io/...` 只作为辅助拉取 tag；删除辅助 tag 前必须确认 `IMAGE ID` 一致且没有容器正在引用它。
+同样适用于 `bellsoft/liberica-openjdk-rocky:21.0.12-cds`、`node:26.13.1`、`nginx:1.31.9`。原则：Dockerfile 和 Compose 引用短名时保留短名；完整 `registry-1.docker.io/...` 只作为辅助拉取 tag；删除辅助 tag 前必须确认 `IMAGE ID` 一致且没有容器正在引用它。
 
 Docker credential helper 排查见第 2.2 节：macOS Colima 环境如果曾安装或卸载 Docker Desktop，`~/.docker/config.json` 可能残留 `credsStore` 或 `credHelpers` 指向 `desktop`，导致拉取 public image 失败。部署脚本会在 `deploy` / `build` 路径进入镜像拉取或构建前检查 Docker credential helper 是否存在；`status`、`stop`、`logs` 等不拉取镜像的命令不会因该检查被拦截。
 
@@ -614,7 +614,7 @@ Docker credential helper 排查见第 2.2 节：macOS Colima 环境如果曾安�
 | `curl 127.0.0.1` 得到代理 502 | localhost 请求被 HTTP proxy 拦截 | 使用 `curl --noproxy '*'` |
 | `error getting credentials` 且缺少 `docker-credential-desktop` | Docker config 残留 Docker Desktop credential helper | Colima 验证时临时设置独立 `DOCKER_CONFIG` 和 `DOCKER_HOST`；长期清理失效的 `credsStore`/`credHelpers` 或安装匹配 helper |
 | 镜像列表出现短名和 `registry-1.docker.io/...` 双 tag | 直拉完整 tag 后又 tag 回短名 | 确认 `IMAGE ID` 一致且无容器引用长名后删除辅助 tag |
-| 前端构建出现 Corepack/packageManager 激活失败 | Node 镜像内 Corepack 或包管理器激活异常 | 先确认 Dockerfile 使用固定 `node:24.18.0`，再按工作区 `packageManager` 与 lockfile 定位；不要降回 Node 20/22 标记通过 |
+| 前端构建出现 pnpm 安装或 packageManager 版本失败 | Node 26 镜像不再内置 Corepack，pnpm 由 Dockerfile 通过 npm 固定安装 | 先确认 Dockerfile 使用固定 `node:26.13.1` 并安装与根 `packageManager` 一致的 `pnpm@12.23.0`，且已复制工作区 `pnpm-workspace.yaml`；再按 lockfile 定位；不要降回旧 Node 标记通过 |
 | React 在 `/react/` 下请求 `/logo.svg` 404 | 静态资源使用了根路径 | 使用 `VITE_APP_CONTEXT_PATH` 生成 `/react/logo.svg` |
 | WSL 容器反复重启 | WSL distro 退出导致 Docker daemon 生命周期不稳定 | 部署验证期保持一个 WSL 会话或 keepalive |
 

@@ -461,8 +461,8 @@ NODE
     replace_env_value APPLE_CONTAINER_BIND_HOST "$(read_env_value APPLE_CONTAINER_BIND_HOST 127.0.0.1)"
     replace_env_value APPLE_CONTAINER_HOST_PORT "$(read_env_value APPLE_CONTAINER_HOST_PORT 19090)"
     replace_env_value APPLE_CONTAINER_NETWORK_SUBNET "$(read_env_value APPLE_CONTAINER_NETWORK_SUBNET 192.168.66.0/24)"
-    replace_env_value APPLE_CONTAINER_MYSQL_IMAGE "$(read_env_value APPLE_CONTAINER_MYSQL_IMAGE mysql:8.0.42)"
-    replace_env_value APPLE_CONTAINER_REDIS_IMAGE "$(read_env_value APPLE_CONTAINER_REDIS_IMAGE redis:7.2.8)"
+    replace_env_value APPLE_CONTAINER_MYSQL_IMAGE "$(read_env_value APPLE_CONTAINER_MYSQL_IMAGE mysql:8.0.46)"
+    replace_env_value APPLE_CONTAINER_REDIS_IMAGE "$(read_env_value APPLE_CONTAINER_REDIS_IMAGE redis:7.2.17)"
     replace_env_value APPLE_CONTAINER_ADMIN_IMAGE "$(read_env_value APPLE_CONTAINER_ADMIN_IMAGE localhost/infoq-admin:3.0.0-apple)"
     if [[ -z "$(read_env_value APPLE_CONTAINER_DEPLOY_ROOT)" ]]; then
         replace_env_value APPLE_CONTAINER_DEPLOY_ROOT "${HOME}/infoq-apple"
@@ -478,8 +478,8 @@ prepare_environment() {
     validate_env_file_security
     require_command node
     node "${REPO_ROOT}/tools/production_config.mjs" check --scope apple --env-file "${ENV_FILE}"
-    MYSQL_IMAGE="$(read_env_value APPLE_CONTAINER_MYSQL_IMAGE mysql:8.0.42)"
-    REDIS_IMAGE="$(read_env_value APPLE_CONTAINER_REDIS_IMAGE redis:7.2.8)"
+    MYSQL_IMAGE="$(read_env_value APPLE_CONTAINER_MYSQL_IMAGE mysql:8.0.46)"
+    REDIS_IMAGE="$(read_env_value APPLE_CONTAINER_REDIS_IMAGE redis:7.2.17)"
     ADMIN_IMAGE="$(read_env_value APPLE_CONTAINER_ADMIN_IMAGE localhost/infoq-admin:3.0.0-apple)"
     BIND_HOST="$(read_env_value APPLE_CONTAINER_BIND_HOST 127.0.0.1)"
     HOST_PORT="$(read_env_value APPLE_CONTAINER_HOST_PORT 19090)"

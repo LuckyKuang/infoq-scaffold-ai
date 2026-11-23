@@ -94,7 +94,7 @@ node tools/verify/linux_acceptance.mjs --run-id acceptance-001
 node tools/verify/linux_acceptance.mjs --run-id acceptance-001 --execute
 ```
 
-仅在明确可丢弃的本机 Linux 环境执行；要求 Docker Compose v2、BuildKit、openssl、Node 24.18.0、pnpm 10.34.1、可拉取固定依赖镜像。工具不会自动安装 daemon。80/443/19090/19000/16379 和恢复目标对应端口必须空闲。run root 不得已存在，`infoq-verify-*` project 也不得已有容器/卷/网络。生产证书/凭据不作为隔离输入。
+仅在明确可丢弃的本机 Linux 环境执行；要求 Docker Compose v2、BuildKit、openssl、Node 26.13.1、pnpm 12.23.0、可拉取固定依赖镜像。工具不会自动安装 daemon。80/443/19090/19000/16379 和恢复目标对应端口必须空闲。run root 不得已存在，`infoq-verify-*` project 也不得已有容器/卷/网络。生产证书/凭据不作为隔离输入。
 
 runner 使用两组临时 RSA/随机凭据和双域自签证书，执行以下真实步骤；任何失败或缺前置条件非零退出：
 

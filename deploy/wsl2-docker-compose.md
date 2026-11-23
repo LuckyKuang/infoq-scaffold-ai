@@ -71,7 +71,7 @@ foreach ($infoqPath in $infoqPaths) {
 | localhost 代理 502 | `curl --noproxy '*'`，区分代理失败与服务失败 |
 | Redis 配置 Permission denied | 检查容器用户可读性及 owner；helper 的无密码配置只读挂载，旧 `777` 目录会被拒绝；管理员按镜像 UID/GID 迁移权限后重试 |
 | 前端直连 200、网关 404/502 | 核对 context 与 upstream；受控前端部署会重建网关刷新 DNS，也会覆盖配置 |
-| 镜像 EOF / Corepack 失败 | 按 `DOCKER.md` 区分网络和版本；固定 Node 24.18.0 / pnpm 10.34.1，不降版本伪造通过 |
+| 镜像 EOF / pnpm 安装失败 | 按 `DOCKER.md` 区分网络和版本；固定 Node 26.13.1 / pnpm 12.23.0，不降版本伪造通过 |
 | Debian 未提供宿主 JDK 21 | Compose 不依赖宿主 JDK；手动/Apple Maven 构建才需宿主工具链 |
 
 恢复旧镜像/配置前确认数据库兼容，保留日志与数据；readiness、登录、代理和关键 API 再通过后恢复流量。停止或卸载只作用本次获授权栈，按 `VERIFICATION.md` 的逐项确认执行；不得主动删除 `/infoq` 或其他项目资源。收口列出发行版、root、镜像/构建、各层 smoke、权限/TLS/凭据与未验证项。
