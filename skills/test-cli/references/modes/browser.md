@@ -87,7 +87,9 @@ pnpm --dir skills/test-cli/scripts run playwright-cli admin-route-probe --client
 pnpm --dir skills/test-cli/scripts run chrome-devtools-cli --help
 ```
 
-该入口是本地 `chrome-devtools-mcp` 的服务启动包装器，启动后通过 MCP 协议接收调用；它不是带截图/性能子命令的交互 CLI。由 `.codex/config.toml` 配置的 MCP 客户端调用实际诊断工具，手动启动会保持进程等待客户端连接。
+该入口是本地 `chrome-devtools-mcp` 的服务启动包装器，启动后通过 MCP 协议接收调用；它不是带截图/性能子命令的交互 CLI。由 `.codex/config.toml` 配置的 MCP 客户端调用实际诊断工具，手动启动会保持进程等待客户端连接。包装器按包内 `package.json` 的 `bin.chrome-devtools-mcp` 解析入口，不硬编码构建目录。
+
+当前 `chrome-devtools-mcp` 默认启用 pageId 路由：`take_snapshot`、`take_screenshot`、`evaluate_script`、`click` 等页面级工具必须携带 `list_pages` 返回的数值 `pageId`。客户端未协商 MCP roots 时，读写本地文件的工具（如带 `filePath` 的截图）只允许系统临时目录。
 
 状态和生命周期日志在 `tmp/test-cli/browser/chrome-devtools-mcp/`，记录子进程 PID、`port=null`（stdio）、owned 和终态。收到 SIGINT/SIGTERM/SIGHUP 时关闭 owned 进程树并核验退出；失败不能写成正常完成。隔离进程回归命令见 `references/crud/crud-patterns.md`；对已安装 DevTools MCP 的真实协议与 owned 进程收口回归使用 `node skills/test-cli/scripts/test_chrome_devtools_runtime.mjs`（需先安装 Playwright 依赖与 Chromium，CI 的 Node CLI 矩阵会运行，证据在 `tmp/test-cli/devtools-protocol-*/`）。
 

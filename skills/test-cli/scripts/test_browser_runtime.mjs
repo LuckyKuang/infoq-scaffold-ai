@@ -183,8 +183,10 @@ try {
     } finally {server.closeAllConnections(); await new Promise((resolve) => server.close(resolve));}
   });
   await test('DevTools wrapper forwards termination, closes its owned process and records evidence', async () => {
-    const entry = path.join(scripts, 'node_modules/chrome-devtools-mcp/build/src/bin/chrome-devtools-mcp.js');
+    const mcpPackage = path.join(scripts, 'node_modules/chrome-devtools-mcp');
+    const entry = path.join(mcpPackage, 'out/bin/fixture-mcp.js');
     fs.mkdirSync(path.dirname(entry), {recursive: true});
+    fs.writeFileSync(path.join(mcpPackage, 'package.json'), JSON.stringify({bin: {'chrome-devtools-mcp': './out/bin/fixture-mcp.js'}}), 'utf8');
     fs.writeFileSync(entry, "process.stdout.write('FIXTURE_READY\\n'); setInterval(() => {}, 1000);\n", 'utf8');
     const child = spawn(process.execPath, [path.join(scripts, 'chrome_devtools_cli.mjs')], {stdio: ['ignore', 'pipe', 'pipe']});
     try {
