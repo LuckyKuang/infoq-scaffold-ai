@@ -23,7 +23,7 @@ import RightToolbar from '@/components/RightToolbar';
 import CrudModal from '@/components/CrudModal';
 import modal from '@/utils/modal';
 import auth from '@/utils/permission';
-import { addDateRange } from '@/utils/scaffold';
+import { addDateRange, getCheckedWithHalfKeys } from '@/utils/scaffold';
 import { download } from '@/utils/request';
 
 type TreeOption = MenuTreeOption;
@@ -92,7 +92,7 @@ export default function RolePage() {
   const dict = useDictOptions('sys_normal_disable');
 
   const loadList = useCallback(
-    async (nextQuery: RoleQuery = query, nextRange: [Dayjs, Dayjs] | null = dateRange) => {
+    async (nextQuery: RoleQuery, nextRange: [Dayjs, Dayjs] | null) => {
       setLoading(true);
       try {
         const response = await listRole(addDateRange({ ...nextQuery }, formatRange(nextRange)));
@@ -102,7 +102,7 @@ export default function RolePage() {
         setLoading(false);
       }
     },
-    [dateRange, query]
+    []
   );
 
   const loadMenuTree = async (roleId?: string | number) => {
@@ -148,7 +148,7 @@ export default function RolePage() {
             }
             await changeRoleStatus(record.roleId, nextStatus);
             modal.msgSuccess('状态修改成功');
-            loadList();
+            loadList(query, dateRange);
           }}
         />
       )
@@ -214,16 +214,27 @@ export default function RolePage() {
     await delRole(target);
     modal.msgSuccess('删除成功');
     setSelectedIds([]);
-    loadList();
+    loadList(query, dateRange);
   };
 
   const handleSubmit = async () => {
-    const values = await form.validateFields();
+    await form.validateFields();
+    // validateFields 只返回已注册字段；联动开关等需要从 store 全量读取
+    const values = form.getFieldsValue(true) as RoleForm;
     setSubmitting(true);
     try {
-      const payload = {
-        ...values,
-        menuIds: checkedMenuKeys
+      const payload: RoleForm = {
+        roleId: values.roleId,
+        roleName: values.roleName,
+        roleKey: values.roleKey,
+        roleSort: values.roleSort,
+        status: values.status,
+        menuCheckStrictly: values.menuCheckStrictly,
+        deptCheckStrictly: values.deptCheckStrictly,
+        remark: values.remark,
+        dataScope: values.dataScope,
+        menuIds: values.menuCheckStrictly ? getCheckedWithHalfKeys(toTreeData(menuOptions), checkedMenuKeys) : checkedMenuKeys,
+        deptIds: values.deptIds
       };
       if (values.roleId) {
         await updateRole(payload);
@@ -232,7 +243,7 @@ export default function RolePage() {
       }
       modal.msgSuccess('操作成功');
       setDialogOpen(false);
-      loadList();
+      loadList(query, dateRange);
     } finally {
       setSubmitting(false);
     }
@@ -387,7 +398,7 @@ export default function RolePage() {
             )}
           </Space>
           <div className="right-toolbar-wrap">
-            <RightToolbar showSearch={showSearch} onShowSearchChange={setShowSearch} onQueryTable={() => loadList()} />
+            <RightToolbar showSearch={showSearch} onShowSearchChange={setShowSearch} onQueryTable={() => loadList(query, dateRange)} />
           </div>
         </div>
 
@@ -469,14 +480,20 @@ export default function RolePage() {
         title="分配数据权限"
         onCancel={() => setScopeOpen(false)}
         onOk={async () => {
-          const values = await form.validateFields();
+          await form.validateFields();
+          const values = form.getFieldsValue(true) as RoleForm;
           await dataScope({
-            ...values,
-            deptIds: checkedDeptKeys
+            roleId: values.roleId,
+            roleName: values.roleName,
+            roleKey: values.roleKey,
+            dataScope: values.dataScope,
+            menuCheckStrictly: values.menuCheckStrictly,
+            deptCheckStrictly: values.deptCheckStrictly,
+            deptIds: values.deptCheckStrictly ? getCheckedWithHalfKeys(toTreeData(deptOptions), checkedDeptKeys) : checkedDeptKeys
           });
           modal.msgSuccess('修改成功');
           setScopeOpen(false);
-          loadList();
+          loadList(query, dateRange);
         }}
       >
         <Form form={form} layout="vertical">

@@ -7,9 +7,9 @@
 [![CI](https://github.com/LuckyKuang/infoq-scaffold-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/LuckyKuang/infoq-scaffold-ai/actions/workflows/ci.yml)
 ![Version](https://img.shields.io/badge/Version-3.0.0--rc1-f66a39)
 ![JDK](https://img.shields.io/badge/JDK-21-1677FF)
-![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1.1-6DB33F)
-![Vue](https://img.shields.io/badge/Vue-3.5.42-42B883)
-![React](https://img.shields.io/badge/React-19.2.7-61DAFB)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.2.0-6DB33F)
+![Vue](https://img.shields.io/badge/Vue-3.5.46-42B883)
+![React](https://img.shields.io/badge/React-19.3.1-61DAFB)
 [![License](https://img.shields.io/badge/License-MIT-F7C948)](LICENSE)
 
 **AI-collaboration full-stack engineering scaffold**
@@ -39,7 +39,7 @@ the user removes local plans manually.
 
 Supported workspaces:
 
-- `backend`: Spring Boot 4.1 multi-module backend
+- `backend`: Spring Boot 4.2 multi-module backend
 - `frontend-vue`: Vue 3 + Element Plus admin
 - `frontend-react`: React 19 + Ant Design admin
 
@@ -50,7 +50,7 @@ seed changes must use `sql/infoq_scaffold_update_YYYYMMDD.sql`.
 <!-- readme-section:features -->
 ## Features
 
-- Spring Boot 4.1 backend on JDK 21, MyBatis-Plus, and Spring Security
+- Spring Boot 4.2 backend on JDK 21, MyBatis-Plus, and Spring Security
 - Dual admin consoles that share the same backend API contract
 - Layered [`AGENTS.md`](AGENTS.md), `skills`, and OpenSpec delivery
 - Frozen SQL baseline plus dated incremental scripts

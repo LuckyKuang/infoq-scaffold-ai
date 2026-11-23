@@ -7,9 +7,9 @@
 [![CI](https://github.com/LuckyKuang/infoq-scaffold-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/LuckyKuang/infoq-scaffold-ai/actions/workflows/ci.yml)
 ![Version](https://img.shields.io/badge/Version-3.0.0--rc1-f66a39)
 ![JDK](https://img.shields.io/badge/JDK-21-1677FF)
-![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1.1-6DB33F)
-![Vue](https://img.shields.io/badge/Vue-3.5.42-42B883)
-![React](https://img.shields.io/badge/React-19.2.7-61DAFB)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.2.0-6DB33F)
+![Vue](https://img.shields.io/badge/Vue-3.5.46-42B883)
+![React](https://img.shields.io/badge/React-19.3.1-61DAFB)
 [![License](https://img.shields.io/badge/License-MIT-F7C948)](LICENSE)
 
 **面向 AI 协作的全栈工程脚手架**
@@ -37,7 +37,7 @@
 
 当前保留三个工作区：
 
-- `backend`：Spring Boot 4.1 多模块后端
+- `backend`：Spring Boot 4.2 多模块后端
 - `frontend-vue`：Vue 3 + Element Plus 管理端
 - `frontend-react`：React 19 + Ant Design 管理端
 
@@ -48,7 +48,7 @@
 <!-- readme-section:features -->
 ## 核心功能
 
-- Spring Boot 4.1 后端，基线为 JDK 21、MyBatis-Plus 和 Spring Security
+- Spring Boot 4.2 后端，基线为 JDK 21、MyBatis-Plus 和 Spring Security
 - Vue / React 双管理端共享同一套后端 API 契约
 - 分层 [`AGENTS.md`](AGENTS.md)、`skills` 与 OpenSpec 交付流程
 - 冻结 SQL 基线与按日期增量脚本

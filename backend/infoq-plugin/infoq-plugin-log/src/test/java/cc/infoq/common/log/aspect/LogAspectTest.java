@@ -86,6 +86,26 @@ class LogAspectTest {
     }
 
     @Test
+    @DisplayName("argsArrayToString: should not log OSS keys or client secrets")
+    void argsArrayToStringShouldDropCredentialFields() throws Exception {
+        Method method = LogAspect.class.getDeclaredMethod("argsArrayToString", Object[].class, String[].class);
+        method.setAccessible(true);
+
+        Object[] args = new Object[]{
+            Map.of("configKey", "minio", "accessKey", "AKIA-LEAK", "secretKey", "SK-LEAK"),
+            Map.of("clientKey", "pc", "clientSecret", "CS-LEAK")
+        };
+
+        String result = (String) method.invoke(logAspect, new Object[]{args, new String[0]});
+
+        assertTrue(result.contains("minio"));
+        assertTrue(result.contains("pc"));
+        assertFalse(result.contains("AKIA-LEAK"));
+        assertFalse(result.contains("SK-LEAK"));
+        assertFalse(result.contains("CS-LEAK"));
+    }
+
+    @Test
     @DisplayName("argsArrayToString: should sanitize excluded fields in map/list payloads")
     void argsArrayToStringShouldSanitizeExcludedFields() throws Exception {
         Method method = LogAspect.class.getDeclaredMethod("argsArrayToString", Object[].class, String[].class);

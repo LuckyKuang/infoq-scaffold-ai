@@ -23,7 +23,7 @@
 ## 4. 依赖方向
 
 - 上游依赖主要是 `views/*` 与 `store/modules/*`。
-- 普通业务接口依赖 `../utils/request.ts`；浏览器恢复资源用独立 fetch，避免附带旧 Bearer、缓存到 `sessionObj` 或触发普通 401 注销循环。
+- 普通业务接口依赖 `../utils/request.ts`；浏览器恢复资源用独立 fetch，避免附带旧 Bearer、进入内存重复提交记录或触发普通 401 注销循环。
 - 类型定义与返回体约束来自本目录 `types.ts` 或各子模块 `types.ts`。
 
 ## 5. 典型调用链

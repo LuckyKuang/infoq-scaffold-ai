@@ -46,6 +46,11 @@ Install, upgrade, rollback, stop, and data-retention boundaries are documented i
 | `DOCKER.md` | Docker Compose 全栈部署（教程 + 脚本化流程） |
 | `APPLE_CONTAINER.md` | Apple `container` local stack |
 | `DEPLOYMENT_LIFECYCLE.md` | Install, upgrade, rollback, stop, and cleanup |
+| `PRODUCTION.md` | Linux Docker 生产配置、TLS、私有存储与权限迁移 |
+| `VERIFICATION.md` | 完整 Compose 栈 smoke 与阻断收口 |
+| `runtime-matrix.md` | 容器运行时选择矩阵 |
+| `COLIMA.md` | macOS Colima 完整栈与隔离验收 |
+| `wsl2-docker-compose.md` | Windows WSL2 Docker Compose 专项验证 |
 | `MANUAL.md` | 非容器化 JVM + Nginx 部署 |
 | `Dockerfile.apple` | Apple container runtime image |
 | `apple-container.sh` | Isolated MySQL, Redis, and backend helper |
@@ -54,6 +59,9 @@ Install, upgrade, rollback, stop, and data-retention boundaries are documented i
 | `../deploy/docker/docker-compose.yml` | Full-stack Compose file |
 | `../deploy/bin/infoq.sh` | Backend and middleware helper |
 | `../deploy/bin/deploy-frontend.sh` | Frontend / gateway deploy helper |
+| `bin/deploy-middleware.sh` | 可选 MQTT / Elasticsearch 单节点与三节点选择入口（见 [DOCKER.md](DOCKER.md) 第 10 节） |
+| `bin/minio-policy.mjs`、`bin/prepare-volume-users.mjs`、`bin/migrate-permissions.mjs` | 私有 bucket 策略、镜像用户目录初始化与权限迁移工具（见 [PRODUCTION.md](PRODUCTION.md)） |
+| `bin/render-gateway.mjs`、`bin/test-production-runtime.mjs` | 受控 TLS 网关渲染与隔离回归 |
 
 ## 1. 前置条件
 
@@ -176,7 +184,7 @@ ${INFOQ_DEPLOY_ROOT}/react/logs      # INFOQ_FRONTEND_TARGET=react 或 all
 ### 1.5 数据初始化准备
 
 - 冻结初始化基线：[`sql/infoq_scaffold_3.0.0.sql`](../sql/infoq_scaffold_3.0.0.sql)
-- 增量脚本：`sql/infoq_scaffold_update_*.sql`
+- 增量脚本：`sql/infoq_scaffold_update_*.sql`（按需新增；当前 `sql/` 仅含冻结基线，历史增量已并入 3.0.0 基线）
 
 部署前确认：目标数据库字符集支持 `utf8mb4`；目标库名是否使用 `infoq`；已有库是否允许导入；非首次部署是否有可用备份与回滚点；多节点滚动发布前数据库增量必须先完成。当前部署完成后应能查到 `sys_job`、`QRTZ_LOCKS`、`sys_oauth_provider`、`sys_oauth_identity`，且 `sys_client` 的 `e5cd7e4891bf95d1d19206ce24a7b32e` 客户端包含 `oauth` 授权类型。
 
@@ -344,6 +352,9 @@ INFOQ_ENV_FILE=/etc/infoq-scaffold-ai/deploy.env bash deploy/bin/infoq.sh logs i
 | [APPLE_CONTAINER.md](APPLE_CONTAINER.md) | macOS Apple `container` 本机后端栈 |
 | [DEPLOYMENT_LIFECYCLE.md](DEPLOYMENT_LIFECYCLE.md) | 安装、升级、回滚、停止与数据保留 |
 | [MANUAL.md](MANUAL.md) | 非容器化部署 |
+| [PRODUCTION.md](PRODUCTION.md) | Linux Docker 生产配置、TLS、私有存储与权限迁移 |
 | [VERIFICATION.md](VERIFICATION.md) | 容器部署 smoke 与阻断收口 |
 | [runtime-matrix.md](runtime-matrix.md) | 运行时选择矩阵 |
+| [COLIMA.md](COLIMA.md) | macOS Colima 完整栈与隔离验收 |
+| [wsl2-docker-compose.md](wsl2-docker-compose.md) | Windows WSL2 Docker Compose 专项验证 |
 | [Security policy](../SECURITY.md) | Vulnerability reporting |

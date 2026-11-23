@@ -228,7 +228,7 @@ describe('layout/components/Navbar', () => {
     expect(navbarMocks.routerReplace).toHaveBeenCalledWith({
       path: '/login',
       query: {
-        redirect: encodeURIComponent('/system/user?tab=1')
+        redirect: '/system/user?tab=1'
       }
     });
     expect(navbarMocks.closeAllPage).toHaveBeenCalledTimes(1);

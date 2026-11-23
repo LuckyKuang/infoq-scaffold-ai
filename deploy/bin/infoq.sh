@@ -477,12 +477,10 @@ discover_sql_update_files() {
   done
   shopt -u nullglob
 
-  if (( ${#files[@]} == 0 )); then
-    echo "[backend] 未发现 SQL 增量脚本: ${SQL_DIR}/infoq_scaffold_update_*.sql" >&2
-    exit 1
+  # 3.0.0 基线已合并全部历史增量，无增量脚本是合法状态
+  if (( ${#files[@]} > 0 )); then
+    printf '%s\n' "${files[@]}"
   fi
-
-  printf '%s\n' "${files[@]}"
 }
 
 table_exists() {
@@ -508,100 +506,15 @@ ensure_base_schema() {
   mysql_exec_infoq_file "${SQL_INIT_FILE}" "基础库"
 }
 
-ensure_scheduler_schema() {
-  local job_table_exists
-  local quartz_lock_exists
-
-  job_table_exists="$(table_exists sys_job)"
-  quartz_lock_exists="$(table_exists qrtz_locks)"
-
-  if [[ "${job_table_exists}" == "1" && "${quartz_lock_exists}" == "1" ]]; then
-    return
-  fi
-
-  mysql_exec_infoq_file "${SQL_DIR}/infoq_scaffold_update_20260425.sql" "定时任务与 Quartz 表"
-}
-
-ensure_monitor_menu_data() {
-  if [[ "$(menu_count)" == "4" ]]; then
-    return
-  fi
-
-  mysql_exec_infoq_file "${SQL_DIR}/infoq_scaffold_update_20260429.sql" "监控菜单数据"
-}
-
-ensure_config_metadata_columns() {
-  local expected_count=6
-  local actual_count
-  local metadata_columns="'value_type','default_value','group_key','display_order','options_json','ui_props_json'"
-
-  actual_count="$(column_count sys_config "${metadata_columns}")"
-  if [[ "${actual_count}" == "${expected_count}" ]]; then
-    return
-  fi
-
-  if [[ "${actual_count}" != "0" ]]; then
-    echo "[backend] 检测到 sys_config 配置元数据列处于部分迁移状态，请人工检查后重试" >&2
-    exit 1
-  fi
-
-  mysql_exec_infoq_file "${SQL_DIR}/infoq_scaffold_update_20260526.sql" "配置元数据列"
-}
-
-oauth_schema_ready() {
-  local oauth_tables_count
-  local oauth_dict_count
-  local oauth_client_count
-
-  oauth_tables_count="$(mysql_query "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='infoq' AND LOWER(table_name) IN ('sys_oauth_provider','sys_oauth_identity');")"
-  oauth_dict_count="$(mysql_query "SELECT COUNT(*) FROM infoq.sys_dict_data WHERE dict_type='sys_grant_type' AND dict_value='oauth';")"
-  oauth_client_count="$(mysql_query "SELECT COUNT(*) FROM infoq.sys_client WHERE client_id='e5cd7e4891bf95d1d19206ce24a7b32e' AND FIND_IN_SET('oauth', REPLACE(COALESCE(grant_type, ''), ' ', '')) > 0;")"
-
-  [[ "${oauth_tables_count}" == "2" && "${oauth_dict_count}" == "1" && "${oauth_client_count}" == "1" ]]
-}
-
-ensure_oauth_schema() {
-  if oauth_schema_ready; then
-    return
-  fi
-
-  mysql_exec_infoq_file "${SQL_DIR}/infoq_scaffold_update_20260529.sql" "OAuth 登录表与授权类型"
-
-  if ! oauth_schema_ready; then
-    echo "[backend] OAuth 增量 SQL 校验失败，请检查 sys_oauth_provider、sys_oauth_identity、sys_grant_type=oauth 与 sys_client.grant_type" >&2
-    exit 1
-  fi
-}
-
-ensure_sql_update_applied() {
-  local sql_file="$1"
-
-  case "${sql_file##*/}" in
-    infoq_scaffold_update_20260425.sql)
-      ensure_scheduler_schema
-      ;;
-    infoq_scaffold_update_20260429.sql)
-      ensure_monitor_menu_data
-      ;;
-    infoq_scaffold_update_20260526.sql)
-      ensure_config_metadata_columns
-      ;;
-    infoq_scaffold_update_20260529.sql)
-      ensure_oauth_schema
-      ;;
-    *)
-      echo "[backend] 发现未接入校验逻辑的 SQL 增量脚本: ${sql_file##${REPO_ROOT}/}" >&2
-      echo "[backend] 请先在 deploy/bin/infoq.sh 增加幂等执行和执行后校验规则，避免部分迁移状态" >&2
-      exit 1
-      ;;
-  esac
-}
-
+# 新增增量脚本时，在此按文件名接入幂等执行与执行后校验；未接入的脚本显式失败，避免部分迁移状态
 ensure_sql_updates() {
   local sql_file
 
   while IFS= read -r sql_file; do
-    ensure_sql_update_applied "${sql_file}"
+    [[ -n "${sql_file}" ]] || continue
+    echo "[backend] 发现未接入校验逻辑的 SQL 增量脚本: ${sql_file##${REPO_ROOT}/}" >&2
+    echo "[backend] 请先在 deploy/bin/infoq.sh 增加幂等执行和执行后校验规则，避免部分迁移状态" >&2
+    exit 1
   done < <(discover_sql_update_files)
 }
 

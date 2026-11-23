@@ -134,6 +134,7 @@ spring.servlet.multipart.location: /your/path/server/temp
   set -euo pipefail
   mysql -u root -p < sql/infoq_scaffold_3.0.0.sql
   for file in sql/infoq_scaffold_update_*.sql; do
+    [[ -e "$file" ]] || continue  # 当前仓库无增量脚本时跳过未展开的通配符
     mysql -u root -p infoq < "$file"
   done
 )

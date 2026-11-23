@@ -115,7 +115,7 @@ API 模块本身主要负责：
 -> router.replace('/login?redirect=...')
 ```
 
-普通 401 不会递归调用专用恢复资源。浏览器恢复请求使用独立同源 fetch，绕过普通拦截器，也不会写入 `sessionObj`；密码和 OAuth ticket 已通过 `repeatSubmit:false` 排除该缓存。
+普通 401 不会递归调用专用恢复资源。浏览器恢复请求使用独立同源 fetch，绕过普通拦截器，也不会进入重复提交记录；该记录只保存在 `utils/request.ts` 模块内存中（不写入 sessionStorage），`FormData` 请求不参与比较，密码和 OAuth ticket 另通过 `repeatSubmit:false` 排除。
 
 旧 Bearer 请求晚到的 401 不会注销新身份；App 在匿名且当前仍为受保护路由时隐藏旧 DOM，即使导航失败也不会继续显示旧页面。专用恢复/绑定/退出的 cookie 副作用在当前 tab 排队，新密码/OAuth 登录等待 pending logout，避免晚到 DELETE 清掉新 cookie。
 

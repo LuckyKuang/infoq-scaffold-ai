@@ -94,7 +94,8 @@ public class SysConfigServiceImpl implements SysConfigService, ConfigService {
      * @param configKey 参数key
      * @return 参数键值
      */
-    @Cacheable(cacheNames = CacheNames.SYS_CONFIG, key = "#configKey")
+    // 未知键名返回空串；缓存会存储 null/空值，不排除会让任意键名（含匿名接口传入）在 Redis 中留下缓存记录
+    @Cacheable(cacheNames = CacheNames.SYS_CONFIG, key = "#configKey", unless = "#result == null or #result.isEmpty()")
     @Override
     public String selectConfigByKey(String configKey) {
         SysConfig retConfig = sysConfigMapper.selectOne(new LambdaQueryWrapper<SysConfig>()

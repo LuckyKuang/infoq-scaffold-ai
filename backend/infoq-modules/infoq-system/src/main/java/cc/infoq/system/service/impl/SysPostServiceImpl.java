@@ -64,7 +64,7 @@ public class SysPostServiceImpl implements SysPostService, PostService {
      */
     @Override
     public List<SysPostVo> selectPostList(SysPostBo post) {
-        return sysPostMapper.selectVoList(buildQueryWrapper(post));
+        return sysPostMapper.selectPostList(buildQueryWrapper(post));
     }
 
     /**
@@ -114,7 +114,7 @@ public class SysPostServiceImpl implements SysPostService, PostService {
      */
     @Override
     public List<SysPostVo> selectPostAll() {
-        return sysPostMapper.selectVoList(new QueryWrapper<>());
+        return sysPostMapper.selectPostList(new QueryWrapper<>());
     }
 
     /**
@@ -125,7 +125,7 @@ public class SysPostServiceImpl implements SysPostService, PostService {
      */
     @Override
     public SysPostVo selectPostById(Long postId) {
-        return sysPostMapper.selectVoById(postId);
+        return CollUtil.getFirst(sysPostMapper.selectPostList(new LambdaQueryWrapper<SysPost>().eq(SysPost::getPostId, postId)));
     }
 
     /**

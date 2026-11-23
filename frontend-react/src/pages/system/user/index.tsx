@@ -186,7 +186,7 @@ export default function UserPage() {
   }, []);
 
   const loadList = useCallback(
-    async (nextQuery: UserQuery = query, nextRange: [Dayjs, Dayjs] | null = dateRange) => {
+    async (nextQuery: UserQuery, nextRange: [Dayjs, Dayjs] | null) => {
       setLoading(true);
       try {
         const response = await listUser(addDateRange({ ...nextQuery }, formatRange(nextRange)));
@@ -196,7 +196,7 @@ export default function UserPage() {
         setLoading(false);
       }
     },
-    [dateRange, query]
+    []
   );
 
   const loadBaseOptions = useCallback(async (deptId?: string | number) => {
@@ -303,9 +303,9 @@ export default function UserPage() {
       await delUser(target);
       modal.msgSuccess('删除成功');
       setSelectedIds([]);
-      loadList();
+      loadList(query, dateRange);
     },
-    [loadList, selectedIds]
+    [dateRange, loadList, query, selectedIds]
   );
 
   const handleSubmit = useCallback(async () => {
@@ -319,11 +319,11 @@ export default function UserPage() {
       }
       modal.msgSuccess('操作成功');
       setDialogOpen(false);
-      loadList();
+      loadList(query, dateRange);
     } finally {
       setSubmitting(false);
     }
-  }, [form, loadList]);
+  }, [dateRange, form, loadList, query]);
 
   const handleAdd = useCallback(async () => {
     const response = await getUser();
@@ -392,7 +392,15 @@ export default function UserPage() {
         width: 560,
         okText: '确定',
         content: (
-          <div style={{ maxHeight: '50vh', overflowY: 'auto', paddingRight: 8 }} dangerouslySetInnerHTML={{ __html: response.msg || '导入成功' }} />
+          // 后端以 <br/> 分行且正文含 Excel 中用户可控的账号名，按纯文本逐行渲染，不注入 HTML
+          <div style={{ maxHeight: '50vh', overflowY: 'auto', paddingRight: 8 }}>
+            {(response.msg || '导入成功')
+              .split(/<br\s*\/?>/i)
+              .filter((line) => line.trim() !== '')
+              .map((line, index) => (
+                <div key={index}>{line}</div>
+              ))}
+          </div>
         )
       });
       loadList(initialQuery, null);
@@ -433,7 +441,7 @@ export default function UserPage() {
               }
               await changeUserStatus(record.userId, nextStatus);
               modal.msgSuccess('状态修改成功');
-              loadList();
+              loadList(query, dateRange);
             }}
           />
         )
@@ -487,7 +495,7 @@ export default function UserPage() {
     ];
 
     return nextColumns.filter((column) => !column.hidden);
-  }, [handleDelete, handleEdit, loadList, navigate, pwdForm, visibleColumnKeys]);
+  }, [dateRange, handleDelete, handleEdit, loadList, navigate, pwdForm, query, visibleColumnKeys]);
 
   return (
     <Row gutter={16}>
@@ -655,7 +663,7 @@ export default function UserPage() {
                   showSearch={showSearch}
                   columns={columns}
                   onShowSearchChange={setShowSearch}
-                  onQueryTable={() => loadList()}
+                  onQueryTable={() => loadList(query, dateRange)}
                   onColumnsChange={setColumns}
                 />
               </div>

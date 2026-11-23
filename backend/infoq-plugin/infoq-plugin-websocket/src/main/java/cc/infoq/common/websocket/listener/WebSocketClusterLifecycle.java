@@ -24,7 +24,7 @@ public class WebSocketClusterLifecycle implements ApplicationRunner, Ordered, Di
     public void run(ApplicationArguments args) {
         maintainClusterState();
         ScheduledExecutorService scheduledExecutorService = SpringUtils.getBean(ScheduledExecutorService.class);
-        heartbeatFuture = scheduledExecutorService.scheduleWithFixedDelay(this::maintainClusterState,
+        heartbeatFuture = scheduledExecutorService.scheduleWithFixedDelay(this::maintainClusterStateSafely,
             WebSocketClusterUtils.NODE_HEARTBEAT_INTERVAL_SECONDS,
             WebSocketClusterUtils.NODE_HEARTBEAT_INTERVAL_SECONDS,
             TimeUnit.SECONDS);
@@ -43,6 +43,18 @@ public class WebSocketClusterLifecycle implements ApplicationRunner, Ordered, Di
         }
         WebSocketClusterUtils.unregisterCurrentNode();
         log.info("清理WebSocket集群节点成功, nodeId={}", WebSocketClusterUtils.currentNodeId());
+    }
+
+    /**
+     * 周期任务抛出异常会被 ScheduledExecutorService 永久取消，导致本节点心跳过期后被其他节点判定下线；
+     * 单轮失败只记录并等待下一轮重试。启动时首轮仍直接调用 maintainClusterState，失败即显式暴露。
+     */
+    void maintainClusterStateSafely() {
+        try {
+            maintainClusterState();
+        } catch (RuntimeException e) {
+            log.warn("WebSocket集群节点心跳维护失败, 等待下一轮重试, nodeId={}", WebSocketClusterUtils.currentNodeId(), e);
+        }
     }
 
     private void maintainClusterState() {

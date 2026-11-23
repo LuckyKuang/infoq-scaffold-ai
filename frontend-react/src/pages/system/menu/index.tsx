@@ -64,7 +64,7 @@ export default function MenuPage() {
   const dict = useDictOptions('sys_show_hide', 'sys_normal_disable');
 
   const loadList = useCallback(
-    async (nextQuery: MenuQuery = query) => {
+    async (nextQuery: MenuQuery) => {
       setLoading(true);
       try {
         const response = await listMenu(nextQuery);
@@ -75,7 +75,7 @@ export default function MenuPage() {
         setLoading(false);
       }
     },
-    [query]
+    []
   );
 
   useEffect(() => {
@@ -161,7 +161,7 @@ export default function MenuPage() {
     }
     await delMenu(menuId);
     modal.msgSuccess('删除成功');
-    loadList();
+    loadList(query);
   };
 
   const handleSubmit = async () => {
@@ -175,7 +175,7 @@ export default function MenuPage() {
       }
       modal.msgSuccess('操作成功');
       setDialogOpen(false);
-      loadList();
+      loadList(query);
     } finally {
       setSubmitting(false);
     }
@@ -248,7 +248,7 @@ export default function MenuPage() {
             )}
           </Space>
           <div className="right-toolbar-wrap">
-            <RightToolbar showSearch={showSearch} onShowSearchChange={setShowSearch} onQueryTable={() => loadList()} />
+            <RightToolbar showSearch={showSearch} onShowSearchChange={setShowSearch} onQueryTable={() => loadList(query)} />
           </div>
         </div>
 
@@ -377,7 +377,7 @@ export default function MenuPage() {
           modal.msgSuccess('删除成功');
           setDeleteOpen(false);
           setCheckedMenuIds([]);
-          loadList();
+          loadList(query);
         }}
       >
         <Tree

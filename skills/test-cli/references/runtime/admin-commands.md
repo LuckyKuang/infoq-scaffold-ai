@@ -66,11 +66,11 @@ E2E 自管栈：
 pnpm --dir skills/test-cli/scripts run playwright-cli admin-route-probe --backend-url "http://127.0.0.1:8080" --list-routes
 ```
 
-3. 对目标受保护路由执行 CLI-first 浏览器探测（以下用 E2E 自管栈端口；手动 dev 默认 `80`）：
+3. 对目标受保护路由执行 CLI-first 浏览器探测（以下用 E2E 自管栈端口；手动 dev 默认 `80`；`--client` 必须与目标应用一致，默认 `--api-prefix` 为 `/dev-api`）：
 
 ```bash
-pnpm --dir skills/test-cli/scripts run playwright-cli admin-route-probe --frontend-origin "http://127.0.0.1:5173" --route "/index"
-pnpm --dir skills/test-cli/scripts run playwright-cli admin-route-probe --frontend-origin "http://127.0.0.1:5174" --route "/index"
+pnpm --dir skills/test-cli/scripts run playwright-cli admin-route-probe --client vue --frontend-origin "http://127.0.0.1:5173" --route "/index"
+pnpm --dir skills/test-cli/scripts run playwright-cli admin-route-probe --client react --frontend-origin "http://127.0.0.1:5174" --route "/index"
 ```
 
 4. `admin-route-probe` 直接调用 `test-cli/scripts/captcha_login.mjs`，通过 Redis 种子答案获取 token。需要逐个动态菜单路由取证时使用 `run_admin_e2e.mjs`；它尚不执行完整静态矩阵，不能代替固定路由、登录表单和角色权限用例。
@@ -88,8 +88,8 @@ Admin Docker 入口（生产使用已配置证书和域名的 HTTPS 网关；下
 在已授权测试部署中，按实际网关上下文路径探测（Vue 用 `/vue`，React 用 `/react`）；这会执行 Redis 种子登录，禁止直接对生产后端/Redis 使用：
 
 ```bash
-pnpm --dir skills/test-cli/scripts run playwright-cli admin-route-probe --backend-url "http://127.0.0.1:9090" --frontend-origin "http://127.0.0.1/vue" --route "/index"
-pnpm --dir skills/test-cli/scripts run playwright-cli admin-route-probe --backend-url "http://127.0.0.1:9090" --frontend-origin "http://127.0.0.1/react" --route "/index"
+pnpm --dir skills/test-cli/scripts run playwright-cli admin-route-probe --client vue --api-prefix /prod-api --backend-url "http://127.0.0.1:9090" --frontend-origin "http://127.0.0.1/vue" --route "/index"
+pnpm --dir skills/test-cli/scripts run playwright-cli admin-route-probe --client react --api-prefix /prod-api --backend-url "http://127.0.0.1:9090" --frontend-origin "http://127.0.0.1/react" --route "/index"
 ```
 
 双端 Router base 与 Vite `BASE_URL` 一致，React `BrowserRouter.basename` 与 Vue history 均保留部署前缀。认证回跳经 `utils/auth-redirect.ts` 校验；API 交换带前缀一次且不含 origin 的站内路径，Router navigate 使用应用内路径，不二次解码 query/hash。双端子路径刷新、登录回跳、资源 URL 及 API 反代仍须单独实测，不能用站点 HTTP 200 或直连 `/` 的结果替代。真实构建产物的隔离 HTTP/Provider 替身回归见 `references/modes/frontend.md` 的认证回跳 SOP，不能替代真实认证和生产网关验收。

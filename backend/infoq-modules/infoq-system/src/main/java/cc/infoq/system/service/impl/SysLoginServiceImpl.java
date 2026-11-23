@@ -135,7 +135,7 @@ public class SysLoginServiceImpl implements SysLoginService {
         String loginFail = Constants.LOGIN_FAIL;
 
         // 获取用户登录错误次数，默认为0 (可自定义限制策略 例如: key + username + ip)
-        int errorNumber = ObjectUtil.defaultIfNull(RedisUtils.getCacheObject(errorKey), 0);
+        long errorNumber = RedisUtils.getAtomicValue(errorKey);
         // 锁定时间内登录 则踢出
         if (errorNumber >= maxRetryCount) {
             recordLoginInfo(username, loginFail, MessageUtils.message(loginType.getRetryLimitExceed(), maxRetryCount, lockTime));
@@ -143,9 +143,9 @@ public class SysLoginServiceImpl implements SysLoginService {
         }
 
         if (supplier.get()) {
-            // 错误次数递增
-            errorNumber++;
-            RedisUtils.setCacheObject(errorKey, errorNumber, Duration.ofMinutes(lockTime));
+            // 原子递增，避免并发失败请求读到同一旧值而少计次数，绕过锁定阈值；每次失败刷新锁定窗口
+            errorNumber = RedisUtils.incrAtomicValue(errorKey);
+            RedisUtils.expire(errorKey, Duration.ofMinutes(lockTime));
             // 达到规定错误次数 则锁定登录
             if (errorNumber >= maxRetryCount) {
                 recordLoginInfo(username, loginFail, MessageUtils.message(loginType.getRetryLimitExceed(), maxRetryCount, lockTime));

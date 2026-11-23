@@ -23,6 +23,7 @@ const userMocks = vi.hoisted(() => ({
   treeSetCurrentKey: vi.fn(),
   uploadSubmit: vi.fn(),
   uploadRemove: vi.fn(),
+  msgError: vi.fn(),
   rows: [
     {
       userId: 2,
@@ -366,7 +367,8 @@ describe('views/system/user/index', () => {
             addDateRange: (query: Record<string, unknown>, range: unknown[]) => ({ ...query, range }),
             $modal: {
               confirm: userMocks.modalConfirm,
-              msgSuccess: userMocks.msgSuccess
+              msgSuccess: userMocks.msgSuccess,
+              msgError: userMocks.msgError
             },
             download: userMocks.download,
             getConfigKey: userMocks.getConfigKey
@@ -413,7 +415,7 @@ describe('views/system/user/index', () => {
       }
     });
 
-  it('loads department tree, user list and init password on mounted', async () => {
+  it('loads department tree and user list on mounted without reading the init password', async () => {
     mountView();
     await flushPromises();
 
@@ -424,7 +426,7 @@ describe('views/system/user/index', () => {
         pageSize: 10
       })
     );
-    expect(userMocks.getConfigKey).toHaveBeenCalledWith('sys.user.initPassword');
+    expect(userMocks.getConfigKey).not.toHaveBeenCalled();
   });
 
   it('filters user list by clicked department node', async () => {
@@ -458,6 +460,7 @@ describe('views/system/user/index', () => {
     await flushPromises();
 
     expect(userMocks.getUser).toHaveBeenCalledTimes(1);
+    expect(userMocks.getConfigKey).toHaveBeenCalledWith('sys.user.initPassword');
     expect(userMocks.addUser).toHaveBeenCalledWith(
       expect.objectContaining({
         password: 'Init@123'
@@ -554,7 +557,8 @@ describe('views/system/user/index', () => {
       handleExport: () => void;
       importTemplate: () => void;
       handleFileUploadProgress: () => void;
-      handleFileSuccess: (response: { msg: string }, file: { name: string }) => void;
+      handleFileSuccess: (response: { code: number; msg: string }, file: { name: string }) => void;
+      handleFileError: (error: Error, file: { name: string }) => void;
       cancel: () => void;
       closeDialog: () => void;
       handleSelectionChange: (selection: Array<{ userId: number }>) => void;
@@ -626,7 +630,8 @@ describe('views/system/user/index', () => {
       handleExport: () => void;
       importTemplate: () => void;
       handleFileUploadProgress: () => void;
-      handleFileSuccess: (response: { msg: string }, file: { name: string }) => void;
+      handleFileSuccess: (response: { code: number; msg: string }, file: { name: string }) => void;
+      handleFileError: (error: Error, file: { name: string }) => void;
       cancel: () => void;
       closeDialog: () => void;
       handleSelectionChange: (selection: Array<{ userId: number }>) => void;
@@ -666,9 +671,11 @@ describe('views/system/user/index', () => {
     expect(vm.upload.isUploading).toBe(true);
 
     messageBoxAlertMock.mockResolvedValueOnce(undefined);
-    vm.handleFileSuccess({ msg: '导入完成' }, { name: 'users.xlsx' });
+    vm.handleFileSuccess({ code: 200, msg: '导入完成' }, { name: 'users.xlsx' });
     await flushPromises();
     expect(userMocks.uploadRemove).toHaveBeenCalled();
+    expect(vm.upload.isUploading).toBe(false);
+    expect(vm.upload.open).toBe(false);
 
     vm.dialog.visible = true;
     vm.cancel();
@@ -726,5 +733,70 @@ describe('views/system/user/index', () => {
     await vm.handleDeptChange(99);
     expect(userMocks.optionselect).toHaveBeenCalledWith(99);
     expect(vm.form.postIds).toEqual([]);
+  });
+
+  it('escapes user-controlled import result text while keeping <br/> line breaks', async () => {
+    const wrapper = mountView();
+    await flushPromises();
+    const vm = wrapper.vm as unknown as {
+      handleFileSuccess: (response: { code: number; msg: string }, file: { name: string }) => void;
+    };
+    messageBoxAlertMock.mockResolvedValueOnce(undefined);
+
+    vm.handleFileSuccess(
+      { code: 200, msg: '<br/>1、账号 <img src=x onerror=alert(1)> 导入成功<br>2、账号 a&b "q" 更新成功' },
+      { name: 'users.xlsx' }
+    );
+
+    const [html, title, options] = messageBoxAlertMock.mock.calls[0] as [string, string, Record<string, unknown>];
+    expect(title).toBe('导入结果');
+    expect(options.dangerouslyUseHTMLString).toBe(true);
+    expect(html).not.toContain('<img');
+    expect(html).toContain('&#60;img src=x onerror=alert(1)&#62;');
+    expect(html).toContain('<br/>1、账号');
+    expect(html).toContain('<br/>2、账号 a&#38;b &#34;q&#34; 更新成功');
+  });
+
+  it('keeps the dialog open and resets the upload control when the response code is not success', async () => {
+    const wrapper = mountView();
+    await flushPromises();
+    const vm = wrapper.vm as unknown as {
+      upload: { open: boolean; isUploading: boolean };
+      handleImport: () => void;
+      handleFileUploadProgress: () => void;
+      handleFileSuccess: (response: { code: number; msg: string }, file: { name: string }) => void;
+    };
+    vm.handleImport();
+    await flushPromises();
+    vm.handleFileUploadProgress();
+
+    vm.handleFileSuccess({ code: 500, msg: '没有权限' }, { name: 'users.xlsx' });
+
+    expect(userMocks.msgError).toHaveBeenCalledWith('没有权限');
+    expect(messageBoxAlertMock).not.toHaveBeenCalled();
+    expect(vm.upload.open).toBe(true);
+    expect(vm.upload.isUploading).toBe(false);
+    expect(userMocks.uploadRemove).toHaveBeenCalledWith({ name: 'users.xlsx' });
+  });
+
+  it('resets isUploading and clears the failed file on upload error', async () => {
+    const wrapper = mountView();
+    await flushPromises();
+    const vm = wrapper.vm as unknown as {
+      upload: { isUploading: boolean };
+      handleImport: () => void;
+      handleFileUploadProgress: () => void;
+      handleFileError: (error: Error, file: { name: string }) => void;
+    };
+    vm.handleImport();
+    await flushPromises();
+    vm.handleFileUploadProgress();
+    expect(vm.upload.isUploading).toBe(true);
+
+    vm.handleFileError(new Error('Network Error'), { name: 'users.xlsx' });
+
+    expect(vm.upload.isUploading).toBe(false);
+    expect(userMocks.uploadRemove).toHaveBeenCalledWith({ name: 'users.xlsx' });
+    expect(userMocks.msgError).toHaveBeenCalledWith('用户导入失败，请检查文件后重试');
   });
 });

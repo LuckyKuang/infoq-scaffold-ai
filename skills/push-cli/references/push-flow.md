@@ -25,6 +25,8 @@ ensure -> check -> submit-pr 预览 -> submit-pr --execute -> [默认分支? 新
 - 永远不使用 `--force`、`--all`、`--tags`；`--force-with-lease` 只允许在显式传入且分支已存在于远端时使用。
 - detached HEAD、脏工作区（有未提交改动时执行 `push`）、未完成的 merge/rebase/cherry-pick/revert 一律拒绝。
 
+可选参数：`submit-pr --branch <name>` 仅在默认分支上指定新工作分支名（在其他分支上与当前分支不一致即失败）；`submit-pr --skip-check` 跳过本地矩阵、`--no-watch` 不自动进入 `watch`；`watch --timeout-min <n>` 默认 30 分钟；`merge --method squash|merge|rebase` 默认 `squash`，合并带 `--delete-branch`。
+
 `push`、`submit-pr`、`merge` 默认只预览；`--dry-run` 可显式表示预览，与 `--execute` 同时出现时无论顺序均失败。预览不创建分支或提交，也不运行 `submit-pr` 的本地校验矩阵。`ensure` 读取认证与仓库信息，实际 Git 推送前才调用 `gh auth setup-git`；预览及合并不配置本地 Git 凭据，推送/PR 预览仍需已登录且具有写权限。
 不适用参数同样失败：`check --dry-run` 不存在，`--json` 仅 `status` 支持。Git/gh 目标由 `origin` 的唯一 fetch/push URL 绑定，两者不同或存在多 URL 时停止。支持无内嵌秘密的 HTTPS、`git@host:owner/repo.git` 和 `ssh://git@host/owner/repo.git`；本地路径、内嵌凭据、HTTPS 自定义端口或多层路径不作为 GitHub 发布目标。
 
@@ -41,9 +43,9 @@ ensure -> check -> submit-pr 预览 -> submit-pr --execute -> [默认分支? 新
 ## 4. PR 契约
 
 - 标题：取 `--message` 首行；未提供时使用最近一次提交主题。
-- 正文必须包含：变更摘要、跑过的校验命令、影响面（docs/SQL/dependency/rollback）、是否包含破坏性操作。
+- 正文由 CLI 生成，固定包含：变更摘要（标题）、本地校验（profile 与 `tmp/push-cli/<run-id>/check-*.log` 路径）、影响面占位（docs/SQL/dependency/rollback，见 change 或提交说明）；是否包含破坏性操作须由提交者在 PR 中补充。
 - 复用规则：同一 head 分支只允许一个 open PR；存在多个或 head/base 不匹配时必须失败退出，不猜测。
-- 校验状态来源：`gh pr checks` 与 `gh pr view statusCheckRollup`，CLI 不读取分支保护规则。CI 当前显示 Repository Gates、Backend Build、Admin Frontend (react)、Admin Frontend (vue)；仓库管理员须将所需检查配置为 required，不能仅凭文档认为保护已开启。
+- 校验状态来源：`gh pr checks` 与 `gh pr view statusCheckRollup`，CLI 不读取分支保护规则。CI 当前显示 Repository Gates、Backend Build、Node CLI (ubuntu-latest / macos-latest / windows-latest)、Admin Frontend (react)、Admin Frontend (vue)；仓库管理员须将所需检查配置为 required，不能仅凭文档认为保护已开启。
 
 ## 5. 失败回流
 

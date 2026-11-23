@@ -9,9 +9,9 @@
 - 按仓库 RC 编号规则比较：主/次/补丁号按数值排列，同基线满足 `3.0.0-rc1 < 3.0.0-rc2 < 3.0.0-rc10 < 3.0.0`。这不是任意 SemVer 标识的通用比较器。远端 RC tag 参与版本排序，不允许正式版发布后回到同基线 RC。
 - 四套 Shields 徽标将版本内的 `-` 编码为 `--`，例如 `Version-3.0.0--rc1-...`；版本门禁读取时还原完整后缀。
 - Git tag 必须精确为 `v<version>`，例如 `v3.0.0-rc1`；`--tag` 不允许指定与版本不符的名称；tag 必须指向已合并到默认分支并通过校验的提交。
-- 三个版本字段必须一致：backend `pom.xml` `<revision>`、`frontend-vue/package.json`、
+- 版本字段必须一致：backend `pom.xml` 与 `backend/infoq-core/infoq-core-bom/pom.xml` 的 `<revision>`、`frontend-vue/package.json`、
   `frontend-react/package.json`；`README.md`、`README_CN.md`、`README_JA.md`、`README_ZH_TW.md` 的 Version 徽标必须同步。
-- `node tools/check_release_version.mjs` 会同时校验这些版本字段、README 徽标与部署文档中的版本引用。
+- `node tools/check_release_version.mjs` 会同时校验这些版本字段、README 徽标与部署文档/模板中的版本引用（`deploy/.env.example`、`deploy/DOCKER.md`、`deploy/docker/docker-compose.yml`，共 13 个来源）。
 - 版本门禁接受 `--tag v<version>` 或 `--expect <version>`，也支持 `--tag=...` / `--expect=...`；同时指定时必须指向同一版本。空值、重复、未知参数及尾部垃圾均失败，不能用空预期绕过检查。
 - 已存在的 tag 与 Release 一律拒绝复用，禁止重打、覆盖或强推。
 

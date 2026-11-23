@@ -1,13 +1,13 @@
 import vue from '@vitejs/plugin-vue';
 import vueDevTools from 'vite-plugin-vue-devtools';
 
-import createUnoCss from './unocss';
-import createAutoImport from './auto-import';
-import createComponents from './components';
-import createIcons from './icons';
-import createSvgIconsPlugin from './svg-icon';
-import createCompression from './compression';
-import createSetupExtend from './setup-extend';
+import createUnoCss from './unocss.ts';
+import createAutoImport from './auto-import.ts';
+import createComponents from './components.ts';
+import createIcons from './icons.ts';
+import createSvgIconsPlugin from './svg-icon.ts';
+import createCompression from './compression.ts';
+import createSetupExtend from './setup-extend.ts';
 import path from 'path';
 import type { PluginOption } from 'vite';
 

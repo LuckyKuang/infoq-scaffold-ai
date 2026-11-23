@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { DeleteOutlined, EditOutlined, PlusOutlined, ReloadOutlined, SearchOutlined, SortAscendingOutlined } from '@ant-design/icons';
 import { Button, Card, Col, Form, Input, InputNumber, Radio, Row, Select, Space, Table, Tooltip, TreeSelect } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
@@ -53,7 +53,8 @@ export default function DeptPage() {
   const [list, setList] = useState<DeptVO[]>([]);
   const [deptOptions, setDeptOptions] = useState<DeptVO[]>([]);
   const [deptUsers, setDeptUsers] = useState<UserVO[]>([]);
-  const [expandAll, setExpandAll] = useState(true);
+  // 展开/折叠偏好只影响后续加载结果，不应触发列表重新加载，因此不放入 state
+  const expandAllRef = useRef(true);
   const [expandedRowKeys, setExpandedRowKeys] = useState<Array<string | number>>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -70,12 +71,12 @@ export default function DeptPage() {
         const response = await listDept(nextQuery);
         const treeData = handleTree<DeptVO>(response.data, 'deptId');
         setList(treeData);
-        setExpandedRowKeys(expandAll ? collectDeptIds(treeData) : []);
+        setExpandedRowKeys(expandAllRef.current ? collectDeptIds(treeData) : []);
       } finally {
         setLoading(false);
       }
     },
-    [expandAll]
+    []
   );
 
   const loadDeptOptions = useCallback(async () => {
@@ -283,8 +284,8 @@ export default function DeptPage() {
             <Button
               icon={<SortAscendingOutlined />}
               onClick={() => {
-                const nextExpand = !expandAll;
-                setExpandAll(nextExpand);
+                const nextExpand = !expandAllRef.current;
+                expandAllRef.current = nextExpand;
                 setExpandedRowKeys(nextExpand ? collectDeptIds(list) : []);
               }}
             >

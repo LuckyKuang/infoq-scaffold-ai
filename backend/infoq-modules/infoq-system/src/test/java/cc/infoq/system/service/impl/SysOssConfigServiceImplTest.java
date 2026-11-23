@@ -288,6 +288,7 @@ class SysOssConfigServiceImplTest {
         SysOssConfigBo bo = new SysOssConfigBo();
         bo.setOssConfigId(2L);
         bo.setConfigKey("aliyun");
+        bo.setStatus("0");
         SysOssConfig converted = new SysOssConfig();
         converted.setOssConfigId(2L);
         converted.setConfigKey("aliyun");
@@ -304,5 +305,21 @@ class SysOssConfigServiceImplTest {
             assertEquals(2, rows);
             redisUtils.verify(() -> RedisUtils.setCacheObject(OssConstant.DEFAULT_CONFIG_KEY, "aliyun"));
         }
+    }
+
+    @Test
+    @DisplayName("updateOssConfigStatus: should reject non-enable status without touching db or default key")
+    void updateOssConfigStatusShouldRejectDisableRequest() {
+        SysOssConfigBo bo = new SysOssConfigBo();
+        bo.setOssConfigId(2L);
+        bo.setConfigKey("aliyun");
+        bo.setStatus("1");
+
+        try (MockedStatic<RedisUtils> redisUtils = org.mockito.Mockito.mockStatic(RedisUtils.class)) {
+            org.junit.jupiter.api.Assertions.assertThrows(ServiceException.class, () -> service.updateOssConfigStatus(bo));
+
+            redisUtils.verifyNoInteractions();
+        }
+        org.mockito.Mockito.verifyNoInteractions(sysOssConfigMapper);
     }
 }

@@ -28,6 +28,7 @@ const dictOptions = vi.hoisted(() => ({
 }));
 
 vi.mock('@/hooks/useDictOptions', () => ({
+  clearDictCache: vi.fn(),
   default: (...types: string[]) => Object.fromEntries(types.map((type) => [type, dictOptions[type as keyof typeof dictOptions] || []]))
 }));
 

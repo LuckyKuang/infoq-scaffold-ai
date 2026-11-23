@@ -82,6 +82,7 @@ node skills/deploy-cli/scripts/deploy_cli.mjs up --execute
 node skills/deploy-cli/scripts/deploy_cli.mjs down --execute
 ```
 
+- 可选参数：`--json`（`status`/`smoke` 机器可读输出）、`--base-url <url>`（`status`/`smoke`，Docker 的后端直连仍固定 `127.0.0.1:9090`）、`--timeout-ms <n>`（`up`/`status`/`smoke`，默认 `10000`）；参数必须适用于当前命令。
 - Apple `up` 默认先构建镜像；已有产物时用 `--no-build`，复用现有 jar 时用 `build --from-existing-jar`。
 - `destroy --yes` 只删除容器与网络；删除卷必须显式追加 `--volumes`。
 - Docker 路径的 `up`/`down` 默认只打印计划，必须显式追加 `--execute` 才执行。

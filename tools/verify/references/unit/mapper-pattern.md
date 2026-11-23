@@ -48,5 +48,5 @@ class MapperDefaultMethodTest {
 ## 项目特定说明
 
 - 稳定的 `default` 方法已在 `MapperDefaultMethodTest` 中覆盖。
-- MyBatis-Plus `3.5.17` 的 lambda 列解析依赖实体 `TableInfo`；模板中的初始化不可省略。完整示例见 `backend/infoq-modules/infoq-system/src/test/java/cc/infoq/system/mapper/MapperDefaultMethodTest.java`。
+- MyBatis-Plus `3.5.18.1` 的 lambda 列解析依赖实体 `TableInfo`；模板中的初始化不可省略。完整示例见 `backend/infoq-modules/infoq-system/src/test/java/cc/infoq/system/mapper/MapperDefaultMethodTest.java`。
 - 单测只验证 Java 分支或委派；分页拦截器、XML SQL、事务与数据库方言仍通过集成测试验证，不能由 Mockito 委派断言替代。

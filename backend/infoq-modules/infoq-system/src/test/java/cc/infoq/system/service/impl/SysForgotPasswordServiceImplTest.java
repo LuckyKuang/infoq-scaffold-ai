@@ -13,6 +13,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.MockedStatic;
+import cc.infoq.common.mybatis.helper.DataPermissionHelper;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -71,7 +73,17 @@ class SysForgotPasswordServiceImplTest {
         when(userMapper.selectVoOne(any())).thenReturn(user);
         when(authEmailCodeService.validateCode(EmailCodeScene.FORGOT_PASSWORD, "admin@infoq.cc", "5678")).thenReturn(true);
 
-        service.resetPassword(buildBody());
+        try (MockedStatic<DataPermissionHelper> helper = mockStatic(DataPermissionHelper.class)) {
+            helper.when(() -> DataPermissionHelper.ignore(any(Runnable.class)))
+                .thenAnswer(invocation -> {
+                    ((Runnable) invocation.getArgument(0)).run();
+                    return null;
+                });
+
+            service.resetPassword(buildBody());
+
+            helper.verify(() -> DataPermissionHelper.ignore(any(Runnable.class)));
+        }
 
         ArgumentCaptor<String> passwordCaptor = ArgumentCaptor.forClass(String.class);
         verify(sysUserService).resetUserPwd(eq(9L), passwordCaptor.capture());

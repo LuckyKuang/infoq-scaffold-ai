@@ -3,7 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate } from
 import NProgress from 'nprogress';
 import 'nprogress/nprogress.css';
 import { Spin } from 'antd';
-import { setNavigator } from '@/utils/router-utils';
+import { setCurrentFullPath, setNavigator } from '@/utils/router-utils';
 
 const AuthGuard = lazy(() => import('@/router/AuthGuard'));
 const MainLayout = lazy(() => import('@/layouts/MainLayout'));
@@ -27,6 +27,10 @@ function RouterEffects() {
   useEffect(() => {
     setNavigator((path: string) => navigate(path));
   }, [navigate]);
+
+  useEffect(() => {
+    setCurrentFullPath(`${location.pathname}${location.search}${location.hash}`);
+  }, [location.hash, location.pathname, location.search]);
 
   useEffect(() => {
     NProgress.start();

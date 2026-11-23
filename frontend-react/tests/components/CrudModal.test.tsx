@@ -16,8 +16,9 @@ describe('components/CrudModal', () => {
 
     const body = document.querySelector('.ant-modal-body') as HTMLElement | null;
     expect(body).toBeInTheDocument();
+    // jsdom resolves calc(90vh - 120px) against its viewport, so assert the resolved pixel value.
+    expect(parseFloat(getComputedStyle(body as HTMLElement).maxHeight)).toBeCloseTo(window.innerHeight * 0.9 - 120, 5);
     expect(body).toHaveStyle({
-      maxHeight: 'calc(90vh - 120px)',
       overflowY: 'auto',
       overflowX: 'hidden'
     });

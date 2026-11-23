@@ -87,7 +87,9 @@ describe('layout/components/TagsView/ScrollPane', () => {
     expect(wrapper.emitted('scroll')).toHaveLength(1);
 
     wrapper.unmount();
-    expect(scrollPaneMocks.wrapRef.removeEventListener).toHaveBeenCalledWith('scroll', expect.any(Function));
+    // 捕获阶段监听必须用相同的 capture 标志移除，否则监听器不会被移除。
+    expect(scrollPaneMocks.wrapRef.removeEventListener).toHaveBeenCalledWith('scroll', expect.any(Function), true);
+    expect(scrollPaneMocks.wrapRef.removeEventListener.mock.calls[0][1]).toBe(scrollPaneMocks.wrapRef.addEventListener.mock.calls[0][1]);
   });
 
   it('moves to first/last/current tag based on target position', () => {

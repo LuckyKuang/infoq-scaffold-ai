@@ -58,6 +58,7 @@ public class SysUserServiceImpl implements SysUserService, UserService {
     private final SysUserRoleMapper sysUserRoleMapper;
     private final SysUserPostMapper sysUserPostMapper;
     private final SecurityTokenService securityTokenService;
+    private final SysOauthIdentityMapper sysOauthIdentityMapper;
 
     @Override
     public TableDataInfo<SysUserVo> selectPageUserList(SysUserBo user, PageQuery pageQuery) {
@@ -372,6 +373,8 @@ public class SysUserServiceImpl implements SysUserService, UserService {
         // 修改用户岗位（先清空旧关联再写入新关联）
         insertUserPost(user, true);
         SysUser sysUser = MapstructUtils.convert(user, SysUser.class);
+        // 修改接口不处理密码，改密只能走 resetPwd/个人中心；避免明文密码经 PUT /system/user 落库
+        sysUser.setPassword(null);
         // 防止错误更新后导致的数据误删除
         int flag = sysUserMapper.updateById(sysUser);
         if (flag < 1) {
@@ -566,6 +569,8 @@ public class SysUserServiceImpl implements SysUserService, UserService {
         sysUserRoleMapper.delete(new LambdaQueryWrapper<SysUserRole>().eq(SysUserRole::getUserId, userId));
         // 删除用户与岗位表
         sysUserPostMapper.delete(new LambdaQueryWrapper<SysUserPost>().eq(SysUserPost::getUserId, userId));
+        // 删除 OAuth 身份绑定，否则残留绑定会指向已删除用户，导致该第三方账号再也无法登录或重新注册
+        sysOauthIdentityMapper.deleteByUserIdsPhysically(List.of(userId));
         // 防止更新失败导致的数据删除
         int flag = sysUserMapper.deleteById(userId);
         if (flag < 1) {
@@ -607,6 +612,8 @@ public class SysUserServiceImpl implements SysUserService, UserService {
         sysUserRoleMapper.delete(new LambdaQueryWrapper<SysUserRole>().in(SysUserRole::getUserId, ids));
         // 删除用户与岗位表
         sysUserPostMapper.delete(new LambdaQueryWrapper<SysUserPost>().in(SysUserPost::getUserId, ids));
+        // 删除 OAuth 身份绑定，否则残留绑定会指向已删除用户，导致该第三方账号再也无法登录或重新注册
+        sysOauthIdentityMapper.deleteByUserIdsPhysically(ids);
         // 防止更新失败导致的数据删除
         int flag = sysUserMapper.deleteByIds(ids);
         if (flag < 1) {
@@ -627,7 +634,8 @@ public class SysUserServiceImpl implements SysUserService, UserService {
         LambdaQueryWrapper<SysUser> lqw = Wrappers.lambdaQuery();
         lqw.eq(SysUser::getDeptId, deptId);
         lqw.orderByAsc(SysUser::getUserId);
-        return sysUserMapper.selectVoList(lqw);
+        // 使用带 @DataPermission 的 mapper 方法，避免部门用户列表绕过数据权限
+        return sysUserMapper.selectUserList(lqw);
     }
 
     /**

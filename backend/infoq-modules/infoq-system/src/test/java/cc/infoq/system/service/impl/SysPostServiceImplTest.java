@@ -126,8 +126,7 @@ class SysPostServiceImplTest {
         SysPostVo vo = new SysPostVo();
         vo.setPostId(9L);
         vo.setPostName("开发工程师");
-        when(sysPostMapper.selectVoList(any())).thenReturn(List.of(vo));
-        when(sysPostMapper.selectVoById(9L)).thenReturn(vo);
+        when(sysPostMapper.selectPostList(any())).thenReturn(List.of(vo));
         when(sysPostMapper.selectPostsByUserId(66L)).thenReturn(List.of(vo));
 
         List<SysPostVo> byCondition = service.selectPostList(bo);
@@ -139,6 +138,10 @@ class SysPostServiceImplTest {
         assertEquals(1, all.size());
         assertEquals(9L, byId.getPostId());
         assertEquals(1, byUser.size());
+        // 必须走带 @DataPermission 的 selectPostList，不能回退到无数据权限的 selectVoList/selectVoById
+        verify(sysPostMapper, times(3)).selectPostList(any());
+        verify(sysPostMapper, never()).selectVoList(any());
+        verify(sysPostMapper, never()).selectVoById(any());
     }
 
     @Test

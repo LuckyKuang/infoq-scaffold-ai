@@ -53,11 +53,16 @@ const validatePaginationPayload = (payload: unknown) => {
 
 type RequestConfig<D = unknown> = AxiosRequestConfig<D>;
 
-interface SessionRequestPayload {
+interface LastSubmission {
   url?: string;
   data?: unknown;
-  time?: number;
+  time: number;
 }
+
+// 重复提交保护只保存在内存：请求体可能含密码，不能落入 sessionStorage。
+let lastSubmission: LastSubmission | undefined;
+// 清理旧版本写入 sessionStorage 的重复提交缓存（可能含明文请求体）；旧版本会话全部过期后可删除。
+cache.session.remove('sessionObj');
 
 interface ErrorResponsePayload {
   code?: string | number;
@@ -99,7 +104,7 @@ const handleUnauthorized = (authorization: unknown) => {
   void router
     .replace({
       path: '/login',
-      query: { redirect: encodeURIComponent(router.currentRoute.value.fullPath || '/') }
+      query: { redirect: router.currentRoute.value.fullPath || '/' }
     })
     .then(
       () => {
@@ -153,28 +158,21 @@ service.interceptors.request.use(
       config.url = url;
     }
 
-    if (!isRepeatSubmit && (config.method === 'post' || config.method === 'put')) {
-      const requestObj = {
+    // FormData 经 JSON.stringify 恒为 "{}"，无法用内容判重，直接跳过，避免不同文件上传被互相误判为重复提交。
+    if (!isRepeatSubmit && (config.method === 'post' || config.method === 'put') && !(config.data instanceof FormData)) {
+      const requestObj: LastSubmission = {
         url: config.url,
         data: typeof config.data === 'object' ? JSON.stringify(config.data) : config.data,
-        time: new Date().getTime()
+        time: Date.now()
       };
-      const sessionObj = cache.session.getJSON<SessionRequestPayload>('sessionObj');
-      if (sessionObj === undefined || sessionObj === null) {
-        cache.session.setJSON('sessionObj', requestObj);
-      } else {
-        const s_url = sessionObj.url; // 请求地址
-        const s_data = sessionObj.data; // 请求数据
-        const s_time = sessionObj.time; // 请求时间
-        const interval = 500; // 间隔时间(ms)，小于此时间视为重复提交
-        if (s_data === requestObj.data && requestObj.time - s_time < interval && s_url === requestObj.url) {
-          const message = '数据正在处理，请勿重复提交';
-          console.warn(`[${s_url}]: ` + message);
-          return Promise.reject(new Error(message));
-        } else {
-          cache.session.setJSON('sessionObj', requestObj);
-        }
+      const interval = 500; // 间隔时间(ms)，小于此时间视为重复提交
+      const last = lastSubmission;
+      if (last && last.data === requestObj.data && requestObj.time - last.time < interval && last.url === requestObj.url) {
+        const message = '数据正在处理，请勿重复提交';
+        console.warn(`[${last.url}]: ` + message);
+        return Promise.reject(new Error(message));
       }
+      lastSubmission = requestObj;
     }
     if (import.meta.env.VITE_APP_ENCRYPT === 'true') {
       // 当开启参数加密

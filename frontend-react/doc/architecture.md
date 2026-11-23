@@ -103,7 +103,7 @@ main.tsx
 
 - 补 `Authorization` 和 `clientid`
 - GET 参数串行化
-- 500ms 内重复提交拦截
+- 500ms 内重复提交拦截（最近一次请求仅存模块内存，不落 sessionStorage；`FormData` 不参与）
 - 401 过期会话弹窗与重新登录跳转
 - 下载流处理
 

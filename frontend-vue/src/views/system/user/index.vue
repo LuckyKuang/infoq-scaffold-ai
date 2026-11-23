@@ -263,6 +263,7 @@
         :disabled="upload.isUploading"
         :on-progress="handleFileUploadProgress"
         :on-success="handleFileSuccess"
+        :on-error="handleFileError"
         :auto-upload="false"
         drag
       >
@@ -574,14 +575,31 @@ const handleFileUploadProgress = () => {
   upload.isUploading = true;
 };
 /** 文件上传成功处理 */
-const handleFileSuccess = (response: { msg: string }, file: UploadFile) => {
-  upload.open = false;
+const handleFileSuccess = (response: { code: number; msg: string }, file: UploadFile) => {
   upload.isUploading = false;
   uploadRef.value?.handleRemove(file);
-  ElMessageBox.alert("<div style='overflow: auto;overflow-x: hidden;max-height: 70vh;padding: 10px 20px 0;'>" + response.msg + '</div>', '导入结果', {
+  // el-upload 不经过 axios 拦截器，业务失败码需要在此显式处理，对话框保留以便重新选择文件。
+  if (response.code !== 200) {
+    proxy?.$modal.msgError(response.msg || '导入失败');
+    return;
+  }
+  upload.open = false;
+  // 后端用 <br/> 分隔行且正文含用户可控的账号信息：先转义文本片段，再仅还原 <br/> 换行。
+  const escapeHtml = (text: string) => text.replace(/[&<>"']/g, (char) => `&#${char.charCodeAt(0)};`);
+  const safeMsg = (response.msg || '导入成功')
+    .split(/<br\s*\/?>/i)
+    .map(escapeHtml)
+    .join('<br/>');
+  ElMessageBox.alert("<div style='overflow: auto;overflow-x: hidden;max-height: 70vh;padding: 10px 20px 0;'>" + safeMsg + '</div>', '导入结果', {
     dangerouslyUseHTMLString: true
   });
   getList();
+};
+/** 文件上传失败处理（网络/HTTP 错误）：恢复上传控件，允许重新选择文件 */
+const handleFileError = (_error: Error, file: UploadFile) => {
+  upload.isUploading = false;
+  uploadRef.value?.handleRemove(file);
+  proxy?.$modal.msgError('用户导入失败，请检查文件后重试');
 };
 
 /** 提交上传文件 */
@@ -603,7 +621,9 @@ const cancel = () => {
 /** 新增按钮操作 */
 const handleAdd = async () => {
   reset();
-  const { data } = await api.getUser();
+  // 初始密码只在新增时按需读取，避免仅有列表权限的用户进入页面即触发参数读取 403
+  const [{ data }, initPasswordRes] = await Promise.all([api.getUser(), proxy?.getConfigKey('sys.user.initPassword')]);
+  initPassword.value = initPasswordRes?.data ?? '';
   dialog.visible = true;
   dialog.title = '新增用户';
   postOptions.value = data.posts;
@@ -683,9 +703,6 @@ const resetForm = () => {
 onMounted(() => {
   getDeptTree(); // 初始化部门数据
   getList(); // 初始化列表数据
-  proxy?.getConfigKey('sys.user.initPassword').then((response) => {
-    initPassword.value = response.data;
-  });
 });
 
 async function handleDeptChange(value: number | string) {

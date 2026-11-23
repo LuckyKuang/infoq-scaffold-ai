@@ -121,9 +121,9 @@ docs/
 
 | 工作区 | 作用 | 技术栈 |
 | --- | --- | --- |
-| `backend` | Spring Boot 后端 | JDK 21, Spring Boot 4.1.1 |
+| `backend` | Spring Boot 后端 | JDK 21, Spring Boot 4.2.0 |
 | `frontend-vue` | Vue 管理端 | Vue 3.5, Element Plus 2.14 |
-| `frontend-react` | React 管理端 | React 19.2, Ant Design 6.4 |
+| `frontend-react` | React 管理端 | React 19.3, Ant Design 6.7 |
 | `deploy` | 部署脚本、运行时矩阵与容器编排 | Bash, Docker Compose, Apple container |
 | `sql` | 数据库脚本 | MySQL 8 |
 | `skills` | 仓库级 CLI 工作域 | Node.js |

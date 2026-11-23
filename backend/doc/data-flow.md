@@ -105,12 +105,12 @@ sequenceDiagram
     Auth->>Auth: 解析解密后的 JSON 请求体
     Auth->>ClientSvc: queryByClientId(clientId)
     ClientSvc-->>Auth: SysClientVo
-    Auth->>Strategy: AuthStrategy.login(body, client, grantType)
+    Auth->>Strategy: AuthStrategy.loginForResult(body, client, grantType)
     Strategy->>Redis: GET global:captcha_codes:{uuid}
     Strategy->>Redis: DEL global:captcha_codes:{uuid}
     Strategy->>UserMapper: select user by username
     Strategy->>LoginSvc: checkLogin(...)
-    LoginSvc->>Redis: GET/SET/DEL pwd_err_cnt:{username}
+    LoginSvc->>Redis: GET/INCR/EXPIRE/DEL pwd_err_cnt:{username}
     Strategy->>LoginSvc: buildLoginUser(user)
     LoginSvc-->>Strategy: LoginUser(roles/perms/posts/dept)
     Strategy->>Listener: buildOnlineUser(loginUser, clientId, deviceType)
@@ -129,7 +129,7 @@ sequenceDiagram
 - `AuthController` 解析的是解密后的 JSON 请求体，并只先校验 `clientId` 和 `grantType`，说明登录接口把“客户端是否合法”作为第一道门槛。
 - `SysClientServiceImpl.queryByClientId` 结果带缓存，缓存组名是 `global:sys_client#30d`。
 - `PasswordAuthStrategy` 校验验证码时会删除 Redis 验证码 key，因此同一验证码不会重复使用。
-- `SysLoginServiceImpl.checkLogin` 使用 `pwd_err_cnt:{username}` 记录错误次数，达到阈值后直接抛出 `UserException`。
+- `SysLoginServiceImpl.checkLogin` 使用 `pwd_err_cnt:{username}` 记录错误次数（Redisson OSS 原子自增后重设锁定窗口 TTL，并发失败不会漏计），达到阈值后直接抛出 `UserException`。
 - `buildLoginUser` 会同步聚合部门、角色、岗位、菜单权限和角色权限，因此 token 建立前就已经拿到大部分鉴权上下文。
 - token session 会保存 `clientId`、设备类型、超时时间、活跃超时和完整 `LoginUser`；后续每个请求都会再经过客户端一致性校验。
 
@@ -156,7 +156,7 @@ sequenceDiagram
 
 ### 3.2 邮箱登录
 
-如果登录请求里的 `grantType=email`，`AuthStrategy.login(...)` 会分发到 [EmailAuthStrategy](../infoq-modules/infoq-system/src/main/java/cc/infoq/system/service/impl/EmailAuthStrategy.java)：
+如果登录请求里的 `grantType=email`，`AuthStrategy.loginForResult(...)` 会分发到 [EmailAuthStrategy](../infoq-modules/infoq-system/src/main/java/cc/infoq/system/service/impl/EmailAuthStrategy.java)：
 
 - 按邮箱查询用户；
 - 通过 `AuthEmailCodeService` 从 `global:captcha_codes:email_login:{email}` 读取并删除验证码，失败与成功都会消费该次验证码；
@@ -182,7 +182,7 @@ sequenceDiagram
    - `sys_post.post_code=user`
    - `sys_dept.dept_id=112`
 4. `SysUserServiceImpl.registerUser()` 成功写入用户、用户-角色、用户-岗位关系后，注册事务会继续消费邀请码。
-5. 邀请码消费走 `SysInviteCodeMapper.consumeInviteCode(...)`，SQL 条件要求 `status='0'` 且 `expire_time > now`，因此并发提交时只会有一个请求成功把同一个邀请码置为已使用。
+5. 邀请码消费走 `SysInviteCodeMapper.consumeInviteCode(...)`，SQL 条件要求 `status='0'` 且 `expire_time` 为空或晚于当前时间，因此并发提交时只会有一个请求成功把同一个邀请码置为已使用。
 
 这条链路说明当前公开注册并不是“前端自己拼规则”，而是由 backend 统一下发能力位、统一校验邀请码、统一分配默认归属，并在事务里完成邀请码一次性消费。
 
@@ -190,7 +190,8 @@ sequenceDiagram
 
 后台参数设置由 [SysConfigController](../infoq-modules/infoq-system/src/main/java/cc/infoq/system/controller/system/SysConfigController.java) 与 [SysConfigServiceImpl](../infoq-modules/infoq-system/src/main/java/cc/infoq/system/service/impl/SysConfigServiceImpl.java) 承载：
 
-- 旧业务读取路径保持不变：`selectConfigByKey(configKey)` 只返回 `configValue` 字符串，并使用 `sys_config` 缓存。
+- 旧业务读取路径保持不变：`selectConfigByKey(configKey)` 只返回 `configValue` 字符串，并使用 `sys_config` 缓存（不存在的键返回空串且不写缓存）。
+- `GET /system/config/configKey/{configKey}` 只对 `sys.oss.previewListResource` 放开给任意登录用户；`sys.user.initPassword` 需要 `system:user:add` 或 `system:config:query`；其余键需要 `system:config:query`，否则返回 HTTP 403。
 - 配置中心新增 `GET /system/config/panel`，按后端固定分组返回 `groupKey`、`groupName`、`displayOrder` 和配置项集合，React / Vue 不各自硬编码分组名称。
 - `configType` 仍表示“是否系统内置”（`Y` / `N`），不表示参数值类型；值类型由 `valueType` 表达。
 - `resetByKey` 由后端读取 `defaultValue` 后恢复默认，并通过缓存写入策略返回新值；当注册总开关恢复或修改为 `false` 时，会同步关闭邀请码注册并清理对应缓存。
@@ -310,6 +311,8 @@ sequenceDiagram
 密码和邮箱策略若在这一步出现运行时异常，会撤销刚签发的 token 后向上抛出，不保留一个已失败登录的有效会话。
 
 因此“用户登录成功”在当前实现里并不是只返回 token，而是会同时刷新在线态、审计态和用户最近登录信息。
+
+在线用户接口（`/monitor/online/list` 与当前用户设备列表）返回的 `tokenId` 是 access token 的 SHA-256 digest，不再暴露原始 Bearer；强退 `DELETE /monitor/online/{tokenId}` 与本人下线 `DELETE /monitor/online/myself/{tokenId}` 均按 digest 撤销会话，本人下线仍校验 digest 属于当前 `loginId`。
 
 ### 6.2 登录日志流
 

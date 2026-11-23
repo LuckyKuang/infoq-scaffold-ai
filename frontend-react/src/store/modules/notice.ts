@@ -8,6 +8,8 @@ type NoticeState = {
   notices: NoticeItem[];
   unreadCount: number;
   loading: boolean;
+  // 最近一次显式请求的页大小；markRead/markAllRead/deleteByIds 与实时推送刷新沿用它，避免列表被缩回默认大小
+  pageSize: number;
   refresh: (pageSize?: number) => Promise<void>;
   markRead: (messageId: number) => Promise<void>;
   markAllRead: () => Promise<void>;
@@ -15,12 +17,16 @@ type NoticeState = {
   clearNotices: () => void;
 };
 
-export const useNoticeStore = create<NoticeState>((set) => ({
+const DEFAULT_PAGE_SIZE = 10;
+
+export const useNoticeStore = create<NoticeState>((set, get) => ({
   notices: [],
   unreadCount: 0,
   loading: false,
-  refresh: async (pageSize = 10) => {
-    set({ loading: true });
+  pageSize: DEFAULT_PAGE_SIZE,
+  refresh: async (requestedPageSize) => {
+    const pageSize = requestedPageSize ?? get().pageSize;
+    set({ loading: true, pageSize });
     try {
       const [listResponse, unreadResponse] = await Promise.all([listMessages({ pageNum: 1, pageSize }), getUnreadMessageCount()]);
       set({ notices: listResponse.rows, unreadCount: unreadResponse.data });
@@ -30,15 +36,15 @@ export const useNoticeStore = create<NoticeState>((set) => ({
   },
   markRead: async (messageId) => {
     await markMessageRead(messageId);
-    await useNoticeStore.getState().refresh();
+    await get().refresh();
   },
   markAllRead: async () => {
     await markAllMessagesRead();
-    await useNoticeStore.getState().refresh();
+    await get().refresh();
   },
   deleteByIds: async (messageIds) => {
     await deleteMessages(messageIds);
-    await useNoticeStore.getState().refresh();
+    await get().refresh();
   },
-  clearNotices: () => set({ notices: [], unreadCount: 0, loading: false })
+  clearNotices: () => set({ notices: [], unreadCount: 0, loading: false, pageSize: DEFAULT_PAGE_SIZE })
 }));

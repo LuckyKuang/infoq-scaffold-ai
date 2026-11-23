@@ -66,4 +66,36 @@ describe('store/notice', () => {
     await pending;
     expect(store.state).toEqual({ notices: [], unreadCount: 0, loading: false });
   });
+
+  it('keeps the last requested page size for markRead, readAll, deleteByIds and bare refreshes', async () => {
+    const store = useNoticeStore();
+    messageMocks.listMessages.mockResolvedValue({ rows: [], total: 0 });
+    messageMocks.getUnreadMessageCount.mockResolvedValue({ data: 0 });
+    messageMocks.markMessageRead.mockResolvedValue(undefined);
+    messageMocks.markAllMessagesRead.mockResolvedValue(undefined);
+    messageMocks.deleteMessages.mockResolvedValue(undefined);
+
+    await store.refresh(100);
+    await store.markRead(1);
+    await store.readAll();
+    await store.deleteByIds([1]);
+    await store.refresh();
+
+    expect(messageMocks.listMessages).toHaveBeenCalledTimes(5);
+    for (const call of messageMocks.listMessages.mock.calls) {
+      expect(call[0]).toEqual({ pageNum: 1, pageSize: 100 });
+    }
+  });
+
+  it('resets the remembered page size when the session is cleared', async () => {
+    const store = useNoticeStore();
+    messageMocks.listMessages.mockResolvedValue({ rows: [], total: 0 });
+    messageMocks.getUnreadMessageCount.mockResolvedValue({ data: 0 });
+
+    await store.refresh(100);
+    store.clearNotice();
+    await store.refresh();
+
+    expect(messageMocks.listMessages).toHaveBeenLastCalledWith({ pageNum: 1, pageSize: 10 });
+  });
 });

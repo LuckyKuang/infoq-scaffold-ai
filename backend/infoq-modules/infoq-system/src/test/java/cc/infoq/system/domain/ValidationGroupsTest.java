@@ -44,6 +44,17 @@ class ValidationGroupsTest {
     }
 
     @Test
+    @DisplayName("add group: should reject a missing password before BCrypt hashing")
+    void addGroupShouldRequirePassword() {
+        SysUserBo missing = new SysUserBo();
+        SysUserBo present = new SysUserBo();
+        present.setPassword("123456");
+
+        assertEquals(1, validator.validate(missing, AddGroup.class).size());
+        assertEquals(0, validator.validate(present, AddGroup.class).size());
+    }
+
+    @Test
     @DisplayName("reset password fields: should reject weak passwords on write paths")
     void writePasswordFieldsShouldRejectWeakPasswords() {
         SysUserBo resetPwdBo = new SysUserBo();

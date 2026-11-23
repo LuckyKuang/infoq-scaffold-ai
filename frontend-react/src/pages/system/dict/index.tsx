@@ -6,6 +6,7 @@ import type { Dayjs } from 'dayjs';
 import { useNavigate } from 'react-router-dom';
 import { addType, delType, getType, listType, refreshCache, updateType } from '@/api/system/dict/type';
 import type { DictTypeForm, DictTypeQuery, DictTypeVO } from '@/api/system/dict/type/types';
+import { clearDictCache } from '@/hooks/useDictOptions';
 import Pagination from '@/components/Pagination';
 import RightToolbar from '@/components/RightToolbar';
 import CrudModal from '@/components/CrudModal';
@@ -148,6 +149,7 @@ export default function DictTypePage() {
       return;
     }
     await delType(target);
+    clearDictCache();
     modal.msgSuccess('删除成功');
     setSelectedIds([]);
     loadList(query, dateRange);
@@ -162,6 +164,7 @@ export default function DictTypePage() {
       } else {
         await addType(values);
       }
+      clearDictCache();
       modal.msgSuccess('操作成功');
       setDialogOpen(false);
       loadList(query, dateRange);
@@ -264,6 +267,7 @@ export default function DictTypePage() {
                 icon={<ReloadOutlined />}
                 onClick={async () => {
                   await refreshCache();
+                  clearDictCache();
                   modal.msgSuccess('刷新成功');
                 }}
               >

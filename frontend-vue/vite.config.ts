@@ -1,8 +1,8 @@
 import { frontendBuildConfig, productionBuildMetadataPlugin } from '../tools/production_config.mjs';
 import { defineConfig, loadEnv } from 'vite';
-import createPlugins from './vite/plugins';
+import createPlugins from './vite/plugins/index.ts';
 import autoprefixer from 'autoprefixer'; // css自动添加兼容性前缀
-import { sharedResolve, sharedScssPreprocessorOptions } from './vite/shared';
+import { sharedResolve, sharedScssPreprocessorOptions } from './vite/shared.ts';
 
 const vueEcosystemPackages = [
   'vue',

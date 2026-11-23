@@ -279,4 +279,17 @@ describe('pages/system/invite', () => {
       });
     });
   });
+
+  it('does not reload the invite list while typing and sends the typed filter on explicit search', async () => {
+    renderWithRouter(<InvitePage />, '/system/invite');
+    await screen.findByText('INVITE-CODE');
+    expect(invitePageMocks.listInvite).toHaveBeenCalledTimes(1);
+
+    fireEvent.change(screen.getByPlaceholderText('请输入邀请码'), { target: { value: 'ABC' } });
+    expect(invitePageMocks.listInvite).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole('button', { name: /搜\s*索/ }));
+    await waitFor(() => expect(invitePageMocks.listInvite).toHaveBeenCalledTimes(2));
+    expect(invitePageMocks.listInvite.mock.calls[1][0]).toMatchObject({ inviteCode: 'ABC', pageNum: 1 });
+  });
 });

@@ -29,15 +29,22 @@ export default {
       });
       const isBlob = blobValidate(res.data);
       if (isBlob) {
+        const fileName = res.headers['download-filename'] as string | undefined;
+        if (!fileName) {
+          // 缺少文件名时显式失败，避免把文件保存成 "undefined"。
+          console.error('下载响应缺少 download-filename 响应头', url);
+          ElMessage.error('下载失败：服务端未返回文件名');
+          return;
+        }
         const blob = new Blob([res.data], { type: 'application/octet-stream' });
-        FileSaver.saveAs(blob, decodeURIComponent(res.headers['download-filename'] as string));
+        FileSaver.saveAs(blob, decodeURIComponent(fileName));
       } else {
-        this.printErrMsg(res.data);
+        await this.printErrMsg(res.data);
       }
-      downloadLoadingInstance?.close();
     } catch (r) {
       console.error(r);
       ElMessage.error('下载文件出现错误，请联系管理员！');
+    } finally {
       downloadLoadingInstance?.close();
     }
   },
@@ -56,12 +63,12 @@ export default {
         const blob = new Blob([res.data], { type: 'application/zip' });
         FileSaver.saveAs(blob, name);
       } else {
-        this.printErrMsg(res.data);
+        await this.printErrMsg(res.data);
       }
-      downloadLoadingInstance?.close();
     } catch (r) {
       console.error(r);
       ElMessage.error('下载文件出现错误，请联系管理员！');
+    } finally {
       downloadLoadingInstance?.close();
     }
   },

@@ -1,7 +1,7 @@
 # AGENTS.md
 |IMPORTANT: Prefer retrieval-led reasoning over pre-training-led reasoning for any project tasks. Read repository files before relying on framework pretraining data.
 |Scope:本文件适用于 `frontend-vue` 及其子目录，用于把根规则收窄到 Vue admin 语境。
-|Stack:Vue 3.5.42|TypeScript 6.0.3|Vite 8.0.16|Element Plus 2.14.1|Pinia|Vue Router 5.1.0|Vitest 4.1.11
+|Stack:Vue 3.5.46|TypeScript 6.0.3|Vite 8.3.8|Element Plus 2.14.8|Pinia 4|Vue Router 5.5.1|Vitest 5.1.1
 |Workspace Layout:src/views|src/components|src/api|src/store|src/router|src/utils|src/plugins|tests
 |Environment Baseline:Node 24.18.0|Docker builder 固定 node:24.18.0|pnpm >=10.34.1 <11|packageManager pnpm@10.34.1
 |Build Secrets:当 `VITE_APP_ENCRYPT=true` 时，Vue admin dev/build 环境必须提供 `VITE_APP_RSA_PUBLIC_KEY` 与 `VITE_APP_RSA_PRIVATE_KEY`。|production build 使用 INFOQ_PRODUCTION_CONFIG_FILE 指定受控配置并由 tools/production_config.mjs 交叉校验两组独立2048位以上 RSA；后端请求私钥只参与校验，禁止进入前端产物或构建层。|临时 fixture 构建不等于生产配置验收；浏览器协议私钥是公开内容，公网仍须 HTTPS。
@@ -15,5 +15,5 @@
 |Testing Boundary:Vue admin 单测与 coverage 工作使用 test-cli；本工作区只加载其 Vue admin 相关参考。|`src/api/**/*.ts`、`src/plugins/**/*`、`src/router/**/*`、`src/utils/request*` 改动必须补 targeted tests。|优先 deterministic Vitest + Vue Test Utils 断言，并 mock Element Plus、router、storage、env 依赖。
 |Verification:Vue 行为变更先验证 main flow，再根据影响范围跑 targeted 或 full unit tests，然后 lint，最后 production build。|渲染流程如 `/login`、route guards、request interceptors、shared views 受影响时使用 test-cli。|本地 backend + Vue admin 栈启动或重启也归 test-cli，显式传 `--client vue`。|若本地临时改 backend 端口，运行态验证必须显式传递 override，不能假定 helper 会从共享配置文件自动猜出开发者私人端口。
 |Boundaries:Vue admin 专属规则只留在本工作区；React admin 规则归 `frontend-react`。
-|Doc Entrypoints:`README.md`|`doc/architecture.md`|`doc/data-flow.md`|`src/README.md`|`src/api/README.md`|`src/router/README.md`|`src/store/README.md`|`src/views/README.md`
+|Doc Entrypoints:`README.md`|`doc/architecture.md`|`doc/data-flow.md`|`doc/browser-session-testing.md`|`src/README.md`|`src/api/README.md`|`src/router/README.md`|`src/store/README.md`|`src/views/README.md`
 |Doc Sync Rule:工作区定位、全局守卫、动态路由装配、请求封装、页面分组或 Pinia 边界变更时，先更新离代码最近的 `src/*/README.md`，再同步 `README.md`、`doc/*.md` 与本文件；信息不足时回退为“当前实现说明”。

@@ -1,7 +1,8 @@
 import { Dropdown, Menu, Typography, theme } from 'antd';
 import { MoreOutlined } from '@ant-design/icons';
-import { useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useCallback, useEffect, useMemo } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useAppStore } from '@/store/modules/app';
 import { usePermissionStore } from '@/store/modules/permission';
 import type { AppRoute } from '@/types/router';
 import { isHttp } from '@/utils/validate';
@@ -22,14 +23,26 @@ const resolveTopMenus = (routes: AppRoute[]) => {
   return topMenus;
 };
 
+// 无二级菜单、不展示侧边栏的页面
+const SIDEBAR_HIDDEN_PATHS = ['/index', '/user/profile'];
+
+const resolveActiveTopPath = (pathname: string) => {
+  if (SIDEBAR_HIDDEN_PATHS.includes(pathname) || pathname.lastIndexOf('/') <= 0) {
+    return pathname;
+  }
+  return `/${pathname.slice(1).split('/')[0]}`;
+};
+
 type TopNavProps = {
   visibleNumber?: number;
 };
 
 export default function TopNav({ visibleNumber = 8 }: TopNavProps) {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const topbarRouters = usePermissionStore((state) => state.topbarRouters);
   const setSidebarRouters = usePermissionStore((state) => state.setSidebarRouters);
+  const resetSidebarRouters = usePermissionStore((state) => state.resetSidebarRouters);
   const allRoutes = usePermissionStore((state) => state.routes);
   const {
     token: { colorText, colorTextSecondary }
@@ -40,24 +53,43 @@ export default function TopNav({ visibleNumber = 8 }: TopNavProps) {
   const visibleMenus = topMenus.slice(0, visibleNumber);
   const overflowMenus = topMenus.slice(visibleNumber);
 
-  const activateSidebar = (menuPath: string) => {
-    const menu = allRoutes.find((item) => item.path === menuPath);
-    if (!menu?.children || menu.children.length === 0) {
-      return;
-    }
-    const children = menu.children.map((child) => ({
-      ...child,
-      parentPath: menuPath
-    }));
-    setSidebarRouters(children);
-  };
+  const activeTopPath = resolveActiveTopPath(pathname);
+
+  // 顶部菜单有子菜单时侧边栏展示其子菜单，否则隐藏侧边栏；与 Vue TopNav 行为一致
+  const activateSidebar = useCallback(
+    (menuPath: string) => {
+      const menu = allRoutes.find((item) => item.path === menuPath);
+      const hasChildren = Boolean(menu?.children && menu.children.length > 0);
+      if (menu?.children && hasChildren) {
+        setSidebarRouters(menu.children.map((child) => ({ ...child, parentPath: menuPath })));
+      }
+      useAppStore.getState().toggleSideBarHide(!hasChildren);
+      return hasChildren;
+    },
+    [allRoutes, setSidebarRouters]
+  );
+
+  useEffect(() => {
+    activateSidebar(activeTopPath);
+  }, [activateSidebar, activeTopPath]);
+
+  // 关闭顶部导航后还原完整侧边栏
+  useEffect(
+    () => () => {
+      useAppStore.getState().toggleSideBarHide(false);
+      resetSidebarRouters();
+    },
+    [resetSidebarRouters]
+  );
 
   const handleSelect = (path: string) => {
     if (isHttp(path)) {
       window.open(path, '_blank');
       return;
     }
-    activateSidebar(path);
+    if (activateSidebar(path)) {
+      return;
+    }
     navigate(path);
   };
 
@@ -75,7 +107,7 @@ export default function TopNav({ visibleNumber = 8 }: TopNavProps) {
     <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
       <Menu
         mode="horizontal"
-        selectedKeys={[]}
+        selectedKeys={[activeTopPath]}
         overflowedIndicator={null}
         items={visibleMenus.map((item) => ({
           key: item.path,

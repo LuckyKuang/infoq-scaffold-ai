@@ -9,7 +9,6 @@ WORKDIR /infoq/vue
 RUN corepack enable pnpm
 
 COPY frontend-vue/package.json frontend-vue/pnpm-lock.yaml ./
-COPY frontend-vue/patches ./patches
 
 RUN pnpm install --frozen-lockfile --network-concurrency=2
 

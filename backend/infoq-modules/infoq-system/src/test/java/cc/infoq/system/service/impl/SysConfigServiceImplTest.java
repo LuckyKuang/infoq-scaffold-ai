@@ -565,4 +565,11 @@ class SysConfigServiceImplTest {
         assertEquals("sys.mode", object.getConfigKey());
         assertEquals("dev", object.getConfigValue());
     }
+
+    @Test
+    @DisplayName("selectConfigByKey: should not cache null or empty results for unknown keys")
+    void selectConfigByKeyShouldNotCacheMissingKeys() throws Exception {
+        CacheUnlessAssertions.assertSkipsCaching(SysConfigServiceImpl.class, "selectConfigByKey", String.class, "", "value");
+        CacheUnlessAssertions.assertSkipsCaching(SysConfigServiceImpl.class, "selectConfigByKey", String.class, null, "value");
+    }
 }

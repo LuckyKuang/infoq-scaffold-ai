@@ -312,7 +312,12 @@ public class SysDeptServiceImpl implements SysDeptService, DeptService {
     @CacheEvict(cacheNames = CacheNames.SYS_DEPT_AND_CHILD, allEntries = true)
     @Override
     public int insertDept(SysDeptBo bo) {
-        SysDept info = sysDeptMapper.selectById(bo.getParentId());
+        // 新增也必须校验父部门数据权限，否则可以挂到无权访问的部门下
+        this.checkDeptDataScope(bo.getParentId());
+        SysDept info = ObjectUtil.isNull(bo.getParentId()) ? null : sysDeptMapper.selectById(bo.getParentId());
+        if (ObjectUtil.isNull(info)) {
+            throw new ServiceException("上级部门不存在");
+        }
         // 如果父节点不为正常状态,则不允许新增子节点
         if (!SystemConstants.NORMAL.equals(info.getStatus())) {
             throw new ServiceException("部门停用，不允许新增");
@@ -343,13 +348,19 @@ public class SysDeptServiceImpl implements SysDeptService, DeptService {
         if (!oldDept.getParentId().equals(dept.getParentId())) {
             // 如果是新父部门 则校验是否具有新父部门权限 避免越权
             this.checkDeptDataScope(dept.getParentId());
-            SysDept newParentDept = sysDeptMapper.selectById(dept.getParentId());
-            if (ObjectUtil.isNotNull(newParentDept)) {
-                String newAncestors = newParentDept.getAncestors() + StringUtils.SEPARATOR + newParentDept.getDeptId();
-                String oldAncestors = oldDept.getAncestors();
-                dept.setAncestors(newAncestors);
-                updateDeptChildren(dept.getDeptId(), newAncestors, oldAncestors);
+            SysDept newParentDept = ObjectUtil.isNull(dept.getParentId()) ? null : sysDeptMapper.selectById(dept.getParentId());
+            if (ObjectUtil.isNull(newParentDept)) {
+                throw new ServiceException("上级部门不存在");
             }
+            // 新父部门不能是自己或自己的后代，否则部门树成环
+            if (newParentDept.getDeptId().equals(dept.getDeptId())
+                || Arrays.asList(Convert.toLongArray(newParentDept.getAncestors())).contains(dept.getDeptId())) {
+                throw new ServiceException("上级部门不能是当前部门或其子部门");
+            }
+            String newAncestors = newParentDept.getAncestors() + StringUtils.SEPARATOR + newParentDept.getDeptId();
+            String oldAncestors = oldDept.getAncestors();
+            dept.setAncestors(newAncestors);
+            updateDeptChildren(dept.getDeptId(), newAncestors, oldAncestors);
         } else {
             dept.setAncestors(oldDept.getAncestors());
         }

@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
 
@@ -85,6 +86,20 @@ class DefaultExcelListenerTest {
         ConstraintViolationException exception = new ConstraintViolationException(Set.of(violation));
         assertThrows(ExcelAnalysisException.class, () -> listener.onException(exception, context));
         assertEquals("第5行数据校验异常: 不能为空", listener.getExcelResult().getErrorList().get(0));
+    }
+
+    @Test
+    @DisplayName("onException: should keep message and cause for other exceptions instead of null")
+    void onExceptionShouldKeepMessageAndCauseForOtherExceptions() {
+        DefaultExcelListener<Object> listener = new DefaultExcelListener<>(false);
+        IllegalStateException cause = new IllegalStateException("sheet missing");
+
+        ExcelAnalysisException thrown = assertThrows(ExcelAnalysisException.class,
+            () -> listener.onException(cause, null));
+
+        assertEquals("Excel解析异常: sheet missing", thrown.getMessage());
+        assertSame(cause, thrown.getCause());
+        assertEquals("Excel解析异常: sheet missing", listener.getExcelResult().getErrorList().get(0));
     }
 
     @Test

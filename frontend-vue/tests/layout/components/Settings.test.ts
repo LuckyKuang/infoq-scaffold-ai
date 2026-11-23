@@ -215,7 +215,13 @@ describe('layout/components/Settings', () => {
 
     expect(settingsMocks.modalLoading).toHaveBeenCalledWith('正在清除设置缓存并刷新，请稍候...');
     expect(settingsMocks.storageRefs.get('layout-setting')?.value).toBeNull();
-    expect(timeoutSpy).toHaveBeenCalledWith('window.location.reload()', 1000);
+    // setTimeout 必须接收函数而非字符串（字符串等价于 eval，且会被 CSP 拦截）。
+    expect(timeoutSpy).toHaveBeenCalledWith(expect.any(Function), 1000);
+    const reload = vi.fn();
+    vi.stubGlobal('location', { reload });
+    (timeoutSpy.mock.calls[0][0] as () => void)();
+    expect(reload).toHaveBeenCalledTimes(1);
+    vi.unstubAllGlobals();
     timeoutSpy.mockRestore();
   });
 });

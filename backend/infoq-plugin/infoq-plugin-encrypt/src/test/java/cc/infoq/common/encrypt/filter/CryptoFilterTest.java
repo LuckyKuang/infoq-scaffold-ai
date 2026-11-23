@@ -180,6 +180,37 @@ class CryptoFilterTest {
         verify(filterChain, never()).doFilter(any(), any());
     }
 
+    @Test
+    @DisplayName("doFilter: should resolve 400 instead of throwing when encrypt header is malformed")
+    void doFilterShouldResolveBadRequestWhenEncryptHeaderMalformed() throws Exception {
+        ApiDecryptProperties properties = new ApiDecryptProperties();
+        properties.setHeaderFlag("X-Encrypt-Flag");
+        properties.setPrivateKey("private");
+        properties.setPublicKey("public");
+        CryptoFilter filter = new CryptoFilter(properties);
+
+        RequestMappingHandlerMapping mapping = mock(RequestMappingHandlerMapping.class);
+        HandlerExceptionResolver exceptionResolver = mock(HandlerExceptionResolver.class);
+        registerSpringBeans(mapping, exceptionResolver);
+
+        Method method = CryptoController.class.getMethod("postEndpoint");
+        HandlerExecutionChain chain = new HandlerExecutionChain(new HandlerMethod(new CryptoController(), method));
+
+        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/encrypt/post");
+        request.addHeader("X-Encrypt-Flag", "not-a-valid-rsa-ciphertext");
+        request.setContent("garbage".getBytes(StandardCharsets.UTF_8));
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        when(mapping.getHandler(request)).thenReturn(chain);
+
+        FilterChain filterChain = mock(FilterChain.class);
+        filter.doFilter(request, response, filterChain);
+
+        verify(exceptionResolver).resolveException(any(), any(), any(),
+            org.mockito.ArgumentMatchers.argThat(e -> e instanceof cc.infoq.common.exception.ServiceException se
+                && Integer.valueOf(400).equals(se.getCode())));
+        verify(filterChain, never()).doFilter(any(), any());
+    }
+
     private static void registerSpringBeans(RequestMappingHandlerMapping mapping, HandlerExceptionResolver resolver) {
         GenericApplicationContext context = new GenericApplicationContext();
         context.registerBean("requestMappingHandlerMapping", RequestMappingHandlerMapping.class, () -> mapping);
