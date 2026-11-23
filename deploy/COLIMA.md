@@ -19,7 +19,7 @@ Homebrew 的 Compose/Buildx 需要 Docker CLI 插件发现。在保留 `~/.docke
 
 ## VM 原生工作区
 
-`colima ssh --profile infoq-verify -- ...` 进入 Ubuntu VM。先核 `/etc/os-release`、Docker daemon、Compose、Buildx、DNS、磁盘与端口；安装仓库规定的 Node.js 24.18.0、pnpm 10.34.1 及 test-cli Playwright/Chromium 依赖。Node 压缩包须核官方 SHA-256，不能把宿主 macOS 二进制复制后当 Linux 工具运行。
+`colima ssh --profile infoq-verify -- ...` 进入 Ubuntu VM。先核 `/etc/os-release`、Docker daemon、Compose、Buildx、DNS、磁盘与端口；安装仓库规定的 Node.js 26.13.1、pnpm 12.23.0 及 test-cli Playwright/Chromium 依赖。Node 压缩包须核官方 SHA-256，不能把宿主 macOS 二进制复制后当 Linux 工具运行。
 
 本轮环境出现以下需诊断的情况：
 

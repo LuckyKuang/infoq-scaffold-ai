@@ -33,7 +33,7 @@ Node 入口按操作系统选择运行时：macOS 固定为 Apple，Linux 固定
 1. 判定范围：全新部署、已有栈复核、失败诊断、停止/清理，还是仅做 smoke。
 2. 只读探测：读取 `deploy/.env`（或 `INFOQ_ENV_FILE`）、端口、运行时可用性与现有容器；
    Apple 路径先确认 `container --version` 与 `container system status`。
-3. 预检：确认 Node 24.18.0、Python 3/openssl（Apple）、JDK 21/Maven 3.9.x（Apple 构建需要）、Docker/Compose（Docker 路径）、
+3. 预检：确认 Node 26.13.1、Python 3/openssl（Apple）、JDK 21/Maven 3.9.x（Apple 构建需要）、Docker/Compose（Docker 路径）、
    运行环境文件与 `sql/infoq_scaffold_3.0.0.sql` 存在。Apple 使用 `deploy/.env`；
    Docker 使用 `INFOQ_ENV_FILE`（默认 `/etc/infoq-scaffold-ai/deploy.env`）；生产缺失时显式失败。Docker 使用 `tools/production_config.mjs` 的纯数据解析器，并合并 `INFOQ_PRODUCTION_CONFIG_FILE` 受控来源，不执行 shell 表达式；Unix 文件权限为 owner-only。Apple env 按未加引号的字面量读取。生产部署先检查独立凭据、两组独立 RSA、TLS 双域证书与路径；前端构建使用 `production_config` BuildKit secret，内部端口默认 loopback。
 4. 执行：Apple 按 `init -> up -> smoke`（`up` 默认构建；已单独构建则 `up --no-build`）；Docker 按 `install.sh -> status/smoke` 或 `up --execute`；失败记录日志，不能假设自动恢复旧容器或自动停栈。

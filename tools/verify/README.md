@@ -65,7 +65,7 @@ node tools/verify/run_cluster_smoke.mjs
 
 ## 运行前置条件与实际影响
 
-- Node 基线 `24.18.0`；构建使用 `tools/backend_mvn.mjs` 选择 JDK 21 / Maven 3.9.x。启动阶段调用 PATH 中的 `java`，因此还需单独确认 `java -version` 为 21，不能假设 Maven runner 的 JDK 选择会更改父进程 PATH。
+- Node 基线 `26.13.1`；构建使用 `tools/backend_mvn.mjs` 选择 JDK 21 / Maven 3.9.x。启动阶段调用 PATH 中的 `java`，因此还需单独确认 `java -version` 为 21，不能假设 Maven runner 的 JDK 选择会更改父进程 PATH。
 - 单节点默认 `127.0.0.1:18080`，双节点默认 `127.0.0.1:19081` / `19082`，与产品默认 `8080` 不同。`--host` / 对应 `*_HOST` 只接受 `127.0.0.1` 或 `localhost`，同时用于 Java `server.address` 和探测；禁用验证码的实例不得绑定公网或通配地址。端口必须为无前导零的 `1..65535` 整数，集群两端口须不同；端口已占用会失败，不复用未确认 ownership 的服务。
 - 集群 node ID 为 1–64 位字母、数字、`.`、`_`、`-`，且首位必须为字母或数字；两个 ID 忽略大小写后也必须不同，避免跨平台日志文件冲突。上述监听 host/port、node ID 不合法或参数缺值时，在配置解析、旧状态清理、构建和启动前拒绝。
 - 默认 jar 为 `backend/infoq-admin/target/infoq-admin.jar`；缺失或传入 `--build` 时自动构建。默认 profile 在 `application-local.yml` 存在时为 `local`，否则为 `dev`。`--profile` / `SMOKE_SPRING_PROFILES_ACTIVE` / `CLUSTER_SMOKE_SPRING_PROFILES_ACTIVE` 可以显式覆盖 Java 激活 profile；文件必须已打包或通过外部配置加载。
@@ -93,7 +93,7 @@ node tools/verify/run_cluster_smoke.mjs
 触发条件：修改 smoke 登录协议、监听地址、私有输出、错误诊断、参数解析、候选账号、运行态编排或覆盖缺口扫描行为时。
 
 1. 先读 runner → `smoke_checks.mjs` → `smoke_output.mjs` 调用链，确认无意外真实地址、启动或秘密输出。
-2. 执行 `node tools/verify/test_smoke.mjs`，需 Node 24 与 Python 3；Python fixture 注入假 `redis` / `websockets`，无需安装这两个包。HTTP fixture 只监听 `127.0.0.1` 随机端口，验证加密/明文成功与失败、不跨协议重试、错误正文/异常业务码不泄漏凭据；禁用 `Math.random` 时真实加密登录仍成功。真实 fork 流程验证认证 IPC、固定诊断、非法/重复/缺失消息、子进程失败、旧开关/无 IPC 拒绝、秘密 stdout/stderr 拒绝，以及超时/中断后实际 PID 退出和端口重绑；POSIX 另注入 `ps` 检查失败，验证失败状态并清理 fixture。Node 24 `registerHooks` fixture 只替换外部 runtime/config/IPC 边界，执行真实 runner 编排，检查 Java bind/probe 一致、单节点不请求认证，以及成功/失败 cleanup 与显式 keep 状态。HTTP 请求、测试子进程各有期限；fixture 不能替代真实 Java/Redis 集群验收。
+2. 执行 `node tools/verify/test_smoke.mjs`，需 Node 26 与 Python 3；Python fixture 注入假 `redis` / `websockets`，无需安装这两个包。HTTP fixture 只监听 `127.0.0.1` 随机端口，验证加密/明文成功与失败、不跨协议重试、错误正文/异常业务码不泄漏凭据；禁用 `Math.random` 时真实加密登录仍成功。真实 fork 流程验证认证 IPC、固定诊断、非法/重复/缺失消息、子进程失败、旧开关/无 IPC 拒绝、秘密 stdout/stderr 拒绝，以及超时/中断后实际 PID 退出和端口重绑；POSIX 另注入 `ps` 检查失败，验证失败状态并清理 fixture。Node 24 `registerHooks` fixture 只替换外部 runtime/config/IPC 边界，执行真实 runner 编排，检查 Java bind/probe 一致、单节点不请求认证，以及成功/失败 cleanup 与显式 keep 状态。HTTP 请求、测试子进程各有期限；fixture 不能替代真实 Java/Redis 集群验收。
 3. 对修改的 `.mjs` 执行 `node --check <file>`，再运行 `node tools/validate_utf8.mjs tools/verify` 和 `git diff --check`；日志、命令/退出码放到 `tmp/`。
 4. fixture 必须关闭自己的连接与监听端口。沙箱禁止回环监听时记录 `EPERM` 并在允许本地 fixture 的权限环境重跑；不得改为跳过测试或连接已有 backend 制造通过。
 

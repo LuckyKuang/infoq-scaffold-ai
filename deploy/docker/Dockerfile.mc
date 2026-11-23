@@ -1,4 +1,4 @@
-FROM node:24.18.0 AS download
+FROM node:26.13.1 AS download
 ARG TARGETARCH
 RUN TARGETARCH="$TARGETARCH" node --input-type=module - <<'NODE'
 import fs from 'node:fs';

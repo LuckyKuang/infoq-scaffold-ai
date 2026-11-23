@@ -36,7 +36,7 @@ Compose 的 MySQL、Redis、MinIO、后端、独立前端端口默认仅绑定 `
 
 MinIO API 由独立 OSS 域名根路径代理，保留原始 `Host` 和 URI；不要增加 `/oss/` 前缀、改写签名 URL，或用公开 bucket 解决签名失败。数据库配置使用内部 `endpoint=http://minio:9000` 与外部 `domain=INFOQ_OSS_PUBLIC_ORIGIN`，两者协议分离。网关访问日志不记录 query，避免临时签名泄漏。Console 仍经主站 `/console-oss/`，生产可以另加组织网络访问控制。
 
-辅助工具由 `deploy/docker/Dockerfile.mc` 构建为本地固定标签 `infoq/infoq-mc:RELEASE.2025-08-13T08-35-41Z`。它下载官方 GitHub release 的 Linux amd64/arm64 二进制，逐架构校验仓库固定 SHA256，并保留官方 LICENSE/CREDITS；下载 stage 为 `node:24.18.0`，运行 stage 为 `busybox:1.37.0`。Dockerfile 经 stdin 构建，没有文件上下文，不把部署配置、证书或秘密送入构建。执行前校验 Docker daemon 架构、镜像归属/版本标签及实际二进制 SHA256/版本，随后使用不可变镜像 ID；本地同名镜像校验失败时拒绝运行和覆盖。
+辅助工具由 `deploy/docker/Dockerfile.mc` 构建为本地固定标签 `infoq/infoq-mc:RELEASE.2025-08-13T08-35-41Z`。它下载官方 GitHub release 的 Linux amd64/arm64 二进制，逐架构校验仓库固定 SHA256，并保留官方 LICENSE/CREDITS；下载 stage 为 `node:26.13.1`，运行 stage 为 `busybox:1.37.0`。Dockerfile 经 stdin 构建，没有文件上下文，不把部署配置、证书或秘密送入构建。执行前校验 Docker daemon 架构、镜像归属/版本标签及实际二进制 SHA256/版本，随后使用不可变镜像 ID；本地同名镜像校验失败时拒绝运行和覆盖。
 
 `ensure --execute` 可在镜像缺失时先显式准备工具，再创建缺失 bucket（S3 默认私有）并读取策略；已有匿名或自定义策略明确失败，不自动修改。镜像构建、匿名下载、SHA256、认证和未知响应错误立即失败，不伪装为 bucket 尚未就绪；仅明确的 S3 临时服务错误允许有限重试。只有确认私有后，部署才同步 `sys_oss_config.access_policy='0'`。自定义 OSS 配置保留原有显式覆盖门禁。默认约 120 秒的授权签名访问、匿名拒绝、过期拒绝及 API 权限需实机验证。
 

@@ -13,8 +13,8 @@ Use the versions declared by the repository. Do not copy tool versions into
 extra policy documents.
 
 - JDK 21 and Maven 3.9.x: `backend/pom.xml`
-- Node.js `24.18.0`: `.node-version` and `.nvmrc`
-- pnpm `10.34.1`: root `package.json` `packageManager`, mirrored by each workspace
+- Node.js `26.13.1`: `.node-version` and `.nvmrc`
+- pnpm `12.23.0`: root `package.json` `packageManager`, mirrored by each workspace
 
 ## Local Services
 

@@ -5,7 +5,7 @@ import {parseLinuxArgs,isolateDefinition,presignObject,activateGateway,assertAno
 assert.deepEqual(parseLinuxArgs(['--run-id','test-run']),{execute:false,runId:'test-run'});
 assert.throws(()=>parseLinuxArgs(['--run-id','../prod']),/run-id/);
 assert.throws(()=>parseLinuxArgs(['--run-id','valid-run','--execute','--execute']),/参数/);
-const fixture={services:{mysql:{container_name:'mysql',image:'mysql:8.0.42',ports:[{target:3306,published:'3306',host_ip:'127.0.0.1'}],volumes:[{type:'bind',source:'/isolated/data/mysql',target:'/var/lib/mysql'}]},'nginx-web':{ports:[{target:443,published:'443',host_ip:'0.0.0.0'}],volumes:[]},application:{image:'shared/app:3.0.0',build:{context:'/workspace'}}},networks:{default:{}},secrets:{production_config:{file:'/old/config'}}};
+const fixture={services:{mysql:{container_name:'mysql',image:'mysql:8.0.46',ports:[{target:3306,published:'3306',host_ip:'127.0.0.1'}],volumes:[{type:'bind',source:'/isolated/data/mysql',target:'/var/lib/mysql'}]},'nginx-web':{ports:[{target:443,published:'443',host_ip:'0.0.0.0'}],volumes:[]},application:{image:'shared/app:3.0.0',build:{context:'/workspace'}}},networks:{default:{}},secrets:{production_config:{file:'/old/config'}}};
 const isolated=isolateDefinition(fixture,{project:'infoq-verify-test',runId:'run-test',root:'/isolated',environment:{INFOQ_DEPLOY_ROOT:'/isolated/data',INFOQ_PRODUCTION_CONFIG_FILE:'/isolated/production.env'},ports:{mysql:{3306:13306},'nginx-web':{443:443}}});
 assert.equal(isolated.services.mysql.container_name,'infoq-verify-test-mysql');
 assert.equal(isolated.services.mysql.ports[0].published,'13306');

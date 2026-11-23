@@ -20,7 +20,7 @@
 ## 前置条件
 
 - Apple silicon Mac，macOS 26+，Apple `container` 1.1+。
-- Node 24.18.0、Python 3、`openssl`；`INFOQ_ENV_FILE` 可指定独立环境文件，默认 `deploy/.env`。
+- Node 26.13.1、Python 3、`openssl`；`INFOQ_ENV_FILE` 可指定独立环境文件，默认 `deploy/.env`。
 - 首次使用先启动系统服务：
 
 ```bash

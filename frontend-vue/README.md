@@ -56,7 +56,7 @@
 
 ## 开发与生产验证前置
 
-从仓库根目录执行 `pnpm --dir frontend-vue install`、`pnpm --dir frontend-vue run dev`；Node 使用 `24.18.0`，pnpm 使用根 `packageManager` 固定版本。开发服务默认端口 `80`、代理后端 `8080`；端口覆盖与测试命令见 [本层规约](./AGENTS.md) 和 [测试政策](../docs/TESTING.md)。
+从仓库根目录执行 `pnpm --dir frontend-vue install`、`pnpm --dir frontend-vue run dev`；Node 使用 `26.13.1`，pnpm 使用根 `packageManager` 固定版本。开发服务默认端口 `80`、代理后端 `8080`；端口覆盖与测试命令见 [本层规约](./AGENTS.md) 和 [测试政策](../docs/TESTING.md)。
 
 Windows 可直接使用上面的 pnpm 命令。`bin/package.bat`、`bin/run-web.bat`、`bin/build.bat` 分别包装冻结 lockfile 安装、开发服务和生产构建，会切换到工作区并保留 pnpm 退出码；先安装基线 Node/pnpm，构建前准备下述 RSA 配置。本轮静态核对了这些批处理入口，尚未在 Windows 实机执行。
 

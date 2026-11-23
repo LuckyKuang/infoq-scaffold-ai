@@ -39,7 +39,7 @@ function dockerFixture(config,{fresh=false,sql='1\n',cleanupFails=false,imageMis
     else if(args[0]==='stop') running=false;
     else if(args[0]==='start') running=true;
     else if(args[0]==='image') {if(imageMissing) throw Error('Docker 操作失败 exit=1');output=JSON.stringify([{Id:'sha256:'+'b'.repeat(64)}]);}
-    else if(args[0]==='exec') output=args.includes('--version')?'mysqldump Ver 8.0.42':args.some(a=>a.includes('mysqldump --no-data'))?'SCHEMA':args.some(a=>a.includes('mysqldump'))?'CREATE TABLE test(id INT);\n':sql;
+    else if(args[0]==='exec') output=args.includes('--version')?'mysqldump Ver 8.0.46':args.some(a=>a.includes('mysqldump --no-data'))?'SCHEMA':args.some(a=>a.includes('mysqldump'))?'CREATE TABLE test(id INT);\n':sql;
     else if(args[0]==='compose') {
       if(args.includes('config')) output=JSON.stringify(definition);
       else if(args.includes('up')) {alive=true;if(args.includes('--no-deps')) image='sha256:'+'b'.repeat(64);}

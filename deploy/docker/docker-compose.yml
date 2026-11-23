@@ -2,7 +2,7 @@ x-infoq-sql-baseline: sql/infoq_scaffold_3.0.0.sql
 
 services:
   mysql:
-    image: mysql:8.0.42
+    image: mysql:8.0.46
     container_name: mysql
     restart: unless-stopped
     environment:
@@ -31,7 +31,7 @@ services:
       start_period: 20s
 
   redis:
-    image: redis:7.2.8
+    image: redis:7.2.17
     container_name: redis
     restart: unless-stopped
     environment:
@@ -174,7 +174,7 @@ services:
       - ${INFOQ_DEPLOY_ROOT:-/infoq}/react/logs:/var/log/nginx
 
   nginx-web:
-    image: nginx:1.30.3
+    image: nginx:1.31.9
     container_name: nginx-web
     restart: unless-stopped
     environment:

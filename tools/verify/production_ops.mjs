@@ -11,7 +11,7 @@ const tmp = path.join(repo, 'tmp');
 const hash = value => crypto.createHash('sha256').update(value).digest('hex');
 const fail = message => { throw new Error(message); };
 const identifier = /^[a-z][a-z0-9-]{2,47}$/;
-const help = `生产运维隔离验证（Node 24；真实执行需 Linux Docker Compose v2）
+const help = `生产运维隔离验证（Node 26；真实执行需 Linux Docker Compose v2）
 node tools/verify/production_ops.mjs <command> --config <controlled.json> [--execute]
 commands: inspect | backup | verify-backup | restore | rollback | checks | alert | capacity | cleanup
 默认只读预览，无证据写入、无 HTTP、无 Docker mutation。--execute 才实际执行。

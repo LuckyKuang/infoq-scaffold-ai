@@ -6,7 +6,7 @@
   "author": "Pontus",
   "license": "MIT",
   "type": "module",
-  "packageManager": "pnpm@10.34.1",
+  "packageManager": "pnpm@12.23.0",
   "scripts": {
     "dev": "vite serve --mode development",
     "build:prod": "vite build --mode production",
@@ -27,7 +27,7 @@
     "@element-plus/icons-vue": "2.3.2",
     "@highlightjs/vue-plugin": "2.1.2",
     "@vueup/vue-quill": "1.5.5",
-    "@vueuse/core": "15.0.0",
+    "@vueuse/core": "15.1.0",
     "animate.css": "4.1.1",
     "await-to-js": "3.0.0",
     "axios": "1.21.1",
@@ -52,7 +52,7 @@
     "@iconify-json/ep": "^1.2.4",
     "@types/crypto-js": "4.2.2",
     "@types/file-saver": "2.0.7",
-    "@types/node": "^24.19.2",
+    "@types/node": "^26.6.6",
     "@types/nprogress": "0.2.3",
     "@vitejs/plugin-vue": "6.0.11",
     "@vitest/coverage-v8": "5.1.1",
@@ -82,30 +82,9 @@
     "vitest": "5.1.1",
     "vue-eslint-parser": "10.4.2"
   },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "@parcel/watcher"
-    ],
-    "overrides": {
-      "quill": "2.0.2",
-      "typescript-eslint": "8.73.0",
-      "@typescript-eslint/eslint-plugin": "8.73.0",
-      "@typescript-eslint/parser": "8.73.0",
-      "@typescript-eslint/typescript-estree": "8.73.0",
-      "@typescript-eslint/project-service": "8.73.0",
-      "@typescript-eslint/tsconfig-utils": "8.73.0",
-      "@typescript-eslint/type-utils": "8.73.0",
-      "@typescript-eslint/utils": "8.73.0",
-      "@vue/compiler-core": "3.5.46",
-      "@vue/compiler-dom": "3.5.46",
-      "vite-plugin-inspect": "11.4.1",
-      "js-beautify>editorconfig": "4.0.1",
-      "js-beautify>glob": "14.0.6"
-    }
-  },
   "engines": {
-    "node": "24.18.0",
-    "pnpm": ">=10.34.1 <11"
+    "node": "26.13.1",
+    "pnpm": ">=12.23.0 <13"
   },
   "browserslist": [
     "Chrome >= 87",

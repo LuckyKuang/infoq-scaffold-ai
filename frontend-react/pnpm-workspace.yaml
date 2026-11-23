@@ -1,0 +1,9 @@
+allowBuilds:
+  '@parcel/watcher': true
+  esbuild: true
+
+# Exact versions published within the default 1-day minimumReleaseAge window when pinned on 2026-11-23;
+# remove these entries on the next dependency refresh once they are older than one day.
+minimumReleaseAgeExclude:
+  - antd@6.7.2
+  - i18next@27.2.5

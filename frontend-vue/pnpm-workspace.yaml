@@ -1,0 +1,27 @@
+allowBuilds:
+  '@parcel/watcher': true
+
+
+# Exact versions published within the default 1-day minimumReleaseAge window when pinned on 2026-11-23;
+# remove these entries on the next dependency refresh once they are older than one day.
+minimumReleaseAgeExclude:
+  - '@vueuse/core@15.1.0'
+  - '@vueuse/metadata@15.1.0'
+  - '@vueuse/shared@15.1.0'
+
+overrides:
+  # @vueup/vue-quill accepts "2.0.2 || >=2.0.4 <3"; 2.0.3 is excluded upstream.
+  quill: 2.0.2
+  typescript-eslint: 8.73.0
+  '@typescript-eslint/eslint-plugin': 8.73.0
+  '@typescript-eslint/parser': 8.73.0
+  '@typescript-eslint/typescript-estree': 8.73.0
+  '@typescript-eslint/project-service': 8.73.0
+  '@typescript-eslint/tsconfig-utils': 8.73.0
+  '@typescript-eslint/type-utils': 8.73.0
+  '@typescript-eslint/utils': 8.73.0
+  '@vue/compiler-core': 3.5.46
+  '@vue/compiler-dom': 3.5.46
+  vite-plugin-inspect: 11.4.1
+  js-beautify>editorconfig: 4.0.1
+  js-beautify>glob: 14.0.6

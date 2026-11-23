@@ -6,7 +6,7 @@
 
 1. 明确全新部署、已有栈复核、诊断或停止/卸载，写清验收范围、异常、证据及回滚条件。已有授权按目标动作判断；部署状态/数据高风险操作先获得明确确认，不因审计而执行。
 2. 阅读 [运行时矩阵](runtime-matrix.md)、[部署指南](README.md)、[Docker 流程](DOCKER.md) 和 [生命周期](DEPLOYMENT_LIFECYCLE.md)。先只读检查运行时版本、当前 context、容器/挂载归属、端口和配置字段，不打印秘密。`colima start`、`docker context use`、安装和启动均会修改状态，不属于只读探测。
-3. 确认 Docker daemon、Compose、Buildx 与镜像/依赖下载能力。Compose 在 Maven 3.9.12 / JDK 21 builder 内打包，宿主不要求 Java/Maven；前端 builder 固定 Node 24.18.0，pnpm 10.34.1。Docker 权限等同主机高权限，不随意放宽 socket 权限。
+3. 确认 Docker daemon、Compose、Buildx 与镜像/依赖下载能力。Compose 在 Maven 3.9.12 / JDK 21 builder 内打包，宿主不要求 Java/Maven；前端 builder 固定 Node 26.13.1，pnpm 12.23.0。Docker 权限等同主机高权限，不随意放宽 socket 权限。
 4. 显式选 `INFOQ_DEPLOY_ROOT`；WSL2/Linux 通常 `/infoq`，Colima 通常 `$HOME/infoq`，WSL 数据禁止 DrvFS。预创建 `/tmp/infoq-deploy` 和 `${INFOQ_DEPLOY_ROOT}/server/temp`；权限不足由授权管理员处理，不能跳过。
 5. 核对 `INFOQ_FRONTEND_TARGET=all|vue|react`、公共 URL、端口与秘密来源。环境文件/凭据文件必须 `600`，由有权限的属主/root 执行；生命周期 helper 将其作为数据解析并与构建同源，禁止注入 PATH/NODE_OPTIONS 等运行时控制字段。不要用打印文件或 `set -x` 诊断。目标目录或通用容器名与其他项目冲突即停止。
 6. 先按 [PRODUCTION.md](PRODUCTION.md) 验证生产同源配置、两组独立 RSA、主站和独立 S3 域名、匹配且有效的 TLS 及旧 bucket/目录迁移。辅助端口默认 loopback。配置预检通过仍需本节实际运行；不把映射 443 或 fixture 当受信 HTTPS 证据。
