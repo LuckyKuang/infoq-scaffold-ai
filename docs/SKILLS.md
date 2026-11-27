@@ -15,6 +15,8 @@
 5. skill 的主执行入口必须兼容 Windows / macOS / Linux；统一使用 repo-owned Node CLI 或 `.mjs`，不再保留 `.sh` / `.ps1` / `.cmd` 作为 skill 入口。若内部仍需 Python 等实现，必须由跨平台 Node 入口调度。
 6. 仓库级 skill 是 CLI 型可执行 SOP：判定范围 -> 只读探测 / dry-run -> 目标与影响枚举 -> 写入或危险动作门禁 -> 执行验证 -> `tmp/` 证据留存与显式失败。远程写操作默认 dry-run，必须显式 `--execute`，合并另需 `--yes`。
 7. 工作域之外的能力不新建 skill：backend 验证与 OpenSpec 校验放 `tools/`，数据运维与交付工作流放 `docs/`，部署脚本与运行时矩阵放 `deploy/`；部署生命周期编排由 `deploy-cli` 承担。
+8. 每个 skill 目录必须包含 `SKILL.md` 与 `agents/openai.yaml`，`default_prompt` 显式包含 `$skill-name`；新增或更新 skill 时同步校验元数据是否 stale。
+9. 描述性文档中文优先（含 `SKILL.md`、`references/*.md`、`agents/openai.yaml` 说明字段）；命令、路径、环境变量、标识符、代码块与版本号保持原文。
 
 ## 2. 一个 skill 通常包含什么
 
@@ -62,6 +64,8 @@
 触发来源三类：用户显式点名 skill；`AGENTS.md` 的 `Skill Trigger` 命中语义；Codex 读取规则后按任务类型主动选择最合适的 skill。因此 skill 的有效性不只取决于脚本，还取决于 `SKILL.md` 是否描述清楚触发场景、`AGENTS.md` 是否正确路由、`README.md` 与 `docs/*.md` 是否与 skill 实际入口一致。
 
 `skills/` 是本仓库正文真值目录，当前依靠规约路由后显式读取。它不是 Codex 官方自动发现的 `.agents/skills/`；UI 选择器和 `$skill-name` 原生调用需要宿主另行安装或链接。文件存在和 metadata 合法不证明当前会话已经加载技能，详见 `docs/AI-COLLABORATION.md` 第 1.4 节。
+
+涉及 OpenAI API、Responses API、ChatGPT Apps SDK、Codex、AGENTS.md、MCP 或 subagent 问题时，优先使用本机/系统 `openai-docs` skill 按其流程读取官方文档；项目级 `.codex/config.toml` 不声明对应 MCP server。
 
 以下情况通常不值得单独沉淀为 skill：
 
@@ -114,18 +118,7 @@ node tools/openspec_check.mjs <change-id>
 
 ### 8.1 Web 测试与运行态（test-cli）
 
-当任务要求"不要跳过验证码""用 Redis 种子答案跑完整登录""启动后端和前端后逐模块 smoke""生成管理端测试矩阵"或"设计 CRUD 浏览器自动化模式"时使用。测试政策与 case 集合见 [TESTING.md](./TESTING.md) 与 `docs/testing/`。
-
-```bash
-node skills/test-cli/scripts/generate-case-matrix.mjs --output-dir tmp/test-cli/matrix-preview
-node skills/test-cli/scripts/validate-case-matrix.mjs docs/testing/case-matrix.json
-# 先配置 INFOQ_TEST_REDIS_* 或 --redis-*，且与后端使用同一 Redis
-node skills/test-cli/scripts/captcha_login.mjs --backend-url http://127.0.0.1:8080 --json
-node skills/test-cli/scripts/run_admin_e2e.mjs --client vue
-node skills/test-cli/scripts/run_admin_e2e.mjs --client react
-node skills/test-cli/scripts/run_admin_crud_e2e.mjs --client vue
-node skills/test-cli/scripts/run_admin_crud_e2e.mjs --client react
-```
+当任务要求"不要跳过验证码""用 Redis 种子答案跑完整登录""启动后端和前端后逐模块 smoke""生成管理端测试矩阵"或"设计 CRUD 浏览器自动化模式"时使用。测试政策与 case 集合见 [TESTING.md](./TESTING.md) 与 `docs/testing/`；命令与参数见 `skills/test-cli/SKILL.md`。
 
 说明：
 
@@ -142,12 +135,7 @@ node skills/test-cli/scripts/run_admin_crud_e2e.mjs --client react
 
 ### 8.2 前端验证（test-cli，mode: frontend）
 
-React / Vue admin 的运行态、单测、coverage、lint/build 都统一使用 `test-cli`。
-
-```bash
-node skills/test-cli/scripts/run_admin_e2e.mjs --client vue --route-limit 1
-node skills/test-cli/scripts/run_admin_e2e.mjs --client react --route-limit 1
-```
+React / Vue admin 的运行态、单测、coverage、lint/build 都统一使用 `test-cli`；命令见 `skills/test-cli/SKILL.md` 与 `skills/test-cli/references/modes/frontend.md`。
 
 验证码种子登录和动态路由 smoke 见 `skills/test-cli/references/modes/e2e.md`。本地栈由 `run_admin_e2e.mjs` 自管，状态写入 `tmp/test-cli/e2e/stack/<client>/state.json`，完成、失败或中断后按状态文件收口 owned 端口；纯单测 / 构建迭代可手动启动，命令见 `skills/test-cli/references/runtime/admin-commands.md`。
 
@@ -165,40 +153,13 @@ SQL、数据库、Redis、数据修复、迁移、测试数据维护和 API/UI/D
 
 ### 8.4 后端验证（tools/verify）
 
-后端单测、Mapper XML、HTTP smoke、WebSocket cluster smoke 统一使用 `tools/verify`；登录/鉴权验证统一使用 `test-cli` 的 `captcha_login.mjs`（Redis 种子答案），不再维护独立登录脚本。
-
-```bash
-node tools/verify/run_smoke.mjs
-node tools/verify/run_cluster_smoke.mjs
-```
+后端单测、Mapper XML、HTTP smoke、WebSocket cluster smoke 统一使用 `tools/verify`；登录/鉴权验证统一使用 `test-cli` 的 `captcha_login.mjs`（Redis 种子答案），不再维护独立登录脚本。命令见 `tools/verify/README.md`。
 
 这些脚本启动临时后端时会在 `tmp/verify/` 写入 `*.state.json`。默认在成功、失败或中断后关闭自己启动的端口；显式 keep 参数只用于临时诊断，必须依赖状态文件后续清理。
 
 ### 8.5 部署与运行态（deploy-cli）
 
-当任务要求"在本机部署项目""用 Apple container 起栈""在 WSL2 / Linux Docker 部署""运行态 smoke""部署失败诊断"或"停止/清理本地栈"时使用。部署脚本真值在 `deploy/`，运行态编排入口是 `deploy-cli`。
-
-Apple container：
-
-```bash
-node skills/deploy-cli/scripts/deploy_cli.mjs init
-node skills/deploy-cli/scripts/deploy_cli.mjs build
-node skills/deploy-cli/scripts/deploy_cli.mjs up
-node skills/deploy-cli/scripts/deploy_cli.mjs status
-node skills/deploy-cli/scripts/deploy_cli.mjs smoke
-node skills/deploy-cli/scripts/deploy_cli.mjs down
-node skills/deploy-cli/scripts/deploy_cli.mjs destroy --yes
-```
-
-Docker（WSL2/Linux）：
-
-```bash
-bash deploy/install.sh
-node skills/deploy-cli/scripts/deploy_cli.mjs status
-node skills/deploy-cli/scripts/deploy_cli.mjs smoke
-node skills/deploy-cli/scripts/deploy_cli.mjs up --execute
-node skills/deploy-cli/scripts/deploy_cli.mjs down --execute
-```
+当任务要求"在本机部署项目""用 Apple container 起栈""在 WSL2 / Linux Docker 部署""运行态 smoke""部署失败诊断"或"停止/清理本地栈"时使用。部署脚本真值在 `deploy/`，运行态编排入口是 `deploy-cli`；命令矩阵按运行时区分，完整命令见 `skills/deploy-cli/SKILL.md`。
 
 说明：
 
@@ -217,34 +178,18 @@ node skills/deploy-cli/scripts/deploy_cli.mjs down --execute
 
 ### 8.6 AGENTS 规约压缩（compress-cli）
 
-当任务涉及压缩或更新根 `AGENTS.md`、怀疑 Local Skills 路由漂移、或需要校验引用路径与受保护类别时使用。
-
-```bash
-node skills/compress-cli/scripts/agents_check.mjs check
-node skills/compress-cli/scripts/agents_check.mjs budget
-node skills/compress-cli/scripts/test_agents_check.mjs
-```
+当任务涉及压缩或更新根 `AGENTS.md`、怀疑 Local Skills 路由漂移、或需要校验引用路径与受保护类别时使用；命令见 `skills/compress-cli/SKILL.md`。
 
 说明：
 
 - 校验器只读：不提供自动改写模式；压缩安全与发布类规则必须人工评审。
-- `check` 覆盖四类结构契约：`|Category:value` 格式与唯一类别、受保护类别存在性、路由一致性（Local Skills ↔ `skills/` 目录 ↔ `docs/SKILLS.md` 表 ↔ Skill Trigger 引用）、根 AGENTS.md 引用路径存在性。规则语义未弱化及近层规约正确性必须另行人工核对。
-- `budget` 输出行数、超长类别与重复片段，作为压缩评审输入，不作为失败条件。
+- `check` 覆盖五类结构契约：`|Category:value` 格式与唯一类别、受保护类别存在性、路由一致性（Local Skills ↔ `skills/` 目录 ↔ `docs/SKILLS.md` 表 ↔ Skill Trigger 引用）、根 AGENTS.md 引用路径存在性、指针契约（声明下钻必须带 `docs/`、`deploy/` 或 `skills/` 路径）。规则语义未弱化及近层规约正确性必须另行人工核对。
+- `budget` 是硬门禁：category 数上限 24、UTF-8 字节数上限 8192 且至少保留 200 bytes 余量，超限或余量不足即失败；同时输出行数、超长类别与重复片段作为评审输入。
 - 通用 `agents-md-compress` 仅提供压缩写作方法；仓库特有真值以本 skill 为准。
 
 ### 8.7 推送与 PR（push-cli）
 
-当任务要求推送代码、提交或更新 PR、修复 PR 校验失败或合并 PR 时使用。
-
-```bash
-node skills/push-cli/scripts/push_cli.mjs ensure
-node skills/push-cli/scripts/push_cli.mjs check --profile docs
-node skills/push-cli/scripts/push_cli.mjs check --profile ci
-node skills/push-cli/scripts/push_cli.mjs submit-pr --message "fix: xxx" --execute
-node skills/push-cli/scripts/push_cli.mjs watch --pr <number>
-node skills/push-cli/scripts/push_cli.mjs merge --pr <number> --execute --yes
-node skills/push-cli/scripts/test_push_cli.mjs
-```
+当任务要求推送代码、提交或更新 PR、修复 PR 校验失败或合并 PR 时使用；命令见 `skills/push-cli/SKILL.md`，提交前评审见 `skills/push-cli/references/review-gate.md`。
 
 说明：
 
@@ -252,21 +197,12 @@ node skills/push-cli/scripts/test_push_cli.mjs
 - `submit-pr` = 本地校验矩阵 -> 提交 -> 推送 -> 创建或复用 PR -> 自动 `watch`；失败时输出失败 check 与失败日志摘要，修复后重跑即复用同一 PR。
 - `merge` 需要全绿 + 显式 `--execute --yes`；禁止 `--admin` 绕过保护。
 - Git remote 必须具有指向同一仓库的唯一 fetch/push URL，gh 使用显式相同仓库，拒绝内嵌凭据或多目标。`--json` 仅用于 `status`；`check` 不接受 `--dry-run`，它会实际执行所选本地矩阵。
-- 校验矩阵：`docs`（UTF-8、README 同步、版本一致性、文档链接、AGENTS 校验、active change 的 OpenSpec 校验）、`ci`（对齐 `.github/workflows/ci.yml` 的本地可跑部分：仓库门禁 + 发布工具与固定 Maven 安装器回归 + 双管理端 lint/test/build + 后端 `clean package` 的 `-P dev` 与 `-P prod` 两轮，不含 agents/openspec，也不含 Node CLI 三平台矩阵）、`full`（docs + ci）。
+- 校验矩阵：`docs`（UTF-8、README 同步、版本一致性、文档链接、AGENTS 校验、shortcut 欠债台账、active change 的 OpenSpec 校验）、`ci`（对齐 `.github/workflows/ci.yml` 的本地可跑部分：仓库门禁 + 发布工具与固定 Maven 安装器回归 + 双管理端 lint/test/build + 后端 `clean package` 的 `-P dev` 与 `-P prod` 两轮，不含 agents/openspec，也不含 Node CLI 三平台矩阵）、`full`（docs + ci）。
 - 证据写入 `tmp/push-cli/<run-id>/`。
 
 ### 8.8 版本与 Release（release-cli）
 
-当任务要求版本升级、确认版本是否最新、创建 tag 或发布 GitHub Release 时使用。
-
-```bash
-node skills/release-cli/scripts/release_cli.mjs plan
-node skills/release-cli/scripts/release_cli.mjs bump --version 3.0.1
-node skills/release-cli/scripts/release_cli.mjs tag --version 3.0.1 --execute
-node skills/release-cli/scripts/release_cli.mjs verify --version 3.0.1
-node skills/release-cli/scripts/test_bump_version.mjs
-node skills/release-cli/scripts/test_release_cli.mjs
-```
+当任务要求版本升级、确认版本是否最新、创建 tag 或发布 GitHub Release 时使用；命令见 `skills/release-cli/SKILL.md`。
 
 说明：
 
@@ -287,6 +223,7 @@ node skills/release-cli/scripts/test_release_cli.mjs
 | SQL / 数据修复 / 迁移 / 一致性核对 | 无脚本（只读 MCP + SQL 增量脚本） | `docs/DATA-OPS.md` |
 | 交付门禁 / Acceptance Contract / UI 四阶段 / 插件治理 | `tools/generate_plugin_plan.mjs` | `docs/DELIVERY-WORKFLOW.md`、`docs/UI-WORKFLOW.md`、`docs/SKILLS.md` §9 |
 | 容器部署与 smoke | `skills/deploy-cli/scripts/deploy_cli.mjs`、`deploy/install.sh`、`deploy/bin/*` | `deploy/VERIFICATION.md`、`deploy/runtime-matrix.md` |
+| AGENTS 规约预算与 `shortcut:` 欠债台账 | `skills/compress-cli/scripts/agents_check.mjs`、`tools/check_shortcut_debt.mjs` | `skills/compress-cli/references/compress-rules.md`、`docs/AI-COLLABORATION.md` 第 2.2 节 |
 
 ## 9. 插件目录与开关策略
 

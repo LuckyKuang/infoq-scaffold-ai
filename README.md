@@ -166,7 +166,6 @@ detailed configuration and maintenance.
 | Document | Description |
 | --- | --- |
 | [Documentation index](docs/README.md) | User-doc navigation |
-| [Documentation audit](docs/DOCUMENTATION-AUDIT.md) | Coverage, corrections, checks, and remaining production blockers |
 | [Contributing](CONTRIBUTING.md) | Toolchain, checks, and PR flow |
 | [Developer guide](DEV_GUIDE.md) | Local setup and troubleshooting |
 | [Security policy](SECURITY.md) | Vulnerability reporting |

@@ -7,9 +7,11 @@ import {fileURLToPath} from 'node:url';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(scriptDir, '..', '..', '..');
-const fixtureRoot = path.join(repoRoot, 'tmp', 'compress-cli', `fixture-${Date.now()}`);
+const fixtureBase = path.join(repoRoot, 'tmp', 'compress-cli', `fixture-${Date.now()}`);
+let fixtureRoot = fixtureBase;
+let caseIndex = 0;
 const checker = path.join(scriptDir, 'agents_check.mjs');
-const fixtureChecker = path.join(fixtureRoot, 'tmp', 'compress-cli', 'scripts', 'agents_check.mjs');
+let fixtureChecker = path.join(fixtureBase, 'tmp', 'compress-cli', 'scripts', 'agents_check.mjs');
 
 const checkerSource = fs.readFileSync(checker, 'utf8');
 const protectedBlock = checkerSource.match(/const PROTECTED_CATEGORIES = \[([\s\S]*?)\];/);
@@ -38,7 +40,9 @@ function validAgents(extraCategories = {}) {
 }
 
 function writeFixture({agentsBody, skills = [{name: 'alpha-cli', withPrompt: true}], docsRows, ignore = '/docs/plan/\n/openspec/changes/\n', files = {}}) {
-  fs.rmSync(fixtureRoot, {recursive: true, force: true});
+  caseIndex += 1;
+  fixtureRoot = path.join(fixtureBase, `case-${String(caseIndex).padStart(2, '0')}`);
+  fixtureChecker = path.join(fixtureRoot, 'tmp', 'compress-cli', 'scripts', 'agents_check.mjs');
   fs.mkdirSync(path.join(fixtureRoot, 'docs'), {recursive: true});
   fs.writeFileSync(path.join(fixtureRoot, 'AGENTS.md'), agentsBody, 'utf8');
   fs.writeFileSync(path.join(fixtureRoot, '.gitignore'), ignore, 'utf8');
@@ -214,7 +218,44 @@ for (const [name, metadata, expected] of [
 }
 assertCase('blank first line is rejected', {agentsBody: `\n${validAgents().split('\n').slice(1).join('\n')}`}, (status) => status === 1);
 
+assertCase(
+  'category over budget fails',
+  {agentsBody: validAgents(Object.fromEntries(Array.from({length: 10}, (_, index) => [`Extra${index}`, 'detail should live in docs'])) )},
+  (status, output) => status === 1 && output.includes('category 数超出预算')
+);
+
+assertCase(
+  'byte over budget fails',
+  {agentsBody: validAgents({Padding: 'x'.repeat(9000)})},
+  (status, output) => status === 1 && output.includes('字节数超出预算')
+);
+
+const baseBytes = Buffer.byteLength(validAgents(), 'utf8');
+assertCase(
+  'insufficient headroom fails',
+  {agentsBody: validAgents({Padding: 'x'.repeat(Math.max(0, 8100 - baseBytes - 10))})},
+  (status, output) => status === 1 && output.includes('预算余量不足')
+);
+
+assertCase(
+  'delegation without disclosed path fails',
+  {agentsBody: validAgents({'Broken Pointer': '细则见 某文档'})},
+  (status, output) => status === 1 && output.includes('没有可披露路径')
+);
+
+assertCase(
+  'delegation to non-disclosed path fails',
+  {agentsBody: validAgents({'Broken Target': '细则见 `package.json`'})},
+  (status, output) => status === 1 && output.includes('没有可披露路径')
+);
+
+assertCase(
+  'delegation with disclosed path passes',
+  {agentsBody: validAgents({'Good Pointer': '细则见 `docs/SKILLS.md`'})},
+  (status) => status === 0
+);
+
 const failed = results.filter((item) => !item.ok);
 console.log(`[agents-check-test] ${failed.length === 0 ? 'pass' : 'fail'} (${results.length - failed.length}/${results.length})`);
-console.log(`[agents-check-test] fixture root: ${fixtureRoot}`);
+console.log(`[agents-check-test] fixture root: ${fixtureBase}`);
 process.exit(failed.length === 0 ? 0 : 1);

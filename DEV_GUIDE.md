@@ -15,6 +15,7 @@ extra policy documents.
 - JDK 21 and Maven 3.9.x: `backend/pom.xml`
 - Node.js `26.13.1`: `.node-version` and `.nvmrc`
 - pnpm `12.23.0`: root `package.json` `packageManager`, mirrored by each workspace
+- pnpm settings (`overrides`/`allowBuilds`/`permissions`): each workspace `pnpm-workspace.yaml`; never write them back into `package.json` `pnpm`
 
 ## Local Services
 

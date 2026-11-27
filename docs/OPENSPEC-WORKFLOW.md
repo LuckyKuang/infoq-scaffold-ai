@@ -8,8 +8,10 @@
 
 - 长期项目上下文放在 `openspec/config.yaml` 的 context 段
 - 当前真值 specs 放在 `docs/specs/`
+- change 的 spec delta 放在 `openspec/changes/<change-id>/specs/<capability>/spec.md`；交付时应用到 `docs/specs/<capability>/spec.md`
 - 进行中的 change 产物放在 `openspec/changes/<change-id>/`
 - 仓库级自定义 agent 真值放在 `.codex/agents/`
+- 文档正文默认中文；路径、命令、文件名与标准文件名（`proposal.md`/`tasks.md`/`design.md`/`review.md`/`spec.md`）保持英文原样
 - `openspec/changes/` 与 `docs/plan/` 仅供本地计划使用，均由 Git 忽略，不提交、不进 PR；后续执行计划继续写入 `docs/plan/`，目录不存在时按需创建，由用户手动清理；版本控制仅保留可复用流程、已接受的 `docs/specs/` 规格与测试
 
 ## 执行模式

@@ -8,7 +8,8 @@ const docGates = [
 ];
 
 const docsExtra = [
-  {name: 'agents-check', command: 'node', args: ['skills/compress-cli/scripts/agents_check.mjs', 'check']}
+  {name: 'agents-check', command: 'node', args: ['skills/compress-cli/scripts/agents_check.mjs', 'check']},
+  {name: 'shortcut-debt', command: 'node', args: ['tools/check_shortcut_debt.mjs', '--strict']}
 ];
 
 const releaseGates = [

@@ -46,6 +46,9 @@ node tools/check_release_version.mjs
 # Local documentation links and anchors
 node tools/check_doc_links.mjs
 
+# Shortcut debt ledger (fails when a marker has no upgrade trigger)
+node tools/check_shortcut_debt.mjs --strict
+
 # Backend, via the repo Maven runner
 node tools/backend_mvn.mjs -- test
 
