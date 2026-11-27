@@ -395,3 +395,13 @@ S3 分页解析 MUST 按 XML 协议单次解码实体，MUST 不因替换顺序�
 - **WHEN** 实现采用带已知上限的简化方案。
 - **THEN** 代码注释 MUST 包含上限与升级触发条件。
 - **AND** 台账脚本 MUST 能区分代码注释、块注释续行与字符串字面量中的伪注释。
+
+### Requirement: PR 合并后清理 head 分支
+
+PR 合并进默认分支并关闭后，该 PR 的 head 分支 MUST 在远端与本地都被删除并核验；MUST 只清理该 PR 的 head 分支，`backup/*`、发布支撑分支与长期分支按其自身生命周期单独处理。
+
+#### Scenario: 合并完成后收尾
+
+- **WHEN** PR 已合并进默认分支且状态为 `MERGED` / `merged=true`。
+- **THEN** `git ls-remote --heads origin <branch>` 与 `git branch --list <branch>` MUST 均为空。
+- **AND** 删除失败、worktree 占用或权限不足时 MUST 保留失败并给出阻塞原因，MUST NOT 以"已请求删除"代替核验。

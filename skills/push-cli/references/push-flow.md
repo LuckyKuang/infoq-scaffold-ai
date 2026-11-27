@@ -73,6 +73,16 @@ ensure -> check -> submit-pr 预览 -> submit-pr --execute -> [默认分支? 新
 
 禁止：`--admin` 绕过、在保护规则未满足时合并、在失败状态下重试合并。
 
+### 合并后收尾
+
+PR 合并进默认分支并关闭后，必须删除该 PR 的 head 分支，本地与远程都要清空：
+
+1. 合并：`gh pr merge <number> --squash --delete-branch`（`merge` 子命令已内置 `--delete-branch`）。PR 状态为 `MERGED` 且 `merged=true`；REST 显示 `closed` 属正常。
+2. 远程核验：`git ls-remote --heads origin <branch>` 必须无输出；未删除时执行 `git push origin --delete <branch>` 后重新核验。
+3. 本地核验：`git branch --list <branch>` 必须无输出；仍存在时先切回默认分支，再 `git branch -D <branch>`，随后重新核验。
+4. 失败语义：worktree 占用、权限不足或网络失败都必须保留失败并给出命令，不得把"已请求删除"当作删除成功。
+5. 范围：只删除该 PR 的 head 分支；`backup/*`、发布支撑分支与长期分支按各自生命周期处理。
+
 ## 7. 与发布衔接
 
 合并成功后，版本与 Release 由 `release-cli` 负责：先 `plan` 判断是否需要 `bump`，再预览 `tag`，显式 `tag --execute` 推送后由 Release workflow 构建发布；成功后 `verify`。不要与 workflow 并发手动 `publish`。

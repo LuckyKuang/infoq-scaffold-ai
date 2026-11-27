@@ -21,4 +21,4 @@
 |UI Workflow:重大 UI/UX 走四阶段：布局方案与桌面/移动 ASCII Wireframe 获 `LAYOUT APPROVED`；`docs/ui-demos/<change-id>.html` 演示获 `DEMO APPROVED`；再用真实技术栈实现并做运行态核验。|不预设 Tailwind/Capacitor/Hono；有 MVP 约束文件时只做核心流。|细则见 `docs/UI-WORKFLOW.md`。
 |Local Skills:skills:{compress-cli,push-cli,release-cli,test-cli,deploy-cli}
 |Skill Priority:多个 skill 命中时按 test-cli -> push-cli -> release-cli 顺序执行；规约改动先用 compress-cli。|backend 验证、数据运维、交付门禁与组件核验见 `docs/SKILLS.md` 第 8.9 节。
-|Skill Trigger:网页交互、受保护路由、验证码登录、E2E、页面运维与前端单测/构建用 test-cli；推送、PR、修复校验失败与合并用 push-cli（禁直推默认分支与 `--admin`），提交前评审按 `skills/push-cli/references/review-gate.md`；版本、tag 与 Release 用 release-cli；本机部署、Apple container、Docker 启停与 smoke 用 deploy-cli。
+|Skill Trigger:网页交互、受保护路由、验证码登录、E2E、页面运维与前端单测/构建用 test-cli；推送、PR、修复校验失败与合并用 push-cli（禁直推默认分支与 `--admin`），提交前评审按 `skills/push-cli/references/review-gate.md`，合并后删除本地与远程 PR 分支并核验；版本、tag 与 Release 用 release-cli；本机部署、Apple container、Docker 启停与 smoke 用 deploy-cli。
