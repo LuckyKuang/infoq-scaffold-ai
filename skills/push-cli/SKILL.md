@@ -26,7 +26,7 @@ description: 预览或执行 GitHub 分支推送、PR 创建与校验回流、�
 5. 提交与推送：先预览 `submit-pr`，确认目标与影响后加 `--execute`；它在工作分支上校验、提交并推送。预览不会实际运行校验矩阵，不能把预览视为检查通过。
 6. PR 与校验：`submit-pr` 创建或复用 PR，然后 `watch` 轮询 GitHub 校验；失败时输出失败 check 名称与失败日志摘要。
 7. 修复回流：根据失败日志修改代码 → 重新 `submit-pr`（同一个 PR 会被复用），直到校验全绿。
-8. 合并：先预览 `merge --pr <number> --yes`，满足门禁并获得合并授权后用 `--execute --yes` 执行，删除远端分支。
+8. 合并与收尾：先预览 `merge --pr <number> --yes`，满足门禁并获得合并授权后用 `--execute --yes` 执行；`--delete-branch` 删除远端与本地 PR head 分支，随后核验两侧均不存在；本地残留时切回默认分支再删。
 9. 发布衔接：合并完成后使用 `release-cli` 做版本与 Release 发布。
 
 ## 默认命令
@@ -64,6 +64,7 @@ node skills/push-cli/scripts/test_push_cli.mjs
 - 校验失败不得通过放宽断言、跳过校验或降低阈值来"变绿"。
 - 合并前确认：PR 为 open、非 draft、base 为默认分支、状态为 MERGEABLE、存在已完成校验；CLI 接受 SUCCESS/NEUTRAL/SKIPPED，并通过 `--match-head-commit` 绑定本次读取的 head SHA。必需检查与分支保持最新的要求由 GitHub 分支保护配置，发布者需核验，CLI 不读取仓库保护规则。
 - 合并失败或校验过期（分支又落后于默认分支）时必须重新提交，不允许降低保护。
+- 合并后不得保留 PR 分支：`git branch --list <branch>` 与 `git ls-remote --heads origin <branch>` 必须均为空；只清理该 PR 的 head 分支，`backup/*` 与发布支撑分支不在范围内。
 - 任何远程写操作失败都要保留命令与错误摘要，不做静默重试。
 
 ## 参考

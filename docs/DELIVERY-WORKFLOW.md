@@ -45,6 +45,15 @@ node tools/generate_plugin_plan.mjs --name infoq-plugin-xxx --class toggle --fro
 
 交付前显式检查性能影响、日志/告警覆盖、回滚路径，以及 config/SQL/依赖影响。任何未执行或无法执行的必要检查必须记录为阻塞或残余风险；文档核对不能替代生产环境运行验收。
 
+## PR 收尾
+
+PR 合并进入默认分支并关闭后，必须删除该 PR 的 head 分支：
+
+1. 远端：`git ls-remote --heads origin <branch>` 必须为空；未删除时用 `git push origin --delete <branch>`，再核验。
+2. 本地：`git branch --list <branch>` 必须为空；仍存在时先切回默认分支，再 `git branch -D <branch>`，再核验。
+3. 记录合并提交、两侧删除结果与核验输出；删除失败保留为阻塞，不得以"已请求删除"代替核验。
+4. 只清理该 PR 的 head 分支；`backup/*` 与发布支撑分支按各自生命周期单独处理。
+
 ## 单测纪律
 
 - 按业务行为与边界条件编写，不为覆盖率凑数；断言必须能因真实缺陷而失败。
