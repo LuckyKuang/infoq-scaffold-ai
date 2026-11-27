@@ -96,3 +96,4 @@ settings.local.json
 # Local Compose secrets. Use deploy/.env.example as the template.
 deploy/docker/.env
 deploy/.env
+.openidea/

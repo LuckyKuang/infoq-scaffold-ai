@@ -59,7 +59,7 @@ CI 通过 `pnpm/action-setup` 的 `package_json_file` 直接读取该字段。
 | Vue | `pnpm --dir frontend-vue run test:unit && pnpm --dir frontend-vue run lint:eslint && pnpm --dir frontend-vue run build:prod` |
 | React | `pnpm --dir frontend-react run test && pnpm --dir frontend-react run lint && pnpm --dir frontend-react run build:prod` |
 
-`Makefile` 的 `test-docs` 覆盖上表的 UTF-8、README、版本与文档链接检查；`test-backend` 只跑单测，不包含 CI 的 clean/package，`test-vue`、`test-react` 覆盖各端 lint/test/build。本地 production build 同样必须设置 `INFOQ_PRODUCTION_CONFIG_FILE`；上述裸 build 命令缺受控输入时明确失败。常规 PR CI 不执行部署，手动 Linux workflow 执行隔离实机验收。
+`Makefile` 的 `test-docs` 覆盖上表的 UTF-8、README、版本与文档链接检查，并追加 `shortcut:` 欠债台账（`node tools/check_shortcut_debt.mjs --strict`）；`test-backend` 只跑单测，不包含 CI 的 clean/package，`test-vue`、`test-react` 覆盖各端 lint/test/build。本地 production build 同样必须设置 `INFOQ_PRODUCTION_CONFIG_FILE`；上述裸 build 命令缺受控输入时明确失败。常规 PR CI 不执行部署，手动 Linux workflow 执行隔离实机验收。
 
 ## 4. 平台覆盖
 

@@ -162,7 +162,6 @@ README 僅提供專案總覽與快速開始。詳細設定與維護請閱讀下�
 | 文件 | 說明 |
 | --- | --- |
 | [文件中心](docs/README.md) | 使用者文件導覽 |
-| [文件稽核紀錄](docs/DOCUMENTATION-AUDIT.md) | 涵蓋範圍、修正、檢查與正式環境驗收阻礙 |
 | [貢獻指南](CONTRIBUTING.md) | 工具鏈、驗證與 PR 流程 |
 | [開發指南](DEV_GUIDE.md) | 本機設定與疑難排解 |
 | [安全策略](SECURITY.md) | 漏洞回報 |

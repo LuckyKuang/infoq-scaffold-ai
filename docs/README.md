@@ -46,7 +46,6 @@ current repository; it does not retell third-party framework tutorials.
 | [发布流程](./RELEASING.md) | 版本格式、发布 PR、tag、Release workflow、产物与回滚 |
 | [CI 验证](./CI_VALIDATION.md) | 工作流覆盖、本地等价命令、发布门禁与安全扫描 |
 | [FAQ](./FAQ.md) | 常见问题和排障 |
-| [文档审计记录](./DOCUMENTATION-AUDIT.md) | 全量覆盖方法、修正结果、工具回归与生产验收阻塞 |
 
 ### 部署运维
 
@@ -70,7 +69,7 @@ current repository; it does not retell third-party framework tutorials.
 | --- | --- |
 | [AI 协作规范](./AI-COLLABORATION.md) | AGENTS 分层、subagents、研发工作流、模块文档治理 |
 | [Skills 与插件](./SKILLS.md) | 5 个仓库级 skill 的使用与后端插件开关矩阵 |
-| [交付工作流](./DELIVERY-WORKFLOW.md) | Acceptance Contract、OpenSpec 门禁、UI 四阶段与插件治理 |
+| [交付工作流](./DELIVERY-WORKFLOW.md) | Acceptance Contract、OpenSpec 门禁、UI 四阶段、插件治理、单测纪律与审计 SOP |
 | [OpenSpec 流程](./OPENSPEC-WORKFLOW.md) | change 生命周期与结构校验 |
 | [UI 工作流](./UI-WORKFLOW.md) | 重大 UI/UX 四阶段设计辅助层 |
 | [MCP Servers](./MCP-SERVERS.md) | MCP server 配置与只读边界 |
@@ -110,7 +109,6 @@ docs/
 ├── DESIGN.md            # 设计系统与组件选型
 ├── RELEASING.md         # 发布流程与回滚
 ├── CI_VALIDATION.md     # CI 覆盖与发布门禁
-├── DOCUMENTATION-AUDIT.md # 文档审计方法、结果与剩余阻塞
 ├── specs/               # 规格真值（capability 需求）
 ├── testing/             # E2E case 集合
 └── images/              # 文档配图

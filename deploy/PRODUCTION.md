@@ -16,7 +16,7 @@ node tools/production_config.mjs check --scope deploy --env-file /etc/infoq-scaf
 
 `prepare/start/deploy/restart` 的配置预检先于目录/Compose 写入。前端 helper 将证书及网关配置写入 `${INFOQ_DEPLOY_ROOT}/nginx/`，每个文件使用同文件系统暂存和 rename，失败恢复旧文件；暂存只为原子替换，完成后清理。证书先写、配置最后替换，禁止并发部署或在渲染期间重载 nginx。重跑保留 HTTPS；`nginx -t` 通过后才重建网关。HTTP 仅重定向 HTTPS。已有手工 TLS 配置应先备份并迁移到受控输入，不继续手工维护生成文件。
 
-`managed-security.yml` 是 helper 生成且最后载入的 Spring 配置，只有环境占位符，权限 `0600`；它将经校验 DB/Redis/token/RSA 注入运行配置，覆盖旧应用配置中的同名值。两组 RSA 的方向是：前端请求公钥 ↔ 后端请求私钥；前端响应私钥 ↔ 后端响应公钥。后端请求私钥不会注入前端构建产物；前端协议私钥仍会进入浏览器，公网必须 HTTPS。应用 `start/restart` 保留部署批次并重建应用容器，使 env 与启动时 OSS 缓存同步，不改数据卷。
+`managed-security.yml` 是 helper 生成且最后载入的 Spring 配置，只有环境占位符，权限 `0600`；它将经校验 DB/Redis/token/RSA 注入运行配置，覆盖旧应用配置中的同名值。两组 RSA 的方向是：前端请求公钥 `VITE_APP_RSA_PUBLIC_KEY` ↔ 后端请求私钥 `INFOQ_API_REQUEST_PRIVATE_KEY`；前端响应私钥 `VITE_APP_RSA_PRIVATE_KEY` ↔ 后端响应公钥 `INFOQ_API_RESPONSE_PUBLIC_KEY`。后端请求私钥不会注入前端构建产物；前端协议私钥仍会进入浏览器，公网必须 HTTPS。应用 `start/restart` 保留部署批次并重建应用容器，使 env 与启动时 OSS 缓存同步，不改数据卷。
 
 双端 `all` 允许安全的不同 context path（默认 `/vue/`、`/react/`），builder、网关和 OAuth callback map 使用同源值。单端使用 `/`；生产管理页面仍须通过网关访问。
 

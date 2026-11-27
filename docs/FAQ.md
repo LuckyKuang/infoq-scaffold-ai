@@ -56,7 +56,7 @@ java -jar backend/infoq-admin/target/infoq-admin.jar --spring.profiles.active=lo
 
 ## 7. 我只改了文档，需要跑单元测试吗
 
-纯 Markdown 变更通常没有对应的产品单元测试目标，交付时说明不适用的原因；仍须完成 UTF-8、链接、文件存在性、命令与端口事实核对及 diff review。若同时修改校验器、技能或部署脚本行为，必须执行其相关回归，不能按“纯文档”跳过。全仓方法与已知限制见 [文档审计](./DOCUMENTATION-AUDIT.md)。
+纯 Markdown 变更通常没有对应的产品单元测试目标，交付时说明不适用的原因；仍须完成 UTF-8、链接、文件存在性、命令与端口事实核对及 diff review。若同时修改校验器、技能或部署脚本行为，必须执行其相关回归，不能按“纯文档”跳过。全仓审计方法与常见反模式见 [交付工作流](./DELIVERY-WORKFLOW.md) 的「全仓审计与回归 SOP」。
 
 ## 8. 下一步阅读
 

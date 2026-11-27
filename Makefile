@@ -7,7 +7,7 @@ help:
 		'build-vue        Production build for the Vue admin' \
 		'build-react      Production build for the React admin' \
 		'test             Run docs, backend, and admin checks' \
-		'test-docs        UTF-8, README, release-version, and doc-link gates' \
+		'test-docs        UTF-8, README, release-version, doc-link, and shortcut-debt gates' \
 		'test-backend     Backend unit tests' \
 		'test-vue         Vue lint, unit tests, and production build' \
 		'test-react       React lint, unit tests, and production build' \
@@ -32,6 +32,7 @@ test-docs: validate-utf8
 	node tools/check_readme_sync.mjs
 	node tools/check_release_version.mjs
 	node tools/check_doc_links.mjs
+	node tools/check_shortcut_debt.mjs --strict
 
 test-backend:
 	node tools/backend_mvn.mjs -- -B -ntp -DskipTests=false test

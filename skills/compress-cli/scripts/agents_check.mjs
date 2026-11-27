@@ -27,6 +27,14 @@ const PROTECTED_CATEGORIES = [
   'MCP Config Truth'
 ];
 
+// 常驻上下文预算：超出即失败，避免流程细节回流到根规约。
+// 同时保留最小余量，避免内容贴着上限导致任何小修订都失败。
+const BUDGET_LIMITS = {
+  categories: 24,
+  bytes: 8192,
+  minHeadroomBytes: 200
+};
+
 const ALLOWED_PATH_PREFIXES = [
   'tools/',
   'docs/',
@@ -322,6 +330,45 @@ function checkProtectedCategories(categories) {
   }
 }
 
+function checkBudget(budget) {
+  if (budget.categories > BUDGET_LIMITS.categories) {
+    fail(
+      errors,
+      `category 数超出预算：${budget.categories} > ${BUDGET_LIMITS.categories}；把流程细节下沉到 docs/ 或 references/`
+    );
+  }
+  if (budget.bytes > BUDGET_LIMITS.bytes) {
+    fail(
+      errors,
+      `AGENTS.md 字节数超出预算：${budget.bytes} > ${BUDGET_LIMITS.bytes}；把流程细节下沉到 docs/ 或 references/`
+    );
+    return;
+  }
+  if (budget.bytes > BUDGET_LIMITS.bytes - BUDGET_LIMITS.minHeadroomBytes) {
+    fail(
+      errors,
+      `预算余量不足：剩余 ${BUDGET_LIMITS.bytes - budget.bytes} bytes < ${BUDGET_LIMITS.minHeadroomBytes}；新增规则先下沉到 docs/ 或 references/`
+    );
+  }
+}
+
+// 指针契约：声明“细则见/详见/合同见/见 `...`”时，必须给出可披露路径。
+// 只有文字没有路径的授权等于把规则丢出上下文。
+const DELEGATION_RE = /(细则见|详见|合同见|见\s*`)/u;
+const DISCLOSED_TARGET_RE = /`((?:docs|deploy|skills)\/[^`]+)`/u;
+
+function checkPointerDelegation(categories) {
+  for (const entry of categories) {
+    if (!DELEGATION_RE.test(entry.value) || DISCLOSED_TARGET_RE.test(entry.value)) {
+      continue;
+    }
+    fail(
+      errors,
+      `${entry.category} 声明了细则下钻但没有可披露路径（docs/、deploy/ 或 skills/）；指针必须写清触发词、路径与结论`
+    );
+  }
+}
+
 function checkReferencedPaths(skipRefs) {
   if (skipRefs) {
     return [];
@@ -375,6 +422,7 @@ const dirNames = listSkillDirs();
 const routing = checkRouting(categories, dirNames);
 checkSkillStructure(dirNames);
 checkProtectedCategories(categories);
+checkPointerDelegation(categories);
 const checkedPaths = checkReferencedPaths(skipRefs);
 
 function buildBudget() {
@@ -406,12 +454,16 @@ function buildBudget() {
   };
 }
 
+const budget = buildBudget();
+checkBudget(budget);
+
 const report =
   command === 'budget'
-    ? {command, ok: errors.length === 0, budget: buildBudget(), errors}
+    ? {command, ok: errors.length === 0, limits: BUDGET_LIMITS, budget, errors}
     : {
         command,
         ok: errors.length === 0,
+        limits: BUDGET_LIMITS,
         agents: path.relative(repoRoot, agentsPath).split(path.sep).join('/'),
         declared: routing.declared,
         docsSkills: routing.docsSkills,
@@ -425,15 +477,22 @@ const report =
 if (asJson) {
   console.log(JSON.stringify(report, null, 2));
 } else if (command === 'budget') {
-  const budget = report.budget;
-  console.log(`[agents-budget] ${budget.agents}`);
-  console.log(`  lines=${budget.lines} nonEmpty=${budget.nonEmptyLines} bytes=${budget.bytes} categories=${budget.categories}`);
+  const summary = report.budget;
+  console.log(`[agents-budget] ${summary.agents}`);
+  console.log(`  lines=${summary.lines} nonEmpty=${summary.nonEmptyLines} bytes=${summary.bytes} categories=${summary.categories}`);
+  console.log(`  limits: categories<=${report.limits.categories} bytes<=${report.limits.bytes} headroom>=${report.limits.minHeadroomBytes}`);
   console.log('  top value lengths:');
-  for (const entry of budget.topValueLengths) {
+  for (const entry of summary.topValueLengths) {
     console.log(`    - ${entry.category}: ${entry.length}`);
   }
-  console.log(`  lines > 400 chars: ${budget.longCategories.length ? budget.longCategories.join(', ') : 'none'}`);
-  console.log(`  duplicate values: ${budget.duplicateValues.length ? budget.duplicateValues.map((item) => item.categories.join('/')).join('; ') : 'none'}`);
+  console.log(`  lines > 400 chars: ${summary.longCategories.length ? summary.longCategories.join(', ') : 'none'}`);
+  console.log(`  duplicate values: ${summary.duplicateValues.length ? summary.duplicateValues.map((item) => item.categories.join('/')).join('; ') : 'none'}`);
+  if (errors.length > 0) {
+    console.error('[agents-budget] FAIL');
+    for (const item of errors) {
+      console.error(`  - ${item}`);
+    }
+  }
 } else if (errors.length === 0) {
   console.log(`[agents-check] PASS ${report.agents}`);
   console.log(`  skills=${report.skillDirs.length} declared=${report.declared.length} docsSkills=${report.docsSkills.length} mentioned=${report.mentioned.length} referencedPaths=${report.checkedPaths}`);

@@ -369,3 +369,29 @@ S3 分页解析 MUST 按 XML 协议单次解码实体，MUST 不因替换顺序�
 - **WHEN** smoke 成功获取真实 token，或调用者使用旧的打印 token 选项。
 - **THEN** 正常证据 MUST 只包含脱敏结果；旧秘密输出选项 MUST 明确拒绝或被移除并同步文档，MUST 不静默打印或将 token 藏入错误消息。
 - **AND** 自动生成的临时凭据 MUST 使用安全随机源，并在测试后按 owned 资源规则收口。
+
+### Requirement: 根规约分层与预算
+
+根 `AGENTS.md` MUST 只承载每轮必须在场的行为约束与路由指针；流程、产物模板与命令矩阵 MUST 放在 `docs/` 或 skill `references/`，由带触发词的指针连接。规约 MUST 保留 14 个受保护类别原名与语义，类别合并 MUST 写明去向。
+
+#### Scenario: 更新根规约
+
+- **WHEN** 维护者新增、压缩或合并根 `AGENTS.md` 的 category。
+- **THEN** MUST 执行 `node skills/compress-cli/scripts/agents_check.mjs check` 与 `budget`。
+- **AND** category 数 MUST NOT 超过 24，UTF-8 字节数 MUST NOT 超过 8192，且 MUST 保留至少 200 bytes 余量；超限或余量不足 MUST 显式失败。
+
+#### Scenario: 披露规则
+
+- **WHEN** 一条规则的正文移入 `docs/` 或 skill `references/`。
+- **THEN** `AGENTS.md` MUST 保留触发关键词、真值路径与不可协商结论，MUST NOT 只留路径而丢失触发分支。
+- **AND** 声明细则下钻但未给出 `docs/`、`deploy/` 或 `skills/` 路径时，校验器 MUST 显式失败。
+
+### Requirement: 欠债标记
+
+带已知上限的临时妥协 MUST 用 `shortcut: <上限>, <升级触发>` 注释记录，由 `node tools/check_shortcut_debt.mjs` 汇总；缺少升级触发条件的标记 MUST 被标记为 `no-trigger`，`--strict` 模式下 MUST 显式失败。
+
+#### Scenario: 记录临时 shortcuts
+
+- **WHEN** 实现采用带已知上限的简化方案。
+- **THEN** 代码注释 MUST 包含上限与升级触发条件。
+- **AND** 台账脚本 MUST 能区分代码注释、块注释续行与字符串字面量中的伪注释。

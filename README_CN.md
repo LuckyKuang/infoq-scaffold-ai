@@ -156,7 +156,6 @@ README 只提供项目总览和快速开始。详细配置与维护请阅读下�
 | 文档 | 说明 |
 | --- | --- |
 | [文档中心](docs/README.md) | 用户文档导航 |
-| [文档审计记录](docs/DOCUMENTATION-AUDIT.md) | 覆盖范围、修正、校验与生产验收阻塞 |
 | [贡献指南](CONTRIBUTING.md) | 工具链、验证和 PR 流程 |
 | [开发指南](DEV_GUIDE.md) | 本地设置与排障 |
 | [安全策略](SECURITY.md) | 漏洞报告 |
